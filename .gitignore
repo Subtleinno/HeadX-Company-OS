@@ -147,3 +147,14 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# ---------------------------------------------------------------------------
+# company-os: keep local project documents and secrets out of this public repo
+# ---------------------------------------------------------------------------
+/docs/
+*.env
+.env*
+*.pem
+*.key
+*.pfx
+secrets/
