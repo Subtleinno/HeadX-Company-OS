@@ -1,0 +1,32 @@
+[
+  { "id": "reports.*", "level": "L0", "description": "讀取報表與對帳" },
+  { "id": "research.*", "level": "L0", "description": "情報研究與資料查詢" },
+  { "id": "content.draft.*", "level": "L1", "description": "建立內容草稿" },
+  { "id": "ledger.draft.*", "level": "L1", "description": "建立分錄草稿" },
+  { "id": "purchase.draft.*", "level": "L1", "description": "建立採購單草稿" },
+  { "id": "git.branch.create", "level": "L1", "description": "在獨立分支工作" },
+  { "id": "git.pr.open", "level": "L1", "description": "開 Pull Request" },
+  {
+    "id": "erp.order.create",
+    "level": "L2",
+    "amountParam": "amountCents",
+    "amountLimit": 0,
+    "description": "向供應商下訂單；預設上限為 0，即任何金額都要人批，日後逐項放寬"
+  },
+  {
+    "id": "payment.send",
+    "level": "L3",
+    "amountParam": "amountCents",
+    "amountLimit": 0,
+    "description": "付款；預設上限為 0，一律需人批准"
+  },
+  { "id": "refund.create", "level": "L2", "description": "客戶退款，需人批准" },
+  { "id": "publish.social", "level": "L2", "description": "公開發布貼文，需人批准" },
+  { "id": "email.send.customer", "level": "L2", "description": "發信給客戶，需人批准" },
+  { "id": "git.pr.merge", "level": "L3", "description": "合併 Pull Request，需人批准" },
+  { "id": "deploy.production", "level": "L3", "description": "部署正式環境，需人批准" },
+  { "id": "data.delete", "level": "L3", "description": "刪除資料，需人批准" },
+  { "id": "log.disable", "level": "L4", "description": "關閉審計日誌，永久禁止" },
+  { "id": "permission.self.change", "level": "L4", "description": "修改自身權限，永久禁止" },
+  { "id": "secret.read", "level": "L4", "description": "取用金鑰或密碼，永久禁止" }
+]
