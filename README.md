@@ -1,6 +1,6 @@
 ﻿# company-os
 
-> **This repository is a public test bed for the Super Agent.**
+> **This repository is a test bed for the Super Agent.**
 > It is used only to exercise, measure and debug the DeepSeek Harness (DSH)
 > Super-agent prototype end to end (issue -> work item -> pull request -> human approval).
 >
@@ -21,8 +21,8 @@ Provide a disposable, harmless sandbox where the agent can be safely tested:
 
 1. **Test data only.** Never commit real company, brand, customer, supplier,
    financial, payroll or strategy content, nor any API key, token or password.
-2. **No secrets in history.** Nothing here is considered confidential; treat
-   every commit as public forever.
+2. **No secrets in history.** Treat every commit as if it could be published.
+   The repository is private today, but never rely on that.
 3. **main is protected.** Changes arrive through pull requests reviewed by a
    human. No direct pushes, no force pushes, no branch deletion.
 4. **Every PR states its risk level and rollback plan**, because an agent wrote it.
