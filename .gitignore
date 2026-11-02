@@ -1,4 +1,4 @@
-# Logs
+﻿# Logs
 logs
 *.log
 npm-debug.log*
@@ -151,7 +151,7 @@ vite.config.ts.timestamp-*
 # ---------------------------------------------------------------------------
 # company-os: keep local project documents and secrets out of this public repo
 # ---------------------------------------------------------------------------
-/docs/
+# /docs/  -- committed on purpose: this repository is private
 *.env
 .env*
 *.pem
