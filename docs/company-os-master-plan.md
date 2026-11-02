@@ -1,7 +1,7 @@
 # AI 原生公司總規劃(Company OS Master Plan)
-版本:v0.3 草案|日期:2026-11-03|負責人:創辦人(唯一批准人)
-本次修訂(v0.3):加入 Needs 系統、Company Dashboard、Docker 統一承載、外置渲染機、
-模型與研究策略,並確立「先評估開源、再 fork 改造」的閘道開發方向(見附錄 A/ADR-008 至 ADR-014)
+版本:v0.4 草案|日期:2026-11-03|負責人:創辦人(唯一批准人)
+本次修訂(v0.4):加入介面標準(Apple HIG、白底黑 accent、禁 emoji)、每 app 必備 MCP、
+ERPNext/WordPress 部署策略(見原則 9–10、ADR-015 至 ADR-017、`docs/company-os-design-system.md`)
 
 ## 1. 目標
 由 Super Agent 與多個專職 AI Agent 持續營運與開發公司,創辦人每天約 2 小時處理「批准收件匣」。
@@ -16,6 +16,8 @@
 6. 策略庫保密:HxDesign 的內容策略不得出現在客戶端 API、日誌、第三方插件或送往外部模型的非必要內容中。
 7. 財務分權:Agent 可建草稿,過帳、付款、退款由人批准(或經人預先批准的明確規則)。
 8. 隨時可停:全域熔斷開關,可一鍵暫停所有 Agent 的寫入。
+9. **AI 原生:每個 app 必須提供 MCP 伺服器**,採用最新 MCP 規範,令 Agent 能以結構化方式使用;但 MCP **不得**提供「批准」工具,批准永遠只經人(見 ADR-016)。
+10. **介面標準:Apple HIG + 白底黑 accent + 禁止 emoji**(見 ADR-015 與 `docs/company-os-design-system.md`)。
 
 ## 3. 風險分級
 | 級別 | 例子 | 控制 |
@@ -196,6 +198,31 @@
 - **已安裝基準(P0,2026-11-03)**:`dshmarket` 1.73.7、`dsh-browser` 0.1.0、`dsh-better-sidebar` 0.28.2、`dsh-skill-mcp-panel` 2.3.5、`dsh-mnemon` 0.5.38、`@liustack/modlens` 3.27.2、`@nanmicoder/dsh-agent-teams` 0.1.28。
 - **狀態**:已定案。
 
+### ADR-015:UI/UX 標準 — Apple HIG + 白底黑 accent
+- **決策**:Company OS 及其所有子系統的介面一律以 **Apple Human Interface Guidelines** 為規則基礎;配色固定 **白底(#FFFFFF)+ 黑主色(#000000)**;**全面禁止 emoji**(介面、文件、提交訊息、註解);動效使用 **GSAP**,時長 120–320ms,並尊重 reduced-motion。
+- **可控制設計系統**:結構規則(間距、對比、動效、可及性)全系統統一;品牌層可經 `brand.config` 換色與字型,**制度統一、皮膚可換**。
+- **指引來源**:DSH 已安裝 `apple-hig-mcp`(MCP 伺服器,提供 Apple HIG 即時查詢);公司自訂規格見 `docs/company-os-design-system.md`。
+- **理由**:創辦人不能忍受不一致、吵雜或「AI 味」的介面;白底黑 accent 是最耐看、最不易出錯的選擇,也讓狀態必須以結構(字重、位置、圖示)表達而非顏色,對色盲使用者更友善。
+- **狀態**:已定案。
+
+### ADR-016:AI 原生 — 每個 App 必須提供 MCP
+- **決策**:每一個 app(自家開發與接入的第三方)都必須提供一個 **MCP 伺服器**,採用最新 MCP 規範,令 AI Agent 能以結構化方式使用該 app,而不必爬網頁或模擬點擊。
+- **規則**:
+  1. MCP 與 UI 共用同一個核心服務層,不另寫一套邏輯。
+  2. MCP 工具必須有型別化參數、幂等鍵、結構化回傳(含 `request_id` 對應審計日誌)、明確錯誤碼。
+  3. **MCP 不得提供「批准」或「撤銷批准」工具** — 批准永遠只經人在 UI 上完成。
+  4. Company Dashboard 必須提供 `dashboard.snapshot`,讓 Super Agent 讀取公司現況。
+- **理由**:這是「系統自己成長」的前提 — Agent 要能操作系統,才能發現缺口並修補;但同時必須有一條無法被繞過的人類批准路徑。
+- **狀態**:已定案,寫入 master plan 第 2 節成為原則 9。
+
+### ADR-017:ERPNext 與 WordPress — 開發用容器,生產用 SaaS
+- **決策**:
+  - **ERPNext**:開發與測試期用 Docker;正式上線後改用 **Frappe Cloud 官方託管**(只做總帳)。目的:開發可隨意試錯,生產有備份、有支援、免自行升級。
+  - **WordPress**:**維持外部 SaaS(WordPress.com)**,Company OS 只經 API/MCP 接駁,不自行架設。原因:自架 WordPress 需要 CDN、物件快取、調校與持續安全更新,等於營運一台主機;容器化不會令它更安全,只會令人誤以為安全。
+- **例外**:若日後出現明確需求(例如需要完全自訂外掛或深度整合),再以 ADR 方式重新評估。
+- **理由**:創辦人的目標是營運公司,不是維護伺服器;引擎只連接、不合併(ADR-003)。
+- **狀態**:WordPress 部分由創辦人決定「連接時再議」;ERPNext 部分已定案。
+
 ## 附錄 B:進度記錄(手動維護)
 
 | 日期 | 階段 | 事件 | 結果 |
@@ -206,5 +233,7 @@
 | 2026-11-03 | P0 Step A | 文件改為上載至 private repo;repo README 說明其為 Super Agent 測試場 | 完成 |
 | 2026-11-03 | P0 Step A | 安裝 7 個 DSH 插件(見 ADR-014),`dsh-browser` 實測可開網頁 | 完成 |
 | 2026-11-03 | 規劃 | Master Plan v0.3:新增 ADR-008 至 ADR-014(Needs、Dashboard、Docker、外置渲染、模型策略、閘道開源策略、插件策略) | 完成 |
+| 2026-11-03 | 規劃 | Master Plan v0.4:新增原則 9–10 與 ADR-015 至 ADR-017(Apple HIG 設計標準、每 app 必備 MCP、ERPNext/WordPress 部署策略);新增 `docs/company-os-design-system.md` | 完成 |
+| 2026-11-03 | P0 Step A | 安裝 `apple-hig-mcp` 1.1.3(npm MCP 伺服器),待接駁至 DSH 的 MCP 設定 | 待完成 |
 
 > 注意:本表由人或 DSH 手動更新。P1 完成審計日誌模組後,進度應改由系統自動生成。
