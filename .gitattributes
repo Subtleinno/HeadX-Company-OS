@@ -1,0 +1,4 @@
+# migration 的 checksum 是檔案內容的 SHA-256，換行方式不可以因機器而變。
+# 這部機 core.autocrlf=true，沒有這一行的話 Windows 工作樹會是 CRLF，
+# 建出來的映像 checksum 與資料庫紀錄（LF）不同，API 會被誤判為「已套用的檔案被修改」。
+db/migrations/*.sql text eol=lf

@@ -60,6 +60,15 @@ npm run storage:smoke -- verify
 
 `write` 寫入 `_smoke/persist-check.txt`，`verify` 確認它仍然存在。console：<http://127.0.0.1:29001>（只綁本機）。
 
+## 資料庫
+
+Migration 是 `db/migrations/NNNN_說明.sql` 的純 SQL，API 啟動時自動套用；套不上就結束，不會起一個 schema 不完整的服務。
+
+- 只往前加：已套用的檔案永不修改（內容一變就拒絕啟動），新檔編號接續，不可以跳號。
+- 加一個 migration：新增 `db/migrations/0002_xxx.sql`，重啟 api 就會套用。
+- `audit_log` 只准追加：UPDATE／DELETE／TRUNCATE 由 trigger 擋掉（SQLSTATE `42501`）。
+- 整合測試用臨時資料庫 `co_test_<隨機>`，不寫入正式資料庫。
+
 ## 測試
 
 ```powershell
