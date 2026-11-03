@@ -17,14 +17,39 @@ Docker 的價值是可移植、可備份，代價是多一層要維護、多一�
 
 ---
 
-## 四個檔案
+## 檔案
 
 | 檔案 | 作用 |
 |---|---|
 | `ensure.ps1` | **單次執行、可重複呼叫**。檢查 3083 與 3082，沒有就拉起來；順便檢查看守程式還在不在。 |
 | `watchdog.ps1` | 無窮迴圈，每 60 秒呼叫一次 `ensure.ps1`。 |
 | `run-hidden.vbs` | 用隱藏視窗執行 `watchdog.ps1`，避免每次登入閃出黑色視窗。 |
+| `open-superagent.cmd` | 桌面捷徑的入口（純 ASCII）。 |
+| `open-superagent.ps1` | **自動讀取目前的 token** 再開 Super Agent 面板。 |
 | `supervisor.log` | 執行記錄，只保留最近 500 行。**在 `.gitignore` 內，不入 repo。** |
+
+---
+
+## 桌面兩個捷徑（這部機已建立，不入 repo）
+
+| 桌面圖示 | 指向 | 為什麼 |
+|---|---|---|
+| **Company OS** | `http://127.0.0.1:3083/` | 不需要 token，直接開 |
+| **Super Agent** | `ops\open-superagent.cmd` | 面板必須帶 `?token=…`，而 **token 每次重啟都會變**。這支腳本每次即時讀取最新 token，所以永遠開得對。 |
+
+### 為什麼要有 `open-superagent`
+
+Super Agent 的面板有登入保護，網址必須帶 token。把舊網址存入書籤，服務一重啟就會見到：
+
+```
+dsh web authentication required; reopen the URL printed by dsh web.
+```
+
+這支腳本每次都去 WSL 最新一份日誌裡抽 `?token=…`，所以不需要記住任何 token，也不會開到壞網址。抽不到時會用紅字說明可能服務未啟動，而不是靜靜地開一個空白頁。
+
+### 為什麼 `.cmd` 內沒有一行中文
+
+`cmd.exe` 用系統 OEM 碼頁讀 `.cmd`，UTF-8 中文會被弄壞並**弄斷整份腳本的解析**（跟 `.ps1` 的 BOM 問題同類）。所以 `.cmd` 只做一件事：呼叫 `open-superagent.ps1`，所有中文訊息都在那邊。
 
 ---
 
