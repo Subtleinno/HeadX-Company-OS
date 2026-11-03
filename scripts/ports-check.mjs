@@ -10,6 +10,8 @@ export const PORT_VARS = [
   { key: 'WEB_PORT', service: 'web', fallback: 4210 },
   { key: 'API_PORT', service: 'api', fallback: 4420 },
   { key: 'DB_PORT', service: 'db', fallback: 25432 },
+  { key: 'PORT_MINIO_API', service: 'storage', fallback: 29000 },
+  { key: 'PORT_MINIO_CONSOLE', service: 'storage console', fallback: 29001 },
 ];
 
 export function parseEnv(contents) {

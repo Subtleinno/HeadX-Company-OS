@@ -159,3 +159,6 @@ vite.config.ts.timestamp-*
 *.key
 *.pfx
 secrets/
+
+# MinIO 在本機的預設資料夾（MINIO_DATA_DIR 的 fallback），裡面是公司資料，不進 git
+.data/

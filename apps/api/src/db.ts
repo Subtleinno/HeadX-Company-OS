@@ -1,7 +1,7 @@
 import type { Pool } from 'pg';
-import type { DbCheck } from './app.js';
+import type { HealthCheck } from './app.js';
 
-export function createDbCheck(pool: Pool): DbCheck {
+export function createDbCheck(pool: Pool): HealthCheck {
   return async () => {
     await pool.query('SELECT 1');
   };

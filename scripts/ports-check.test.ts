@@ -22,11 +22,11 @@ describe('parseEnv', () => {
 });
 
 describe('resolvePorts', () => {
-  it('未設定的端口使用 compose 的預設值', () => {
+  it('未設定的端口使用 compose 的預設值（含 storage 兩個端口）', () => {
     const { ports, errors } = resolvePorts({});
 
     expect(errors).toEqual([]);
-    expect(ports.map((item) => item.port)).toEqual([4210, 4420, 25432]);
+    expect(ports.map((item) => item.port)).toEqual([4210, 4420, 25432, 29000, 29001]);
   });
 
   it('非數字或超範圍的端口會回報原因', () => {
