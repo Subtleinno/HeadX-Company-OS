@@ -154,6 +154,7 @@ vite.config.ts.timestamp-*
 # /docs/  -- committed on purpose: this repository is private
 *.env
 .env*
+!.env.example
 *.pem
 *.key
 *.pfx

@@ -1,0 +1,52 @@
+name: company-os
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?請先複製 .env.example 為 .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?請先複製 .env.example 為 .env}
+      POSTGRES_DB: ${POSTGRES_DB:?請先複製 .env.example 為 .env}
+    ports:
+      - "${DB_PORT:-25432}:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    environment:
+      PORT: "4420"
+      PGHOST: db
+      PGPORT: "5432"
+      PGUSER: ${POSTGRES_USER:?請先複製 .env.example 為 .env}
+      PGPASSWORD: ${POSTGRES_PASSWORD:?請先複製 .env.example 為 .env}
+      PGDATABASE: ${POSTGRES_DB:?請先複製 .env.example 為 .env}
+    ports:
+      - "${API_PORT:-4420}:4420"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-4210}:80"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  db_data:

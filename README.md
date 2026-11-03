@@ -1,41 +1,37 @@
 # company-os
 
-這個 repo 目前是**空的**，由 2026-11-03 起重新開始。
+全公司軟件的專案骨架：Fastify API、React 前端、Postgres（pgvector），全部以 Docker Compose 起動。
 
-程式碼與文件已清空，因為之前的產出沒有解決真正要解決的問題，決定由零開始。
+## 需求
 
----
+- Node.js 26.13.0（見 `.nvmrc`）
+- Docker Desktop（目標是長期開機的 Windows 機）
 
-## 現在這裡有什麼
+## 首次啟動
 
-只有這份 README。
+在 repo 根目錄執行：
 
----
-
-## 接下來會放什麼
-
-由計劃決定。在計劃定案之前，不要在這裡加任何東西。
-
----
-
-## 舊內容去哪裡了
-
-沒有消失，只是不在檔案樹裡：
-
-```bash
-# 看全部歷史
-git log --all --oneline
-
-# 找回任何一個舊檔案
-git show <commit>:<路徑>
-
-# 或整棵樹取回到另一個資料夾
-git archive <commit> | tar -x -C /tmp/old-company-os
+```powershell
+copy .env.example .env
+npm ci
+npm run ports:check
+docker compose up -d --build
 ```
 
-**回復整個舊狀態**：
+前端：<http://localhost:4210>；API：<http://localhost:4420/livez>。`npm run ports:check` 會檢查 `.env` 內的端口能否綁定，有衝突會列出原因並以 exit 1 結束。
 
-```bash
-git revert --no-commit <清空的 commit>
-git commit -m "回復清空前的內容"
+## 端口
+
+| 服務 | `.env` 變數 | 預設 |
+| --- | --- | --- |
+| web | `WEB_PORT` | 4210 |
+| api | `API_PORT` | 4420 |
+| db | `DB_PORT` | 25432 |
+
+## 測試
+
+```powershell
+npm test
+npm run lint
+npm run build
 ```
