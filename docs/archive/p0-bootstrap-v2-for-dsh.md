@@ -1,3 +1,7 @@
+> **已歸檔（2026-11-03）**
+> 原本回答：P0 建置 Super Agent 的任務書。
+> 為何失效：P0 已完成。
+> 現在看：無需替代。
 # P0 任務書 v2:建置 Super Agent(給 DeepSeek Harness 自己執行)
 關聯文件:company-os-master-plan.md(請先完整閱讀)
 範圍:只做 P0。完成後停下,等待使用者批准;不得自行開始 P1。

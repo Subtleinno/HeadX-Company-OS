@@ -1,3 +1,6 @@
+> **這份是決策歷史（ADR），不是現行規格。**
+> 當它與 `PROBLEM.md`、`OUTCOMES.md`、`SOLUTION_SPACE.md` 衝突時，以後者為準。
+> 用途：查「當時為什麼這樣決定」。
 # AI 原生公司總規劃(Company OS Master Plan)
 版本:v0.4 草案|日期:2026-11-03|負責人:創辦人(唯一批准人)
 本次修訂(v0.4):加入介面標準(Apple HIG、白底黑 accent、禁 emoji)、每 app 必備 MCP、

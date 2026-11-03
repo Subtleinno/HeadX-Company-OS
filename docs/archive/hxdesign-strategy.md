@@ -1,3 +1,7 @@
+> **已歸檔（2026-11-03）**
+> 原本回答：Strategy 在 HxDesign 裡是什麼。
+> 為何失效：實跑後發現策略是一份 41KB、帶 scope 與可驗證條款的目錄，比本文假設成熟得多。
+> 現在看：`docs/reference/hxdesign-hands-on-findings.md`。
 # Strategy：HxDesign 的控制層
 
 日期：2026-11-03

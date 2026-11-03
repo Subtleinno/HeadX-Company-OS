@@ -48,6 +48,8 @@
 | 把密碼、token、金鑰寫進任何檔案或 PR | |
 | 在程式裡留下「暫時」「稍後補」 | 要留就開 issue |
 | 把「解法」寫進 `PROBLEM.md` | 那一頁只准有問題 |
+| 直接刪除過時文件 | 要移入 `docs/archive/` 並在檔頭寫三樣：原問題、為何失效、看哪份 |
+| 新增一份「又一份說明」 | 先問它屬於四層文件中的哪一層；不屬於就不要加 |
 
 ---
 
@@ -101,19 +103,21 @@ PR 描述必須包含四段：
 ## 目錄結構
 
 ```
+README.md          唯一入口（文件地圖在裡面）
 PROBLEM.md         問題（不准有解法）
 OUTCOMES.md        成果指標與量測
 SOLUTION_SPACE.md  解法窮舉、評分、決定、否決原因
+PROJECT_BRIEF.md   專案簡報
+HANDOFF.md         交接包（app 逐部分）
 PLAYBOOKS/         每類問題的標準流程
-DECISIONS.md       決策記錄
-LEARNINGS.md       失敗與教訓
-METRICS/           上線後的實際數據
 engine/            Company OS：閘道、批准、審計、Needs
 parts/             各部門（每個都是「目錄 → 專案 → 條款 → 缺口」四件套）
 skill/             一個 skill + references/（漸進揭露）
 config/            公司與品牌設定
 proof/             證明「條款可被機器檢查」的實驗，不要刪
-docs/              深入文件與歷史記錄
+docs/              規範（設計系統、skill 設計、決策歷史、帳戶設定）
+docs/reference/    事實記錄（參考系統的理解、工具查證、能力現況）
+docs/archive/      已淘汰文件，不要照它做
 ```
 
 `parts/<部門>/` 裡面永遠是這四樣：`catalog/`（政策）、`src/`（程式）、`test/`（會 fail 的測試）、`README.md`。

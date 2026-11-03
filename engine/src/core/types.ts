@@ -1,7 +1,7 @@
 /**
  * Company OS 的核心型別。
  *
- * 設計原則（見 docs/company-os-master-plan.md）：
+ * 設計原則（見 docs/decisions-log.md）：
  * 1. 風險按「動作」分級，不按 Agent。
  * 2. 預設拒絕：沒有明確允許的動作一律 ask，逾時即取消。
  * 3. 品牌之間資料隔離。

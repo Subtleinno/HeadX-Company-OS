@@ -148,7 +148,7 @@ engine/
 ## 相關文件
 
 - 根目錄 [`README.md`](../README.md)：倉庫定位與基本規則。
-- [`docs/company-os-master-plan.md`](../docs/company-os-master-plan.md)：總體規劃、原則與風險級別。
+- [`docs/decisions-log.md`](../docs/decisions-log.md)：總體規劃、原則與風險級別。
 - [`docs/company-os-design-system.md`](../docs/company-os-design-system.md)：介面設計的硬規則。
 
 ## 誰在做這個引擎

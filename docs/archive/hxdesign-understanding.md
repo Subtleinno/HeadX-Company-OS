@@ -1,3 +1,7 @@
+> **已歸檔（2026-11-03）**
+> 原本回答：只讀原始碼時，我對 HxDesign 的理解。
+> 為何失效：後來把它完整部署並實際操作，發現多處與只讀推斷不同。
+> 現在看：`docs/reference/hxdesign-hands-on-findings.md`。
 # 我對 HxDesign 的理解
 
 日期：2026-11-03
