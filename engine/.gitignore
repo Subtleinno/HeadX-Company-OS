@@ -2,5 +2,4 @@
 dist/
 data/
 *.log
-mcp-test-out.txt
-mcp-test-err.txt
+*.png
