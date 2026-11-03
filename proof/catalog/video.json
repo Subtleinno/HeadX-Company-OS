@@ -1,0 +1,109 @@
+{
+  "version": "1.0.0",
+  "kind": "video",
+  "note": "可行性驗證用目錄。只保留兩條策略，其餘與 HxDesign 的 modules/create/catalog/video.json 結構一致。門檻值屬於政策資料，不寫死在程式裡。",
+  "channels": [
+    {
+      "key": "instagram",
+      "label": "Instagram",
+      "subs": [
+        {
+          "key": "reels",
+          "label": "Reels",
+          "formats": [
+            {
+              "key": "reels-video",
+              "label": "Reels 影片",
+              "width": 1080,
+              "height": 1920,
+              "ratio": "9:16",
+              "maxSeconds": 30,
+              "safeZone": {
+                "top": 220,
+                "bottom": 320,
+                "note": "官方數值：上方 220px、下方 320px 為平台介面遮擋區",
+                "maxEdgeEnergy": 5
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "strategies": [
+    {
+      "id": "st-vid-caption",
+      "key": "video.caption-spatial-story",
+      "title": {
+        "zh": "字幕空間敘事",
+        "en": "Caption spatial story"
+      },
+      "summary": {
+        "zh": "讓字幕成為構圖的一部分，靜音也能讀懂畫面與產區。",
+        "en": "Make captions part of the frame, readable on mute."
+      },
+      "scope": {
+        "stages": ["awareness", "consideration"],
+        "platforms": ["instagram", "tiktok", "youtube"]
+      },
+      "priority": 85,
+      "body": {
+        "purpose": "給靜音滑動的觀眾；前 2 秒用字幕建立空間與懸念。",
+        "tone": "短句、具體名詞；一句一個資訊點。",
+        "dos": "做：字幕留在安全區、關鍵詞加粗、先給結果再解釋。",
+        "missing": "缺產區或批次旁白稿時，先開 Need；不要用無來源的形容詞填滿字幕。"
+      },
+      "mandatory": [
+        {
+          "id": "r1",
+          "text": "字幕需全程存在，且可在播放器中關閉。",
+          "kind": "lint",
+          "check": "caption-track"
+        },
+        {
+          "id": "r2",
+          "text": "字幕不得進入平台介面遮擋區。",
+          "kind": "lint",
+          "check": "safe-zone"
+        },
+        {
+          "id": "r3",
+          "text": "前 2 秒需出現整支片的主張。",
+          "kind": "guidance",
+          "check": "hook-2s"
+        },
+        {
+          "id": "r4",
+          "text": "尺寸與長度需符合子渠道格式。",
+          "kind": "lint",
+          "check": "dimension"
+        },
+        {
+          "id": "r5",
+          "text": "長度不得超過平台上限。",
+          "kind": "lint",
+          "check": "duration"
+        }
+      ]
+    },
+    {
+      "id": "st-vid-launch",
+      "key": "video.product-launch",
+      "title": { "zh": "產品發佈", "en": "Product launch" },
+      "summary": { "zh": "30 秒內說清楚是甚麼、為何現在、去哪裡。", "en": "What, why now, where — in 30 seconds." },
+      "scope": { "stages": ["launch"], "platforms": ["instagram", "youtube"] },
+      "priority": 88,
+      "body": {
+        "purpose": "一次性說清楚三件事，不靠旁白解釋。",
+        "tone": "肯定句，不用問句開場。",
+        "dos": "做：前三秒出現產品本體。",
+        "missing": "缺產品實拍時開 Need，不要用生成圖假裝實拍。"
+      },
+      "mandatory": [
+        { "id": "r1", "text": "尺寸與長度需符合子渠道格式。", "kind": "lint", "check": "dimension" },
+        { "id": "r2", "text": "長度不得超過平台上限。", "kind": "lint", "check": "duration" },
+        { "id": "r3", "text": "字幕不得進入平台介面遮擋區。", "kind": "lint", "check": "safe-zone" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="zh-Hant-HK">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+    <style>
+      :root {
+        --ground: #f4f1ea;
+        --ink: #111111;
+        --accent: #2f6b4f;
+        --font: "Segoe UI", "Noto Sans HK", system-ui, sans-serif;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body {
+        width: 1080px; height: 1920px; overflow: hidden;
+        background: var(--ground); font-family: var(--font);
+      }
+      #root {
+        width: 1080px; height: 1920px; position: relative;
+        display: flex; flex-direction: column; justify-content: center;
+        padding: 220px 96px 320px 96px;
+      }
+      .kicker {
+        color: var(--accent); font-size: 40px; font-weight: 600;
+        letter-spacing: 0.18em; margin-bottom: 56px;
+      }
+      h1 {
+        color: var(--ink); font-size: 132px; font-weight: 700;
+        line-height: 1.05; letter-spacing: -0.03em;
+      }
+      .rule { width: 180px; height: 6px; background: var(--ink); margin: 64px 0; }
+      .body { color: #3a3a3a; font-size: 48px; line-height: 1.5; }
+
+      /* 字幕軌：可關閉（獨立圖層，方便 lint 檢查存在性） */
+      #caption {
+        position: absolute; left: 96px; right: 96px; bottom: 360px;
+        background: rgba(17, 17, 17, 0.88); color: #ffffff;
+        font-size: 52px; line-height: 1.35; text-align: center;
+        padding: 28px 40px; border-radius: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="12"
+      data-width="1080"
+      data-height="1920">
+
+      <div class="kicker" id="kicker">山霧茶研</div>
+      <h1 id="title">清晨五點，<br />霧還沒散。</h1>
+      <div class="rule" id="rule"></div>
+      <p class="body" id="body">採摘只在起霧的兩個鐘頭內完成。<br />日光一來，葉子就變了。</p>
+
+      <div id="caption" data-caption-track="1" data-safe="ok"></div>
+    </div>
+
+    <script>
+      const captions = [
+        { at: 0.4,  text: "清晨五點，霧還沒散" },
+        { at: 3.6,  text: "採摘只在起霧的兩個鐘頭內" },
+        { at: 6.8,  text: "日光一來，葉子就變了" },
+        { at: 9.8,  text: "山霧茶研 · 起霧的兩個鐘頭" }
+      ];
+
+      const tl = gsap.timeline({ paused: true });
+      tl.from("#kicker", { opacity: 0, y: 30, duration: 0.6, ease: "power2.out" }, 0.1)
+        .from("#title", { opacity: 0, y: 48, duration: 0.8, ease: "power2.out" }, 0.3)
+        .to("#rule", { width: 180, duration: 0.5, ease: "power2.inOut" }, 1.1)
+        .from("#body", { opacity: 0, y: 32, duration: 0.7, ease: "power2.out" }, 1.4);
+
+      const cap = document.getElementById("caption");
+      for (const c of captions) {
+        tl.call(() => { cap.textContent = c.text; }, null, c.at);
+        tl.set(cap, { opacity: 1 }, c.at);
+      }
+      tl.set(cap, { opacity: 0 }, 12);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines.main = tl;
+    </script>
+  </body>
+</html>

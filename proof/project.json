@@ -1,0 +1,50 @@
+{
+  "ref": "HX-001",
+  "kind": "video",
+  "title": "山霧茶研 · 起霧的兩個鐘頭",
+  "status": "draft",
+  "channel": "instagram",
+  "sub": "reels",
+  "format": "reels-video",
+  "strategy": "video.caption-spatial-story",
+  "kit": null,
+  "intent": {
+    "achieve": "讓看過的人在搜尋時記得「起霧的兩個鐘頭」這個說法",
+    "audience": "25–40 歲、會買手採高山茶的香港與台灣消費者",
+    "notThis": "不做產地旅遊宣傳；不講價格；不用形容詞堆疊代替事實"
+  },
+  "knowledge": [
+    {
+      "id": "k1",
+      "source": "品牌知識：採摘工序",
+      "fact": "採摘只在起霧的兩個鐘頭內完成",
+      "checked": true
+    },
+    {
+      "id": "k2",
+      "source": "品牌知識：工序",
+      "fact": "日光出現後葉片性狀改變，不再符合當日採摘標準",
+      "checked": true
+    }
+  ],
+  "gaps": [
+    {
+      "id": "g1",
+      "what": "缺實拍素材：清晨霧中的茶園畫面",
+      "because": "knowledge 沒有任何已入庫的實拍",
+      "becomes": "Need（給同事）",
+      "blocking": false
+    },
+    {
+      "id": "g2",
+      "what": "缺旁白稿（批次）",
+      "because": "本專案 narration 為空",
+      "becomes": "待補",
+      "blocking": false
+    }
+  ],
+  "narration": null,
+  "music": null,
+  "voice": null,
+  "parent": null
+}
