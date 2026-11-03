@@ -1,0 +1,69 @@
+# CI 流水線：三個獨立檢查 lint、test、build。
+# Node 版本一律由 .nvmrc 決定，這裡不寫死版本號，避免兩處真相。
+name: ci
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+# 同一個分支有新 push 時，取消還在跑的舊 run。
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# 最小權限：只讀內容，不需要寫入任何東西。
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: 取出程式碼
+        uses: actions/checkout@v7
+      - name: 安裝 Node（版本讀 .nvmrc）與 npm 快取
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: 安裝依賴
+        run: npm ci
+      - name: 靜態檢查
+        run: npm run lint
+
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: 取出程式碼
+        uses: actions/checkout@v7
+      - name: 安裝 Node（版本讀 .nvmrc）與 npm 快取
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: 安裝依賴
+        run: npm ci
+      - name: 單元測試
+        run: npm test
+
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: 取出程式碼
+        uses: actions/checkout@v7
+      - name: 安裝 Node（版本讀 .nvmrc）與 npm 快取
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: 安裝依賴
+        run: npm ci
+      - name: 建置
+        run: npm run build
