@@ -1,6 +1,6 @@
 import { execFile } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
-import { createServer } from 'node:net';
+import { connect, createServer } from 'node:net';
 import { pathToFileURL } from 'node:url';
 import { promisify } from 'node:util';
 
@@ -101,13 +101,14 @@ function tryBindPort(port) {
     server.unref();
 
     server.once('error', (error) => {
+      const code = error.code ?? 'UNKNOWN';
       const reason =
-        error.code === 'EADDRINUSE'
+        code === 'EADDRINUSE'
           ? '已被其他程式佔用'
-          : error.code === 'EACCES'
+          : code === 'EACCES'
             ? '沒有權限綁定（可能被系統保留）'
-            : `無法綁定（${error.code ?? 'UNKNOWN'}）`;
-      resolve({ ok: false, reason });
+            : `無法綁定（${code}）`;
+      resolve({ ok: false, reason, code });
     });
 
     server.once('listening', () => {
@@ -116,6 +117,89 @@ function tryBindPort(port) {
 
     server.listen({ port, host: '0.0.0.0', exclusive: true });
   });
+}
+
+// 「綁得上」不等於「空閒」。Docker Desktop 在 Windows 上以 SO_REUSEADDR 發佈端口，
+// 第二個 process 仍然綁得上同一個 0.0.0.0:port，bind 會成功但端口其實已被佔用。
+// 所以 bind 之後再探測一次：有沒有人真的在回應。
+export const PROBE_HOSTS = ['127.0.0.1', '::1'];
+export const PROBE_TIMEOUT_MS = 500;
+
+// 這些錯誤代表「該地址沒有東西在聽」或「本機沒有這個地址族」，都算空閒。
+// 其他錯誤（例如逾時）屬於無法確認，要報出來，不可以當成綠燈。
+const NOT_ANSWERING = new Set(['ECONNREFUSED', 'EADDRNOTAVAIL', 'EAFNOSUPPORT', 'ENETUNREACH']);
+
+export function probePort(host, port, timeoutMs = PROBE_TIMEOUT_MS) {
+  return new Promise((resolve) => {
+    let settled = false;
+    const socket = connect({ host, port });
+
+    const finish = (result) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      socket.destroy();
+      resolve(result);
+    };
+
+    const timer = setTimeout(() => finish({ answering: false, reason: 'TIMEOUT' }), timeoutMs);
+    timer.unref?.();
+
+    socket.once('connect', () => {
+      clearTimeout(timer);
+      finish({ answering: true, reason: 'connect' });
+    });
+
+    socket.once('error', (error) => {
+      clearTimeout(timer);
+      finish({ answering: false, reason: error.code ?? 'UNKNOWN' });
+    });
+  });
+}
+
+/**
+ * 判斷一個端口能否安全使用。
+ * 回傳問題描述字串，或 null 代表沒有問題。
+ * 依賴可注入，測試不需要真的開端口或 Docker。
+ */
+export async function judgePort(target, deps = {}) {
+  const tryBind = deps.tryBind ?? tryBindPort;
+  const probe = deps.probe ?? probePort;
+  const hosts = deps.hosts ?? PROBE_HOSTS;
+  const timeoutMs = deps.timeoutMs ?? PROBE_TIMEOUT_MS;
+  const { key, service, port } = target;
+
+  const bound = await tryBind(port);
+  if (!bound.ok) {
+    return `端口 ${port}（${key}，${service}）${bound.reason}`;
+  }
+
+  const answeringHosts = [];
+  let unknown = null;
+
+  for (const host of hosts) {
+    const result = await probe(host, port, timeoutMs);
+
+    if (result.answering) {
+      answeringHosts.push(host);
+      continue;
+    }
+
+    if (!NOT_ANSWERING.has(result.reason)) {
+      unknown = unknown ?? `${host}：${result.reason}`;
+    }
+  }
+
+  if (answeringHosts.length > 0) {
+    return `端口 ${port}（${key}，${service}）有程式正在回應（${answeringHosts.join('、')}），可能由容器或代理髮布`;
+  }
+
+  if (unknown !== null) {
+    return `端口 ${port}（${key}，${service}）無法確認是否空閒（${unknown}）`;
+  }
+
+  return null;
 }
 
 async function readWindowsExcludedRanges() {
@@ -176,9 +260,9 @@ export async function main() {
       continue;
     }
 
-    const result = await tryBindPort(port);
-    if (!result.ok) {
-      problems.push(`端口 ${port}（${key}，${service}）${result.reason}`);
+    const problem = await judgePort({ key, service, port });
+    if (problem !== null) {
+      problems.push(problem);
     }
   }
 

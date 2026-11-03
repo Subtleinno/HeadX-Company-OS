@@ -18,7 +18,7 @@ npm run ports:check
 docker compose up -d --build
 ```
 
-前端：<http://localhost:4210>；API：<http://localhost:4420/livez>。`npm run ports:check` 會檢查 `.env` 內的端口能否綁定，有衝突會列出原因並以 exit 1 結束。
+前端：<http://localhost:4210>；API：<http://localhost:4420/livez>。`npm run ports:check` 會檢查 `.env` 內的端口能否綁定，再探測有沒有人正在回應（容器發佈的端口「綁得上」但其實已被佔用，所以兩樣都要查）；有衝突或無法確認會列出原因，並以 exit 1 結束。
 
 ## 端口
 
