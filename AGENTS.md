@@ -33,7 +33,7 @@ company-os 是一間公司的整套軟件，全部放在這個 repo，全部跑�
 - 部署：Docker Compose。目標機器是長期開機的 Windows（Docker Desktop）。所有維運腳本用 Node 寫，不依賴 bash。.ps1 檔必須是 UTF-8 with BOM；.cmd 檔不得含中文。
 - 所有對外端口都可由 .env 覆寫，並提供 npm run ports:check。
 - 語言：介面、commit、PR、程式註解一律繁體中文（香港）；程式識別字用英文。
-- 介面風格：白底黑字、單一綠色 #B8F36B、Inter 字體、用細線分隔而不用陰影、不用 emoji、不用紫色漸層。
+- 介面風格：跟 HxDesign（Apple HIG 實作）。白底黑字、accent 黑色 #000、系統字體堆疊、綠色 #B8F36B 只當點綴、平鋪內容用細線分隔、浮層可用 HxDesign 陰影、不用 emoji、不用紫色漸層。
 
 ## 不變量（違反即退回，即使測試通過）
 
