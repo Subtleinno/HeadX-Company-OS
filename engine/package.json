@@ -1,22 +1,25 @@
-{
-  "name": "@company-os/engine",
-  "version": "0.1.0",
-  "private": true,
-  "type": "module",
-  "description": "Company OS 引擎：政策閘道、風險分級、審計日誌、Needs 工單、熔斷開關。原生支援 Windows 與 POSIX。",
-  "engines": {
-    "node": ">=22.19"
-  },
-  "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "node --test --experimental-strip-types tests/*.test.ts",
-    "check": "npm run typecheck && npm run test",
-    "start": "node --experimental-strip-types src/cli.ts"
-  },
-  "dependencies": {},
-  "devDependencies": {
-    "@types/node": "^22.20.0",
-    "typescript": "^5.9.0"
-  }
+﻿{
+    "name":  "@company-os/engine",
+    "version":  "0.1.0",
+    "private":  true,
+    "type":  "module",
+    "description":  "Company OS å¼•æ“Žï¼šæ”¿ç­–é–˜é“ã€é¢¨éšªåˆ†ç´šã€å¯©è¨ˆæ—¥èªŒã€Needs å·¥å–®ã€ç†”æ–·é–‹é—œã€‚åŽŸç”Ÿæ”¯æ´ Windows èˆ‡ POSIXã€‚",
+    "engines":  {
+                    "node":  "\u003e=22.19"
+                },
+    "scripts":  {
+                    "build":  "tsc -p tsconfig.json",
+                    "typecheck":  "tsc -p tsconfig.json --noEmit",
+                    "test":  "node --test --experimental-strip-types tests/*.test.ts",
+                    "check":  "npm run typecheck \u0026\u0026 npm run test",
+                    "start":  "node --experimental-strip-types src/cli.ts",
+                    "ui":  "node --experimental-strip-types src/server.ts"
+                },
+    "dependencies":  {
+
+                     },
+    "devDependencies":  {
+                            "@types/node":  "^22.20.0",
+                            "typescript":  "^5.9.0"
+                        }
 }

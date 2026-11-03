@@ -9,7 +9,9 @@ import { ActionRegistry } from '../policy/action-registry.ts'
 import { CompanyRegistry } from '../core/company.ts'
 import { Gateway } from '../core/gateway.ts'
 import { NeedsBoard } from '../needs/needs-board.ts'
-import type { ApprovalRequest, BreakerState, Verdict } from '../core/types.ts'
+import { ApprovalStore } from '../store/approval-store.ts'
+import { JsonStore } from '../store/json-store.ts'
+import type { ApprovalRequest, BreakerState, Need, Verdict } from '../core/types.ts'
 
 export interface EngineOptions {
   /** 設定目錄，預設為專案內的 config/。 */
@@ -41,7 +43,8 @@ export function createEngine(options: EngineOptions): Engine {
   const actions = ActionRegistry.fromJson(JSON.parse(readFileSync(join(options.configDir, 'actions.json'), 'utf8')))
   const companies = CompanyRegistry.fromFile(join(options.configDir, 'company.json'))
 
-  const approvals = new Map<string, ApprovalRequest>()
+  const approvalsStore = new ApprovalStore(join(options.dataDir, 'approvals.json'))
+  const approvals = approvalsStore.load()
   const idempotency = new Map<string, Verdict>()
   let breaker: BreakerState = { tripped: false, reason: null, at: null, by: null }
 
@@ -57,11 +60,17 @@ export function createEngine(options: EngineOptions): Engine {
         breaker = next
       },
     },
+    onApprovalsChanged: () => {
+      approvalsStore.save(approvals)
+    },
     approvalTtlSeconds: options.approvalTtlSeconds ?? 24 * 60 * 60,
     ...(options.now ? { now: options.now } : {}),
   })
 
-  const needs = new NeedsBoard(audit, options.now)
+  const needsStore = new JsonStore<Need>(join(options.dataDir, 'needs.json'))
+  const needs = new NeedsBoard(audit, options.now, needsStore.load(), () => {
+    needsStore.save(needs.all())
+  })
 
   return {
     audit,

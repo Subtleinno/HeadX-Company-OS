@@ -30,6 +30,8 @@ export interface GatewayDeps {
   breakerRef: BreakerRef
   /** 批准請求的有效秒數；逾時即取消（預設拒絕）。 */
   approvalTtlSeconds: number
+  /** 批准請求變更時回呼（用於落盤）。 */
+  onApprovalsChanged?: () => void
   /** 目前時間來源，方便測試。 */
   now?: () => Date
 }
@@ -250,6 +252,7 @@ export class Gateway {
       decisionNote: null,
     }
     this.#deps.approvals.set(approval.id, approval)
+    this.#deps.onApprovalsChanged?.()
     this.#deps.audit.append({
       kind: 'approval',
       companyId: request.companyId,
@@ -310,12 +313,14 @@ export class Gateway {
       decision: status === 'approved' ? 'allow' : 'deny',
       detail: { approvalId: approval.id, note },
     })
+    this.#deps.onApprovalsChanged?.()
     return approval
   }
 
   /** 逾時的批准請求一律取消：預設拒絕（master plan 原則 3）。 */
   #expireApprovals(): void {
     const now = this.#now().getTime()
+    let changed = false
     for (const approval of this.#deps.approvals.values()) {
       if (approval.status !== 'pending') continue
       if (new Date(approval.expiresAt).getTime() > now) continue
@@ -323,6 +328,7 @@ export class Gateway {
       approval.decidedAt = new Date(now).toISOString()
       approval.decidedBy = null
       approval.decisionNote = '逾時未批准，依預設拒絕原則自動取消'
+      changed = true
       this.#deps.audit.append({
         kind: 'approval',
         companyId: approval.companyId,
@@ -334,5 +340,6 @@ export class Gateway {
         detail: { approvalId: approval.id, reason: 'expired' },
       })
     }
+    if (changed) this.#deps.onApprovalsChanged?.()
   }
 }

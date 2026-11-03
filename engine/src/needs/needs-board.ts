@@ -30,11 +30,22 @@ export class NeedsBoard {
   readonly #needs: Map<string, Need>
   readonly #audit: AuditLog
   readonly #now: () => Date
+  readonly #onChanged: (() => void) | undefined
 
-  constructor(audit: AuditLog, now: () => Date = () => new Date()) {
-    this.#needs = new Map()
+  /**
+   * @param initial 已存在的工單（由外部儲存載入），令多個進程看到同一份資料。
+   * @param onChanged 每次變更後的回呼，用於落盤。
+   */
+  constructor(
+    audit: AuditLog,
+    now: () => Date = () => new Date(),
+    initial?: Map<string, Need>,
+    onChanged?: () => void,
+  ) {
+    this.#needs = initial ?? new Map()
     this.#audit = audit
     this.#now = now
+    this.#onChanged = onChanged
   }
 
   /**
@@ -70,6 +81,7 @@ export class NeedsBoard {
       deliveryNote: null,
     }
     this.#needs.set(need.id, need)
+    this.#onChanged?.()
     this.#audit.append({
       kind: 'need',
       companyId: need.companyId,
@@ -86,6 +98,11 @@ export class NeedsBoard {
   get(id: string): Need | null {
     const need = this.#needs.get(id)
     return need ? { ...need } : null
+  }
+
+  /** 全部工單的內部 Map，供持久化使用。 */
+  all(): Map<string, Need> {
+    return this.#needs
   }
 
   /** 依公司與品牌列出工單（品牌隔離）。 */
@@ -120,6 +137,7 @@ export class NeedsBoard {
       decision: null,
       detail: { status: to },
     })
+    this.#onChanged?.()
     return { ...need }
   }
 
