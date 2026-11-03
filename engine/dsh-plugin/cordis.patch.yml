@@ -1,0 +1,6 @@
+# dsh-company-os-panel 的 bundle patch。
+# 安裝本套件時，DSH 會把它加入 profile 的 dsh.profile.bundles，並且套用這一層，
+# 因此不需要手動編輯 cordis.patch.yml。
+- insert:
+    - id: company-os-panel
+      name: dsh-company-os-panel

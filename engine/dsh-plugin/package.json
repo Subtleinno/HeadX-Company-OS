@@ -1,0 +1,24 @@
+{
+  "name": "dsh-company-os-panel",
+  "version": "0.1.0",
+  "private": true,
+  "description": "把 Company OS 的網頁介面嵌入 DeepSeek Harness 側欄：一個側欄入口，主區顯示 Company OS 的批准收件匣、Needs 看板、分級表與審計驗證。",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "files": ["lib", "cordis.patch.yml"],
+  "dsh": {
+    "client": {
+      "platform": "web",
+      "inject": ["@deepseek-ai/dsh-client-ui-layout", "@deepseek-ai/dsh-client-ui-sidebar"]
+    },
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "license": "MIT"
+}
