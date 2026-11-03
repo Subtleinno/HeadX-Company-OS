@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?請先複製 .env.example 為 .env}
       POSTGRES_DB: ${POSTGRES_DB:?請先複製 .env.example 為 .env}
     ports:
-      - "${DB_PORT:-25432}:5432"
+      - "127.0.0.1:${DB_PORT:-25432}:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
     healthcheck:
@@ -32,7 +32,7 @@ services:
       PGPASSWORD: ${POSTGRES_PASSWORD:?請先複製 .env.example 為 .env}
       PGDATABASE: ${POSTGRES_DB:?請先複製 .env.example 為 .env}
     ports:
-      - "${API_PORT:-4420}:4420"
+      - "127.0.0.1:${API_PORT:-4420}:4420"
     depends_on:
       db:
         condition: service_healthy
@@ -43,7 +43,7 @@ services:
       dockerfile: apps/web/Dockerfile
     restart: unless-stopped
     ports:
-      - "${WEB_PORT:-4210}:80"
+      - "127.0.0.1:${WEB_PORT:-4210}:80"
     depends_on:
       api:
         condition: service_healthy

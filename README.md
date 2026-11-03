@@ -18,7 +18,11 @@ npm run ports:check
 docker compose up -d --build
 ```
 
-前端：<http://localhost:4210>；API：<http://localhost:4420/livez>。`npm run ports:check` 會檢查 `.env` 內的端口能否綁定，再探測有沒有人正在回應（容器發佈的端口「綁得上」但其實已被佔用，所以兩樣都要查）；有衝突或無法確認會列出原因，並以 exit 1 結束。
+**首次啟動前必須在 `.env` 內的 `POSTGRES_PASSWORD` 填入自己的密碼** —— 範本刻意留空，沒有可用的預設值；留空時 `docker compose` 會即時失敗，不會起一個弱密碼的資料庫。
+
+前端：<http://localhost:4210>；API：<http://localhost:4420/livez>。三個端口只綁 `127.0.0.1`，區網內其他機器連不到。
+
+`npm run ports:check` 會檢查 `.env` 內的端口能否綁定，再探測有沒有人正在回應（容器發佈的端口「綁得上」但其實已被佔用，所以兩樣都要查）；有衝突或無法確認會列出原因，並以 exit 1 結束。
 
 ## 端口
 
