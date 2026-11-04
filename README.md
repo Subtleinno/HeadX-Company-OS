@@ -69,6 +69,15 @@ Migration 是 `db/migrations/NNNN_說明.sql` 的純 SQL，API 啟動時自動�
 - `audit_log` 只准追加：UPDATE／DELETE／TRUNCATE 由 trigger 擋掉（SQLSTATE `42501`）。
 - 整合測試用臨時資料庫 `co_test_<隨機>`，不寫入正式資料庫。
 
+## 模組
+
+「有哪些部門軟件」只有一個來源：`modules/<id>/manifest.json`。加資料夾就是安裝，刪資料夾就是卸載，重啟 api 生效（沒有熱重載）。
+
+- 六個欄位：`id`（等於資料夾名）、`title`、`kind`（`console` 或 `department`）、`department`（部門模組必填，老闆台是 `null`）、`order`、`available`。
+- `available: false` 代表那個軟件尚未建立，網站會照實說，不會給一個按了沒反應的入口。
+- 載入時驗證：JSON 合法、欄位齊全、無未知欄位、id 等於資料夾名且格式正確、id 與 department 不重複、只有一個 console、`modules/` 下沒有孤立檔案。任何一項不合格就印出哪個檔、哪個欄位，並以 exit 1 結束。
+- `GET /modules`：未登入 401；老闆見全部並依 `order` 排序；員工只見到自己部門那一個。
+
 ## 測試
 
 ```powershell

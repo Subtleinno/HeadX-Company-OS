@@ -1,0 +1,8 @@
+{
+  "id": "boss",
+  "title": "老闆台",
+  "kind": "console",
+  "department": null,
+  "order": 0,
+  "available": false
+}

@@ -1,0 +1,8 @@
+{
+  "id": "design",
+  "title": "設計／內容／網站",
+  "kind": "department",
+  "department": "design",
+  "order": 10,
+  "available": false
+}

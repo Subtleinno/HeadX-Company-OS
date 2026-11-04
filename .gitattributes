@@ -2,3 +2,6 @@
 # 這部機 core.autocrlf=true，沒有這一行的話 Windows 工作樹會是 CRLF，
 # 建出來的映像 checksum 與資料庫紀錄（LF）不同，API 會被誤判為「已套用的檔案被修改」。
 db/migrations/*.sql text eol=lf
+
+# manifest 是給人看、也會被 diff 的 JSON；固定 LF，避免同一份檔在不同機器有兩種換行。
+modules/**/*.json text eol=lf

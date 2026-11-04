@@ -22,6 +22,10 @@ COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/apps/api/package.json ./apps/api/package.json
 COPY --from=build /app/apps/api/dist ./apps/api/dist
 COPY --from=build /app/db/migrations ./db/migrations
+COPY modules ./modules
+
+# 模組清單的位置；載入失敗就結束，不會起一個清單壞掉的服務。
+ENV MODULES_DIR=/app/modules
 
 EXPOSE 4420
 

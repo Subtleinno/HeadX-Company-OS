@@ -1,0 +1,8 @@
+{
+  "id": "support",
+  "title": "客服與 CRM",
+  "kind": "department",
+  "department": "support",
+  "order": 50,
+  "available": false
+}

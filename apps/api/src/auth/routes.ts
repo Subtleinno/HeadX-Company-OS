@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { Pool } from 'pg';
 import { writeAudit } from '../audit.js';
+import { getSignedInUser } from './current-user.js';
 import { isValidEmail, normalizeEmail } from './email.js';
 import { hashPassword, validatePassword, verifyPassword } from './password.js';
 import { evaluateLockout, loginWindowStart } from './rate-limit.js';
@@ -14,7 +15,6 @@ import { createSessionToken, hashSessionToken } from './token.js';
 import {
   countFailedAttempts,
   createOwnerWithSession,
-  findSessionUser,
   findUserByEmail,
   hasOwner,
   insertSession,
@@ -72,13 +72,7 @@ export function registerAuth(app: FastifyInstance, deps: AuthDeps): void {
   }
 
   async function currentUser(request: FastifyRequest): Promise<UserRow | null> {
-    const token = readSessionToken(request.headers.cookie);
-
-    if (token === null) {
-      return null;
-    }
-
-    return findSessionUser(deps.pool, hashSessionToken(token), now());
+    return getSignedInUser(deps.pool, request, now());
   }
 
   app.get('/auth/state', async (request) => {

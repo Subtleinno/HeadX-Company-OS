@@ -1,0 +1,8 @@
+{
+  "id": "hr",
+  "title": "人事",
+  "kind": "department",
+  "department": "hr",
+  "order": 40,
+  "available": false
+}

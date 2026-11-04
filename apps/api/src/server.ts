@@ -3,6 +3,8 @@ import { buildServer } from './app.js';
 import { registerAuth } from './auth/routes.js';
 import { attachPoolErrorHandler, createDbCheck } from './db.js';
 import { migrate } from './migrate.js';
+import { loadModules } from './modules/registry.js';
+import { registerModules } from './modules/routes.js';
 import type { Storage } from './storage/index.js';
 import { createMinioStorage } from './storage/minio.js';
 
@@ -13,6 +15,25 @@ const pool = new Pool({
   connectionTimeoutMillis: 3000,
   max: 5,
 });
+
+/**
+ * 讀 modules/<id>/manifest.json。
+ * manifest 有問題就大聲失敗並結束 —— 這份清單就是「有哪些部門」，
+ * 帶著一個壞掉的清單起服務，等於對老闆說錯話。
+ * 一次列齊所有錯誤，修的時候不用重複啟動。
+ */
+function loadModuleRegistry(): ReturnType<typeof loadModules> {
+  const dir = process.env.MODULES_DIR ?? '/app/modules';
+
+  try {
+    const registry = loadModules(dir);
+    console.log(`已載入 ${registry.listModules().length} 個模組`);
+    return registry;
+  } catch (error) {
+    console.error(`模組載入失敗，API 不會啟動：\n${error instanceof Error ? error.message : String(error)}`);
+    process.exit(1);
+  }
+}
 
 /**
  * 先套 migration，再開儲存，最後才 listen。
@@ -52,6 +73,9 @@ async function initStorage(): Promise<Storage> {
 }
 
 async function main(): Promise<void> {
+  // 模組清單先驗：壞掉的 manifest 不應該先去碰資料庫。
+  const registry = loadModuleRegistry();
+
   // 開始服務請求之前：資料庫先有正確的 schema。
   await runMigrations();
 
@@ -67,6 +91,8 @@ async function main(): Promise<void> {
 
   // 登入與首次開機。COOKIE_SECURE=true 只在經 HTTPS 入口時開，否則瀏覽器不會存 cookie。
   registerAuth(app, { pool, cookieSecure: process.env.COOKIE_SECURE === 'true' });
+
+  registerModules(app, { registry, pool });
 
   attachPoolErrorHandler(pool, (error) => {
     // 只記錄訊息，避免把連線參數寫入日誌。
