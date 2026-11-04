@@ -50,7 +50,7 @@ describe('GET /modules', () => {
     await migrate({ pool: db.pool, dir: migrationsDir, log: silent });
 
     app = buildServer({ checkDb: ok, checkStorage: ok });
-    registerAuth(app, { pool: db.pool });
+    registerAuth(app, { pool: db.pool, loginHashKey: 'test-only-login-hash-key-0123456789abcdef' });
     registerModules(app, { registry: loadModules(modulesDir), pool: db.pool });
 
     await app.ready();

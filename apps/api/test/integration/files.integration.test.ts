@@ -106,7 +106,7 @@ describe('檔案層', () => {
   function buildFilesApp(options: { storage?: Storage; hooks?: FilesHooks } = {}): FastifyInstance {
     const instance = buildServer({ checkDb: ok, checkStorage: ok });
 
-    registerAuth(instance, { pool: db.pool, now });
+    registerAuth(instance, { pool: db.pool, now, loginHashKey: 'test-only-login-hash-key-0123456789abcdef' });
     registerFiles(instance, {
       pool: db.pool,
       storage: options.storage ?? rec.storage,

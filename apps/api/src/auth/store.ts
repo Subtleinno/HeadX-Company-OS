@@ -216,16 +216,20 @@ export async function revokeSession(
   return rows.rows[0]?.user_id ?? null;
 }
 
+/**
+ * 數窗口內的失敗次數。
+ * `target` 是 loginFailureTarget 算出來的識別碼，不是 email —— 審計表裡沒有 email。
+ */
 export async function countFailedAttempts(
   pool: Pool,
-  email: string,
+  target: string,
   since: Date,
 ): Promise<FailedAttempts> {
   const rows = await pool.query<{ count: number; oldest_at: Date | null }>(
     `select count(*)::int as count, min(at) as oldest_at
      from audit_log
      where action = 'auth.login_failed' and target = $1 and at > $2`,
-    [email, since],
+    [target, since],
   );
 
   const row = rows.rows[0];

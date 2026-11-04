@@ -63,6 +63,9 @@ services:
       MAX_UPLOAD_BYTES: ${MAX_UPLOAD_BYTES:-209715200}
       # 經 HTTPS 入口才設 true；本機 http 預設關，否則瀏覽器不會存 session cookie。
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      # 登入失敗審計用的 HMAC key；沒有預設值，未設定時 compose 即時失敗，
+      # API 自己也再擋一次（不會用空字串當 key）。
+      LOGIN_FAILURE_HASH_KEY: ${LOGIN_FAILURE_HASH_KEY:?請在 .env 設定登入失敗審計用的 HMAC key}
     ports:
       - "127.0.0.1:${API_PORT:-4420}:4420"
     depends_on:

@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { buildServer } from '../../src/app';
+import { loginFailureTarget } from '../../src/auth/login-hash';
 import { hashPassword } from '../../src/auth/password';
 import { registerAuth } from '../../src/auth/routes';
 import { createSessionToken, hashSessionToken } from '../../src/auth/token';
@@ -18,6 +19,9 @@ const silent = (): void => undefined;
 const ok = async (): Promise<void> => undefined;
 
 const BOSS_EMAIL = 'boss@example.com';
+
+/** 測試專用 key：真 key 只放在 .env，不入 repo、不入測試。 */
+const TEST_KEY = 'test-only-login-hash-key-0123456789abcdef';
 
 function randomPassword(): string {
   return randomBytes(24).toString('base64url');
@@ -75,7 +79,7 @@ describe('首次開機與老闆登入', () => {
     now = new Date();
 
     app = buildServer({ checkDb: ok, checkStorage: ok });
-    registerAuth(app, { pool: db.pool, now: () => now });
+    registerAuth(app, { pool: db.pool, now: () => now, loginHashKey: TEST_KEY });
 
     // 測試專用路由：證明 requireOwner 對未登入回 401、對員工回 403。
     app.get('/test/owner-only', { preHandler: app.requireOwner }, async () => ({ ok: true }));
@@ -227,6 +231,7 @@ describe('首次開機與老闆登入', () => {
     registerAuth(hooked, {
       pool: db.pool,
       now: () => now,
+      loginHashKey: TEST_KEY,
       setupHooks: { afterOwnerCheck: gate },
     });
     await hooked.ready();
@@ -395,6 +400,100 @@ describe('首次開機與老闆登入', () => {
     expect(afterWindow.statusCode).toBe(200);
   });
 
+  /**
+   * issue #65：登入失敗的 target 不可以是明文 email。
+   * audit_log 只准追加，所以寫進去的每一列都永遠在；這裡用臨時資料庫，
+   * 測完 DROP，正式庫由頭到尾不插任何列。
+   */
+  it('不存在的 email 連續失敗 5 次：target 是同一個識別碼，不含 @，也不是明文', async () => {
+    const email = 'nobody@example.com';
+
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const failed = await app.inject({
+        method: 'POST',
+        url: '/auth/login',
+        payload: { email, password: randomPassword() },
+      });
+
+      expect(failed.statusCode).toBe(401);
+    }
+
+    const rows = await db.pool.query<{ target: string | null }>(
+      "select target from audit_log where action = 'auth.login_failed' order by id",
+    );
+
+    expect(rows.rows).toHaveLength(5);
+
+    const targets = rows.rows.map((row) => row.target);
+    expect(new Set(targets).size).toBe(1);
+    expect(targets[0]).toBe(loginFailureTarget(email, TEST_KEY));
+    expect(targets[0]).toMatch(/^email_hmac:[0-9a-f]{64}$/);
+    expect(targets[0]).not.toContain('@');
+    expect(targets[0]).not.toContain('nobody');
+
+    // 整張表都不應該有 email 形狀的字串留下來。
+    const withAt = await db.pool.query<{ n: number }>(
+      "select count(*)::int as n from audit_log where target like '%@%'",
+    );
+    expect(withAt.rows[0]?.n).toBe(0);
+  });
+
+  it('大小寫不同、前後有空白的同一 email：同一個 target；不同 email：不同 target', async () => {
+    const attempts = [
+      'Alice.Smith@Company.com',
+      '  alice.smith@company.com ',
+      'bob@company.com',
+    ];
+
+    for (const email of attempts) {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/auth/login',
+        payload: { email, password: randomPassword() },
+      });
+
+      expect(response.statusCode).toBe(401);
+    }
+
+    const rows = await db.pool.query<{ target: string | null }>(
+      "select target from audit_log where action = 'auth.login_failed' order by id",
+    );
+
+    const targets = rows.rows.map((row) => row.target);
+    expect(targets).toHaveLength(3);
+    expect(targets[0]).toBe(targets[1]);
+    expect(targets[2]).not.toBe(targets[0]);
+  });
+
+  it('不存在的 email 第 6 次失敗：429 加 Retry-After（鎖是靠識別碼穩定才鎖得住）', async () => {
+    const email = 'nobody@example.com';
+
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const failed = await app.inject({
+        method: 'POST',
+        url: '/auth/login',
+        payload: { email, password: randomPassword() },
+      });
+
+      expect(failed.statusCode).toBe(401);
+    }
+
+    // 換一個大小寫不同的寫法：正規化後是同一個 email，應該一樣被鎖。
+    const blocked = await app.inject({
+      method: 'POST',
+      url: '/auth/login',
+      payload: { email: 'NOBODY@Example.COM', password: randomPassword() },
+    });
+
+    expect(blocked.statusCode).toBe(429);
+    expect(blocked.json()).toEqual({ error: 'too_many_attempts' });
+
+    const retryAfter = Number(blocked.headers['retry-after']);
+    expect(Number.isInteger(retryAfter)).toBe(true);
+    expect(retryAfter).toBeGreaterThan(0);
+    expect(retryAfter).toBeLessThanOrEqual(15 * 60);
+  });
+
   it('登出：204、清 cookie、同一個 cookie 之後回 401，資料庫有 revoked_at', async () => {
     const owner = await setupOwner();
 
@@ -559,7 +658,10 @@ describe('首次開機與老闆登入', () => {
     expect(actions).toEqual(['auth.setup', 'auth.login', 'auth.login_failed', 'auth.logout']);
 
     const failed = rows.rows.find((row) => row.action === 'auth.login_failed');
-    expect(failed?.target).toBe(BOSS_EMAIL);
+    // issue #65：失敗紀錄的 target 是 keyed hash，不是明文 email。
+    expect(failed?.target).toBe(loginFailureTarget(BOSS_EMAIL, TEST_KEY));
+    expect(failed?.target).not.toBe(BOSS_EMAIL);
+    expect(failed?.target).not.toContain('@');
     expect(failed?.actor_id).toBe('anonymous');
 
     for (const row of rows.rows) {

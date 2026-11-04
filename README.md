@@ -18,7 +18,7 @@ npm run ports:check
 docker compose up -d --build
 ```
 
-**首次啟動前必須在 `.env` 內的 `POSTGRES_PASSWORD` 與 `MINIO_ROOT_PASSWORD` 填入自己的密碼** —— 範本刻意留空，沒有可用的預設值；留空時 `docker compose` 會即時失敗，不會起一個弱密碼的服務。
+**首次啟動前必須在 `.env` 內的 `POSTGRES_PASSWORD`、`MINIO_ROOT_PASSWORD` 與 `LOGIN_FAILURE_HASH_KEY` 填入自己的值** —— 範本刻意留空，沒有可用的預設值；留空時 `docker compose` 會即時失敗，不會起一個弱密碼的服務。
 
 前端：<http://localhost:4210>；API：<http://localhost:4420/livez>。所有端口只綁 `127.0.0.1`，區網內其他機器連不到。
 
@@ -69,6 +69,21 @@ npm run storage:smoke -- verify
 - `DELETE /files/:id`：軟刪除，只寫 `deleted_at`。物件仍留在 MinIO，**不會釋放空間**；永久清除尚未實作。
 
 員工只看得到自己上傳的檔案，老闆看得到全部未刪除的。上傳與刪除會寫入 `audit_log`（`file.upload`、`file.delete`），detail 不含檔名。
+
+## 登入
+
+- 密碼用 scrypt 雜湊；session 是隨機 token，資料庫只存它的 SHA-256。
+- 同一個 email 15 分鐘內失敗 5 次就鎖，鎖定期間連正確密碼都回 429（附 `Retry-After`）。
+  不存在的 email 與錯密碼的回應完全相同，回應時間也拉平。
+- **登入失敗不會把 email 寫進審計表。** `audit_log` 只准追加，任何人打一次字就永遠留在裡面，
+  所以失敗紀錄的 `target` 是 `email_hmac:<64 hex>`：用 `LOGIN_FAILURE_HASH_KEY` 對正規化後的
+  email 做 HMAC-SHA256。同一個 email 穩定對應同一個碼（限流靠這一點），但由碼還原不出 email。
+  成功登入的 `auth.login` 仍然寫明文 email —— 那是已存在的帳戶，`app_user` 本來就有。
+- 沒有 `LOGIN_FAILURE_HASH_KEY` 時 API 會拒絕啟動並講明原因；少於 32 bytes 會在啟動時出警告。
+- **換 key 的後果**：舊的失敗紀錄是用舊 key 算的，與新 key 算出來的識別碼不再對應，
+  所以換 key 的那一刻，窗口內正在生效的限流計數會失效（等於把鎖全部解開一次）。
+  這是刻意的取捨：寧願短暫失去計數，也不要為了連續性而保留舊 key。
+  換 key 請在沒有人正在暴力嘗試的時候做，並把它當成一次憑證輪換記錄下來。
 
 ## 資料庫
 

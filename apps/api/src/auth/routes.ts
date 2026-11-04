@@ -3,6 +3,7 @@ import type { Pool } from 'pg';
 import { writeAudit } from '../audit.js';
 import { getSignedInUser } from './current-user.js';
 import { isValidEmail, normalizeEmail } from './email.js';
+import { loginFailureTarget, readLoginHashKey } from './login-hash.js';
 import { hashPassword, validatePassword, verifyPassword } from './password.js';
 import { evaluateLockout, loginWindowStart } from './rate-limit.js';
 import {
@@ -47,6 +48,12 @@ export type AuthDeps = {
   sessionTtlMs?: number;
   /** 測試專用：讓兩個併發 setup 真的重疊，正式路徑不傳。 */
   setupHooks?: SetupHooks;
+  /**
+   * 登入失敗審計用的 HMAC key（issue #65）。
+   * 沒有它就只能把使用者輸入的 email 明文寫進只准追加的 audit_log，
+   * 所以這裡刻意不給預設值：未設定就拋錯，服務不會啟動。
+   */
+  loginHashKey: string;
 };
 
 /**
@@ -70,6 +77,9 @@ function readString(body: unknown, key: string): string {
 }
 
 export function registerAuth(app: FastifyInstance, deps: AuthDeps): void {
+  // 未設定就在接線時失敗，不要等到第一個登入失敗、audit_log 出現明文之後才發現。
+  const loginHashKey = readLoginHashKey(deps.loginHashKey);
+
   const now = deps.now ?? ((): Date => new Date());
   const cookieSecure = deps.cookieSecure ?? false;
   const sessionTtlMs = deps.sessionTtlMs ?? SESSION_TTL_MS;
@@ -151,8 +161,12 @@ export function registerAuth(app: FastifyInstance, deps: AuthDeps): void {
     const email = normalizeEmail(rawEmail);
     const at = now();
 
+    // 失敗紀錄與限流都用這一個識別碼：同一個 email 穩定對應同一個碼，
+    // 但由碼還原不出 email（audit_log 寫進去就永遠在）。
+    const failureTarget = loginFailureTarget(email, loginHashKey);
+
     // 先看鎖：鎖定期間連正確密碼都拒絕，回應時間也一致。
-    const attempts = await countFailedAttempts(deps.pool, email, loginWindowStart(at));
+    const attempts = await countFailedAttempts(deps.pool, failureTarget, loginWindowStart(at));
     const lockout = evaluateLockout(attempts, at);
 
     if (lockout.locked) {
@@ -170,7 +184,7 @@ export function registerAuth(app: FastifyInstance, deps: AuthDeps): void {
         actorType: 'human',
         actorId: 'anonymous',
         action: 'auth.login_failed',
-        target: email,
+        target: failureTarget,
         detail: { reason: 'invalid_credentials' },
       });
 

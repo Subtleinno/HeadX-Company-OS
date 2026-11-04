@@ -1,5 +1,6 @@
 import { Pool } from 'pg';
 import { buildServer } from './app.js';
+import { LOGIN_HASH_KEY_ENV, loginHashKeyWarning, readLoginHashKey } from './auth/login-hash.js';
 import { registerAuth } from './auth/routes.js';
 import { attachPoolErrorHandler, createDbCheck } from './db.js';
 import { DEFAULT_MAX_UPLOAD_BYTES, registerFiles } from './files/routes.js';
@@ -95,7 +96,32 @@ function readMaxUploadBytes(): number {
   return value;
 }
 
+/**
+ * 登入失敗審計的 HMAC key（issue #65）。
+ * 未設定就大聲失敗並結束：沒有 key，唯一做得到的就是把使用者輸入的 email
+ * 明文寫進只准追加的 audit_log，寫進去就永遠拿不走。
+ * 太短就出聲但不阻止啟動（issue 只要求未設定時拒絕）；警告不含 key 的值。
+ */
+function readLoginHashKeyOrExit(): string {
+  try {
+    const key = readLoginHashKey(process.env[LOGIN_HASH_KEY_ENV]);
+    const warning = loginHashKeyWarning(key);
+
+    if (warning !== null) {
+      console.warn(warning);
+    }
+
+    return key;
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exit(1);
+  }
+}
+
 async function main(): Promise<void> {
+  // 啟動設定先驗：缺 key 就不應該先去碰資料庫或任何外部服務。
+  const loginHashKey = readLoginHashKeyOrExit();
+
   // 模組清單先驗：壞掉的 manifest 不應該先去碰資料庫。
   const registry = loadModuleRegistry();
 
@@ -122,7 +148,11 @@ async function main(): Promise<void> {
   });
 
   // 登入與首次開機。COOKIE_SECURE=true 只在經 HTTPS 入口時開，否則瀏覽器不會存 cookie。
-  registerAuth(app, { pool, cookieSecure: process.env.COOKIE_SECURE === 'true' });
+  registerAuth(app, {
+    pool,
+    cookieSecure: process.env.COOKIE_SECURE === 'true',
+    loginHashKey,
+  });
 
   registerModules(app, { registry, pool });
 
