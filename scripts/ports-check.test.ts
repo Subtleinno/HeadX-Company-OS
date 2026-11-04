@@ -147,12 +147,31 @@ describe('端口清單來自 edition-profile', () => {
     ]);
   });
 
-  it('大陸版的端口清單與國際版完全相同', () => {
-    expect(portVarsOf('cn')).toEqual(portVarsOf('intl'));
+  it('大陸版多一個 APPS_PORT=4431，其餘與國際版相同（#77）', () => {
+    expect(portVarsOf('intl').map((item) => item.key)).not.toContain('APPS_PORT');
+
+    expect(portVarsOf('cn')).toEqual([
+      { key: 'WEB_PORT', service: 'web', fallback: 4210 },
+      { key: 'API_PORT', service: 'api', fallback: 4420 },
+      { key: 'APPS_PORT', service: 'apps', fallback: 4431 },
+      { key: 'DB_PORT', service: 'db', fallback: 25432 },
+      { key: 'PORT_MINIO_API', service: 'storage', fallback: 29000 },
+      { key: 'PORT_MINIO_CONSOLE', service: 'storage console', fallback: 29001 },
+    ]);
   });
 
-  it('resolvePorts 可以指定版本，結果與預設相同', () => {
-    expect(resolvePorts({}, 'cn')).toEqual(resolvePorts({}));
+  it('resolvePorts 可以指定版本：cn 多了 4431，值來自預設', () => {
+    expect(resolvePorts({}, 'intl')).toEqual(resolvePorts({}));
+
+    const cn = resolvePorts({}, 'cn');
+    expect(cn.ports.map((item) => `${item.key}=${item.port}`)).toEqual([
+      'WEB_PORT=4210',
+      'API_PORT=4420',
+      'APPS_PORT=4431',
+      'DB_PORT=25432',
+      'PORT_MINIO_API=29000',
+      'PORT_MINIO_CONSOLE=29001',
+    ]);
   });
 });
 

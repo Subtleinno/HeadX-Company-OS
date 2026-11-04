@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { CONTAINERS, EDITION_PROFILES, existingPorts, type EditionCode } from '../src/index';
+import { CONTAINERS, existingPorts } from '../src/index';
 
 /**
  * 一致性測試：edition-profile 與 docker-compose.yml、.env.example、
@@ -169,8 +169,8 @@ const envExample = parseEnvFile(readText('.env.example'));
 const repoMap = parseRepoMapTable(readText('docs/architecture/REPO-MAP.md'));
 
 describe('掃描器本身', () => {
-  it('compose 讀到四個服務', () => {
-    expect([...compose.keys()].sort()).toEqual(['api', 'db', 'storage', 'web']);
+  it('compose 讀到五個服務', () => {
+    expect([...compose.keys()].sort()).toEqual(['api', 'apps', 'db', 'storage', 'web']);
   });
 
   it('compose 每個服務都讀到至少一條端口', () => {
@@ -179,10 +179,17 @@ describe('掃描器本身', () => {
     }
   });
 
-  it('.env.example 讀到現有五個端口變數', () => {
-    for (const key of ['WEB_PORT', 'API_PORT', 'DB_PORT', 'PORT_MINIO_API', 'PORT_MINIO_CONSOLE']) {
-      expect(envExample.has(key), key).toBe(true);
-    }
+  it('.env.example 讀到現有六個端口變數', () => {
+    expect(
+      [...envExample.keys()].filter((key) => key.endsWith('_PORT') || key.startsWith('PORT_')).sort(),
+    ).toEqual([
+      'API_PORT',
+      'APPS_PORT',
+      'DB_PORT',
+      'PORT_MINIO_API',
+      'PORT_MINIO_CONSOLE',
+      'WEB_PORT',
+    ]);
   });
 
   it('REPO-MAP 讀到十二列，而不是空表', () => {
@@ -195,8 +202,8 @@ describe('掃描器本身', () => {
 describe('與 docker-compose.yml 一致', () => {
   const exists = CONTAINERS.filter((item) => item.status === 'exists');
 
-  it('四個 exists 容器都有對應的 compose 服務', () => {
-    expect(exists).toHaveLength(4);
+  it('五個 exists 容器都有對應的 compose 服務', () => {
+    expect(exists).toHaveLength(5);
 
     for (const item of exists) {
       expect(item.composeService, item.name).not.toBeNull();
@@ -262,12 +269,16 @@ describe('與 REPO-MAP 的容器端口表一致', () => {
 });
 
 describe('版本層面', () => {
-  it('兩版的 exists 端口與 ports:check 讀到的完全一樣', () => {
-    for (const code of Object.keys(EDITION_PROFILES) as EditionCode[]) {
-      expect(existingPorts(code).map((item) => item.defaultPort), code).toEqual([
-        4210, 4420, 25432, 29000, 29001,
-      ]);
-    }
+  it('國際版的 exists 端口與 ports:check 讀到的完全一樣（#77 之後仍然不變）', () => {
+    expect(existingPorts('intl').map((item) => item.defaultPort)).toEqual([
+      4210, 4420, 25432, 29000, 29001,
+    ]);
+  });
+
+  it('大陸版就是國際版再加 app-host 的 4431', () => {
+    expect(existingPorts('cn').map((item) => item.defaultPort)).toEqual([
+      4210, 4420, 4431, 25432, 29000, 29001,
+    ]);
   });
 
   it('REPO-MAP 那個 4431 同時屬於 apps（大陸版）與 apps-internal（國際版），不是重複', () => {

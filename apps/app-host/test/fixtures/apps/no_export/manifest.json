@@ -1,0 +1,11 @@
+{
+  "id": "no_export",
+  "title": "沒有匯出",
+  "kind": "department",
+  "department": "ops_two",
+  "order": 50,
+  "available": true,
+  "route": "/no-export",
+  "exposure": "internal",
+  "sensitive": false
+}

@@ -1,0 +1,11 @@
+{
+  "id": "partner_desk",
+  "title": "夥伴櫃檯",
+  "kind": "department",
+  "department": "overseas",
+  "order": 30,
+  "available": true,
+  "route": "/partner-desk",
+  "exposure": "partner",
+  "sensitive": false
+}

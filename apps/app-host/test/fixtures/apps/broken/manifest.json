@@ -1,0 +1,9 @@
+{
+  "id": "broken",
+  "title": "壞設定",
+  "kind": "department",
+  "department": "ops",
+  "order": 40,
+  "available": true,
+  "route": "/broken"
+}

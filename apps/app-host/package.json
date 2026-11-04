@@ -1,0 +1,19 @@
+{
+  "name": "@company-os/app-host",
+  "version": "0.0.0",
+  "private": true,
+  "type": "commonjs",
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsc --build tsconfig.json",
+    "start": "node dist/main.js"
+  },
+  "dependencies": {
+    "@company-os/contracts": "*",
+    "fastify": "^5.12.8",
+    "pg": "^8.23.1"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.23.1"
+  }
+}

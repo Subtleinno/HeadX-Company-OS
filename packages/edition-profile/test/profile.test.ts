@@ -67,26 +67,36 @@ describe('兩個版本', () => {
 });
 
 describe('容器清單', () => {
-  it('現在真的有四個容器：gateway-internal、platform、db、storage，兩版都有', () => {
+  it('現在真的有五個容器：gateway-internal、platform、apps（只屬大陸版）、db、storage', () => {
     const exists = CONTAINERS.filter((item) => item.status === 'exists');
 
     expect(exists.map((item) => item.name)).toEqual([
       'gateway-internal',
       'platform',
+      'apps',
       'db',
       'storage',
     ]);
 
     for (const item of exists) {
-      expect(item.editions, item.name).toEqual(['intl', 'cn']);
       expect(item.composeService, item.name).not.toBeNull();
     }
+
+    // apps 只屬大陸版（#77）；其餘四個兩版都有。
+    expect(exists.map((item) => `${item.name}:${item.editions.join('+')}`)).toEqual([
+      'gateway-internal:intl+cn',
+      'platform:intl+cn',
+      'apps:cn',
+      'db:intl+cn',
+      'storage:intl+cn',
+    ]);
   });
 
-  it('對應的 compose 服務名稱：web、api、db、storage', () => {
+  it('對應的 compose 服務名稱：web、api、apps、db、storage', () => {
     expect(CONTAINERS.filter((item) => item.status === 'exists').map((item) => item.composeService)).toEqual([
       'web',
       'api',
+      'apps',
       'db',
       'storage',
     ]);
@@ -98,7 +108,6 @@ describe('容器清單', () => {
       'gateway-partner',
       'gateway-customer',
       'cloudflared',
-      'apps',
       'apps-internal',
       'apps-partner',
       'supplier-portal',
@@ -140,8 +149,33 @@ describe('exists 容器的端口（ports:check 讀的就是這一組）', () => 
     ]);
   });
 
-  it('大陸版的端口與國際版相同（現有四個容器兩版都有）', () => {
-    expect(existingPorts('cn')).toEqual(existingPorts('intl'));
+  it('國際版沒有 apps 容器，端口清單與開工前逐項相同', () => {
+    expect(existingPorts('intl').map((item) => `${item.envVar}=${item.defaultPort}`)).toEqual([
+      'WEB_PORT=4210',
+      'API_PORT=4420',
+      'DB_PORT=25432',
+      'PORT_MINIO_API=29000',
+      'PORT_MINIO_CONSOLE=29001',
+    ]);
+  });
+
+  it('大陸版多了 app-host：4431 排在自己的位置（#77）', () => {
+    expect(existingPorts('cn').map((item) => `${item.envVar}=${item.defaultPort}`)).toEqual([
+      'WEB_PORT=4210',
+      'API_PORT=4420',
+      'APPS_PORT=4431',
+      'DB_PORT=25432',
+      'PORT_MINIO_API=29000',
+      'PORT_MINIO_CONSOLE=29001',
+    ]);
+    expect(existingPorts('cn').map((item) => item.service)).toEqual([
+      'web',
+      'api',
+      'apps',
+      'db',
+      'storage',
+      'storage console',
+    ]);
   });
 });
 

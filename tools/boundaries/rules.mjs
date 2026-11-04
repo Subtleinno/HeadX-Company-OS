@@ -1,4 +1,4 @@
-import { readdirSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 /**
@@ -16,8 +16,15 @@ import { resolve } from 'node:path';
  * 同一組規則要兩邊都咬得住。
  */
 
-/** 資料夾名即 id；不符格式的（例如 .DS_Store、README）不當成 app／package。 */
-const ID_PATTERN = /^[a-z][a-z0-9_]*$/;
+/**
+ * 資料夾名即 id；不符格式的（例如 .DS_Store、README）不當成 app／package。
+ *
+ * 允許連字號：`apps/app-host`（#77）是執行器，不是有 manifest 的 app，
+ * 所以它不受 contracts 的 manifest id 規則（只准底線）約束，但它在 apps/ 之下，
+ * 一樣要受「app 之間不可互相 import」管。沒有這一條，app-host 引用 platform
+ * 的內部檔案時 lint:boundaries 會完全看不到 —— 一條守不住東西的規則不算規則。
+ */
+const ID_PATTERN = /^[a-z][a-z0-9_-]*$/;
 
 /** 平台的舊名與新名。R2 改名後 `api` 會消失，規則不用改。 */
 const PLATFORM_IDS = ['api', 'platform'];
@@ -34,10 +41,50 @@ function subdirectories(directory) {
   }
 }
 
-/** 讀出一個根目錄的結構：有哪些 app、哪些 package、每個 app 有哪些模組。 */
+/**
+ * package 的公開入口：只認 package.json 的 exports（沒有就退回 main，再沒有就 src/index.ts）。
+ *
+ * 為甚麼要讀 package.json 而不是寫死 index.ts：`@company-os/design-tokens/tokens.css`
+ * 這種寫法是 package.json 明明白白宣告的公開入口，不是偷偷深入子資料夾。把「哪些入口
+ * 合法」放在兩個地方（package.json 與這裡）就是第二個真相；這裡只讀，不重複。
+ *
+ * 回傳相對於 package 目錄的路徑，例如 `src/index.ts`、`src/tokens.css`。
+ */
+function publicEntries(packageDir) {
+  // 一律允許這兩種寫法：fixtures 內的假 package 沒有 package.json。
+  const entries = new Set(['index.ts', 'src/index.ts']);
+
+  const collect = (value) => {
+    if (typeof value === 'string') {
+      entries.add(value.replace(/^\.\//, ''));
+      return;
+    }
+    if (value !== null && typeof value === 'object') {
+      for (const item of Object.values(value)) {
+        collect(item);
+      }
+    }
+  };
+
+  try {
+    const manifest = JSON.parse(readFileSync(resolve(packageDir, 'package.json'), 'utf8'));
+    collect(manifest.exports ?? manifest.main);
+  } catch {
+    // 沒有 package.json（fixtures 的假 package）或檔案壞掉：用上面的預設。
+  }
+
+  return [...entries].sort();
+}
+
+/** 讀出一個根目錄的結構：有哪些 app、哪些 package（連公開入口）、每個 app 有哪些模組。 */
 export function discoverLayout(root) {
   const appIds = subdirectories(resolve(root, 'apps'));
   const packageIds = subdirectories(resolve(root, 'packages'));
+
+  const packageEntries = {};
+  for (const packageId of packageIds) {
+    packageEntries[packageId] = publicEntries(resolve(root, 'packages', packageId));
+  }
 
   const moduleIds = {};
   for (const appId of appIds) {
@@ -47,13 +94,14 @@ export function discoverLayout(root) {
     }
   }
 
-  return { appIds, packageIds, moduleIds };
+  return { appIds, packageIds, packageEntries, moduleIds };
 }
 
 /** 合併多個根目錄的結構（fixtures 的 violations 與 clean 各有自己的 app）。 */
 export function mergeLayouts(...layouts) {
   const appIds = new Set();
   const packageIds = new Set();
+  const packageEntries = {};
   const moduleIds = {};
 
   for (const layout of layouts) {
@@ -63,13 +111,17 @@ export function mergeLayouts(...layouts) {
     for (const packageId of layout.packageIds) {
       packageIds.add(packageId);
     }
+    for (const [packageId, entries] of Object.entries(layout.packageEntries ?? {})) {
+      const merged = new Set([...(packageEntries[packageId] ?? []), ...entries]);
+      packageEntries[packageId] = [...merged].sort();
+    }
     for (const [appId, modules] of Object.entries(layout.moduleIds)) {
       const merged = new Set([...(moduleIds[appId] ?? []), ...modules]);
       moduleIds[appId] = [...merged].sort();
     }
   }
 
-  return { appIds: [...appIds].sort(), packageIds: [...packageIds].sort(), moduleIds };
+  return { appIds: [...appIds].sort(), packageIds: [...packageIds].sort(), packageEntries, moduleIds };
 }
 
 /**
@@ -103,15 +155,18 @@ export function buildForbiddenRules(layout) {
   }
 
   for (const packageId of layout.packageIds) {
+    const entries = layout.packageEntries?.[packageId] ?? ['index.ts', 'src/index.ts'];
+    const allowed = entries.map((entry) => entry.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+
     rules.push({
       name: `package-deep-import-${packageId}`,
       severity: 'error',
-      // 公開入口只有一個：package 根部的 index.ts，或它的 src/index.ts（原始碼版本）。
-      // 其餘一律視為「深入子資料夾」；要新增公開入口，就要改 package.json 的 exports，
-      // 那時也要一起改這裡。
-      comment: `package 只可經公開的 index.ts 被引用，不可引用 ${packageId} 的其他檔案。`,
+      // 公開入口由 package.json 的 exports 決定（見 publicEntries），不是寫死一份名單。
+      // 要新增公開入口，就改 package.json 的 exports —— 這裡會自動跟着，
+      // 兩邊各寫一份就會有一天對不上。
+      comment: `package 只可經 package.json 宣告的公開入口被引用，不可引用 ${packageId} 的其他檔案。`,
       from: { pathNot: `(^|/)packages/${packageId}/` },
-      to: { path: `(^|/)packages/${packageId}/(?!(?:src/)?index\\.ts$)` },
+      to: { path: `(^|/)packages/${packageId}/(?!(?:${allowed})$)` },
     });
   }
 

@@ -1,0 +1,11 @@
+{
+  "id": "boom",
+  "title": "會爆",
+  "kind": "department",
+  "department": "lab",
+  "order": 60,
+  "available": true,
+  "route": "/boom",
+  "exposure": "internal",
+  "sensitive": false
+}

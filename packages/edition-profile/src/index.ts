@@ -119,9 +119,9 @@ export const CONTAINERS: ContainerSpec[] = [
   },
   {
     name: 'apps',
-    status: 'planned',
+    status: 'exists',
     kind: 'apps',
-    composeService: null,
+    composeService: 'apps',
     editions: ['cn'],
     ports: [{ envVar: 'APPS_PORT', defaultPort: 4431 }],
   },

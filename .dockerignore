@@ -1,6 +1,10 @@
 **/node_modules
 **/dist
 **/coverage
+# tsc --build 的 up-to-date 紀錄：dist 被排除但這批檔案沒有，會被一起帶進映像，
+# 於是 tsc 以為「已經建好」而一個檔都不輸出，runtime 的 COPY dist 就爆
+# （#77 實際撞到：failed to compute cache key .../apps/app-host/dist: not found）。
+**/*.tsbuildinfo
 .env
 .env.*
 !.env.example

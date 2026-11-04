@@ -2,6 +2,7 @@ import { spawnSync } from 'node:child_process';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import { buildForbiddenRules, discoverLayout } from './rules.mjs';
 
 /**
  * 邊界檢查的「故意違反」測試（issue #71）。
@@ -63,6 +64,11 @@ function exitCodeOf(roots: string[], config: string): number {
  * 規則是動態按 app／package／模組資料夾生成的，所以名字帶 id。
  */
 const CASES: { file: string; rule: string; what: string }[] = [
+  {
+    file: 'fixtures/violations/apps/app-host/src/main.ts',
+    rule: 'app-cross-import-app-host',
+    what: 'app-host 不可引用 platform 的內部檔案（#77）',
+  },
   {
     file: 'fixtures/violations/apps/alpha/src/main.ts',
     rule: 'app-cross-import-alpha',
@@ -178,4 +184,40 @@ describe('邊界檢查：故意違反的 fixtures', () => {
     ).toEqual([]);
     expect(exitCodeOf(['apps', 'packages'], config)).toBe(0);
   }, TIMEOUT_MS);
+});
+
+/**
+ * package 的合法入口由 package.json 的 exports 決定（#77）：`apps/app-host` 這種帶連字號的
+ * 資料夾加入之後，`packages/design-tokens` 也第一次被規則看見，而
+ * `@company-os/design-tokens/tokens.css` 是 package.json 宣告過的公開入口 ——
+ * 所以規則要讀 exports，不是寫死 index.ts。
+ */
+describe('package 公開入口的來源', () => {
+  it('規則讀出 design-tokens 宣告的全部入口，不只是 index.ts', () => {
+    const layout = discoverLayout(repoRoot);
+
+    expect(layout.packageEntries['design-tokens']).toContain('src/tokens.css');
+    expect(layout.packageEntries['design-tokens']).toContain('src/index.ts');
+  });
+
+  it('宣告了的入口通得過，沒宣告的照樣被咬', () => {
+    const layout = {
+      appIds: [],
+      packageIds: ['design-tokens'],
+      packageEntries: { 'design-tokens': ['index.ts', 'src/index.ts', 'src/tokens.css'] },
+      moduleIds: {},
+    };
+
+    const rule = buildForbiddenRules(layout).find(
+      (item) => item.name === 'package-deep-import-design-tokens',
+    );
+    expect(rule).toBeDefined();
+
+    const pattern = new RegExp(rule?.to.path ?? '');
+    expect(pattern.test('/repo/packages/design-tokens/src/tokens.css')).toBe(false);
+    expect(pattern.test('/repo/packages/design-tokens/src/index.ts')).toBe(false);
+    expect(pattern.test('/repo/packages/design-tokens/index.ts')).toBe(false);
+    expect(pattern.test('/repo/packages/design-tokens/src/internal.css')).toBe(true);
+    expect(pattern.test('/repo/packages/design-tokens/src/deep/colors.ts')).toBe(true);
+  });
 });

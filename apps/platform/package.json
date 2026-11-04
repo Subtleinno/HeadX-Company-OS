@@ -3,11 +3,12 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "build": "tsc --project tsconfig.json",
+    "build": "tsc --build tsconfig.json",
     "start": "node dist/server.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1161.0",
+    "@company-os/contracts": "*",
     "fastify": "^5.12.8",
     "pg": "^8.23.1"
   },

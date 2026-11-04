@@ -85,5 +85,28 @@ services:
       api:
         condition: service_healthy
 
+  # app-host（R8／issue #77）：同一個映像按 APP_SET 載入 app（決策 C32）。
+  # 放在 profile apps 之下：預設 docker compose up 不會啟動它，
+  # 要 docker compose --profile apps up -d apps 才會。
+  apps:
+    build:
+      context: .
+      dockerfile: apps/app-host/Dockerfile
+    restart: unless-stopped
+    profiles: ["apps"]
+    environment:
+      # 要載入哪些 app；留空即不載入任何 app，容器仍然健康。目前沒有任何真實 app。
+      APP_SET: ${APP_SET:-}
+      PGHOST: db
+      PGPORT: "5432"
+      PGDATABASE: ${POSTGRES_DB:?請先複製 .env.example 為 .env}
+      # 每個 app 的資料庫帳號由 APP_DB_<ID>_USER／APP_DB_<ID>_PASSWORD 提供。
+      # 刻意不給 PGUSER／PGPASSWORD：app 一定要用自己的帳號，不留回退路。
+    ports:
+      - "127.0.0.1:${APPS_PORT:-4431}:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
 volumes:
   db_data:

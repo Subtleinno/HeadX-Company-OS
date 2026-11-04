@@ -81,10 +81,11 @@ function parseEnvAssignments(text: string): { key: string; value: string; line: 
 describe('docker-compose.yml 的端口發佈', () => {
   const entries = extractPortEntries(readText('docker-compose.yml'));
 
-  // 端口項目由 3 個變成 5 個（新增 storage 的 API 與 console），數量是刻意改的門檻，
+  // 端口項目由 3 個變成 5 個（新增 storage 的 API 與 console），再變成 6 個
+  // （新增 app-host 的 4431，#77）。數量是刻意改的門檻，
   // 不是為了讓測試通過而放寬：任何端口項目被刪或被合併都會在這裡變紅。
-  it('讀到五個端口項目（掃描失效時要紅，不可以空集合通過）', () => {
-    expect(entries).toHaveLength(5);
+  it('讀到六個端口項目（掃描失效時要紅，不可以空集合通過）', () => {
+    expect(entries).toHaveLength(6);
   });
 
   it('每一個端口項目都以 127.0.0.1: 開頭，只綁本機', () => {

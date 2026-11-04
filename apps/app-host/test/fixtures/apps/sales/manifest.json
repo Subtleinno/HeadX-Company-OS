@@ -1,0 +1,11 @@
+{
+  "id": "sales",
+  "title": "銷售",
+  "kind": "department",
+  "department": "sales",
+  "order": 10,
+  "available": true,
+  "route": "/sales",
+  "exposure": "internal",
+  "sensitive": false
+}

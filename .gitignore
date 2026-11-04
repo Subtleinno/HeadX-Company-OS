@@ -162,3 +162,15 @@ secrets/
 
 # MinIO 在本機的預設資料夾（MINIO_DATA_DIR 的 fallback），裡面是公司資料，不進 git
 .data/
+
+# ---------------------------------------------------------------------------
+# 例外：app-host 的假 app（#77）
+# ---------------------------------------------------------------------------
+# 上面有一條全域 `dist` 規則（建置產物不進 git）。但 apps/app-host/test/fixtures/apps/
+# 之下每個假 app 的 `dist/index.js` 是**已建置的樣子**，那是測試資料，不是產物 ——
+# 把它們一齊 ignore 的話，CI 從 git archive 取出來的樹就沒有這些檔案，測試會全紅。
+!apps/app-host/test/fixtures/apps/**/dist/
+
+# 代理工具的工作目錄（不是專案內容）
+.workbuddy/
+.zcode/

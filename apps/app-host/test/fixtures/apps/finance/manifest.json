@@ -1,0 +1,11 @@
+{
+  "id": "finance",
+  "title": "財務",
+  "kind": "department",
+  "department": "finance",
+  "order": 20,
+  "available": true,
+  "route": "/finance",
+  "exposure": "internal",
+  "sensitive": true
+}

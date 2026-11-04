@@ -7,10 +7,12 @@
     "exactOptionalPropertyTypes": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
+    "composite": true,
     "outDir": "dist",
     "rootDir": "src",
     "sourceMap": true,
     "types": ["node"]
   },
-  "include": ["src"]
+  "include": ["src"],
+  "references": [{ "path": "../../packages/contracts" }]
 }

@@ -1,0 +1,11 @@
+{
+  "id": "no_dist",
+  "title": "未建置",
+  "kind": "department",
+  "department": "ghost",
+  "order": 70,
+  "available": true,
+  "route": "/no-dist",
+  "exposure": "internal",
+  "sensitive": false
+}

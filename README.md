@@ -184,6 +184,25 @@ Migration 是純 SQL，API 啟動時自動套用；套不上就結束，不會�
 
 新增一個 app 時：在 `apps/<id>/` 放 `manifest.json`，並在 `apps/platform/Dockerfile` 加一行 `COPY apps/<id>/manifest.json ./apps/<id>/manifest.json`（Docker 的 COPY 不支援只複製某個名稱的檔案）。忘記加的話 `apps/platform/test/modules/dockerfile-manifests.test.ts` 會紅。
 
+## app-host
+
+`apps/app-host` 是**同一個映像載入多個 app** 的執行器（決策 C32）。與 platform 的分工：platform 提供「有哪些 app」的清單與登入；app-host 真正把 app 的 API 與網頁跑起來。
+
+- **`APP_SET`**：逗號分隔的 app id，決定這個容器載入哪些 app。**留空或未設定＝不載入任何 app，容器照樣健康** —— 這是預設值，repo 內沒有任何預設清單。
+- **`APPS_DIR`**：app 的位置，映像內預設 `/app/apps`。每個 id 要有 `<APPS_DIR>/<id>/manifest.json`（驗證規則與 platform 完全一樣，同一份 `packages/contracts`），以及建置好的 `<id>/dist/index.js`；有 `<id>/dist/web` 就順便在 `route` 前綴下當靜態網頁提供。
+- **`exposure` 必須一致**：同一個容器只可以載入同一種 `exposure` 的 app，否則啟動失敗並指出是哪兩個（`apps/sales 與 apps/partner_desk 的 exposure 不同…`）。
+- **資料庫**：app 自己宣告 `needsDatabase: true` 就一定要有 `APP_DB_<ID 大寫>_USER` 與 `APP_DB_<ID 大寫>_PASSWORD`（連同共用的 `PGHOST`／`PGPORT`／`PGDATABASE`）。連線的 `search_path` 只有該 app 的 schema；**沒有帳號就拒絕啟動，不會回退用共用帳號**。帳號本身由 `#88` 建立，本張只消費環境提供的帳號。
+- `/livez` 只講「進程還在」；`/health` 列出已載入的 app 與各自狀態。任何 app 載入失敗，或者 route 掛不上，程序以非 0 退出並印出 app id 與原因，不會假裝健康。
+
+`apps` 服務在 compose 的 **`apps` profile** 之下：預設 `docker compose up -d` 不會啟動它。
+
+```powershell
+docker compose --profile apps up -d apps   # 只啟動 app-host
+curl --noproxy "*" http://127.0.0.1:4431/health
+```
+
+現時**沒有任何真實 app**：`APP_SET` 留空，`/health` 顯示已載入 0 個 app。第一個 app 落地時，除了 `apps/app-host/Dockerfile` 要加 `COPY apps/<id>/…`（與 platform 一樣的道理），`APP_SET` 亦要同時更新。
+
 ## 測試
 
 ```powershell
