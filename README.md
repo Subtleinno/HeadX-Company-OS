@@ -1,6 +1,31 @@
-# company-os
+# Company OS
 
-全公司軟件的專案骨架：Fastify API、React 前端、Postgres（pgvector）、MinIO 檔案儲存，全部以 Docker Compose 起動。
+給任何一間公司的 AI 原生公司軟件底座（company starter）：一間公司裝一份，全部自架在 Docker，裝完是空的，由老闆建立帳戶後再設定公司。
+
+## 這是什麼
+
+- Company OS（老闆台）只有老闆一個人用；部門軟件給員工用：設計／內容／網站、銷售、營運財務、人事、客服。所有部分共用同一個資料庫、同一個檔案儲存、同一套登入。
+- AI 盡力做事；AI 做不到的才變成 Need 派給員工，員工交成果，老闆驗收。
+- 本 repo 不執行 AI 模型。AI 是外部客戶端，只經 MCP 的六個動詞（browse、read、write、find、render、help）連入，MCP 永遠沒有 approve 工具。
+- 對外訊息一律先進發件箱，由規則決定放行或交老闆批准。
+
+## 現在到哪裡（2026-11-04）
+
+已完成（全是地基）：CI、端口只綁本機與 ports:check、MinIO 檔案儲存、migration 執行器與只准追加的審計表、首次開機與老闆登入、登入失敗審計去識別化、模組註冊、檔案層、網站外殼（一）、備份與還原程式。
+
+進行中或等待：scrypt 參數調高（#66）、跨碟備份還原驗收（#64，等第二粒實體碟）、ports:check 顯示佔用者（#45）。
+
+還沒有：Need、員工與 agent 帳戶、MCP、發件箱與批准、老闆台「今日」、部門軟件、背景隊列、安裝精靈。老闆目前能看到的只有：建立老闆帳戶、登入、一個誠實的空「今日」頁。
+
+## 文件入口
+
+| 文件 | 內容 |
+| --- | --- |
+| `AGENTS.md` | 給 AI agent 的開工規則與十一條不變量 |
+| `docs/product/MASTER-PLAN.md` | 全盤計劃（source of truth）：架構、資料模型、66 張 issue 清單、里程碑 |
+| `docs/backup-restore.md` | 備份與還原 |
+
+以下是開發與運行說明。
 
 ## 需求
 
