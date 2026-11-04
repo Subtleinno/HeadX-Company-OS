@@ -1,12 +1,17 @@
 import { useRef, useState, type FormEvent } from 'react';
+import { ScreenFrame } from '@company-os/app-shell';
+import { t } from '@company-os/i18n';
+import { Field } from '@company-os/ui-kit';
 import { submitLogin, type PublicUser } from '../api';
-import { Field } from '../components/Field';
 
 /**
  * 登入。
  *
  * 401 一律同一句話，不透露是電郵還是密碼錯；429 用 API 給的 Retry-After
  * 換算成分鐘（進位），不自己猜鎖多久。
+ *
+ * 卡片框架來自 app-shell、欄位來自 ui-kit、文字來自 i18n（#73 R3）；
+ * 畫面、順序、文字與改動前完全一樣。
  */
 
 type LoginScreenProps = {
@@ -61,78 +66,72 @@ export function LoginScreen({ onSignedIn, notice = null }: LoginScreenProps) {
     setSubmitting(false);
 
     if (result.failure.kind === 'network') {
-      setFormError('錯誤：無法連線到伺服器，請稍後再試。');
+      setFormError(t('error.network'));
       return;
     }
 
     if (result.failure.status === 401) {
-      setFormError('錯誤：電郵或密碼不正確。');
+      setFormError(t('login.invalidCredentials'));
       return;
     }
 
     if (result.failure.status === 429) {
       const seconds = result.failure.retryAfterSeconds ?? 60;
       const minutes = Math.max(1, Math.ceil(seconds / 60));
-      setFormError(`錯誤：嘗試次數過多，請在 ${minutes} 分鐘後再試。`);
+      setFormError(t('login.tooManyAttempts', { minutes }));
       return;
     }
 
     if (result.failure.status === 400 && result.failure.field === 'email') {
-      setEmailError('請輸入有效的電郵。');
+      setEmailError(t('login.emailInvalid'));
       emailRef.current?.focus();
       return;
     }
 
-    setFormError('錯誤：發生未預期的錯誤，請稍後再試。');
+    setFormError(t('error.unexpected'));
   }
 
   return (
-    <main className="screen">
-      <section className="card" aria-labelledby="login-title">
-        <h1 className="card__title" id="login-title">
-          登入 Company OS
-        </h1>
+    <ScreenFrame titleId="login-title" title={t('login.title')}>
+      {notice !== null && (
+        <p className="notice" aria-live="polite">
+          {notice}
+        </p>
+      )}
 
-        {notice !== null && (
-          <p className="notice" aria-live="polite">
-            {notice}
+      <form className="form" onSubmit={handleSubmit} noValidate>
+        <Field
+          id="login-email"
+          label={t('common.email')}
+          type="email"
+          value={email}
+          autoComplete="username"
+          error={emailError}
+          autoFocus
+          disabled={submitting}
+          inputRef={emailRef}
+          onChange={updateEmail}
+        />
+        <Field
+          id="login-password"
+          label={t('common.password')}
+          type="password"
+          value={password}
+          autoComplete="current-password"
+          disabled={submitting}
+          onChange={updatePassword}
+        />
+
+        {formError !== null && (
+          <p className="form__error" aria-live="polite">
+            {formError}
           </p>
         )}
 
-        <form className="form" onSubmit={handleSubmit} noValidate>
-          <Field
-            id="login-email"
-            label="電郵"
-            type="email"
-            value={email}
-            autoComplete="username"
-            error={emailError}
-            autoFocus
-            disabled={submitting}
-            inputRef={emailRef}
-            onChange={updateEmail}
-          />
-          <Field
-            id="login-password"
-            label="密碼"
-            type="password"
-            value={password}
-            autoComplete="current-password"
-            disabled={submitting}
-            onChange={updatePassword}
-          />
-
-          {formError !== null && (
-            <p className="form__error" aria-live="polite">
-              {formError}
-            </p>
-          )}
-
-          <button type="submit" className="button button--primary" disabled={submitting}>
-            {submitting ? '登入中…' : '登入'}
-          </button>
-        </form>
-      </section>
-    </main>
+        <button type="submit" className="button button--primary" disabled={submitting}>
+          {submitting ? t('login.submitting') : t('login.submit')}
+        </button>
+      </form>
+    </ScreenFrame>
   );
 }

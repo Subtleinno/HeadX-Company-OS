@@ -1,24 +1,29 @@
-import { useEffect, useState } from 'react';
-import { fetchAuthState, type AuthState, type PublicUser } from './api';
+import { useCallback, useEffect, useState } from 'react';
+import {
+  ConnectionErrorScreen,
+  LoadingScreen,
+  screenOf,
+  useAuthGate,
+  type AuthLoad,
+  type AuthSnapshot,
+} from '@company-os/app-shell';
+import { t } from '@company-os/i18n';
+import { fetchAuthState, type PublicUser } from './api';
 import { navigate, useRoute } from './router';
 import { HomeScreen } from './screens/HomeScreen';
 import { LoginScreen } from './screens/LoginScreen';
 import { SetupScreen } from './screens/SetupScreen';
-import { ConnectionErrorScreen, LoadingScreen } from './screens/StatusScreens';
 
 /**
  * 外殼的第一層：開機問一次 API，由答案決定畫面。
  *
+ * 「該顯示哪一個畫面」與「載入／連不到」的狀態機已搬去 app-shell（#73 R3）。
+ * 這裡只保留這個 app 自己的事：怎麼問 API、網址怎樣對齊、以及三個轉場
+ * （登入、登出、已經設定過）之後要變成什麼狀態。
+ *
  * 前端不自己記「有沒有老闆」：`setupRequired` 每次都問 `/api/auth/state`，
  * 因為誰先呼叫 setup 誰就是老闆，這件事只有伺服器知道。
  */
-
-type LoadState =
-  | { kind: 'loading' }
-  | { kind: 'unreachable' }
-  | { kind: 'ready'; auth: AuthState };
-
-type Screen = 'loading' | 'unreachable' | 'setup' | 'login' | 'home';
 
 const ROUTE_OF: Record<'setup' | 'login' | 'home', '/' | '/login' | '/setup'> = {
   setup: '/setup',
@@ -26,52 +31,27 @@ const ROUTE_OF: Record<'setup' | 'login' | 'home', '/' | '/login' | '/setup'> = 
   home: '/',
 };
 
-function screenOf(load: LoadState): Screen {
-  if (load.kind === 'loading') {
-    return 'loading';
-  }
-
-  if (load.kind === 'unreachable') {
-    return 'unreachable';
-  }
-
-  if (load.auth.signedIn && load.auth.user !== undefined) {
-    return 'home';
-  }
-
-  return load.auth.setupRequired ? 'setup' : 'login';
-}
-
 export function App() {
-  const [load, setLoad] = useState<LoadState>({ kind: 'loading' });
-  const [attempt, setAttempt] = useState(0);
+  /**
+   * 把 API 的結果翻譯成守衛認得的形狀：連不到（網絡錯誤或 5xx）回 null。
+   * 必須包在 useCallback：守衛以它做 effect 的依賴，每次 render 換一個函數
+   * 就會無限重載。
+   */
+  const loadState = useCallback(async (): Promise<AuthSnapshot<PublicUser> | null> => {
+    const result = await fetchAuthState();
+
+    return result.ok ? result.data : null;
+  }, []);
+
+  const { state, retry } = useAuthGate(loadState);
+
+  /** 登入／登出／已經設定過之後的本地狀態；null 代表「照伺服器最初的答案」。 */
+  const [override, setOverride] = useState<AuthSnapshot<PublicUser> | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+
   const route = useRoute();
-  const screen = screenOf(load);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    setLoad({ kind: 'loading' });
-
-    void fetchAuthState().then((result) => {
-      if (cancelled) {
-        return;
-      }
-
-      if (result.ok) {
-        setLoad({ kind: 'ready', auth: result.data });
-        return;
-      }
-
-      // 網絡錯誤與 5xx 都是「連不到」；不顯示空白頁，也不假裝未開機。
-      setLoad({ kind: 'unreachable' });
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [attempt]);
+  const effective: AuthLoad<PublicUser> = override === null ? state : { kind: 'ready', auth: override };
+  const screen = screenOf(effective);
 
   // 網址只是畫面的鏡子：畫面定了就把 hash 對齊，重新載入仍然停在同一個地方。
   // 比對原始 hash 而不是解析後的 route，空 hash 也要補成 #/。
@@ -89,17 +69,17 @@ export function App() {
 
   function signedIn(user: PublicUser): void {
     setNotice(null);
-    setLoad({ kind: 'ready', auth: { setupRequired: false, signedIn: true, user } });
+    setOverride({ setupRequired: false, signedIn: true, user });
   }
 
   function signedOut(): void {
     setNotice(null);
-    setLoad({ kind: 'ready', auth: { setupRequired: false, signedIn: false } });
+    setOverride({ setupRequired: false, signedIn: false });
   }
 
   function alreadySetUp(): void {
-    setNotice('已經有老闆帳戶，請登入。');
-    setLoad({ kind: 'ready', auth: { setupRequired: false, signedIn: false } });
+    setNotice(t('login.noticeAlreadySetUp'));
+    setOverride({ setupRequired: false, signedIn: false });
   }
 
   if (screen === 'loading') {
@@ -107,15 +87,15 @@ export function App() {
   }
 
   if (screen === 'unreachable') {
-    return <ConnectionErrorScreen onRetry={() => setAttempt((current) => current + 1)} />;
+    return <ConnectionErrorScreen onRetry={retry} />;
   }
 
-  if (load.kind !== 'ready') {
+  if (effective.kind !== 'ready') {
     return <LoadingScreen />;
   }
 
-  if (screen === 'home' && load.auth.user !== undefined) {
-    return <HomeScreen user={load.auth.user} onSignedOut={signedOut} />;
+  if (screen === 'home' && effective.auth.user !== undefined) {
+    return <HomeScreen user={effective.auth.user} onSignedOut={signedOut} />;
   }
 
   if (screen === 'setup') {

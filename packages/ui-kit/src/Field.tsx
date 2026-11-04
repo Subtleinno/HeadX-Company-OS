@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type RefObject } from 'react';
+import { t } from '@company-os/i18n';
 
 export type FieldProps = {
   id: string;
@@ -67,7 +68,7 @@ export function Field({
             aria-pressed={revealed}
             onClick={() => setRevealed(!revealed)}
           >
-            {revealed ? '隱藏' : '顯示'}
+            {revealed ? t('common.hide') : t('common.show')}
           </button>
         )}
       </div>

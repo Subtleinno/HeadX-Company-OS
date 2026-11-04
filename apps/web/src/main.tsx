@@ -1,13 +1,13 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import './styles/tokens.css';
+import '@company-os/design-tokens/tokens.css';
 import './styles/app.css';
 import { App } from './App';
 
 const root = document.getElementById('root');
 
 if (root === null) {
-  throw new Error('找不到 #root');
+  throw new Error('Missing #root element');
 }
 
 createRoot(root).render(

@@ -7,6 +7,7 @@ export default defineConfig({
       'scripts/**/*.test.ts',
       'apps/web/test/**/*.test.{ts,tsx}',
       'tools/**/*.test.ts',
+      'packages/**/test/**/*.test.{ts,tsx}',
     ],
     // 整合測試要連真的 storage，CI 沒有 MinIO 容器，只在 Windows 機本地跑（npm run test:integration）。
     exclude: [...configDefaults.exclude, 'apps/platform/test/integration/**'],

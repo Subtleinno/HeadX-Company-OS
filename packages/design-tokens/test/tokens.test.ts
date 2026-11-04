@@ -10,8 +10,8 @@ import { describe, expect, it } from 'vitest';
  * 之後任何人手改一個色碼都會在這裡變紅，而不是等到畫面走樣才發現。
  */
 
-const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
-const tokensPath = resolve(repoRoot, 'apps/web/src/styles/tokens.css');
+// token 已搬入 packages/design-tokens（#73 R3）：路徑由本檔位置推出，不再假設它在 apps/web。
+const tokensPath = resolve(dirname(fileURLToPath(import.meta.url)), '../src/tokens.css');
 
 function readTokens(): Map<string, string> {
   const css = readFileSync(tokensPath, 'utf8');

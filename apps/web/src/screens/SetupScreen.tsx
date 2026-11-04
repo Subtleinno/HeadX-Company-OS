@@ -1,6 +1,8 @@
 import { useRef, useState, type FormEvent } from 'react';
+import { ScreenFrame } from '@company-os/app-shell';
+import { t } from '@company-os/i18n';
+import { Field } from '@company-os/ui-kit';
 import { submitSetup, type PublicUser } from '../api';
-import { Field } from '../components/Field';
 
 /**
  * 建立老闆帳戶。
@@ -8,6 +10,8 @@ import { Field } from '../components/Field';
  * 這個畫面只會出現一次：`setupRequired` 由 API 說，前端不判斷「有沒有老闆」。
  * 前端先驗證四件事（顯示名稱、電郵格式、密碼長度、兩次一致），
  * 後端仍然是最終裁判：400 會帶 `field`，409 代表這部機已經開機。
+ *
+ * 框架、欄位、文字分別來自 app-shell、ui-kit、i18n（#73 R3）；行為不變。
  */
 
 type Values = {
@@ -33,19 +37,19 @@ function validate(values: Values): FieldErrors {
   const errors: FieldErrors = {};
 
   if (values.displayName.trim() === '') {
-    errors.displayName = '顯示名稱不可空白。';
+    errors.displayName = t('setup.error.displayNameRequired');
   }
 
   if (!isEmail(values.email)) {
-    errors.email = '請輸入有效的電郵。';
+    errors.email = t('setup.error.emailInvalid');
   }
 
   if ([...values.password].length < 12) {
-    errors.password = '密碼至少需要 12 個字元。';
+    errors.password = t('setup.error.passwordTooShort');
   }
 
   if (values.confirmPassword !== values.password) {
-    errors.confirmPassword = '兩次輸入的密碼不一致。';
+    errors.confirmPassword = t('setup.error.passwordMismatch');
   }
 
   return errors;
@@ -53,11 +57,16 @@ function validate(values: Values): FieldErrors {
 
 const FIELD_ORDER: FieldKey[] = ['displayName', 'email', 'password', 'confirmPassword'];
 
-const API_FIELD_TO_MESSAGE: Record<string, { key: FieldKey; message: string }> = {
-  displayName: { key: 'displayName', message: '顯示名稱不可空白。' },
-  email: { key: 'email', message: '請輸入有效的電郵。' },
-  password: { key: 'password', message: '密碼至少需要 12 個字元。' },
-};
+/** 後端 400 帶回來的欄位名 → 顯示哪一句、標在哪一個欄位。 */
+function apiFieldMessage(field: string): { key: FieldKey; message: string } | undefined {
+  const messages: Record<string, { key: FieldKey; message: string }> = {
+    displayName: { key: 'displayName', message: t('setup.error.displayNameRequired') },
+    email: { key: 'email', message: t('setup.error.emailInvalid') },
+    password: { key: 'password', message: t('setup.error.passwordTooShort') },
+  };
+
+  return messages[field];
+}
 
 type SetupScreenProps = {
   onCreated: (user: PublicUser) => void;
@@ -147,7 +156,7 @@ export function SetupScreen({ onCreated, onAlreadySetUp }: SetupScreenProps) {
     setSubmitting(false);
 
     if (result.failure.kind === 'network') {
-      setFormError('錯誤：無法連線到伺服器，請稍後再試。');
+      setFormError(t('error.network'));
       return;
     }
 
@@ -158,7 +167,7 @@ export function SetupScreen({ onCreated, onAlreadySetUp }: SetupScreenProps) {
 
     const mapped =
       result.failure.status === 400 && result.failure.field !== null
-        ? API_FIELD_TO_MESSAGE[result.failure.field]
+        ? apiFieldMessage(result.failure.field)
         : undefined;
 
     if (mapped !== undefined) {
@@ -168,74 +177,71 @@ export function SetupScreen({ onCreated, onAlreadySetUp }: SetupScreenProps) {
       return;
     }
 
-    setFormError('錯誤：發生未預期的錯誤，請稍後再試。');
+    setFormError(t('error.unexpected'));
   }
 
   return (
-    <main className="screen">
-      <section className="card" aria-labelledby="setup-title">
-        <h1 className="card__title" id="setup-title">
-          建立老闆帳戶
-        </h1>
-        <p className="card__description">這個帳戶是整個 Company OS 的老闆，只可以建立一次。</p>
+    <ScreenFrame
+      titleId="setup-title"
+      title={t('setup.title')}
+      description={t('setup.description')}
+    >
+      <form className="form" onSubmit={handleSubmit} noValidate>
+        <Field
+          id="setup-name"
+          label={t('setup.displayName')}
+          value={values.displayName}
+          autoComplete="name"
+          error={errors.displayName}
+          autoFocus
+          disabled={submitting}
+          inputRef={refs.displayName}
+          onChange={(value) => update('displayName', value)}
+        />
+        <Field
+          id="setup-email"
+          label={t('common.email')}
+          type="email"
+          value={values.email}
+          autoComplete="email"
+          error={errors.email}
+          disabled={submitting}
+          inputRef={refs.email}
+          onChange={(value) => update('email', value)}
+        />
+        <Field
+          id="setup-password"
+          label={t('common.password')}
+          type="password"
+          value={values.password}
+          autoComplete="new-password"
+          error={errors.password}
+          disabled={submitting}
+          inputRef={refs.password}
+          onChange={(value) => update('password', value)}
+        />
+        <Field
+          id="setup-confirm"
+          label={t('setup.confirmPassword')}
+          type="password"
+          value={values.confirmPassword}
+          autoComplete="new-password"
+          error={errors.confirmPassword}
+          disabled={submitting}
+          inputRef={refs.confirmPassword}
+          onChange={(value) => update('confirmPassword', value)}
+        />
 
-        <form className="form" onSubmit={handleSubmit} noValidate>
-          <Field
-            id="setup-name"
-            label="顯示名稱"
-            value={values.displayName}
-            autoComplete="name"
-            error={errors.displayName}
-            autoFocus
-            disabled={submitting}
-            inputRef={refs.displayName}
-            onChange={(value) => update('displayName', value)}
-          />
-          <Field
-            id="setup-email"
-            label="電郵"
-            type="email"
-            value={values.email}
-            autoComplete="email"
-            error={errors.email}
-            disabled={submitting}
-            inputRef={refs.email}
-            onChange={(value) => update('email', value)}
-          />
-          <Field
-            id="setup-password"
-            label="密碼"
-            type="password"
-            value={values.password}
-            autoComplete="new-password"
-            error={errors.password}
-            disabled={submitting}
-            inputRef={refs.password}
-            onChange={(value) => update('password', value)}
-          />
-          <Field
-            id="setup-confirm"
-            label="再輸入一次密碼"
-            type="password"
-            value={values.confirmPassword}
-            autoComplete="new-password"
-            error={errors.confirmPassword}
-            disabled={submitting}
-            inputRef={refs.confirmPassword}
-            onChange={(value) => update('confirmPassword', value)}
-          />
+        {formError !== null && (
+          <p className="form__error" aria-live="polite">
+            {formError}
+          </p>
+        )}
 
-          {formError !== null && (
-            <p className="form__error" aria-live="polite">
-              {formError}
-            </p>
-          )}
-
-          <button type="submit" className="button button--primary" disabled={submitting}>
-            {submitting ? '建立中…' : '建立老闆帳戶'}
-          </button>
-        </form>
-      </section>
-    </main>
+        <button type="submit" className="button button--primary" disabled={submitting}>
+          {submitting ? t('setup.submitting') : t('setup.submit')}
+        </button>
+      </form>
+    </ScreenFrame>
   );
 }

@@ -106,9 +106,12 @@ export function buildForbiddenRules(layout) {
     rules.push({
       name: `package-deep-import-${packageId}`,
       severity: 'error',
-      comment: `package 只可經 index.ts 被引用，不可引用 ${packageId} 的子資料夾。`,
+      // 公開入口只有一個：package 根部的 index.ts，或它的 src/index.ts（原始碼版本）。
+      // 其餘一律視為「深入子資料夾」；要新增公開入口，就要改 package.json 的 exports，
+      // 那時也要一起改這裡。
+      comment: `package 只可經公開的 index.ts 被引用，不可引用 ${packageId} 的其他檔案。`,
       from: { pathNot: `(^|/)packages/${packageId}/` },
-      to: { path: `(^|/)packages/${packageId}/(?!index\\.ts$)` },
+      to: { path: `(^|/)packages/${packageId}/(?!(?:src/)?index\\.ts$)` },
     });
   }
 

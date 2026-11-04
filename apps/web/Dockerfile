@@ -7,9 +7,15 @@ COPY package.json package-lock.json ./
 COPY tsconfig.base.json ./
 COPY apps/platform/package.json apps/platform/package.json
 COPY apps/web/package.json apps/web/package.json
+COPY packages/design-tokens/package.json packages/design-tokens/package.json
+COPY packages/i18n/package.json packages/i18n/package.json
+COPY packages/ui-kit/package.json packages/ui-kit/package.json
+COPY packages/app-shell/package.json packages/app-shell/package.json
 RUN npm ci
 
 COPY apps/web apps/web
+# 共用 packages 由原始碼編譯（package exports 指向 src）。
+COPY packages packages
 RUN npm run build --workspace @company-os/web
 
 FROM nginx:alpine

@@ -18,6 +18,14 @@ import {
 // 不用真實密碼：測試自己產生，不進 repo。
 const PASSWORD = 'correct horse battery staple';
 
+/**
+ * N=2^17 的 scrypt 一次要 128 MiB 加約 0.4 秒，這幾條測試一次跑 3 至 8 次。
+ * 全套 43 個檔案並行時，單一條最重的測試會撞穿 vitest 預設的 5 秒上限而超時 ——
+ * 那是機器爭用，不是行為出錯。所以逐條宣告寬鬆一點的時限。
+ * 斷言一條都沒有改，config 的 timeout 也沒有動。
+ */
+const SLOW_MS = 60_000;
+
 /** OpenSSL 的 scrypt 實際需要的記憶體：128 × r × (N + p + 2)。 */
 function requiredMem({ N, r, p }: { N: number; r: number; p: number }): number {
   return 128 * r * (N + p + 2);
@@ -79,7 +87,7 @@ describe('scrypt 參數（issue #66）', () => {
     expect(parts.N).toBe(131072);
     expect(parts.r).toBe(8);
     expect(parts.p).toBe(1);
-  });
+  }, SLOW_MS);
 
   it('maxmem 明確設定，而且真的夠 OpenSSL 用', () => {
     // 這條是這次的主角：issue 原本寫 134217728（=128×N×r），
@@ -96,7 +104,7 @@ describe('scrypt 參數（issue #66）', () => {
     expect(SCRYPT_PARAMS.keylen).toBe(64);
     expect(parts.hash).toHaveLength(64);
     expect(parts.salt).toHaveLength(16);
-  });
+  }, SLOW_MS);
 
   it('參數只在 password.ts 一處定義，其他地方不得 hardcode', () => {
     const root = join(process.cwd(), 'apps', 'platform', 'src');
@@ -134,7 +142,7 @@ describe('雜湊本身', () => {
 
     await expect(verifyPassword(PASSWORD, hash)).resolves.toBe(true);
     await expect(verifyPassword(`${PASSWORD}唔同`, hash)).resolves.toBe(false);
-  });
+  }, SLOW_MS);
 
   it('同一個密碼每次 salt 不同，兩個雜湊都仍然有效', async () => {
     const first = await hashPassword(PASSWORD);
@@ -144,13 +152,13 @@ describe('雜湊本身', () => {
     expect(parsePasswordHash(first).salt).not.toEqual(parsePasswordHash(second).salt);
     await expect(verifyPassword(PASSWORD, first)).resolves.toBe(true);
     await expect(verifyPassword(PASSWORD, second)).resolves.toBe(true);
-  });
+  }, SLOW_MS);
 
   it('雜湊字串裡沒有明文密碼', async () => {
     const hash = await hashPassword(PASSWORD);
 
     expect(hash).not.toContain(PASSWORD);
-  });
+  }, SLOW_MS);
 });
 
 describe('舊參數（N=16384）仍然可用', () => {
@@ -180,7 +188,7 @@ describe('雜湊字串異常：一律回 false，不拋錯', () => {
     const broken = mangle(await hashPassword(PASSWORD));
 
     await expect(verifyPassword(PASSWORD, broken)).resolves.toBe(false);
-  });
+  }, SLOW_MS);
 
   it.each([
     ['純文字', 'plain-text'],
@@ -271,7 +279,7 @@ describe('升級判定', () => {
     );
 
     expect(needsRehash(parsePasswordHash(stronger))).toBe(false);
-  });
+  }, SLOW_MS);
 
   it('digest 比 64 bytes 短也要升級', async () => {
     const shorter = await buildHashWith(
@@ -282,7 +290,7 @@ describe('升級判定', () => {
     );
 
     expect(needsRehash(parsePasswordHash(shorter))).toBe(true);
-  });
+  }, SLOW_MS);
 });
 
 describe('驗證用的 maxmem 由該筆雜湊自己算出來', () => {
