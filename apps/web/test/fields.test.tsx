@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it } from 'vitest';
 import './helpers/rtl';
@@ -78,7 +78,11 @@ describe('建立老闆帳戶的欄位', () => {
 
     await screen.findByRole('heading', { name: '建立老闆帳戶' });
 
-    expect(document.activeElement).toBe(screen.getByLabelText('顯示名稱'));
+    // 聚焦在 useEffect（被動效果）內，可能在 DOM 落地之後才跑；並行跑測試時偶爾慢過
+    // findByRole 的解析時間。等它發生，斷言目標不變：焦點一定要在「顯示名稱」。
+    await waitFor(() => {
+      expect(document.activeElement).toBe(screen.getByLabelText('顯示名稱'));
+    });
   });
 });
 
@@ -101,6 +105,9 @@ describe('登入的欄位', () => {
 
     await screen.findByRole('heading', { name: '登入 Company OS' });
 
-    expect(document.activeElement).toBe(screen.getByLabelText('電郵'));
+    // 同上：等被動效果把焦點放好，斷言目標不變。
+    await waitFor(() => {
+      expect(document.activeElement).toBe(screen.getByLabelText('電郵'));
+    });
   });
 });

@@ -1,5 +1,3 @@
-import { DEFAULT_STORAGE_TIMEOUT_MS } from '../app.js';
-
 /**
  * 儲存空間診斷。
  *
@@ -9,6 +7,17 @@ import { DEFAULT_STORAGE_TIMEOUT_MS } from '../app.js';
  *
  * 資料目錄（host 上的 MINIO_DATA_DIR）API 看不到，由 `npm run storage:check` 檢查。
  */
+
+/**
+ * storage 檢查的硬上限。
+ * AWS SDK 預設會重試，storage 停掉時 /health 可以拖到 11 秒以上；監控與 docker healthcheck
+ * 都等不到那個答案。這裡是最後防線，ping 自己另有 2 秒逾時。
+ *
+ * 定義在這一邊（而不是 app.ts）：app.ts 要用它做預設值，這裡也要用它做預設參數，
+ * 放在 app.ts 會形成 app → diagnose → app 的循環依賴（邊界規則 5）。
+ * app.ts 仍然對外轉出同一個常數，名字與數值不變。
+ */
+export const DEFAULT_STORAGE_TIMEOUT_MS = 2500;
 
 export type StorageDiagnosisCode =
   | 'ok'

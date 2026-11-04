@@ -4,7 +4,7 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   {
-    ignores: ['**/dist/**', '**/node_modules/**', '**/coverage/**'],
+    ignores: ['**/dist/**', '**/node_modules/**', '**/coverage/**', '**/.workbuddy/**', '**/.zcode/**'],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
@@ -15,7 +15,15 @@ export default tseslint.config(
     },
   },
   {
-    files: ['apps/api/**/*.ts', 'scripts/**/*.ts', 'scripts/**/*.mjs', '*.mjs', '*.ts'],
+    files: [
+      'apps/api/**/*.ts',
+      'scripts/**/*.ts',
+      'scripts/**/*.mjs',
+      'tools/**/*.ts',
+      'tools/**/*.mjs',
+      '*.mjs',
+      '*.ts',
+    ],
     languageOptions: {
       globals: globals.node,
     },

@@ -1,4 +1,4 @@
-# CI 流水線：三個獨立檢查 lint、test、build。
+# CI 流水線：四個獨立檢查 lint、test、build、boundaries。
 # Node 版本一律由 .nvmrc 決定，這裡不寫死版本號，避免兩處真相。
 name: ci
 
@@ -67,3 +67,25 @@ jobs:
         run: npm ci
       - name: 建置
         run: npm run build
+
+  # 邊界檢查獨立一格：它擋的是「程式碼結構走錯方向」，
+  # 與 lint（風格）、test（行為）、build（能否產出）是三件不同的事。
+  boundaries:
+    name: boundaries
+    runs-on: ubuntu-latest
+    steps:
+      - name: 取出程式碼
+        uses: actions/checkout@v7
+      - name: 安裝 Node（版本讀 .nvmrc）與 npm 快取
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: 安裝依賴
+        run: npm ci
+      - name: 掃描邊界違規
+        run: npm run lint:boundaries
+      # 「故意違反」的 fixtures 要證明規則真的咬得住；這一步紅了代表規則失效，
+      # 不是代表程式碼有問題。
+      - name: 故意違反的 fixtures 測試
+        run: npx vitest run tools/boundaries

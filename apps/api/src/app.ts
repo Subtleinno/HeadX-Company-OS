@@ -1,6 +1,6 @@
 import Fastify, { type FastifyInstance } from 'fastify';
 import { isSameOrigin } from './auth/origin.js';
-import type { StorageDiagnosis } from './storage/diagnose.js';
+import { DEFAULT_STORAGE_TIMEOUT_MS, type StorageDiagnosis } from './storage/diagnose.js';
 
 export type HealthCheck = () => Promise<void>;
 
@@ -8,11 +8,10 @@ export type HealthCheck = () => Promise<void>;
 const STATE_CHANGING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
 /**
- * storage 檢查的硬上限。
- * AWS SDK 預設會重試，storage 停掉時 /health 可以拖到 11 秒以上；監控與 docker healthcheck
- * 都等不到那個答案。這裡是最後防線，ping 自己另有 2 秒逾時。
+ * storage 檢查的硬上限（數值與說明在 storage/diagnose.ts 定義，這裡只轉出）。
+ * 放在那邊是為了避免 app → diagnose → app 的循環依賴。
  */
-export const DEFAULT_STORAGE_TIMEOUT_MS = 2500;
+export { DEFAULT_STORAGE_TIMEOUT_MS };
 
 export type ServerOptions = {
   checkDb: HealthCheck;

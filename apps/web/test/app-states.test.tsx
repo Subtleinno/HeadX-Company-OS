@@ -6,6 +6,7 @@ import './helpers/rtl';
 import { App } from '../src/App';
 
 import { installFakeApi, jsonResponse, resetBrowserState } from './helpers/fake-api';
+import { expectHash } from './helpers/assertions';
 
 const BOSS = { id: 'u1', email: 'boss@example.com', displayName: '陳老闆', role: 'owner' };
 
@@ -63,7 +64,7 @@ describe('啟動時的五個狀態', () => {
 
     expect(await screen.findByRole('heading', { name: '建立老闆帳戶' })).toBeTruthy();
     expect(screen.getByText('這個帳戶是整個 Company OS 的老闆，只可以建立一次。')).toBeTruthy();
-    expect(window.location.hash).toBe('#/setup');
+    await expectHash('/setup');
   });
 
   it('已開機但未登入時顯示登入，網址同步為 #/login', async () => {
@@ -72,7 +73,7 @@ describe('啟動時的五個狀態', () => {
     render(<App />);
 
     expect(await screen.findByRole('heading', { name: '登入 Company OS' })).toBeTruthy();
-    expect(window.location.hash).toBe('#/login');
+    await expectHash('/login');
   });
 
   it('已登入時顯示首頁骨架與誠實的空狀態', async () => {
@@ -91,7 +92,7 @@ describe('啟動時的五個狀態', () => {
     expect(screen.getByText('陳老闆')).toBeTruthy();
     expect(screen.getByText('Company OS')).toBeTruthy();
     expect(screen.getByRole('button', { name: '登出' })).toBeTruthy();
-    expect(window.location.hash).toBe('#/');
+    await expectHash('/');
   });
 
   it('首頁沒有任何假數據', async () => {

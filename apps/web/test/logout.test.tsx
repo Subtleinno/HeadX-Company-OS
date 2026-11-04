@@ -6,6 +6,7 @@ import './helpers/rtl';
 import { App } from '../src/App';
 
 import { installFakeApi, jsonResponse, resetBrowserState } from './helpers/fake-api';
+import { expectHash } from './helpers/assertions';
 
 const BOSS = { id: 'u1', email: 'boss@example.com', displayName: '陳老闆', role: 'owner' };
 
@@ -48,7 +49,7 @@ describe('登出', () => {
     await userEvent.setup().click(screen.getByRole('button', { name: '登出' }));
 
     expect(await screen.findByRole('heading', { name: '登入 Company OS' })).toBeTruthy();
-    expect(window.location.hash).toBe('#/login');
+    await expectHash('/login');
     expect(screen.queryByRole('heading', { name: '今日' })).toBeNull();
   });
 

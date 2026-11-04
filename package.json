@@ -4,13 +4,15 @@
   "private": true,
   "type": "module",
   "workspaces": [
-    "apps/*"
+    "apps/*",
+    "packages/*"
   ],
   "engines": {
     "node": ">=26.0.0"
   },
   "scripts": {
     "lint": "eslint .",
+    "lint:boundaries": "depcruise apps packages",
     "test": "vitest run",
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "build": "npm run build --workspaces --if-present",
@@ -30,6 +32,7 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/node": "^26.6.6",
+    "dependency-cruiser": "^18.7.2",
     "eslint": "^10.14.0",
     "globals": "^17.14.0",
     "typescript": "~6.0.3",

@@ -6,6 +6,7 @@ import './helpers/rtl';
 import { App } from '../src/App';
 
 import { installFakeApi, jsonResponse, resetBrowserState, type FakeHandlers } from './helpers/fake-api';
+import { expectHash } from './helpers/assertions';
 
 const BOSS = { id: 'u1', email: 'boss@example.com', displayName: '陳老闆', role: 'owner' };
 const PASSWORD = 'correct-horse-9';
@@ -199,7 +200,7 @@ describe('建立老闆帳戶：後端回應', () => {
 
     expect(await screen.findByText('已經有老闆帳戶，請登入。')).toBeTruthy();
     expect(screen.getByRole('heading', { name: '登入 Company OS' })).toBeTruthy();
-    expect(window.location.hash).toBe('#/login');
+    await expectHash('/login');
   });
 
   it('網絡錯誤顯示「錯誤：無法連線到伺服器，請稍後再試。」', async () => {

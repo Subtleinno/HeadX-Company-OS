@@ -3,6 +3,8 @@ FROM node:26.13.0-alpine AS build
 WORKDIR /app
 
 COPY package.json package-lock.json ./
+# apps/web/tsconfig.json 繼承根目錄的 base；沒有這個檔，tsc --noEmit 會以 TS5083 失敗。
+COPY tsconfig.base.json ./
 COPY apps/api/package.json apps/api/package.json
 COPY apps/web/package.json apps/web/package.json
 RUN npm ci
