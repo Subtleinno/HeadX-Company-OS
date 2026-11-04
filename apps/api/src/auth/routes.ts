@@ -26,8 +26,15 @@ import {
 
 declare module 'fastify' {
   interface FastifyInstance {
+    /** 任何已登入的人：未登入 401。 */
+    requireUser: (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
     /** 只准老闆通過：未登入 401，角色不夠 403。 */
     requireOwner: (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
+  }
+
+  interface FastifyRequest {
+    /** requireUser／requireOwner 通過後才會有值。 */
+    currentUser: UserRow | null;
   }
 }
 
@@ -220,19 +227,49 @@ export function registerAuth(app: FastifyInstance, deps: AuthDeps): void {
     return { user: toPublicUser(user) };
   });
 
+  app.decorateRequest('currentUser', null);
+
+  app.decorate(
+    'requireUser',
+    async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
+      const user = await currentUser(request);
+
+      if (denyIfNotSignedIn(reply, user)) {
+        return;
+      }
+
+      request.currentUser = user;
+    },
+  );
+
   app.decorate(
     'requireOwner',
     async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
       const user = await currentUser(request);
 
-      if (user === null) {
-        reply.code(401).send({ error: 'not_signed_in' });
+      if (denyIfNotSignedIn(reply, user)) {
         return;
       }
 
-      if (user.role !== 'owner') {
+      if (user?.role !== 'owner') {
         reply.code(403).send({ error: 'forbidden' });
+        return;
       }
+
+      request.currentUser = user;
     },
   );
+}
+
+/**
+ * 未登入一律同一個 401，兩個裝飾共用。
+ * TS 的窄化在 closure 內幫不上忙，所以用回傳值表示「已經回應了」。
+ */
+function denyIfNotSignedIn(reply: FastifyReply, user: UserRow | null): boolean {
+  if (user !== null) {
+    return false;
+  }
+
+  void reply.code(401).send({ error: 'not_signed_in' });
+  return true;
 }

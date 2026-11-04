@@ -25,10 +25,14 @@ describe('migration 執行器', () => {
     await db.drop();
   });
 
-  it('空資料庫套用全部 migration，schema_migrations 有 0001 與 0002', async () => {
+  it('空資料庫套用全部 migration，schema_migrations 有 0001 至 0003', async () => {
     const applied = await migrate({ pool: db.pool, dir: migrationsDir, log: silent });
 
-    expect(applied).toEqual(['0001_audit_log.sql', '0002_users_sessions.sql']);
+    expect(applied).toEqual([
+      '0001_audit_log.sql',
+      '0002_users_sessions.sql',
+      '0003_stored_file.sql',
+    ]);
 
     const rows = await db.pool.query<{ name: string; checksum: string }>(
       'select name, checksum from schema_migrations order by name',
@@ -37,11 +41,15 @@ describe('migration 執行器', () => {
     expect(rows.rows.map((row) => row.name)).toEqual([
       '0001_audit_log.sql',
       '0002_users_sessions.sql',
+      '0003_stored_file.sql',
     ]);
     expect(rows.rows[0]?.checksum).toMatch(/^[0-9a-f]{64}$/);
 
     const table = await db.pool.query("select to_regclass('public.audit_log') as reg");
     expect(table.rows[0]?.reg).toBe('audit_log');
+
+    const files = await db.pool.query("select to_regclass('public.stored_file') as reg");
+    expect(files.rows[0]?.reg).toBe('stored_file');
   });
 
   it('再跑一次：沒有任何改動，applied_at 不變', async () => {
@@ -64,10 +72,14 @@ describe('migration 執行器', () => {
         migrate({ pool: fresh.pool, dir: migrationsDir, log: silent }),
       ]);
 
-      expect(results.flat()).toEqual(['0001_audit_log.sql', '0002_users_sessions.sql']);
+      expect(results.flat()).toEqual([
+        '0001_audit_log.sql',
+        '0002_users_sessions.sql',
+        '0003_stored_file.sql',
+      ]);
 
       const rows = await fresh.pool.query('select count(*)::int as n from schema_migrations');
-      expect(rows.rows[0]?.n).toBe(2);
+      expect(rows.rows[0]?.n).toBe(3);
     } finally {
       await fresh.drop();
     }

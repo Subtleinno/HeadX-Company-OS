@@ -2,6 +2,7 @@ import { Pool } from 'pg';
 import { buildServer } from './app.js';
 import { registerAuth } from './auth/routes.js';
 import { attachPoolErrorHandler, createDbCheck } from './db.js';
+import { DEFAULT_MAX_UPLOAD_BYTES, registerFiles } from './files/routes.js';
 import { migrate } from './migrate.js';
 import { loadModules } from './modules/registry.js';
 import { registerModules } from './modules/routes.js';
@@ -72,6 +73,27 @@ async function initStorage(): Promise<Storage> {
   }
 }
 
+/**
+ * 上傳上限。不是秘密，放 .env；寫錯就大聲失敗，不要靜靜用預設值
+ * （使用者的檔案被拒收時，原因必須看得見）。
+ */
+function readMaxUploadBytes(): number {
+  const raw = process.env.MAX_UPLOAD_BYTES;
+
+  if (raw === undefined || raw === '') {
+    return DEFAULT_MAX_UPLOAD_BYTES;
+  }
+
+  const value = Number(raw);
+
+  if (!Number.isInteger(value) || value <= 0) {
+    console.error(`MAX_UPLOAD_BYTES 不是正整數：${raw}`);
+    process.exit(1);
+  }
+
+  return value;
+}
+
 async function main(): Promise<void> {
   // 模組清單先驗：壞掉的 manifest 不應該先去碰資料庫。
   const registry = loadModuleRegistry();
@@ -93,6 +115,14 @@ async function main(): Promise<void> {
   registerAuth(app, { pool, cookieSecure: process.env.COOKIE_SECURE === 'true' });
 
   registerModules(app, { registry, pool });
+
+  // 檔案層：上傳／下載（Range）／列表／軟刪除。key 前綴固定為 files/，
+  // 用戶提供的檔名永遠不參與路徑。
+  registerFiles(app, {
+    pool,
+    storage,
+    maxUploadBytes: readMaxUploadBytes(),
+  });
 
   attachPoolErrorHandler(pool, (error) => {
     // 只記錄訊息，避免把連線參數寫入日誌。

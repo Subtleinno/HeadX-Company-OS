@@ -60,6 +60,16 @@ npm run storage:smoke -- verify
 
 `write` 寫入 `_smoke/persist-check.txt`，`verify` 確認它仍然存在。console：<http://127.0.0.1:29001>（只綁本機）。
 
+### 檔案層
+
+登入的人可以上傳、下載、刪除檔案。一個檔案就是一個檔案，未關聯任何業務物件。
+
+- `POST /files`：原始 bytes 作 body，`content-type` 是檔案類型，檔名放 `x-file-name`（URL 編碼的 UTF-8）。單檔上限由 `MAX_UPLOAD_BYTES` 決定（預設 200 MiB），超過回 413。
+- `GET /files/:id`：下載，支援單一 `Range`（影片可以拖動，回 206）。`GET /files` 列出自己看得到的檔案，游標分頁。
+- `DELETE /files/:id`：軟刪除，只寫 `deleted_at`。物件仍留在 MinIO，**不會釋放空間**；永久清除尚未實作。
+
+員工只看得到自己上傳的檔案，老闆看得到全部未刪除的。上傳與刪除會寫入 `audit_log`（`file.upload`、`file.delete`），detail 不含檔名。
+
 ## 資料庫
 
 Migration 是 `db/migrations/NNNN_說明.sql` 的純 SQL，API 啟動時自動套用；套不上就結束，不會起一個 schema 不完整的服務。

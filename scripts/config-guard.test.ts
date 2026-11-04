@@ -116,3 +116,33 @@ describe('.env.example 的密碼與密鑰變數', () => {
     expect(withValue).toEqual([]);
   });
 });
+
+/**
+ * 上傳上限有三個地方要對得上：API 的 MAX_UPLOAD_BYTES、nginx 的 client_max_body_size
+ * （預設 1 MiB，不改的話瀏覽器上傳會先被 nginx 擋掉）、以及 .env.example 的預設值。
+ * 靠人記得會漂移，所以讀檔驗。
+ */
+describe('上傳上限：nginx 與 API 一致', () => {
+  const nginx = readText('apps/web/nginx.conf');
+  const assignments = parseEnvAssignments(readText('.env.example'));
+  const maxUpload = assignments.find((assignment) => assignment.key === 'MAX_UPLOAD_BYTES');
+
+  it('.env.example 有 MAX_UPLOAD_BYTES，預設 209715200（200 MiB）', () => {
+    expect(maxUpload?.value).toBe('209715200');
+  });
+
+  it('apps/web/nginx.conf 的 client_max_body_size 等於同一個上限', () => {
+    const matched = /client_max_body_size\s+(\d+)m\s*;/.exec(nginx);
+
+    expect(matched).not.toBeNull();
+
+    const bytes = Number(matched?.[1] ?? '0') * 1024 * 1024;
+    expect(bytes).toBe(Number(maxUpload?.value));
+  });
+
+  it('docker-compose.yml 把 MAX_UPLOAD_BYTES 傳入 api 容器', () => {
+    expect(readText('docker-compose.yml')).toContain(
+      'MAX_UPLOAD_BYTES: ${MAX_UPLOAD_BYTES:-209715200}',
+    );
+  });
+});

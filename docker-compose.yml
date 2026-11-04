@@ -59,6 +59,8 @@ services:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:?請先複製 .env.example 為 .env}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?請先複製 .env.example 為 .env}
       MINIO_BUCKET: ${MINIO_BUCKET:-company-os}
+      # 單一檔案上傳上限；與 apps/web/nginx.conf 的 client_max_body_size 一致。
+      MAX_UPLOAD_BYTES: ${MAX_UPLOAD_BYTES:-209715200}
       # 經 HTTPS 入口才設 true；本機 http 預設關，否則瀏覽器不會存 session cookie。
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
     ports:
