@@ -4,6 +4,9 @@ import {
   judgePort,
   parseEnv,
   parseExcludedPortRanges,
+  PORT_VARS,
+  portVarsOf,
+  resolveEdition,
   resolvePorts,
 } from './ports-check.mjs';
 
@@ -130,5 +133,48 @@ describe('judgePort', () => {
     });
 
     expect(problem).toContain('已被其他程式佔用');
+  });
+});
+
+describe('端口清單來自 edition-profile', () => {
+  it('PORT_VARS 就是版本設定內 exists 容器的端口，次序與標籤不變', () => {
+    expect(PORT_VARS).toEqual([
+      { key: 'WEB_PORT', service: 'web', fallback: 4210 },
+      { key: 'API_PORT', service: 'api', fallback: 4420 },
+      { key: 'DB_PORT', service: 'db', fallback: 25432 },
+      { key: 'PORT_MINIO_API', service: 'storage', fallback: 29000 },
+      { key: 'PORT_MINIO_CONSOLE', service: 'storage console', fallback: 29001 },
+    ]);
+  });
+
+  it('大陸版的端口清單與國際版完全相同', () => {
+    expect(portVarsOf('cn')).toEqual(portVarsOf('intl'));
+  });
+
+  it('resolvePorts 可以指定版本，結果與預設相同', () => {
+    expect(resolvePorts({}, 'cn')).toEqual(resolvePorts({}));
+  });
+});
+
+describe('resolveEdition', () => {
+  it('沒有設定或空字串時用預設版本', () => {
+    expect(resolveEdition(undefined)).toEqual({ code: 'intl' });
+    expect(resolveEdition('')).toEqual({ code: 'intl' });
+    expect(resolveEdition('   ')).toEqual({ code: 'intl' });
+  });
+
+  it('認得 intl 與 cn', () => {
+    expect(resolveEdition('intl')).toEqual({ code: 'intl' });
+    expect(resolveEdition('cn')).toEqual({ code: 'cn' });
+    expect(resolveEdition(' cn ')).toEqual({ code: 'cn' });
+  });
+
+  it('未知版本回報錯誤，訊息帶出那個值', () => {
+    const result = resolveEdition('xyz');
+
+    expect(result.error).toContain('xyz');
+    expect(result.error).toContain('intl');
+    expect(result.error).toContain('cn');
+    expect(result.code).toBeUndefined();
   });
 });

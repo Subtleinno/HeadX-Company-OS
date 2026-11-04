@@ -3,16 +3,47 @@ import { readFile } from 'node:fs/promises';
 import { connect, createServer } from 'node:net';
 import { pathToFileURL } from 'node:url';
 import { promisify } from 'node:util';
+import {
+  DEFAULT_EDITION,
+  existingPorts,
+  isEditionCode,
+} from '../packages/edition-profile/src/index.ts';
 
 const execFileAsync = promisify(execFile);
 
-export const PORT_VARS = [
-  { key: 'WEB_PORT', service: 'web', fallback: 4210 },
-  { key: 'API_PORT', service: 'api', fallback: 4420 },
-  { key: 'DB_PORT', service: 'db', fallback: 25432 },
-  { key: 'PORT_MINIO_API', service: 'storage', fallback: 29000 },
-  { key: 'PORT_MINIO_CONSOLE', service: 'storage console', fallback: 29001 },
-];
+/**
+ * 端口清單的唯一來源是 `packages/edition-profile`：這裡只負責「查這個版本的 exists 容器」，
+ * 不再自己維護一份端口表。次序、服務標籤、預設值全部由那份設定決定。
+ *
+ * 直接 import `.ts`：主機的 Node 22 與容器內的 Node 26 都預設剝離型別，
+ * 不需要先 build，也不需要開 flag（已實測 node v22.22.2 可行）。
+ */
+export function portVarsOf(edition) {
+  return existingPorts(edition).map((item) => ({
+    key: item.envVar,
+    service: item.service,
+    fallback: item.defaultPort,
+  }));
+}
+
+export const PORT_VARS = portVarsOf(DEFAULT_EDITION);
+
+/**
+ * 版本由環境變數 `EDITION` 決定，預設 intl。
+ * 未知的值要即時報錯，不可以默默當成國際版 —— 那會令大陸版檢查錯的端口。
+ */
+export function resolveEdition(raw) {
+  if (raw === undefined || raw.trim() === '') {
+    return { code: DEFAULT_EDITION };
+  }
+
+  const value = raw.trim();
+  if (!isEditionCode(value)) {
+    return { error: `未知版本 EDITION=${value}；只可以是 intl 或 cn` };
+  }
+
+  return { code: value };
+}
 
 export function parseEnv(contents) {
   const env = {};
@@ -44,11 +75,11 @@ export function parseEnv(contents) {
   return env;
 }
 
-export function resolvePorts(env) {
+export function resolvePorts(env, edition = DEFAULT_EDITION) {
   const ports = [];
   const errors = [];
 
-  for (const { key, service, fallback } of PORT_VARS) {
+  for (const { key, service, fallback } of portVarsOf(edition)) {
     const raw = env[key];
 
     if (raw === undefined || raw.trim() === '') {
@@ -219,6 +250,14 @@ async function readWindowsExcludedRanges() {
 }
 
 export async function main() {
+  // 版本先驗：未知的 EDITION 不可以當成國際版繼續跑。
+  const edition = resolveEdition(process.env.EDITION);
+  if (edition.error !== undefined) {
+    console.error(edition.error);
+    process.exitCode = 1;
+    return;
+  }
+
   let contents;
   try {
     contents = await readFile('.env', 'utf8');
@@ -231,7 +270,7 @@ export async function main() {
     throw error;
   }
 
-  const { ports, errors } = resolvePorts(parseEnv(contents));
+  const { ports, errors } = resolvePorts(parseEnv(contents), edition.code);
   const problems = [...errors];
 
   for (let i = 0; i < ports.length; i += 1) {

@@ -56,7 +56,7 @@ docker compose up -d --build
 
 前端：<http://localhost:4210>；API：<http://localhost:4420/livez>。所有端口現在只綁 `127.0.0.1`，區網內其他機器連不到；讓同事連線的 LAN 設定屬於 S2-02，尚未完成。
 
-`npm run ports:check` 會檢查 `.env` 內的端口能否綁定，再探測有沒有人正在回應（容器發佈的端口「綁得上」但其實已被佔用，所以兩樣都要查）；有衝突或無法確認會列出原因，並以 exit 1 結束。
+`npm run ports:check` 會檢查 `.env` 內的端口能否綁定，再探測有沒有人正在回應（容器發佈的端口「綁得上」但其實已被佔用，所以兩樣都要查）；有衝突或無法確認會列出原因，並以 exit 1 結束。它現在讀 `packages/edition-profile` 的版本設定：版本由 `EDITION` 決定（預設 `intl`，另一個是 `cn`），未知的值會即時報錯，不會默默當成國際版。
 
 ## 端口（現況）
 
@@ -68,7 +68,7 @@ docker compose up -d --build
 | storage（S3 API） | `PORT_MINIO_API` | 29000 |
 | storage（console） | `PORT_MINIO_CONSOLE` | 29001 |
 
-目標端口表（按容器、按版本）見 `docs/architecture/REPO-MAP.md`，由 R6 實現。
+**目標端口表與版本差異以 `packages/edition-profile` 為準**：哪個版本有哪個容器、每個容器的端口與預設值都只寫在那裡，`docs/architecture/REPO-MAP.md` 的端口表與 `.env.example` 由 `npm test` 的一致性測試釘住，不會各說各話。上表是現況（真的存在的四個容器），目標容器（gateway、apps、portal）仍是 `planned`，未有容器。
 
 ## 檔案儲存
 
