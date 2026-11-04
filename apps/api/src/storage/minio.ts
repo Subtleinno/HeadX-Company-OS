@@ -232,5 +232,10 @@ export async function createMinioStorage(options: MinioStorageOptions): Promise<
         abortSignal: AbortSignal.timeout(PING_TIMEOUT_MS),
       });
     },
+
+    async isEmpty(): Promise<boolean> {
+      const listing = await client.send(new ListObjectsV2Command({ Bucket: bucket, MaxKeys: 1 }));
+      return (listing.KeyCount ?? listing.Contents?.length ?? 0) === 0;
+    },
   };
 }

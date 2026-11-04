@@ -1,5 +1,6 @@
 import Fastify, { type FastifyInstance } from 'fastify';
 import { isSameOrigin } from './auth/origin.js';
+import type { StorageDiagnosis } from './storage/diagnose.js';
 
 export type HealthCheck = () => Promise<void>;
 
@@ -18,6 +19,8 @@ export type ServerOptions = {
   checkStorage: HealthCheck;
   /** 測試可以調短；預設 2500ms，確保 /health 在 3 秒內一定有答案。 */
   storageTimeoutMs?: number;
+  /** /health/storage 的診斷；沒有注入時一律回 storage_error，不會假裝正常。 */
+  diagnoseStorage?: () => Promise<StorageDiagnosis>;
   logger?: boolean;
 };
 
@@ -135,6 +138,27 @@ export function buildServer(options: ServerOptions): FastifyInstance {
     // 不把底層錯誤內容回給外面，避免洩漏連線資訊。
     reply.code(503);
     return { status: 'error', checks };
+  });
+
+  // 比 /health 更具體的診斷：講得出是 bucket 不見、物件不見、還是連不上。
+  // /health 的形狀刻意不變，監控與 healthcheck 依賴它。
+  app.get('/health/storage', async (_request, reply) => {
+    const diagnosis =
+      options.diagnoseStorage === undefined
+        ? {
+            status: 'error' as const,
+            code: 'storage_error' as const,
+            guidance:
+              'storage 診斷未設定。在本機執行 npm run storage:check，還原步驟見 docs/backup-restore.md。',
+          }
+        : await options.diagnoseStorage();
+
+    if (diagnosis.status === 'ok') {
+      return { status: 'ok', code: 'ok' };
+    }
+
+    reply.code(503);
+    return diagnosis;
   });
 
   return app;

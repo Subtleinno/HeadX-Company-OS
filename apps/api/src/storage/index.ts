@@ -44,6 +44,9 @@ export interface Storage {
 
   /** 只確認儲存可用（bucket 讀得到），不讀寫任何物件。給 /health 用。 */
   ping(): Promise<void>;
+
+  /** bucket 是否完全沒有物件。用於分辨「全新安裝、還沒有檔案」與「檔案不見了」。 */
+  isEmpty(): Promise<boolean>;
 }
 
 export class StorageObjectNotFoundError extends Error {

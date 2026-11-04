@@ -7,6 +7,7 @@ import { migrate } from './migrate.js';
 import { loadModules } from './modules/registry.js';
 import { registerModules } from './modules/routes.js';
 import type { Storage } from './storage/index.js';
+import { createStorageDiagnosis } from './storage/diagnose.js';
 import { createMinioStorage } from './storage/minio.js';
 
 const port = Number(process.env.PORT ?? 4420);
@@ -108,6 +109,15 @@ async function main(): Promise<void> {
     checkStorage: async () => {
       await storage.ping();
     },
+    // 診斷要能分辨「bucket 不見」與「連不上」，所以除了 ping 還要探測一個已知物件。
+    diagnoseStorage: createStorageDiagnosis({
+      probeKey: process.env.STORAGE_PROBE_KEY ?? '_smoke/persist-check.txt',
+      headBucket: async () => {
+        await storage.ping();
+      },
+      headObject: (key) => storage.exists(key),
+      bucketIsEmpty: () => storage.isEmpty(),
+    }),
     logger: true,
   });
 
