@@ -75,12 +75,46 @@ export function parseEnv(contents) {
   return env;
 }
 
+/**
+ * 已改名的端口變數：舊名 → 新名。
+ *
+ * S1-02／#78 把 `WEB_PORT` 改名為 `GATEWAY_INTERNAL_PORT`（容器由 `web` 改名為
+ * `gateway-internal`）。已有的 `.env` 不可以一夜之間壞掉，所以舊名仍然生效，
+ * 但要提醒改名 —— 警告不令檢查失敗，因為那不是錯，只是未搬。
+ */
+const RENAMED_PORT_VARS = { WEB_PORT: 'GATEWAY_INTERNAL_PORT' };
+
+/**
+ * 找出一個端口變數的值：新名優先，舊名後備。
+ * 回傳 `{ raw, warnings }`；`raw` 是字串（可能 undefined）。
+ */
+export function readPortValue(env, key) {
+  const warnings = [];
+  const legacy = Object.keys(RENAMED_PORT_VARS).find((old) => RENAMED_PORT_VARS[old] === key);
+
+  if (legacy !== undefined && env[legacy] !== undefined && env[legacy].trim() !== '') {
+    warnings.push(`${legacy} 已改名為 ${key}（舊名仍然生效，請更新 .env）`);
+  }
+
+  const raw = env[key];
+
+  // 新名沒有值（未設定或空白）才用舊名。
+  if ((raw === undefined || raw.trim() === '') && legacy !== undefined) {
+    return { raw: env[legacy], warnings };
+  }
+
+  return { raw, warnings };
+}
+
 export function resolvePorts(env, edition = DEFAULT_EDITION) {
   const ports = [];
   const errors = [];
+  const warnings = [];
 
   for (const { key, service, fallback } of portVarsOf(edition)) {
-    const raw = env[key];
+    const read = readPortValue(env, key);
+    warnings.push(...read.warnings);
+    const raw = read.raw;
 
     if (raw === undefined || raw.trim() === '') {
       ports.push({ key, service, port: fallback });
@@ -102,7 +136,7 @@ export function resolvePorts(env, edition = DEFAULT_EDITION) {
     ports.push({ key, service, port });
   }
 
-  return { ports, errors };
+  return { ports, errors, warnings };
 }
 
 export function parseExcludedPortRanges(output) {
@@ -270,8 +304,13 @@ export async function main() {
     throw error;
   }
 
-  const { ports, errors } = resolvePorts(parseEnv(contents), edition.code);
+  const { ports, errors, warnings } = resolvePorts(parseEnv(contents), edition.code);
   const problems = [...errors];
+
+  // 改名提醒不是錯：印出來但照樣繼續檢查，也不會令退出碼變成 1。
+  for (const warning of warnings) {
+    console.warn(`- ${warning}`);
+  }
 
   for (let i = 0; i < ports.length; i += 1) {
     for (let j = i + 1; j < ports.length; j += 1) {

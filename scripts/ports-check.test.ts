@@ -33,11 +33,53 @@ describe('resolvePorts', () => {
   });
 
   it('非數字或超範圍的端口會回報原因', () => {
-    const { errors } = resolvePorts({ WEB_PORT: 'abc', API_PORT: '70000' });
+    const { errors } = resolvePorts({ GATEWAY_INTERNAL_PORT: 'abc', API_PORT: '70000' });
 
     expect(errors).toHaveLength(2);
-    expect(errors[0]).toContain('WEB_PORT');
+    expect(errors[0]).toContain('GATEWAY_INTERNAL_PORT');
     expect(errors[1]).toContain('API_PORT');
+  });
+});
+
+/**
+ * S1-02／#78：入口容器由 `web` 改名為 `gateway-internal`，端口變數由 `WEB_PORT`
+ * 改名為 `GATEWAY_INTERNAL_PORT`。舊的 `.env` 不可以一夜之間壞掉：
+ * 舊名稱仍然生效，但要提醒使用者改名（警告不令檢查失敗）。
+ */
+describe('WEB_PORT 改名為 GATEWAY_INTERNAL_PORT', () => {
+  it('用新名稱：值生效、沒有警告', () => {
+    const { ports, warnings } = resolvePorts({ GATEWAY_INTERNAL_PORT: '4400' });
+
+    expect(ports[0]).toEqual({
+      key: 'GATEWAY_INTERNAL_PORT',
+      service: 'gateway-internal',
+      port: 4400,
+    });
+    expect(warnings).toEqual([]);
+  });
+
+  it('只有舊名稱：仍然生效，並印出改名警告', () => {
+    const { ports, warnings } = resolvePorts({ WEB_PORT: '4300' });
+
+    expect(ports[0]).toEqual({
+      key: 'GATEWAY_INTERNAL_PORT',
+      service: 'gateway-internal',
+      port: 4300,
+    });
+    expect(warnings.join('\n')).toContain('WEB_PORT 已改名為 GATEWAY_INTERNAL_PORT');
+  });
+
+  it('兩個都寫：新名稱優先，但仍然提醒舊名稱已改名', () => {
+    const { ports, warnings } = resolvePorts({ GATEWAY_INTERNAL_PORT: '4400', WEB_PORT: '4300' });
+
+    expect(ports[0]?.port).toBe(4400);
+    expect(warnings.join('\n')).toContain('WEB_PORT 已改名為 GATEWAY_INTERNAL_PORT');
+  });
+
+  it('舊名稱的值不合法時，訊息用新名稱講（否則用戶會去改一個已改名的鍵）', () => {
+    const { errors } = resolvePorts({ WEB_PORT: 'abc' });
+
+    expect(errors.join('\n')).toContain('GATEWAY_INTERNAL_PORT');
   });
 });
 
@@ -77,7 +119,7 @@ function probeByHost(map: Record<string, { answering: boolean; reason: string }>
   return async (host: string) => map[host] ?? refused;
 }
 
-const target = { key: 'WEB_PORT', service: 'web', port: 4210 };
+const target = { key: 'GATEWAY_INTERNAL_PORT', service: 'gateway-internal', port: 4210 };
 
 describe('judgePort', () => {
   it('bind 成功但有程式在回應，要當成被佔用（Docker 發佈端口的情況）', async () => {
@@ -139,7 +181,7 @@ describe('judgePort', () => {
 describe('端口清單來自 edition-profile', () => {
   it('PORT_VARS 就是版本設定內 exists 容器的端口，次序與標籤不變', () => {
     expect(PORT_VARS).toEqual([
-      { key: 'WEB_PORT', service: 'web', fallback: 4210 },
+      { key: 'GATEWAY_INTERNAL_PORT', service: 'gateway-internal', fallback: 4210 },
       { key: 'API_PORT', service: 'api', fallback: 4420 },
       { key: 'DB_PORT', service: 'db', fallback: 25432 },
       { key: 'PORT_MINIO_API', service: 'storage', fallback: 29000 },
@@ -151,7 +193,7 @@ describe('端口清單來自 edition-profile', () => {
     expect(portVarsOf('intl').map((item) => item.key)).not.toContain('APPS_PORT');
 
     expect(portVarsOf('cn')).toEqual([
-      { key: 'WEB_PORT', service: 'web', fallback: 4210 },
+      { key: 'GATEWAY_INTERNAL_PORT', service: 'gateway-internal', fallback: 4210 },
       { key: 'API_PORT', service: 'api', fallback: 4420 },
       { key: 'APPS_PORT', service: 'apps', fallback: 4431 },
       { key: 'DB_PORT', service: 'db', fallback: 25432 },
@@ -165,7 +207,7 @@ describe('端口清單來自 edition-profile', () => {
 
     const cn = resolvePorts({}, 'cn');
     expect(cn.ports.map((item) => `${item.key}=${item.port}`)).toEqual([
-      'WEB_PORT=4210',
+      'GATEWAY_INTERNAL_PORT=4210',
       'API_PORT=4420',
       'APPS_PORT=4431',
       'DB_PORT=25432',

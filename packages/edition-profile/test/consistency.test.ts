@@ -170,7 +170,13 @@ const repoMap = parseRepoMapTable(readText('docs/architecture/REPO-MAP.md'));
 
 describe('掃描器本身', () => {
   it('compose 讀到五個服務', () => {
-    expect([...compose.keys()].sort()).toEqual(['api', 'apps', 'db', 'storage', 'web']);
+    expect([...compose.keys()].sort()).toEqual([
+      'api',
+      'apps',
+      'db',
+      'gateway-internal',
+      'storage',
+    ]);
   });
 
   it('compose 每個服務都讀到至少一條端口', () => {
@@ -179,16 +185,16 @@ describe('掃描器本身', () => {
     }
   });
 
-  it('.env.example 讀到現有六個端口變數', () => {
+  it('.env.example 讀到現有六個端口變數（入口已改名為 GATEWAY_INTERNAL_PORT）', () => {
     expect(
       [...envExample.keys()].filter((key) => key.endsWith('_PORT') || key.startsWith('PORT_')).sort(),
     ).toEqual([
       'API_PORT',
       'APPS_PORT',
       'DB_PORT',
+      'GATEWAY_INTERNAL_PORT',
       'PORT_MINIO_API',
       'PORT_MINIO_CONSOLE',
-      'WEB_PORT',
     ]);
   });
 
@@ -211,15 +217,29 @@ describe('與 docker-compose.yml 一致', () => {
     }
   });
 
+  /**
+   * 端口一定要用 `${envVar:-defaultPort}` 發佈 —— 這條不放寬。
+   *
+   * 唯一的例外是 S1-02（#78）改名：`gateway-internal` 的 `${GATEWAY_INTERNAL_PORT:-4210}`
+   * 之內再包一層舊名後備（`${…:-${WEB_PORT:-4210}}`），令只有舊 `WEB_PORT` 的 `.env`
+   * 仍然啟動到同一個端口。所以這裡接受兩種寫法，**但兩種都要求新變數名與預設值一模一樣**，
+   * 不是「見到 4210 就算」。
+   */
   it('每個 exists 容器的端口都用 ${envVar:-defaultPort} 發佈，預設值與設定檔相同', () => {
     for (const item of exists) {
       const entries = compose.get(item.composeService ?? '') ?? [];
 
       for (const port of item.ports) {
-        const expected = `\${${port.envVar}:-${port.defaultPort}}`;
-        const matched = entries.filter((entry) => entry.includes(expected));
+        const plain = `\${${port.envVar}:-${port.defaultPort}}`;
+        const withLegacy = `\${${port.envVar}:-\${WEB_PORT:-${port.defaultPort}}}`;
+        const matched = entries.filter(
+          (entry) => entry.includes(plain) || entry.includes(withLegacy),
+        );
 
-        expect(matched, `${item.name} 期待 ${expected}，實際 ${entries.join(' / ')}`).toHaveLength(1);
+        expect(
+          matched,
+          `${item.name} 期待 ${plain}（或舊名後備 ${withLegacy}），實際 ${entries.join(' / ')}`,
+        ).toHaveLength(1);
       }
     }
   });

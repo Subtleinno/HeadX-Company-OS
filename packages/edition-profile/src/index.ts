@@ -72,17 +72,18 @@ const EDITION_CODES: EditionCode[] = ['intl', 'cn'];
 
 /**
  * 容器清單，次序就是 REPO-MAP 表的次序，也決定了 `ports:check` 檢查端口的次序。
- * `exists` 的四個是現在真的存在於 `docker-compose.yml` 的；其餘是目標，未有容器。
+ * `exists` 的五個是現在真的存在於 `docker-compose.yml` 的；其餘是目標，未有容器。
  */
 export const CONTAINERS: ContainerSpec[] = [
   {
     name: 'gateway-internal',
     status: 'exists',
     kind: 'gateway',
-    // 目標名稱（S1-02）是 GATEWAY_INTERNAL_PORT，現在仍叫 WEB_PORT。
-    composeService: 'web',
+    // S1-02／#78：容器與變數都由 web／WEB_PORT 改名過來；舊名由 compose 與
+    // ports:check 接住（見 README 與 scripts/ports-check.mjs 的說明）。
+    composeService: 'gateway-internal',
     editions: ['intl', 'cn'],
-    ports: [{ envVar: 'WEB_PORT', defaultPort: 4210 }],
+    ports: [{ envVar: 'GATEWAY_INTERNAL_PORT', defaultPort: 4210 }],
   },
   {
     name: 'gateway-partner',

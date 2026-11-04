@@ -74,13 +74,17 @@ services:
       storage:
         condition: service_healthy
 
-  web:
+  # 內網入口（S1-02／#78）。原本叫 web；改名之後仍然是同一個 nginx 映像，
+  # 只是名字與端口變數改為 gateway-internal／GATEWAY_INTERNAL_PORT。
+  # 端口寫成 ${GATEWAY_INTERNAL_PORT:-${WEB_PORT:-4210}}：已有的 .env 只有
+  # WEB_PORT 時仍然在 4210 起來，不會因為改名而啟動失敗。
+  gateway-internal:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
     restart: unless-stopped
     ports:
-      - "127.0.0.1:${WEB_PORT:-4210}:80"
+      - "127.0.0.1:${GATEWAY_INTERNAL_PORT:-${WEB_PORT:-4210}}:80"
     depends_on:
       api:
         condition: service_healthy

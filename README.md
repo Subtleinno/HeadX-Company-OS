@@ -62,13 +62,18 @@ docker compose up -d --build
 
 | 服務 | `.env` 變數 | 預設 |
 | --- | --- | --- |
-| web | `WEB_PORT` | 4210 |
+| gateway-internal（原本叫 web） | `GATEWAY_INTERNAL_PORT` | 4210 |
 | api | `API_PORT` | 4420 |
+| apps（只屬大陸版，profile `apps`） | `APPS_PORT` | 4431 |
 | db | `DB_PORT` | 25432 |
 | storage（S3 API） | `PORT_MINIO_API` | 29000 |
 | storage（console） | `PORT_MINIO_CONSOLE` | 29001 |
 
-**目標端口表與版本差異以 `packages/edition-profile` 為準**：哪個版本有哪個容器、每個容器的端口與預設值都只寫在那裡，`docs/architecture/REPO-MAP.md` 的端口表與 `.env.example` 由 `npm test` 的一致性測試釘住，不會各說各話。上表是現況（真的存在的四個容器），目標容器（gateway、apps、portal）仍是 `planned`，未有容器。
+`WEB_PORT` 已改名為 `GATEWAY_INTERNAL_PORT`（S1-02）：只有舊名的 `.env` **不用改也可以照樣啟動**（compose 寫成 `${GATEWAY_INTERNAL_PORT:-${WEB_PORT:-4210}}`），`npm run ports:check` 會提示改名但不會因此失敗。
+
+內網入口（`gateway-internal`）在每一個轉發去後端的請求上寫入 `X-Company-OS-Entry: internal`，並**先覆寫**客戶端自帶的同名標頭，所以後端可以信任這個值；回應一律帶 `X-Content-Type-Options: nosniff`、`X-Frame-Options: DENY`、`Referrer-Policy: same-origin`（連 404 與 5xx 都有，全部 `always`）。夥伴與客戶兩個入口屬 S8-01，現時未存在。
+
+**目標端口表與版本差異以 `packages/edition-profile` 為準**：哪個版本有哪個容器、每個容器的端口與預設值都只寫在那裡，`docs/architecture/REPO-MAP.md` 的端口表與 `.env.example` 由 `npm test` 的一致性測試釘住，不會各說各話。上表是現況（真的存在的五個容器）；`gateway-partner`、`gateway-customer`、`cloudflared` 與兩個 portal 仍是 `planned`，未有容器。
 
 ## 檔案儲存
 

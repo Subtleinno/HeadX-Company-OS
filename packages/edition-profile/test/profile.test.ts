@@ -92,9 +92,9 @@ describe('容器清單', () => {
     ]);
   });
 
-  it('對應的 compose 服務名稱：web、api、apps、db、storage', () => {
+  it('對應的 compose 服務名稱：gateway-internal、api、apps、db、storage', () => {
     expect(CONTAINERS.filter((item) => item.status === 'exists').map((item) => item.composeService)).toEqual([
-      'web',
+      'gateway-internal',
       'api',
       'apps',
       'db',
@@ -131,7 +131,7 @@ describe('exists 容器的端口（ports:check 讀的就是這一組）', () => 
 
     expect(ports.map((item) => item.defaultPort)).toEqual([4210, 4420, 25432, 29000, 29001]);
     expect(ports.map((item) => item.envVar)).toEqual([
-      'WEB_PORT',
+      'GATEWAY_INTERNAL_PORT',
       'API_PORT',
       'DB_PORT',
       'PORT_MINIO_API',
@@ -139,9 +139,9 @@ describe('exists 容器的端口（ports:check 讀的就是這一組）', () => 
     ]);
   });
 
-  it('服務標籤：web、api、db、storage、storage console', () => {
+  it('服務標籤：gateway-internal、api、db、storage、storage console', () => {
     expect(existingPorts('intl').map((item) => item.service)).toEqual([
-      'web',
+      'gateway-internal',
       'api',
       'db',
       'storage',
@@ -151,7 +151,7 @@ describe('exists 容器的端口（ports:check 讀的就是這一組）', () => 
 
   it('國際版沒有 apps 容器，端口清單與開工前逐項相同', () => {
     expect(existingPorts('intl').map((item) => `${item.envVar}=${item.defaultPort}`)).toEqual([
-      'WEB_PORT=4210',
+      'GATEWAY_INTERNAL_PORT=4210',
       'API_PORT=4420',
       'DB_PORT=25432',
       'PORT_MINIO_API=29000',
@@ -161,7 +161,7 @@ describe('exists 容器的端口（ports:check 讀的就是這一組）', () => 
 
   it('大陸版多了 app-host：4431 排在自己的位置（#77）', () => {
     expect(existingPorts('cn').map((item) => `${item.envVar}=${item.defaultPort}`)).toEqual([
-      'WEB_PORT=4210',
+      'GATEWAY_INTERNAL_PORT=4210',
       'API_PORT=4420',
       'APPS_PORT=4431',
       'DB_PORT=25432',
@@ -169,7 +169,7 @@ describe('exists 容器的端口（ports:check 讀的就是這一組）', () => 
       'PORT_MINIO_CONSOLE=29001',
     ]);
     expect(existingPorts('cn').map((item) => item.service)).toEqual([
-      'web',
+      'gateway-internal',
       'api',
       'apps',
       'db',
