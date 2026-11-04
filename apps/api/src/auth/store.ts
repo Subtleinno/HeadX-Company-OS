@@ -240,3 +240,24 @@ export async function countFailedAttempts(
 
   return { count: row.count, oldestAt: row.oldest_at };
 }
+
+/**
+ * 把使用者的密碼雜湊換成新參數（issue #66）。
+ *
+ * 條件更新而不是盲目寫入：`expectedHash` 是登入時讀到的那一串，只有資料庫裡的
+ * 仍然是同一串才寫。若期間有人改了密碼，這裡會回 false 而不是把別人的新雜湊蓋掉。
+ * 單一句 UPDATE 本身是原子的，不會出現半寫入。
+ */
+export async function updatePasswordHash(
+  pool: Pool,
+  input: { userId: string; expectedHash: string; passwordHash: string },
+): Promise<boolean> {
+  const result = await pool.query(
+    `update app_user
+        set password_hash = $1
+      where id = $2 and password_hash = $3`,
+    [input.passwordHash, input.userId, input.expectedHash],
+  );
+
+  return (result.rowCount ?? 0) > 0;
+}

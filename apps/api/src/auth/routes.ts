@@ -4,7 +4,13 @@ import { writeAudit } from '../audit.js';
 import { getSignedInUser } from './current-user.js';
 import { isValidEmail, normalizeEmail } from './email.js';
 import { loginFailureTarget, readLoginHashKey } from './login-hash.js';
-import { hashPassword, validatePassword, verifyPassword } from './password.js';
+import {
+  hashPassword,
+  needsRehash,
+  parsePasswordHash,
+  validatePassword,
+  verifyPassword,
+} from './password.js';
 import { evaluateLockout, loginWindowStart } from './rate-limit.js';
 import {
   buildClearSessionCookie,
@@ -21,6 +27,7 @@ import {
   insertSession,
   revokeSession,
   toPublicUser,
+  updatePasswordHash,
   type SetupHooks,
   type UserRow,
 } from './store.js';
@@ -86,6 +93,82 @@ export function registerAuth(app: FastifyInstance, deps: AuthDeps): void {
 
   function sessionExpiry(at: Date): Date {
     return new Date(at.getTime() + sessionTtlMs);
+  }
+
+  /** PostgreSQL 的 SQLSTATE（例如 42501）。不是訊息本文，不含任何敏感內容。 */
+  function sqlStateOf(error: unknown): string | null {
+    if (typeof error !== 'object' || error === null || !('code' in error)) {
+      return null;
+    }
+
+    const code = (error as { code?: unknown }).code;
+    return typeof code === 'string' ? code : null;
+  }
+
+  /**
+   * 升級失敗要留痕，但「留痕」本身不可以令登入失敗。
+   * 只記原因與 SQLSTATE，不記密碼、salt、雜湊或資料庫原始訊息。
+   */
+  async function recordUpgradeFailure(
+    userId: string,
+    reason: 'hash_failed' | 'update_failed',
+    sqlState: string | null,
+  ): Promise<void> {
+    try {
+      await writeAudit(deps.pool, {
+        actorType: 'system',
+        actorId: 'password-upgrade',
+        action: 'auth.password_upgrade_failed',
+        target: userId,
+        detail: sqlState === null ? { reason } : { reason, sqlState },
+      });
+    } catch {
+      // 連審計都寫不進去：至少令它在進程輸出裡看得見，但仍然不影響登入。
+      console.error(
+        JSON.stringify({ event: 'password_upgrade_failed', reason: 'audit_unavailable' }),
+      );
+    }
+  }
+
+  /**
+   * 舊參數的密碼登入成功後，用新參數與**新 salt** 重新雜湊並寫回（issue #66）。
+   *
+   * 任何一步失敗都不阻止本次登入 —— 用戶剛剛證明自己是本人，不應該因為
+   * 一次寫入失敗而被擋在門外。失敗會寫一列審計，下次登入再試。
+   */
+  async function upgradePasswordHash(user: UserRow, password: string): Promise<void> {
+    let parts;
+
+    try {
+      parts = parsePasswordHash(user.password_hash);
+    } catch {
+      // 雜湊本身讀不懂：此刻它在 verifyPassword 已經回 false，走不到這裡。
+      return;
+    }
+
+    if (!needsRehash(parts)) {
+      return;
+    }
+
+    let passwordHash: string;
+
+    try {
+      passwordHash = await hashPassword(password);
+    } catch {
+      await recordUpgradeFailure(user.id, 'hash_failed', null);
+      return;
+    }
+
+    try {
+      // 條件更新：只有資料庫裡仍然是登入時讀到的那一串才會寫入。
+      await updatePasswordHash(deps.pool, {
+        userId: user.id,
+        expectedHash: user.password_hash,
+        passwordHash,
+      });
+    } catch (error) {
+      await recordUpgradeFailure(user.id, 'update_failed', sqlStateOf(error));
+    }
   }
 
   async function currentUser(request: FastifyRequest): Promise<UserRow | null> {
@@ -190,6 +273,9 @@ export function registerAuth(app: FastifyInstance, deps: AuthDeps): void {
 
       return reply.code(401).send({ error: 'invalid_credentials' });
     }
+
+    // 舊參數的雜湊在這裡換成新參數。失敗照樣放行，只是留下審計紀錄。
+    await upgradePasswordHash(user, password);
 
     const token = createSessionToken();
 
