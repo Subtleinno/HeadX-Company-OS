@@ -5,7 +5,7 @@ import { registerAuth } from './auth/routes.js';
 import { attachPoolErrorHandler, createDbCheck } from './db.js';
 import { DEFAULT_MAX_UPLOAD_BYTES, registerFiles } from './files/routes.js';
 import { migrate } from './migrate.js';
-import { loadModules } from './modules/registry.js';
+import { loadModules } from './modules/registry/index.js';
 import { registerModules } from './modules/routes.js';
 import type { Storage } from './storage/index.js';
 import { createStorageDiagnosis } from './storage/diagnose.js';
@@ -20,13 +20,13 @@ const pool = new Pool({
 });
 
 /**
- * 讀 modules/<id>/manifest.json。
+ * 讀 apps/<id>/manifest.json（R4）。
  * manifest 有問題就大聲失敗並結束 —— 這份清單就是「有哪些部門」，
  * 帶著一個壞掉的清單起服務，等於對老闆說錯話。
  * 一次列齊所有錯誤，修的時候不用重複啟動。
  */
 function loadModuleRegistry(): ReturnType<typeof loadModules> {
-  const dir = process.env.MODULES_DIR ?? '/app/modules';
+  const dir = process.env.MODULES_DIR ?? '/app/apps';
 
   try {
     const registry = loadModules(dir);

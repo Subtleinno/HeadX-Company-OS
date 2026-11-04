@@ -4,5 +4,8 @@
   "kind": "department",
   "department": "design",
   "order": 10,
-  "available": false
+  "available": false,
+  "route": "/design",
+  "exposure": "internal",
+  "sensitive": false
 }

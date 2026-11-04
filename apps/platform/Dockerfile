@@ -28,10 +28,21 @@ COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/apps/platform/package.json ./apps/platform/package.json
 COPY --from=build /app/apps/platform/dist ./apps/platform/dist
 COPY --from=build /app/db/migrations ./db/migrations
-COPY modules ./modules
 
-# 模組清單的位置；載入失敗就結束，不會起一個清單壞掉的服務。
-ENV MODULES_DIR=/app/modules
+# app 清單（manifest.json）由 repo 的 apps/<id>/ 直接搬進來（R4／issue #74）。
+# 逐個寫出來而不是 COPY apps ./apps：映像不應該帶著各 app 的原始碼。
+# Docker 的 COPY 不支援「只複製某個名稱的檔案」，所以新增一個 app 就要在這裡加一行；
+# apps/platform/test/modules/dockerfile-manifests.test.ts 會盯着兩邊是否一致，
+# 忘記加就會在 CI 紅，而不是等到上線才發現少了一個部門。
+COPY apps/boss/manifest.json ./apps/boss/manifest.json
+COPY apps/design/manifest.json ./apps/design/manifest.json
+COPY apps/sales/manifest.json ./apps/sales/manifest.json
+COPY apps/ops_finance/manifest.json ./apps/ops_finance/manifest.json
+COPY apps/hr/manifest.json ./apps/hr/manifest.json
+COPY apps/support/manifest.json ./apps/support/manifest.json
+
+# app 清單的位置；載入失敗就結束，不會起一個清單壞掉的服務。
+ENV MODULES_DIR=/app/apps
 
 EXPOSE 4420
 

@@ -4,5 +4,8 @@
   "kind": "console",
   "department": null,
   "order": 0,
-  "available": false
+  "available": false,
+  "route": "/boss",
+  "exposure": "internal",
+  "sensitive": true
 }

@@ -4,5 +4,8 @@
   "kind": "department",
   "department": "hr",
   "order": 40,
-  "available": false
+  "available": false,
+  "route": "/hr",
+  "exposure": "internal",
+  "sensitive": true
 }

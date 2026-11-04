@@ -13,10 +13,10 @@ import { createTempDatabase, type TempDatabase } from './temp-db';
 
 /**
  * GET /modules：誰見到哪些模組。
- * 用真的 Postgres（co_test_<隨機>）但模組清單讀 repo 內的 modules/，不是假資料。
+ * 用真的 Postgres（co_test_<隨機>）但模組清單讀 repo 內的 apps/，不是假資料。
  */
 const migrationsDir = resolve(process.cwd(), 'db/migrations');
-const modulesDir = resolve(process.cwd(), 'modules');
+const appsDir = resolve(process.cwd(), 'apps');
 const silent = (): void => undefined;
 const ok = async (): Promise<void> => undefined;
 
@@ -51,7 +51,7 @@ describe('GET /modules', () => {
 
     app = buildServer({ checkDb: ok, checkStorage: ok });
     registerAuth(app, { pool: db.pool, loginHashKey: 'test-only-login-hash-key-0123456789abcdef' });
-    registerModules(app, { registry: loadModules(modulesDir), pool: db.pool });
+    registerModules(app, { registry: loadModules(appsDir), pool: db.pool });
 
     await app.ready();
   });
@@ -134,8 +134,8 @@ describe('GET /modules', () => {
     ]);
 
     expect(response.body).not.toContain('manifest.json');
-    expect(response.body).not.toContain('/app/modules');
-    expect(response.body).not.toContain(modulesDir.replace(/\\/g, '/'));
+    expect(response.body).not.toContain('/app/apps');
+    expect(response.body).not.toContain(appsDir.replace(/\\/g, '/'));
   });
 
   it('design 員工：只見 design，看不到老闆台', async () => {

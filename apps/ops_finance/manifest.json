@@ -4,5 +4,8 @@
   "kind": "department",
   "department": "ops_finance",
   "order": 30,
-  "available": false
+  "available": false,
+  "route": "/ops-finance",
+  "exposure": "internal",
+  "sensitive": true
 }

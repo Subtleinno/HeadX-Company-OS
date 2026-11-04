@@ -4,5 +4,8 @@
   "kind": "department",
   "department": "support",
   "order": 50,
-  "available": false
+  "available": false,
+  "route": "/support",
+  "exposure": "internal",
+  "sensitive": false
 }

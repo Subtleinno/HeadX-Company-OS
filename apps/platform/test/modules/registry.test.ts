@@ -7,10 +7,10 @@ import { loadModules } from '../../src/modules/registry';
 /**
  * 模組註冊的驗證規則。
  *
- * 「有哪些部門」只有 modules/<id>/manifest.json 這一個來源，載入失敗就是啟動失敗，
+ * 「有哪些部門」只有 apps/<id>/manifest.json 這一個來源，載入失敗就是啟動失敗，
  * 所以每一條規則都要有一個會紅的案例，訊息要指出哪個檔、哪個欄位、為甚麼。
  */
-const repoModules = resolve(process.cwd(), 'modules');
+const repoApps = resolve(process.cwd(), 'apps');
 
 const tempDirs: string[] = [];
 
@@ -29,8 +29,13 @@ async function tempRoot(): Promise<string> {
   return dir;
 }
 
+/**
+ * 一份合法的 manifest（R4 之後是九個欄位）。
+ * route 預設由 id 推出：這樣每條測試只會撞到它想驗的那一條規則，
+ * 不會因為兩個 fixture 用了同一個 route 而多報一條重複。
+ */
 function manifest(overrides: Record<string, unknown> = {}): Record<string, unknown> {
-  return {
+  const base: Record<string, unknown> = {
     id: 'design',
     title: '設計／內容／網站',
     kind: 'department',
@@ -38,6 +43,13 @@ function manifest(overrides: Record<string, unknown> = {}): Record<string, unkno
     order: 10,
     available: false,
     ...overrides,
+  };
+
+  return {
+    ...base,
+    route: overrides.route ?? `/${String(base.id)}`,
+    exposure: overrides.exposure ?? 'internal',
+    sensitive: overrides.sensitive ?? false,
   };
 }
 
@@ -58,8 +70,8 @@ async function errorFrom(root: string): Promise<string> {
 }
 
 describe('模組註冊：六個初始 manifest', () => {
-  it('載入 repo 內的 modules/：六個，依 order 排序', () => {
-    const registry = loadModules(repoModules);
+  it('載入 repo 內的 apps/：六個，依 order 排序', () => {
+    const registry = loadModules(repoApps);
 
     expect(registry.listModules().map((item) => item.id)).toEqual([
       'boss',
@@ -74,22 +86,33 @@ describe('模組註冊：六個初始 manifest', () => {
   });
 
   it('六個都是 available: false，未建立的部門軟件不會假裝可用', () => {
-    const registry = loadModules(repoModules);
+    const registry = loadModules(repoApps);
 
     expect(registry.listModules().every((item) => item.available === false)).toBe(true);
   });
 
   it('boss 是唯一的 console，department 是 null', () => {
-    const registry = loadModules(repoModules);
+    const registry = loadModules(repoApps);
     const consoles = registry.listModules().filter((item) => item.kind === 'console');
 
-    expect(consoles).toEqual([
+    // 只比對對外公開的六個欄位：route／exposure／sensitive 是暫定值，
+    // 不適合寫死在這裡當成規格（它們的驗證在 apps-layout.test.ts）。
+    expect(
+      consoles.map((item) => ({
+        id: item.id,
+        title: item.title,
+        kind: item.kind,
+        department: item.department,
+        order: item.order,
+        available: item.available,
+      })),
+    ).toEqual([
       { id: 'boss', title: '老闆台', kind: 'console', department: null, order: 0, available: false },
     ]);
   });
 
   it('departmentKeys() 只有五個部門，不含老闆台', () => {
-    const registry = loadModules(repoModules);
+    const registry = loadModules(repoApps);
 
     expect(registry.departmentKeys()).toEqual(['design', 'sales', 'ops_finance', 'hr', 'support']);
   });
@@ -113,7 +136,7 @@ describe('模組註冊：刪資料夾就是卸載', () => {
     expect(loadModules(root).departmentKeys()).toEqual(['design']);
   });
 
-  it('空的 modules/ 目錄：零個模組，不是崩潰', async () => {
+  it('空的 apps/ 目錄：零個模組，不是崩潰', async () => {
     const root = await tempRoot();
 
     expect(loadModules(root).listModules()).toEqual([]);
@@ -127,7 +150,7 @@ describe('模組註冊：驗證規則（每條一個失敗案例）', () => {
 
     const message = await errorFrom(root);
 
-    expect(message).toContain('modules/design/manifest.json');
+    expect(message).toContain('apps/design/manifest.json');
     expect(message).toContain('JSON');
   });
 
@@ -139,7 +162,7 @@ describe('模組註冊：驗證規則（每條一個失敗案例）', () => {
 
     const message = await errorFrom(root);
 
-    expect(message).toContain('modules/design/manifest.json');
+    expect(message).toContain('apps/design/manifest.json');
     expect(message).toContain('title');
   });
 
@@ -261,11 +284,11 @@ describe('模組註冊：驗證規則（每條一個失敗案例）', () => {
 
     const message = await errorFrom(root);
 
-    expect(message).toContain('modules/design');
+    expect(message).toContain('apps/design');
     expect(message).toContain('manifest.json');
   });
 
-  it('modules/ 下有孤立檔案', async () => {
+  it('apps/ 下有孤立檔案', async () => {
     const root = await tempRoot();
     await writeModule(root, 'design', manifest());
     await writeFile(join(root, 'README.md'), '# 不應該在這裡\n', 'utf8');
@@ -284,6 +307,6 @@ describe('模組註冊：驗證規則（每條一個失敗案例）', () => {
     const message = await errorFrom(root);
 
     expect(message).toContain('order');
-    expect(message).toContain('modules/sales');
+    expect(message).toContain('apps/sales');
   });
 });

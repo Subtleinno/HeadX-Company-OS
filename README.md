@@ -149,12 +149,29 @@ Migration 是 `db/migrations/NNNN_說明.sql` 的純 SQL，API 啟動時自動�
 
 ## 模組
 
-「有哪些部門軟件」只有一個來源：`modules/<id>/manifest.json`（R4 之後移到 `apps/<app>/manifest.json`）。加資料夾就是安裝，刪資料夾就是卸載，重啟 api 生效（沒有熱重載）。
+「有哪些部門軟件」只有一個來源：`apps/<id>/manifest.json`。加資料夾就是安裝，刪資料夾就是卸載，重啟 api 生效（沒有熱重載）。
 
-- 六個欄位：`id`（等於資料夾名）、`title`、`kind`（`console` 或 `department`）、`department`（部門模組必填，老闆台是 `null`）、`order`、`available`。
+`apps/` 底下同時住兩種東西，載入器靠檔案分辨：有 `manifest.json` 的是 app（模組）；只有 `package.json` 的是服務（`apps/platform`、`apps/web`），不是模組，忽略；兩者都沒有就是孤立資料夾，啟動失敗。
+
+- 九個欄位：`id`（等於資料夾名）、`title`、`kind`（`console` 或 `department`）、`department`（部門模組必填，老闆台是 `null`）、`order`、`available`、`route`、`exposure`、`sensitive`。
+- `route`：這個 app 掛在哪條路徑，必須以 `/` 開頭，而且所有 manifest 之間不可重複（兩條一樣的路徑，等於有一條永遠到不了）。
+- `exposure`：`internal`、`partner`、`customer` 其中之一，省略時當作 `internal`。
+- `sensitive`：`true` 或 `false`，**沒有預設值** —— 未講不可以當成不敏感。
+- 現時六個 manifest 的 `route`、`exposure`、`sensitive` 都是**暫定值，等 app 設計討論後確認**：（見下表）
 - `available: false` 代表那個軟件尚未建立，網站會照實說，不會給一個按了沒反應的入口。
-- 載入時驗證：JSON 合法、欄位齊全、無未知欄位、id 等於資料夾名且格式正確、id 與 department 不重複、只有一個 console、`modules/` 下沒有孤立檔案。任何一項不合格就印出哪個檔、哪個欄位，並以 exit 1 結束。
-- `GET /modules`：未登入 401；老闆見全部並依 `order` 排序；員工只見到自己部門那一個。
+- 載入時驗證：JSON 合法、欄位齊全、無未知欄位、id 等於資料夾名且格式正確、id／department／route 不重複、只有一個 console、`apps/` 下沒有孤立檔案或孤立資料夾。任何一項不合格就印出哪個檔、哪個欄位，並以 exit 1 結束。
+- `GET /modules`：未登入 401；老闆見全部並依 `order` 排序；員工只見到自己部門那一個。回應仍然只有六個欄位（`id`、`title`、`kind`、`department`、`order`、`available`），`route`、`exposure`、`sensitive` 不對外輸出。
+
+| id | `route` | `exposure` | `sensitive` |
+|---|---|---|---|
+| `boss` | `/boss` | `internal` | `true` |
+| `design` | `/design` | `internal` | `false` |
+| `sales` | `/sales` | `internal` | `false` |
+| `ops_finance` | `/ops-finance` | `internal` | `true` |
+| `hr` | `/hr` | `internal` | `true` |
+| `support` | `/support` | `internal` | `false` |
+
+新增一個 app 時：在 `apps/<id>/` 放 `manifest.json`，並在 `apps/platform/Dockerfile` 加一行 `COPY apps/<id>/manifest.json ./apps/<id>/manifest.json`（Docker 的 COPY 不支援只複製某個名稱的檔案）。忘記加的話 `apps/platform/test/modules/dockerfile-manifests.test.ts` 會紅。
 
 ## 測試
 

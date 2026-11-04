@@ -33,7 +33,7 @@ company-os/
 ├── ops/  dev/  docker/  e2e/  docs/
 ```
 
-manifest 欄位：`id`、`title`、`kind`、`department`、`order`、`available`，加上 `route`、`exposure`、`sensitive`。端口不寫在 manifest，由 edition-profile 與 REPO-MAP 的容器端口表決定。載入器目前拒絕未知欄位，由 R4 放寬並加測試。
+manifest 欄位：`id`、`title`、`kind`、`department`、`order`、`available`，加上 `route`、`exposure`、`sensitive`。端口不寫在 manifest，由 edition-profile 與 REPO-MAP 的容器端口表決定。R4 已完成：載入器在 `apps/platform/src/modules/registry/index.ts`，九個欄位全部納入驗證，未知欄位仍然拒絕。
 
 ## 共用 packages
 

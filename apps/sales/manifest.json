@@ -4,5 +4,8 @@
   "kind": "department",
   "department": "sales",
   "order": 20,
-  "available": false
+  "available": false,
+  "route": "/sales",
+  "exposure": "internal",
+  "sensitive": false
 }
