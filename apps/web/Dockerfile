@@ -12,7 +12,10 @@ RUN npm run build --workspace @company-os/web
 
 FROM nginx:alpine
 
-COPY apps/web/nginx.conf /etc/nginx/conf.d/default.conf
+# nginx.conf 是模板：映像啟動時由官方 entrypoint 用 envsubst 換掉 ${API_UPSTREAM}，
+# 結果寫到 /etc/nginx/conf.d/default.conf。要指向另一組 api 時只改環境變數。
+ENV API_UPSTREAM=api:4420
+COPY apps/web/nginx.conf /etc/nginx/templates/default.conf.template
 COPY --from=build /app/apps/web/dist /usr/share/nginx/html
 
 EXPOSE 80

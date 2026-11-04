@@ -1,88 +1,126 @@
 import { useEffect, useState } from 'react';
+import { fetchAuthState, type AuthState, type PublicUser } from './api';
+import { navigate, useRoute } from './router';
+import { HomeScreen } from './screens/HomeScreen';
+import { LoginScreen } from './screens/LoginScreen';
+import { SetupScreen } from './screens/SetupScreen';
+import { ConnectionErrorScreen, LoadingScreen } from './screens/StatusScreens';
 
-type ErrorReason = 'api' | 'db';
+/**
+ * 外殼的第一層：開機問一次 API，由答案決定畫面。
+ *
+ * 前端不自己記「有沒有老闆」：`setupRequired` 每次都問 `/api/auth/state`，
+ * 因為誰先呼叫 setup 誰就是老闆，這件事只有伺服器知道。
+ */
 
-type ApiState =
+type LoadState =
   | { kind: 'loading' }
-  | { kind: 'ok' }
-  | { kind: 'error'; reason: ErrorReason; detail: string };
+  | { kind: 'unreachable' }
+  | { kind: 'ready'; auth: AuthState };
 
-class HealthError extends Error {
-  readonly reason: ErrorReason;
+type Screen = 'loading' | 'unreachable' | 'setup' | 'login' | 'home';
 
-  constructor(message: string, reason: ErrorReason) {
-    super(message);
-    this.reason = reason;
-  }
-}
+const ROUTE_OF: Record<'setup' | 'login' | 'home', '/' | '/login' | '/setup'> = {
+  setup: '/setup',
+  login: '/login',
+  home: '/',
+};
 
-function isHealthy(value: unknown): boolean {
-  if (typeof value !== 'object' || value === null) {
-    return false;
-  }
-
-  const body = value as { status?: unknown; checks?: unknown };
-  if (body.status !== 'ok' || typeof body.checks !== 'object' || body.checks === null) {
-    return false;
+function screenOf(load: LoadState): Screen {
+  if (load.kind === 'loading') {
+    return 'loading';
   }
 
-  return (body.checks as { db?: unknown }).db === 'ok';
+  if (load.kind === 'unreachable') {
+    return 'unreachable';
+  }
+
+  if (load.auth.signedIn && load.auth.user !== undefined) {
+    return 'home';
+  }
+
+  return load.auth.setupRequired ? 'setup' : 'login';
 }
 
 export function App() {
-  const [apiState, setApiState] = useState<ApiState>({ kind: 'loading' });
+  const [load, setLoad] = useState<LoadState>({ kind: 'loading' });
+  const [attempt, setAttempt] = useState(0);
+  const [notice, setNotice] = useState<string | null>(null);
+  const route = useRoute();
+  const screen = screenOf(load);
 
   useEffect(() => {
     let cancelled = false;
 
-    fetch('/api/health', { headers: { accept: 'application/json' } })
-      .then(async (response) => {
-        if (response.status === 503) {
-          throw new HealthError('HTTP 503', 'db');
-        }
+    setLoad({ kind: 'loading' });
 
-        if (!response.ok) {
-          throw new HealthError(`HTTP ${response.status}`, 'api');
-        }
+    void fetchAuthState().then((result) => {
+      if (cancelled) {
+        return;
+      }
 
-        const body: unknown = await response.json();
-        if (!isHealthy(body)) {
-          throw new HealthError('回應格式不正確', 'api');
-        }
+      if (result.ok) {
+        setLoad({ kind: 'ready', auth: result.data });
+        return;
+      }
 
-        if (!cancelled) {
-          setApiState({ kind: 'ok' });
-        }
-      })
-      .catch((error: unknown) => {
-        if (!cancelled) {
-          setApiState({
-            kind: 'error',
-            reason: error instanceof HealthError ? error.reason : 'api',
-            detail: error instanceof Error ? error.message : '未知錯誤',
-          });
-        }
-      });
+      // 網絡錯誤與 5xx 都是「連不到」；不顯示空白頁，也不假裝未開機。
+      setLoad({ kind: 'unreachable' });
+    });
 
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [attempt]);
 
-  return (
-    <main className="page">
-      <section className="hero">
-        <h1 className="title">company-os</h1>
-        <div className="rule" aria-hidden="true" />
-        <p className={`status status--${apiState.kind}`} role="status" aria-live="polite">
-          <span className="dot" aria-hidden="true" />
-          {apiState.kind === 'loading' && '正在檢查 API'}
-          {apiState.kind === 'ok' && 'API 正常'}
-          {apiState.kind === 'error' &&
-            (apiState.reason === 'db' ? 'API 未就緒（資料庫）' : 'API 無法連線')}
-        </p>
-        {apiState.kind === 'error' && <p className="detail">{apiState.detail}</p>}
-      </section>
-    </main>
-  );
+  // 網址只是畫面的鏡子：畫面定了就把 hash 對齊，重新載入仍然停在同一個地方。
+  // 比對原始 hash 而不是解析後的 route，空 hash 也要補成 #/。
+  useEffect(() => {
+    if (screen !== 'setup' && screen !== 'login' && screen !== 'home') {
+      return;
+    }
+
+    const target = ROUTE_OF[screen];
+
+    if (window.location.hash !== `#${target}`) {
+      navigate(target);
+    }
+  }, [screen, route]);
+
+  function signedIn(user: PublicUser): void {
+    setNotice(null);
+    setLoad({ kind: 'ready', auth: { setupRequired: false, signedIn: true, user } });
+  }
+
+  function signedOut(): void {
+    setNotice(null);
+    setLoad({ kind: 'ready', auth: { setupRequired: false, signedIn: false } });
+  }
+
+  function alreadySetUp(): void {
+    setNotice('已經有老闆帳戶，請登入。');
+    setLoad({ kind: 'ready', auth: { setupRequired: false, signedIn: false } });
+  }
+
+  if (screen === 'loading') {
+    return <LoadingScreen />;
+  }
+
+  if (screen === 'unreachable') {
+    return <ConnectionErrorScreen onRetry={() => setAttempt((current) => current + 1)} />;
+  }
+
+  if (load.kind !== 'ready') {
+    return <LoadingScreen />;
+  }
+
+  if (screen === 'home' && load.auth.user !== undefined) {
+    return <HomeScreen user={load.auth.user} onSignedOut={signedOut} />;
+  }
+
+  if (screen === 'setup') {
+    return <SetupScreen onCreated={signedIn} onAlreadySetUp={alreadySetUp} />;
+  }
+
+  return <LoginScreen notice={notice} onSignedIn={signedIn} />;
 }

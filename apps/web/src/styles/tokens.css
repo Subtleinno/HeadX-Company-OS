@@ -1,0 +1,58 @@
+/*
+ * 設計 token。整個 apps/web 只有這個檔案可以出現色碼；
+ * 其他 CSS 一律用 var(--hx-*)，由 apps/web/test/gates.test.ts 把關。
+ */
+:root {
+  /* 色彩 */
+  --hx-bg-primary: #ffffff;
+  --hx-bg-secondary: #f5f5f7;
+  --hx-bg-tertiary: #e8e8ed;
+  --hx-text-primary: #1d1d1f;
+  --hx-text-secondary: #68686c;
+  --hx-accent: #000000;
+  --hx-accent-text: #ffffff;
+  --hx-border: #d2d2d7;
+  --hx-hairline: rgba(0, 0, 0, 0.12);
+  /* 只可以做邊框與填色：在白底上對比 3.5:1，不夠當文字。 */
+  --hx-danger: #ff3b30;
+  /* 錯誤文字專用：白底 5.4:1，過 4.5:1。 */
+  --hx-danger-text: #d70015;
+  --hx-warning: #ff9500;
+  --hx-success: #34c759;
+  /* 只可以做品牌標誌那一個 8×8 方塊。 */
+  --hx-brand-green: #b8f36b;
+
+  /* 圓角 */
+  --hx-radius-sm: 8px;
+  --hx-radius-md: 12px;
+  --hx-radius-lg: 16px;
+  --hx-radius-xl: 20px;
+
+  /* 尺寸 */
+  --hx-size-control: 36px;
+  --hx-size-touch: 44px;
+  --hx-size-toolbar: 52px;
+  --hx-size-sidebar: 300px;
+
+  /* 間距 */
+  --hx-space-1: 4px;
+  --hx-space-2: 8px;
+  --hx-space-3: 12px;
+  --hx-space-4: 16px;
+  --hx-space-5: 20px;
+  --hx-space-6: 24px;
+  --hx-space-7: 32px;
+  --hx-space-8: 40px;
+
+  /* 字型：只用系統字體，不下載任何字體檔。 */
+  --hx-font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+  --hx-font-title: 700 28px/34px;
+  --hx-font-headline: 600 17px/22px;
+  --hx-font-body: 400 17px/22px;
+  --hx-font-footnote: 400 13px/18px;
+
+  /* 動效 */
+  --hx-motion-fast: 0.12s;
+  --hx-motion-base: 0.15s;
+  --hx-ease: cubic-bezier(0.2, 0, 0, 1);
+}

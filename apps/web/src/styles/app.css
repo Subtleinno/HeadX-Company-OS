@@ -1,0 +1,266 @@
+/*
+ * 外殼版面。顏色、字級、間距一律用 tokens.css 的 var(--hx-*)，
+ * 這裡不出現任何色碼（apps/web/test/gates.test.ts 會讀檔檢查）。
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--hx-bg-primary);
+  color: var(--hx-text-primary);
+  font-family: var(--hx-font-family);
+  font-size: 17px;
+  line-height: 22px;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+button,
+input {
+  font-family: inherit;
+}
+
+/* 每一個互動元素都有同一個 focus ring。 */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--hx-accent);
+  outline-offset: 2px;
+}
+
+.screen {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  padding: var(--hx-space-6);
+}
+
+.screen__status {
+  margin: 0;
+  color: var(--hx-text-secondary);
+  font: var(--hx-font-body) var(--hx-font-family);
+}
+
+.card {
+  width: 100%;
+  max-width: 400px;
+  padding: var(--hx-space-7);
+  border: 1px solid var(--hx-hairline);
+  border-radius: var(--hx-radius-lg);
+  background: var(--hx-bg-primary);
+}
+
+.card__title {
+  margin: 0 0 var(--hx-space-3);
+  font: var(--hx-font-title) var(--hx-font-family);
+}
+
+.card__description {
+  margin: 0 0 var(--hx-space-6);
+  color: var(--hx-text-secondary);
+  font: var(--hx-font-body) var(--hx-font-family);
+}
+
+.form {
+  display: grid;
+  gap: var(--hx-space-4);
+}
+
+.field {
+  display: grid;
+  gap: var(--hx-space-2);
+}
+
+.field__label {
+  color: var(--hx-text-primary);
+  font: var(--hx-font-footnote) var(--hx-font-family);
+  font-weight: 600;
+}
+
+.field__row {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+}
+
+.input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: var(--hx-size-touch);
+  padding: 0 var(--hx-space-3);
+  border: 1px solid var(--hx-border);
+  border-radius: var(--hx-radius-md);
+  background: var(--hx-bg-primary);
+  color: var(--hx-text-primary);
+  font: var(--hx-font-body) var(--hx-font-family);
+  transition: border-color var(--hx-motion-fast) var(--hx-ease);
+}
+
+.input[aria-invalid='true'] {
+  border-color: var(--hx-danger);
+}
+
+.field__error {
+  margin: 0;
+  color: var(--hx-danger-text);
+  font: var(--hx-font-footnote) var(--hx-font-family);
+}
+
+.form__error {
+  margin: 0;
+  color: var(--hx-danger-text);
+  font: var(--hx-font-footnote) var(--hx-font-family);
+}
+
+.notice {
+  margin: 0 0 var(--hx-space-4);
+  padding: var(--hx-space-3);
+  border: 1px solid var(--hx-hairline);
+  border-radius: var(--hx-radius-sm);
+  color: var(--hx-text-secondary);
+  font: var(--hx-font-footnote) var(--hx-font-family);
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--hx-size-touch);
+  padding: 0 var(--hx-space-4);
+  border: 1px solid transparent;
+  border-radius: var(--hx-radius-md);
+  font: var(--hx-font-headline) var(--hx-font-family);
+  cursor: pointer;
+  transition:
+    background-color var(--hx-motion-fast) var(--hx-ease),
+    color var(--hx-motion-fast) var(--hx-ease);
+}
+
+.button:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.button--primary {
+  width: 100%;
+  background: var(--hx-accent);
+  color: var(--hx-accent-text);
+}
+
+.button--text {
+  min-width: var(--hx-size-touch);
+  padding: 0 var(--hx-space-2);
+  background: transparent;
+  color: var(--hx-accent);
+  font: var(--hx-font-footnote) var(--hx-font-family);
+}
+
+.button--text:hover:not(:disabled) {
+  background: var(--hx-bg-secondary);
+}
+
+/* 首頁骨架：頂欄 + 內容，沒有任何假卡片。 */
+.shell {
+  min-height: 100vh;
+  background: var(--hx-bg-primary);
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--hx-space-4);
+  height: var(--hx-size-toolbar);
+  padding: 0 var(--hx-space-6);
+  border-bottom: 1px solid var(--hx-hairline);
+}
+
+.toolbar__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+  font: var(--hx-font-headline) var(--hx-font-family);
+}
+
+.brand__mark {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: var(--hx-brand-green);
+}
+
+.toolbar__account {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+  min-width: 0;
+}
+
+.toolbar__name {
+  overflow: hidden;
+  color: var(--hx-text-secondary);
+  font: var(--hx-font-footnote) var(--hx-font-family);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home {
+  max-width: 720px;
+  padding: var(--hx-space-8) var(--hx-space-6);
+}
+
+.home__title {
+  margin: 0 0 var(--hx-space-4);
+  font: var(--hx-font-title) var(--hx-font-family);
+}
+
+.home__empty {
+  margin: 0;
+  padding-top: var(--hx-space-4);
+  border-top: 1px solid var(--hx-hairline);
+  color: var(--hx-text-secondary);
+  font: var(--hx-font-body) var(--hx-font-family);
+}
+
+.home__error {
+  margin: var(--hx-space-4) 0 0;
+  color: var(--hx-danger-text);
+  font: var(--hx-font-footnote) var(--hx-font-family);
+}
+
+@media (max-width: 480px) {
+  .screen {
+    padding: var(--hx-space-4);
+  }
+
+  .card {
+    padding: var(--hx-space-6);
+  }
+
+  .toolbar {
+    padding: 0 var(--hx-space-4);
+  }
+
+  .home {
+    padding: var(--hx-space-6) var(--hx-space-4);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none;
+    animation: none;
+  }
+}
