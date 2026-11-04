@@ -45,7 +45,7 @@ services:
   api:
     build:
       context: .
-      dockerfile: apps/api/Dockerfile
+      dockerfile: apps/platform/Dockerfile
     restart: unless-stopped
     environment:
       PORT: "4420"

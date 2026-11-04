@@ -99,7 +99,7 @@ describe('scrypt 參數（issue #66）', () => {
   });
 
   it('參數只在 password.ts 一處定義，其他地方不得 hardcode', () => {
-    const root = join(process.cwd(), 'apps', 'api', 'src');
+    const root = join(process.cwd(), 'apps', 'platform', 'src');
     const offenders: string[] = [];
 
     const walk = (dir: string): void => {

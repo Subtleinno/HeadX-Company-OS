@@ -110,7 +110,7 @@ npm run storage:smoke -- verify
 
 - 密碼用 scrypt 雜湊；session 是隨機 token，資料庫只存它的 SHA-256。
 - **目前參數**：`N=131072`（2^17）、`r=8`、`p=1`、`keylen=64`、`maxmem=138412032`（132 MiB），
-  只在 `apps/api/src/auth/password.ts` 的 `SCRYPT_PARAMS` 定義一次，其他地方不得 hardcode。
+  只在 `apps/platform/src/auth/password.ts` 的 `SCRYPT_PARAMS` 定義一次，其他地方不得 hardcode。
   - `maxmem` 是 132 MiB 而不是 128 MiB：`128 × N × r` 只是資料本身的大小，OpenSSL 另外要
     `128 × r × (N + p + 2)`，比 128 MiB 多 3 KiB。用 128 MiB 會在第一個密碼就拋
     `ERR_CRYPTO_INVALID_SCRYPT_PARAMS`，即整個密碼功能起不來。

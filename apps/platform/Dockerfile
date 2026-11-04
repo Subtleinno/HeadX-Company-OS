@@ -3,15 +3,15 @@ FROM node:26.13.0-alpine AS build
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-# apps/api/tsconfig.json 繼承根目錄的 base；沒有這個檔，tsc 會以 TS5083 失敗。
+# apps/platform/tsconfig.json 繼承根目錄的 base；沒有這個檔，tsc 會以 TS5083 失敗。
 COPY tsconfig.base.json ./
-COPY apps/api/package.json apps/api/package.json
+COPY apps/platform/package.json apps/platform/package.json
 COPY apps/web/package.json apps/web/package.json
 RUN npm ci
 
-COPY apps/api apps/api
+COPY apps/platform apps/platform
 COPY db/migrations db/migrations
-RUN npm run build --workspace @company-os/api
+RUN npm run build --workspace @company-os/platform
 RUN npm prune --omit=dev
 
 FROM node:26.13.0-alpine AS runtime
@@ -21,8 +21,8 @@ WORKDIR /app
 ENV NODE_ENV=production
 
 COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/apps/api/package.json ./apps/api/package.json
-COPY --from=build /app/apps/api/dist ./apps/api/dist
+COPY --from=build /app/apps/platform/package.json ./apps/platform/package.json
+COPY --from=build /app/apps/platform/dist ./apps/platform/dist
 COPY --from=build /app/db/migrations ./db/migrations
 COPY modules ./modules
 
@@ -36,4 +36,4 @@ HEALTHCHECK --interval=10s --timeout=3s --start-period=10s --retries=5 \
 
 USER node
 
-CMD ["node", "apps/api/dist/server.js"]
+CMD ["node", "apps/platform/dist/server.js"]
