@@ -1,13 +1,13 @@
 # 程式碼地圖與模組化規則
 
-狀態：設計稿（2026-11-04）。決策見 `docs/product/DECISIONS.md` 的 C31 至 C33。搜遷由 R1 至 R6 切片執行，在它們合併之前，現有程式碼仍是單一 api 加單一 web。
+狀態：設計稿（2026-11-04）。決策見 `docs/product/DECISIONS.md` 的 C31 至 C33。搬遷由 R1 至 R6 切片執行，在它們合併之前，現有程式碼仍是單一 api 加單一 web。入口、容器與端口表在 `docs/architecture/REPO-MAP.md`；這份只放目錄、模組與邊界規則，兩處不重複。
 
 ## 原則
 
 1. 邊界靠程式碼規則，不靠容器數量。容器是打包選擇，按版本 profile 組合。
 2. 底座與 UI 基礎共用，部門 app 只寫自己的流程。
 3. 每個模組只經 `index.ts` 對外，內部檔案不許外部 import。
-4. 搜動不改行為：搜動前後同一組測試全過，一片一個 PR。
+4. 搬動不改行為：搬動前後同一組測試全過，一片一個 PR。
 
 ## 目錄
 
@@ -33,6 +33,8 @@ company-os/
 ├── ops/  dev/  docker/  e2e/  docs/
 ```
 
+manifest 欄位：`id`、`title`、`kind`、`department`、`order`、`available`，加上 `route`、`exposure`、`sensitive`。端口不寫在 manifest，由 edition-profile 與 REPO-MAP 的容器端口表決定。載入器目前拒絕未知欄位，由 R4 放寬並加測試。
+
 ## 共用 packages
 
 | package | 內容 | 規則 |
@@ -41,7 +43,7 @@ company-os/
 | `platform-kit` | 各 app 呼叫 platform 的客戶端、session 驗證 | 只依賴 contracts |
 | `policy` | 權限引擎 | 純函數，不碰資料庫 |
 | `db-kit` | 資料庫連線、migration 執行器 | 只有 platform 與 app-host 可用 |
-| `edition-profile` | 國際版／大陸版的啟用項目（入口、渠道、預設語言、容器組合） | 版本差異只寫在這裡，app 內不寫「如果是大陸版」 |
+| `edition-profile` | 國際版／大陸版的啟用項目（入口、渠道、預設語言、容器組合、端口） | 版本差異只寫在這裡，app 內不寫「如果是大陸版」 |
 | `design-tokens` | 色字間距 | 生成 CSS |
 | `ui-kit` | 共用元件 | 不認識任何部門 |
 | `app-shell` | 頁面外殼、導航、登入守衛、空狀態與錯誤畫面 | 只依賴 ui-kit、platform-kit、i18n |
@@ -87,11 +89,9 @@ company-os/
 | customer-portal | 無 | 有 | customer-portal |
 | Postgres、MinIO | 有 | 有 | — |
 
-每個容器的主機端口只綁本機，gateway-internal 綁管理者選定的 LAN 位址。端口表由 R6 更新；在它合併之前，REPO-MAP 現有的端口表仍是現況，而「端口按容器、不按 app」的規則以 C32 為準。
+## 搬遷切片
 
-## 搜遷切片
-
-每片不改行為、一個 PR、前後同一組測試全過。詳細驗收在建立 issue 時才寫。
+每片不改行為、一個 PR、前後同一組測試全過。詳細驗收在建立 issue 時才寫。R1 至 R6 取代原來的 S1-01。
 
 | 切片 | 內容 | 風險 |
 |---|---|---|
@@ -100,7 +100,7 @@ company-os/
 | R3 | 拆 `apps/web`：登入、首次開機、外殼歸 platform，「今日」歸 boss-portal；抽出 ui-kit、app-shell、design-tokens、i18n | 中 |
 | R4 | `modules/<dept>/manifest.json` 移成 `apps/<app>/manifest.json`，載入器移到 platform 的 registry，放寬欄位並加測試 | 中 |
 | R5 | migration 執行器同時支援舊的平目錄與新的每 schema 編號（先做小實驗，確認既有三個 migration 不受影響） | 中，最需要先驗證 |
-| R6 | app-host、compose 多服務骨架、gateway-internal 綁 LAN 位址、edition-profile（大陸版與國際版）、端口表更新 | 中 |
+| R6 | app-host、compose 多服務骨架、edition-profile（大陸版與國際版）、按容器的端口表與 `ports:check` 對照 | 中 |
 
 ## 測試與交接
 

@@ -1,6 +1,6 @@
 # Company OS 全盤計劃
 
-狀態：草稿。本文件是計劃的 source of truth。一個真相表在 `docs/INDEX.md`，決策日誌在 `docs/product/DECISIONS.md`，目錄結構、入口與端口在 `docs/architecture/REPO-MAP.md`，每個 app 的設計在 `apps/<app>/DESIGN.md`。
+狀態：草稿。本文件是計劃的 source of truth。一個真相表在 `docs/INDEX.md`，決策日誌在 `docs/product/DECISIONS.md`，目錄、模組與邊界規則在 `docs/architecture/CODE-MAP.md`，入口、容器與端口表在 `docs/architecture/REPO-MAP.md`，每個 app 的設計在 `apps/<app>/DESIGN.md`。
 
 版本：2026-11-04　撰寫：Company OS 開發管理者
 讀者：老闆（看第 1、2、13、15 節）、ZCode（QA／QC）、WorkBuddy（實作）
@@ -9,10 +9,11 @@
 
 Company OS 是 company starter：任何一間公司裝好 Docker 就能開始運作的整套公司軟件。全部自架，裝完是空的，由老闆建立帳戶後再設定公司。
 
-- 一部機器 = 一間公司。香港與大陸各裝一份，是兩間獨立公司，帳戶分開；往來當作兩間公司的交易，用 Email 傳單據。兩部機之間沒有跨機連線。
+- 一部機器 = 一間公司，主機是公司自己的電腦。香港與大陸各裝一份，是兩間獨立公司，帳戶分開；往來當作兩間公司的交易，用 Email 傳單據。兩部機之間沒有跨機連線。
+- 安裝時選版本：國際版全部都做，包括三層入口、customer-portal、supplier-portal、Cloudflare 與全部通知渠道；大陸版第一階段只做內網，通知以站內為主，選配企業微信與飛書。兩版同一份程式碼，差異只在 `edition-profile`。安裝由 UI 精靈協助。
 - 一間公司可以有多個 brand 和多個國家分部，由老闆在「公司結構」自行定義，不鎖定。
-- 公司由一個 Boss portal（老闆的入口）和多個部門 app 組成。每個 app 一個容器、有自己的介面，可以獨立更新與重啟；Postgres 與 MinIO 是共用底座。
-- 高機密的 app 只留在內網；需要對外溝通、員工在外地、B2B 夥伴與 B2C 客戶使用的 app，經 Cloudflare Tunnel 對互聯網開放，分成夥伴與客戶兩層。
+- 公司由一個 Boss portal（老闆的入口）和多個部門 app 組成。程式碼按 app 模組化，邊界由 CI 強制；容器按版本打包，可獨立更新。Postgres 與 MinIO 是共用底座。
+- 高機密的 app 只留在內網。國際版另外讓外地員工、B2B 夥伴與 B2C 客戶經 Cloudflare Tunnel 使用被開放的 app，分成夥伴與客戶兩層。
 - AI 盡力做事；AI 做不到的才變成 Need 派給員工；員工交成果，老闆驗收。AI 是外部客戶端，只經 MCP 六動詞（browse、read、write、find、render、help）連入，MCP 永遠沒有 approve 工具。
 - 所有對外訊息先進發件箱，由規則決定放行或交老闆批准。
 
@@ -22,27 +23,32 @@ Company OS 是 company starter：任何一間公司裝好 Docker 就能開始運
 3. AI 經 MCP 讀取授權範圍的資料、建立 Need、交出草稿，但不能批准、不能直接對外發送。
 4. 對外訊息全部經發件箱，老闆批准後才送出。
 5. 每個部門 app 都有一條真實可用的流程；新增部門只需要一個 app 範本。
-6. 外地員工、B2B 夥伴、供應商與 B2C 客戶可以安全地從互聯網使用被開放的 app，而高機密 app 無法從互聯網開啟。
-7. 另一間公司可以用一鍵安裝加公司範本快速開始。
+6. 同事的電腦可以從公司內網連到 Company OS；國際版的外地員工、B2B 夥伴、供應商與 B2C 客戶可以安全地從互聯網使用被開放的 app，而高機密 app 無法從互聯網開啟。
+7. 另一間公司可以用安裝精靈加公司範本快速開始，選國際版或大陸版。
 
 ## 2. 架構
 
 ```
+大陸版
+內網 ──► gateway-internal ──► platform  apps（全部部門 app，一個 app-host）
+                                  └──── 共用 Postgres（一個 schema 一個 app）與 MinIO
+
+國際版
 內網／VPN ──► gateway-internal ───────────────┐
 互聯網 ══ Cloudflare 隧道 ══ cloudflared ──┬─► gateway-partner（Access＋登入）──┤
                                           └─► gateway-customer（無 Access）───┤
                                                                               ▼
-platform  boss-portal  employees  design  sales  ops-finance  hr  support  customer-portal  supplier-portal  …
-(身份、Need、發件箱、通知、MCP、審計、設定、隊列)
-   └──────────────── 共用 Postgres（一個 schema 一個 app）與 MinIO ────────────────┘
+platform  apps-internal  apps-partner  supplier-portal  customer-portal
+   └──────────────── 共用 Postgres（一個 schema 一個 app）與 MinIO ──────────┘
 ```
 
-- gateway：同一個映像、三個實例（internal、partner、customer），路由表不同。統一 cookie、Origin 與入口標記；之後的 HTTPS 只改這裡。
+- gateway：同一個映像，按版本起實例，路由表不同。統一 cookie、Origin 與入口標記；之後的 HTTPS 只改這裡。
 - platform：身份、授權、設定、組織、Need、成果、發件箱、通知、MCP、審計、隊列。這些是跨部門的事實，不屬於任何 app。worker 是同一映像的第二個啟動入口。
+- app-host：同一個映像，用 `APP_SET` 載入 app，每個 app 用自己的資料庫帳號。曝露程度不同的 app 不同容器。
 - Boss portal：老闆的入口。彙整各 app 的摘要介面，不直接讀它們的資料表。
 - 部門 app：員工、設計、銷售、營運財務、人事、客服，日後可再加（例如研發部）。每個 app 提供摘要介面給 Boss portal。
-- portal app：customer-portal 與 supplier-portal，專門對客戶與供應商開放。
-- 邊界：app 之間不互相引用，只用 `packages/` 與 platform 的介面，由 CI 強制。
+- portal app：customer-portal 與 supplier-portal，專門對客戶與供應商開放，只在國際版。
+- 邊界與分層：見 `docs/architecture/CODE-MAP.md`，由 `lint:boundaries` 在 CI 強制。
 
 ## 3. 身份、授權、組織
 
@@ -64,21 +70,22 @@ platform  boss-portal  employees  design  sales  ops-finance  hr  support  custo
 - 裝完只有一個單位：公司本身。老闆在「公司結構」頁自己加，並可選預設範本（單一 brand、多 brand、多國分部）。
 - 金額永遠存為數字加貨幣；合併顯示時用有日期的匯率，同時顯示原幣與換算後數字。
 
-### 3.3 對外入口與對象
+### 3.3 入口與對象
 
-| 入口 | 對象 | 登入 | 能進的 app |
-|---|---|---|---|
-| gateway-internal | 內網員工（含 VPN） | Company OS 登入 | 全部 |
-| gateway-partner | 外地員工、B2B 夥伴、供應商 | Cloudflare Access（一次性 PIN，限定電郵名單）加 Company OS 登入 | exposure 為 partner 的 app |
-| gateway-customer | B2C 客戶 | 客戶自己的帳戶（一次性連結或驗證碼）；Cloudflare WAF 限流加 Turnstile，不經 Access | exposure 為 customer 的 app |
+| 入口 | 對象 | 登入 | 能進的 app | 大陸版 | 國際版 |
+|---|---|---|---|---|---|
+| gateway-internal | 內網員工（含 VPN） | Company OS 登入 | 全部 | 有 | 有 |
+| gateway-partner | 外地員工、B2B 夥伴、供應商 | Cloudflare Access（一次性 PIN，限定電郵名單）加 Company OS 登入 | exposure 為 partner 的 app | 無 | 有 |
+| gateway-customer | B2C 客戶 | 客戶自己的帳戶（一次性連結或驗證碼）；Cloudflare WAF 限流加 Turnstile，不經 Access | exposure 為 customer 的 app | 無 | 有 |
 
-- cloudflared 只指向 gateway-partner 與 gateway-customer，規則最後一條是 404；app 容器與 gateway-internal 不對外。
-- 每個 app 的 manifest 宣告 `exposure`：internal（預設）、partner、customer。
-- session 記錄入口（`entry`）。internal 的 app 只接受 internal；partner 的 app 接受 internal 與 partner；customer 的 app 只接受 customer。海外員工從隧道登入，打得開 sales，打不開財務，必須先接 VPN。
+- 內網存取（兩版）：gateway-internal 綁管理者選定的 LAN 位址並配合主機防火牆限制公司子網；其餘端口只綁本機。內部 HTTPS 與員工裝置的憑證信任流程另行驗證（S2-02）。
+- 大陸版沒有 cloudflared、對外 gateway、外部帳戶與 portal；session 的 `entry` 只有 internal。大陸版不得因通知整合而打開公網回調或遠端登入。
+- 國際版：cloudflared 只指向 gateway-partner 與 gateway-customer，規則最後一條是 404；app 容器與 gateway-internal 不對外。
+- 每個 app 的 manifest 宣告 `exposure`：internal（預設）、partner、customer。session 記錄入口（`entry`）。internal 的 app 只接受 internal；partner 的 app 接受 internal 與 partner；customer 的 app 只接受 customer。海外員工從隧道登入，打得開 sales，打不開財務，必須先接 VPN。
 - 三個 gateway 都會清掉請求裡自帶的入口標記，再寫上自己的值。
 - 夥伴與供應商是 `app_user` 的一種（kind = partner），只能被授權到 partner 的 app；對外登入頁加 IP 限流與 TOTP 雙重驗證。
 - 客戶是獨立的 `customer_account`，與員工帳戶分開，只能看自己的記錄，沒有 app 授權流程。
-- 預設對外程度（臨時答案）：internal = boss-portal、employees、ops-finance、hr、research-dev；partner = sales、support、design、supplier-portal；customer = customer-portal。platform 的登入頁與「我的 Needs」在 partner 入口可用，管理與審計頁只在 internal。
+- 預設對外程度（臨時答案，國際版）：internal = boss-portal、employees、ops-finance、hr、research-dev；partner = sales、support、design、supplier-portal；customer = customer-portal。platform 的登入頁與「我的 Needs」在 partner 入口可用，管理與審計頁只在 internal。
 - portal 模式：customer-portal 與 supplier-portal 是獨立容器、獨立 schema，不與後台 app 共用 session 或 cookie。portal 只寫入自己的 schema 與 platform 的 Need；後台 app（support、ops-finance）經 platform 介面接手處理，不讀 portal 的資料表。
 
 ## 4. 領域模型（platform schema）
@@ -105,8 +112,9 @@ platform  boss-portal  employees  design  sales  ops-finance  hr  support  custo
 2. 政策引擎讀 `policy_rule`：命中放行規則才直接送出，否則進待批准，預設全部待批准。
 3. 老闆在批准收件匣看內容、渠道、收件人，批准、退回或修改。批准綁 content_hash，修改產生新版本，重新批准。
 4. 只有 worker 能送出，寫 `delivery_log`；失敗重試，超過次數進死信，在 Boss portal 可見。
-5. 渠道目錄（第一批）：站內、Email、Lark、飛書、WhatsApp Business、企業微信、釘釘、SMS、Slack、Teams、Telegram、通用 webhook。按組織單位啟用，大陸分部可用性要實測。
+5. 渠道目錄：站內、Email、Lark、飛書、WhatsApp Business、企業微信、釘釘、SMS、Slack、Teams、Telegram、通用 webhook，按組織單位啟用。國際版可啟用全部；大陸版以站內為主，選配企業微信與飛書，且都是出站、可選。個人微信自動化不列入已承諾能力。第一期通知只帶必要摘要與內網連結；使用者不在公司網絡時連結打不開是預期行為。
 6. 兩間公司（香港與大陸）之間的往來，視為對外交易，用 Email 範本傳送單據。
+7. 通知不能取代 Company OS 的批准與審計；第三方訊息有資料出站風險，不能宣稱資料完全不離開主機。
 
 ## 7. MCP 契約
 
@@ -120,24 +128,26 @@ platform  boss-portal  employees  design  sales  ops-finance  hr  support  custo
 
 | 設定 | 選項 | 預設 |
 |---|---|---|
+| 版本 | 國際版／大陸版 | 安裝時必選 |
 | 驗收規則 | 老闆／部門主管／交了就算 | 老闆 |
 | 部門隔離 | 開／關 | 關 |
 | 發件規則 | 每個渠道與類別：放行或批准 | 全部批准 |
 | 付款金額門檻 | 金額乘貨幣 | 全部批准 |
 | 通知渠道 | 渠道目錄 | 只在站內 |
-| 公司語系 | 繁體／簡體 | 繁體 |
-| 啟用的 app | compose profile | 全部關 |
+| 公司語系 | 繁體／簡體 | 國際版繁體，大陸版簡體 |
+| 啟用的 app | edition-profile 與 compose profile | 全部關 |
 | app 敏感度 | 每個 app 一個開關 | 見 3.1 |
-| app 對外程度 | internal／partner／customer | 見 3.3 |
-| 對外網域 | 夥伴入口與客戶入口的主機名稱 | 未設定（不啟動 cloudflared） |
-| Access 允許名單 | 電郵或網域 | 空（拒絕所有人） |
+| app 對外程度 | internal／partner／customer | 見 3.3（國際版） |
+| 內網 LAN 位址與允許子網 | 管理者選定 | 安裝精靈設定 |
+| 對外網域 | 夥伴入口與客戶入口的主機名稱（國際版） | 未設定（不啟動 cloudflared） |
+| Access 允許名單 | 電郵或網域（國際版） | 空（拒絕所有人） |
 | 安裝代碼 | 例如 HK、CN | 必填 |
 | 逾期寬限 | 小時 | 0 |
 
 ## 9. 介面
 
-- 風格：Apple HIG。白底黑字，accent 黑色 #000，系統字體堆疊，綠 #B8F36B 只當點綴，平鋪內容用細線分隔，不用 emoji，不用紫色漸層。錯誤文字 #d70015。所有 app 共用 `design-tokens` 與 `ui-kit`。
-- 畫面：登入頁、我的 Apps、我的 Needs、Need 詳情、設定、公司結構（platform）；今日、批准收件匣、各部門摘要（Boss portal）；名冊與授權（employees）；請求單、報價確認、訂單進度（customer-portal）；發票與文件提交、採購單與付款進度（supplier-portal）。
+- 風格：Apple HIG。白底黑字，accent 黑色 #000，系統字體堆疊，綠 #B8F36B 只當點綴，平鋪內容用細線分隔，不用 emoji，不用紫色漸層。錯誤文字 #d70015。所有 app 共用 `design-tokens`、`ui-kit` 與 `app-shell`；字串走 `i18n`。
+- 畫面：登入頁、我的 Apps、我的 Needs、Need 詳情、設定、公司結構（platform）；今日、批准收件匣、各部門摘要（Boss portal）；名冊與授權（employees）；請求單、報價確認、訂單進度（customer-portal，國際版）；發票與文件提交、採購單與付款進度（supplier-portal，國際版）；安裝精靈（本機）。
 - 規則：一行只給一個訊號；繼承或鎖定的內容收起但保留摘要；空狀態說真話；手機 390×844 不得橫向捲動。
 
 ## 10. 各 app 的第一條流程
@@ -150,17 +160,19 @@ platform  boss-portal  employees  design  sales  ops-finance  hr  support  custo
 | ops-finance | internal | 採購申請、付款申請與門檻、憑證歸檔 | 完整會計、庫存 |
 | hr | internal | 員工檔案、請假審批、入職清單 | 薪酬、考勤 |
 | support | partner | 問題記錄、回覆草稿→批准→發出、升級為 Need | 工單、滿意度 |
-| customer-portal | customer | 客戶帳戶、請求單、報價確認、訂單進度 | 付款、發票下載 |
-| supplier-portal | partner | 發票與文件提交、採購單與付款進度 | 供應商評分 |
+| customer-portal（國際版） | customer | 客戶帳戶、請求單、報價確認、訂單進度 | 付款、發票下載 |
+| supplier-portal（國際版） | partner | 發票與文件提交、採購單與付款進度 | 供應商評分 |
 | research-dev | internal | 流程待老闆說明 | — |
+
+「對外程度」只在國際版有意義；大陸版所有 app 都只經 gateway-internal。
 
 ## 11. 新增部門
 
-新增部門只需要：`npm run new:app <名稱>`、填 `DESIGN.md`、在 compose profile 啟用。範本產生資料夾、Dockerfile、manifest（含 exposure）、schema、gateway 路由與「我的 Apps」入口；CI 自動發現新 app 並套用同一套測試與邊界檢查。
+新增部門只需要：`npm run new:app <名稱>`、填 `DESIGN.md`、在 edition-profile 與 compose profile 啟用。範本產生資料夾、manifest（含 exposure）、schema、gateway 路由、edition-profile 的容器歸屬與「我的 Apps」入口；CI 自動發現新 app 並套用同一套測試與邊界檢查。
 
 ## 12. 兩間公司（香港與大陸）
 
-兩部機各自獨立：各有老闆、員工、brand、資料庫與 MinIO，沒有跨機連線。老闆看兩邊要登入兩次。大陸資料留在大陸機；任何境外存取的法律責任仍在公司，需專業意見（見決策 C24）。大陸機是否使用 Cloudflare Tunnel，要先實測連線品質。
+兩部機各自獨立：各有老闆、員工、brand、資料庫與 MinIO，沒有跨機連線。老闆看兩邊要登入兩次。版本是安裝時的選擇，不依機器位置自動決定。大陸資料留在大陸機；任何境外存取的法律責任仍在公司，需專業意見（見決策 C24）。大陸版不使用 Cloudflare Tunnel，所以沒有連線品質問題；但映像下載與更新的可達性要在真實大陸網絡測試（S2-06）。
 
 ## 13. 里程碑
 
@@ -168,12 +180,13 @@ platform  boss-portal  employees  design  sales  ops-finance  hr  support  custo
 |---|---|---|
 | M0 | 0 收尾 | 無新畫面 |
 | M1 | 1 底座與第一個閉環 | 登入頁、我的 Apps、員工名冊與授權、Boss portal 今日頁，以及 Need 閉環 |
-| M2 | 2 可遠端使用 | 安裝精靈、公司結構頁、三層對外入口（隧道、Access、外部帳戶） |
+| M2 | 2 安裝與兩個版本 | 安裝精靈、LAN 存取、公司結構頁、簡體介面、大陸版離線安裝包 |
 | M3 | 3 AI 接入 | AI 建 Need、交草稿；批准收件匣 |
 | M4 | 4 通知與出口 | 全部通知渠道 |
 | M5 | 5 app 範本與 Design | 新增部門有標準做法；第一個部門 app |
-| M6 | 6 其餘部門與 portal | 銷售、營運財務、人事、客服各一條真流程；客戶與供應商入口 |
-| M7 | 7 Starter 化 | 一鍵安裝、公司範本匯出匯入、升級路徑 |
+| M6 | 6 其餘部門 | 銷售、營運財務、人事、客服各一條真流程 |
+| M7 | 7 Starter 化與營運 | 公司範本匯出匯入、備份排程、一鍵安裝程式、升級路徑；大陸版（內網）完整交付 |
+| M8 | 8 國際版對外入口 | 三層入口、Cloudflare、外部帳戶、客戶與供應商入口 |
 
 ## 14. issue 清單
 
@@ -185,10 +198,15 @@ platform  boss-portal  employees  design  sales  ops-finance  hr  support  custo
 | P0-66 | #66 scrypt N=2^17 與舊雜湊升級 | P0-65 | M | A |
 | P0-64 | #64 跨碟備份還原驗收（等第二粒實體碟） | 硬體 | M | A |
 | P0-45 | #45 ports:check 顯示佔用者 | — | S | C |
-| S1-01 | 架構整理：apps/api→apps/platform、packages/、邊界 lint、compose 多服務骨架；manifest 加 route、debugPort、exposure、sensitive；清除程式碼與註解中對其他專案的引用 | — | L | A |
-| S1-02 | gateway：同一映像三個實例（internal、partner、customer）、路徑分流、cookie、Origin、入口標記 | S1-01 | L | A |
-| S1-03 | CI 按 app 路徑分流與邊界檢查，含 manifest／gateway／compose／.env.example 一致性 | S1-01 | M | B |
-| S1-04 | 公司設定與政策表加種子檔 | S1-01, P0-66 | M | A |
+| R1 | 邊界與工具：packages/* 加入 workspaces、lint:boundaries、project references、故意違反測試；不搬任何檔案 | — | M | A |
+| R2 | apps/api 改名 apps/platform（git mv），S3 SDK 移進 platform | R1 | S | B |
+| R3 | 拆 apps/web：登入、首次開機、外殼歸 platform，「今日」歸 boss-portal；抽出 ui-kit、app-shell、design-tokens、i18n | R2 | L | B |
+| R4 | manifest 移到 apps/<app>/，載入器移到 platform 的 registry，欄位 route、exposure、sensitive | R2 | M | A |
+| R5 | migration 執行器雙模式（舊平目錄與每 schema 編號），先做小實驗 | R2 | M | A |
+| R6 | app-host、compose 多服務骨架、edition-profile、按容器的端口表與 ports:check 對照 | R3, R4, R5 | L | A |
+| S1-02 | gateway-internal：路徑分流、cookie、Origin、入口標記 | R6 | M | A |
+| S1-03 | CI 按 app 路徑分流；manifest／compose／.env.example／edition-profile 一致性 | R1, R4 | M | B |
+| S1-04 | 公司設定與政策表加種子檔 | R6, P0-66 | M | A |
 | S1-05 | 組織單位：org_unit、多上級、設定繼承 | S1-04 | M | A |
 | S1-06 | 權限引擎 packages/policy：角色×app×範圍×入口 | S1-05 | M | A |
 | S1-07 | app 註冊與授權：狀態機、敏感 app 要老闆批准、exposure 與 entry 規則 | S1-06 | L | A |
@@ -204,12 +222,13 @@ platform  boss-portal  employees  design  sales  ops-finance  hr  support  custo
 | S1-17 | Boss portal「今日」 | S1-14, S1-16, S1-11 | M | B |
 | S1-18 | 背景隊列與 worker | S1-12 | L | A |
 | S1-19 | 垂直切片端到端驗收（里程碑 M1） | S1-10, S1-17, S1-18 | M | B |
-| S2-01 | 安裝精靈 v1 | S1-04, S1-09 | L | B |
-| S2-02 | 對外入口與安全：cloudflared、Access 政策、WAF 限流、Turnstile、HTTPS | S1-02 | L | A |
+| S2-01 | 安裝引擎：環境檢查、.env 與秘密生成、compose 啟動、健康檢查、失敗重試 | S1-04, S1-09, R6 | L | B |
+| S2-02 | 內網存取：gateway-internal 綁 LAN 位址、主機防火牆指引、內部 HTTPS 與憑證信任 | S1-02 | L | A |
 | S2-03 | 帳戶管理：改密碼、重設、停用（無電郵重設） | S1-08 | M | B |
 | S2-04 | 公司結構頁：老闆自訂 brand、分部、法人 | S1-05, S1-09 | M | B |
-| S2-05 | 外部身份：夥伴（app_user kind=partner）與客戶（customer_account）、session entry 規則 | S1-08, S2-02 | L | A |
-| S2-06 | 對外登入的 TOTP 雙重驗證與 IP 限流 | S2-05 | M | A |
+| S2-05 | 安裝精靈 UI：版本選擇、環境檢查、LAN 設定、老闆帳戶、app 與渠道、進度與驗證 | S2-01, S2-02 | L | B |
+| S2-06 | 大陸版離線安裝包與映像可達性測試（需真實大陸網絡） | S2-01 | M | A |
+| S2-07 | 簡體語系 | S1-09, R3 | M | B |
 | S3-01 | MCP 契約與 token | S1-06, S1-08 | M | A |
 | S3-02 | MCP 握手 | S3-01 | M | A |
 | S3-03 | browse / read / find | S3-02, S1-13 | L | A |
@@ -221,16 +240,16 @@ platform  boss-portal  employees  design  sales  ops-finance  hr  support  custo
 | S3-09 | agent 控制：總開關、用量、速率、異常暫停 | S3-04 | M | A |
 | S3-10 | AI 閉環驗收（里程碑 M3） | S3-04..S3-09 | M | B |
 | S3-11 | browse 外部資料（可選）：必帶來源 | S3-04 | M | A |
-| S4-01 | 渠道抽象與目錄、加密憑證、重試 | S3-06 | L | A |
+| S4-01 | 渠道抽象與目錄、加密憑證、重試、按版本顯示渠道 | S3-06 | L | A |
 | S4-02 | Email 出口 | S4-01, S3-07 | M | A |
 | S4-03 | Lark | S4-01 | M | B |
-| S4-04 | 飛書 | S4-01 | M | B |
+| S4-04 | 飛書（大陸版優先） | S4-01 | M | B |
 | S4-05 | WhatsApp Business | S4-01, S3-07 | L | A |
-| S4-06 | 企業微信 | S4-01 | M | B |
+| S4-06 | 企業微信（大陸版優先） | S4-01 | M | B |
 | S4-07 | 釘釘 | S4-01 | M | B |
 | S4-08 | SMS、Slack、Teams、Telegram、通用 webhook | S4-01 | M | B |
 | S4-09 | 通知偏好與每日摘要 | S4-03 | S | B |
-| S5-00 | app 範本與 new:app 指令 | S1-03 | L | B |
+| S5-00 | app 範本與 new:app 指令（含 app-host 註冊與 edition-profile 歸屬） | S1-03, R6 | L | B |
 | D-01 | design：專案、brief、缺口轉 Need | S5-00, S3-10 | L | B |
 | D-02 | design：成品預覽與交回 | D-01 | M | B |
 | D-03 | design：知識與素材缺口規則 | D-01 | M | B |
@@ -249,22 +268,25 @@ platform  boss-portal  employees  design  sales  ops-finance  hr  support  custo
 | SU-02 | support：回覆草稿→批准→發出 | SU-01, S4-05 | L | A |
 | SU-03 | support：升級為 Need | SU-01 | S | B |
 | SU-04 | support：知識庫 | SU-01 | M | B |
-| CP-01 | customer-portal：客戶帳戶與請求單 | S5-00, S2-05, S1-13 | L | B |
-| CP-02 | customer-portal：報價確認與訂單進度 | CP-01, SA-02 | M | B |
-| SP-01 | supplier-portal：發票與文件提交 | S5-00, S2-05, S1-15 | L | B |
-| SP-02 | supplier-portal：採購單與付款進度 | SP-01, OF-02 | M | B |
 | RD-01 | research-dev：流程研究（待老闆說明） | S5-00 | S | C |
 | O-01 | 公司範本匯出與匯入 | S2-01, S1-05 | L | A |
-| O-02 | 一鍵安裝（Windows、Mac） | S2-01 | L | B |
-| O-03 | 升級路徑與 migration 預檢 | S1-01 | M | A |
+| O-02 | 一鍵安裝程式打包（Windows，之後 Mac） | S2-05 | L | B |
+| O-03 | 升級路徑與 migration 預檢 | R5 | M | A |
 | O-04 | 備份排程與加密 | P0-64 | L | A |
 | O-05 | 觀察與警報頁 | S1-18 | M | B |
-| O-06 | 審計檢視與匯出 | S2-02 | M | B |
-| O-07 | 簡體語系 | S1-09 | M | B |
+| O-06 | 審計檢視與匯出 | S1-08 | M | B |
 | O-08 | 兩間公司往來單據的 Email 範本（採購單、出貨通知） | S4-02 | M | B |
-| O-09 | 外部安全審查與修補 | D-03, CP-01 | L | A |
 | O-10 | 使用手冊 | 全部 | M | C |
 | O-11 | research-dev app（流程確定後） | RD-01 | M | B |
+| S8-01 | 國際版：gateway-partner 與 gateway-customer 實例、session entry 規則 | S1-02, S1-07 | M | A |
+| S8-02 | 國際版對外入口與安全：cloudflared、Access 政策、WAF 限流、Turnstile、HTTPS | S8-01 | L | A |
+| S8-03 | 國際版外部身份：夥伴（app_user kind=partner）與客戶（customer_account） | S1-08, S8-02 | L | A |
+| S8-04 | 國際版對外登入的 TOTP 雙重驗證與 IP 限流 | S8-03 | M | A |
+| CP-01 | customer-portal：客戶帳戶與請求單 | S5-00, S8-03, S1-13 | L | B |
+| CP-02 | customer-portal：報價確認與訂單進度 | CP-01, SA-02 | M | B |
+| SP-01 | supplier-portal：發票與文件提交 | S5-00, S8-03, S1-15 | L | B |
+| SP-02 | supplier-portal：採購單與付款進度 | SP-01, OF-02 | M | B |
+| S8-09 | 國際版外部安全審查與修補 | D-03, CP-01 | L | A |
 
 ## 15. 時間估算
 
@@ -273,16 +295,18 @@ platform  boss-portal  employees  design  sales  ops-finance  hr  support  custo
 | 階段 | issue 數 | 序列工時 | 日曆估算 |
 |---|---|---|---|
 | 0 收尾 | 4 | 7 小時 | 約 1.5 個工作日 |
-| 1 底座與第一個閉環 | 19 | 54 小時 | 約 11.7 個工作日 |
-| 2 可遠端使用 | 6 | 18 小時 | 約 3.9 個工作日 |
+| 1 底座與第一個閉環 | 24 | 63 小時 | 約 13.7 個工作日 |
+| 2 安裝與兩個版本 | 7 | 20 小時 | 約 4.3 個工作日 |
 | 3 AI 接入 | 11 | 30 小時 | 約 6.5 個工作日 |
 | 4 通知與出口 | 9 | 21 小時 | 約 4.5 個工作日 |
 | 5 app 範本與 Design | 4 | 12 小時 | 約 2.6 個工作日 |
-| 6 其餘部門與 portal | 20 | 48 小時 | 約 10.4 個工作日 |
-| 7 Starter 化與營運 | 11 | 30 小時 | 約 6.5 個工作日 |
-| 合計 | 84 | 220 小時 | 約 47.7 個工作日（約 9.5 星期） |
+| 6 其餘部門 | 16 | 36 小時 | 約 7.8 個工作日 |
+| 7 Starter 化與營運 | 9 | 24 小時 | 約 5.2 個工作日 |
+| 大陸版（階段 0 至 7）小計 | 84 | 213 小時 | 約 46.1 個工作日（約 9.2 星期） |
+| 8 國際版對外入口 | 9 | 28 小時 | 約 6.1 個工作日 |
+| 合計（含國際版） | 93 | 241 小時 | 約 52.2 個工作日（約 10.4 星期） |
 
-M1 是第一個完整可用的 Company OS，約 12 個工作日；WorkBuddy 連續運行時可縮短。外部依賴縮短不了，應盡早啟動：第二粒實體碟、對外網域與 Cloudflare 帳戶、Lark／飛書應用審批、WhatsApp Business API 申請。
+M1（階段 0 至 1）是第一個完整可用的 Company OS，約 15.2 個工作日；WorkBuddy 連續運行時可縮短。外部依賴縮短不了，應盡早啟動：第二粒實體碟、真實大陸網絡的映像下載測試、Lark／飛書／企業微信的應用審批、國際版的對外網域與 Cloudflare 帳戶、WhatsApp Business API 申請。交付順序建議先交付大陸版，國際版階段 8 在後（C37，待老闆確認）。
 
 ## 16. GitHub 與流程制度
 
@@ -291,15 +315,15 @@ A 級：完整規格、先寫會 fail 的測試、變異測試、QA 獨立重跑
 
 ### 16.2 分工
 - 開發管理者：寫 issue 全文並直接建立在 GitHub、裁定合併、維護本文件與決策日誌。
-- ZCode：獨立驗收、催 PR、必要時機械式 push 與開 PR，不改程式碼。
-- WorkBuddy：實作。
+- ZCode：獨立驗收、催 PR、必要時機械式 push 與開 PR，不改程式碼；對 R 系列切片另加「故意違反邊界」的變異測試。
+- WorkBuddy：實作，一次一片，只改被指派的範圍。
 - 老闆：回答業務問題、決定外部依賴、驗收畫面。
 
 ### 16.3 repo 設定
 - 每個 app 有自己的 `AGENTS.md`，寫明只能改自己的資料夾。
 - CI 按路徑分流：只改某個 app，只跑該 app 與它依賴的 packages；邊界 lint 全跑。
-- 標籤：`app:<名稱>`、`area:platform`、`tier:A|B|C`、`phase:0..7`、`blocked:external`。
-- 里程碑：M0 至 M7。Project 看板欄位：階段、級別、app、大小、依賴。
+- 標籤：`app:<名稱>`、`area:platform`、`tier:A|B|C`、`phase:0..8`、`blocked:external`、`edition:intl`。
+- 里程碑：M0 至 M8。Project 看板欄位：階段、級別、app、大小、依賴。
 - main 的分支保護：必須經 PR、CI 綠燈、禁止強制推送。
 - issue 範本已加入 `.github/ISSUE_TEMPLATE/task.md`；PR 範本待確認 `.github/pr-evidence` 的要求後再加。
 - 標籤、里程碑、Project、分支保護與倉庫描述，需要在 GitHub 網頁上設定（我的連接器沒有這些工具）。
@@ -309,27 +333,34 @@ A 級：完整規格、先寫會 fail 的測試、變異測試、QA 獨立重跑
 | 風險 | 對策 |
 |---|---|
 | 單碟，備份與資料在同一粒碟 | 盡早取得第二粒實體碟完成 P0-64；之前不宣稱已有災難保護 |
-| 容器多，一部 Windows 機要跑 | compose profile 只啟動需要的 app；先量測資源 |
-| 多 schema 與多帳號的 migration 複雜 | S1-01 先做小實驗，確認執行器兼容既有 migration |
+| 容器多，一部公司電腦要跑 | 大陸版合併成少數容器；先量測空載與三個 app 同時運行的記憶體與 CPU；compose profile 只啟動需要的 app |
+| 多 schema 與多帳號的 migration 複雜 | R5 先做小實驗，確認執行器兼容既有 migration |
+| 搬遷改壞行為 | R1 至 R6 一片一個 PR；搬動前後同一組測試；ZCode 加變異測試 |
+| LAN 位址變動、電腦睡眠導致同事連不上 | 安裝精靈提示固定 IP 或主機名稱、關閉睡眠；驗收包含重開機與 IP 變更 |
+| 端口綁定不當暴露給整個網絡 | 不用未指定位址的發佈；只有 gateway-internal 綁 LAN 位址；防火牆限制公司子網 |
+| 內部 HTTPS 憑證在員工電腦不被信任 | S2-02 驗證流程；不教使用者長期忽略瀏覽器警告 |
 | 部門流程猜錯 | 垂直切片先行；Need 類型放資料；每個 app 先做一條流程 |
 | WorkBuddy 環境不穩 | 完成定義含 PR；ZCode 可機械式補 push；進度以 GitHub 為準 |
-| 對外入口被攻擊或繞過 | 隧道只指向兩個 gateway；app 端口只綁本機；session entry 規則；WAF 限流、Turnstile、TOTP；Access 名單預設為空 |
+| 國際版對外入口被攻擊或繞過 | 隧道只指向兩個 gateway；app 容器端口只綁本機；session entry 規則；WAF 限流、Turnstile、TOTP；Access 名單預設為空 |
 | 客戶入口被濫用（註冊、爆破、爬取） | 客戶只看自己的記錄；一次性連結或驗證碼；限流；portal 與後台完全分離 |
 | 大陸資料與境外存取的法律責任 | 專業意見；系統只做審計與政策控制（C24） |
-| 大陸機使用 Cloudflare Tunnel 的連線品質未驗證 | 實測後再決定大陸機是否對外 |
+| 大陸版映像與套件下載不可達 | 離線安裝包與受控更新來源（S2-06）；不採用未驗證的公共鏡像清單；真實網絡測試 |
+| 個人微信整合期望過高 | 只承諾企業微信與飛書的官方 API；個人微信自動化不列入承諾 |
 | 外部渠道規則變動 | adapter 隔離；先查證官方文件再寫 issue |
 | 過度設定 | 只有第二間公司需要才新增設定項 |
 | env.backup 在 Windows 為明文 | 第二碟到位後做磁碟或備份加密（O-04） |
 
 ## 18. 待老闆確認（均有預設）
 
-1. 驗收規則：預設老闆驗收。
-2. 部門隔離：預設關。
-3. 第一條真實 Need 的例子（作測試用例）。
-4. 對外 app 清單（預設見 3.3）：是否有經銷商或代理需要 partner portal。
-5. 對外網域、Cloudflare 帳戶與方案（WAF、Turnstile 所需），以及 Access 允許名單。
-6. 研發部的流程與敏感度。
-7. 付款金額門檻與貨幣。
-8. AI 營運者與每月費用上限。
-9. 簡體介面。
-10. 第二粒實體碟的到貨時間。
+1. 交付順序：預設先大陸版（內網），國際版對外入口在後（C37）。
+2. 驗收規則：預設老闆驗收。
+3. 部門隔離：預設關。
+4. 第一條真實 Need 的例子（作測試用例）。
+5. 國際版對外 app 清單（預設見 3.3）：是否有經銷商或代理需要 partner portal。
+6. 國際版對外網域、Cloudflare 帳戶與方案（WAF、Turnstile 所需），以及 Access 允許名單。
+7. 研發部的流程與敏感度。
+8. 付款金額門檻與貨幣。
+9. AI 營運者與每月費用上限。
+10. 主機規格與作業系統、Docker 授權是否適用於公司使用。
+11. 內部 HTTPS 方案與員工電腦的信任方式。
+12. 第二粒實體碟的到貨時間。

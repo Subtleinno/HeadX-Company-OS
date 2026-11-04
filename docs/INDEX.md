@@ -4,7 +4,7 @@
 
 ## 這是什麼
 
-Company OS 是 company starter：任何一間公司裝好 Docker 就能開始運作的整套公司軟件。一部機器 = 一間公司；公司由一個 Boss portal 和多個部門 app 組成，每個 app 一個容器，共用同一個 Postgres 與 MinIO。AI 盡力做事，做不到的變成 Need 派給員工，老闆驗收。
+Company OS 是 company starter：任何一間公司裝好 Docker 就能開始運作的整套公司軟件。一部機器 = 一間公司；公司由一個 Boss portal 和多個部門 app 組成，程式碼按 app 模組化，容器按版本 profile 打包，共用同一個 Postgres 與 MinIO。AI 盡力做事，做不到的變成 Need 派給員工，老闆驗收。安裝時選國際版或大陸版：國際版有完整的對外入口，大陸版第一階段只做內網。
 
 ## 文件地圖
 
@@ -14,7 +14,8 @@ Company OS 是 company starter：任何一間公司裝好 Docker 就能開始運
 | `AGENTS.md` | 給 AI agent 的開工規則與不變量 |
 | `docs/product/MASTER-PLAN.md` | 全盤計劃：架構、資料模型、權限、issue 清單、里程碑 |
 | `docs/product/DECISIONS.md` | 決策日誌（後者優先） |
-| `docs/architecture/REPO-MAP.md` | 目錄結構、邊界規則、入口與端口 |
+| `docs/architecture/CODE-MAP.md` | 目錄、模組、分層、邊界規則、搬遷切片 |
+| `docs/architecture/REPO-MAP.md` | 現況對照、入口、容器與端口表 |
 | `docs/architecture/APP-DESIGN-TEMPLATE.md` | 每個 app 的設計範本 |
 | `apps/<app>/DESIGN.md` | 該 app 的設計（唯一一份；app 建立時才有） |
 | `docs/backup-restore.md` | 備份與還原 |
@@ -26,7 +27,10 @@ Company OS 是 company starter：任何一間公司裝好 Docker 就能開始運
 | 事實 | 唯一來源 | 流向 |
 |---|---|---|
 | 有哪些 app 與導航 | `apps/<app>/manifest.json` | manifest → platform 的 app 註冊 → 我的 Apps |
-| 端口、路由與對外程度 | `apps/<app>/manifest.json`（`route`、`debugPort`、`exposure`） | manifest → 三個 gateway 的路由表、compose、`.env.example`、`ports:check`（CI 檢查一致） |
+| app 的路由與對外程度 | `apps/<app>/manifest.json`（`route`、`exposure`、`sensitive`） | manifest → gateway 路由表（CI 檢查一致） |
+| 版本差異（入口、容器組合、端口、渠道、預設語言） | `packages/edition-profile` | edition-profile → compose、`.env.example`、`ports:check`、安裝精靈 |
+| 目錄、模組與邊界規則 | `docs/architecture/CODE-MAP.md` | 規則 → `lint:boundaries` |
+| 容器端口表 | `docs/architecture/REPO-MAP.md` | 文件 → edition-profile 對照檢查 |
 | session 從哪個入口登入 | `auth_session.entry` | gateway 寫入 → app 驗證是否接受 |
 | 誰能進哪個 app | `app_grant` 表 | 資料庫 → platform 介面 → 各 app、我的 Apps |
 | 資料形狀 | `db/migrations/<schema>/*.sql` | migration → 資料庫 → API |
@@ -35,7 +39,7 @@ Company OS 是 company starter：任何一間公司裝好 Docker 就能開始運
 | 公司設定、發件規則、門檻 | `company_setting`、`policy_rule` | 資料庫 → platform 介面 → UI、worker |
 | 公司結構（brand、分部、法人） | `org_unit`、`org_unit_edge` | 資料庫 → platform 介面 |
 | 我是誰（員工、夥伴） | `app_user` | 資料庫 → `GET /auth/me` |
-| 客戶是誰 | `customer_account`（與員工帳戶分開） | 資料庫 → customer-portal |
+| 客戶是誰（國際版） | `customer_account`（與員工帳戶分開） | 資料庫 → customer-portal |
 | 登入狀態 | `auth_session`（只存 token 的 SHA-256） | cookie → session |
 | Need 的內容 | `need` | 資料庫 → platform 介面 → UI／MCP |
 | Need 的狀態、逾期 | `need_event`（只追加）加 `due_at`，現算 | 查詢計算，不存 |

@@ -4,12 +4,13 @@
 
 ## 這是什麼
 
-- 公司由一個 **Boss portal**（老闆的入口）和多個部門 app 組成。每個 app 是一個容器、有自己的介面；Postgres 與 MinIO 是所有容器共用的底座。
+- 公司由一個 **Boss portal**（老闆的入口）和多個部門 app 組成。程式碼按 app 模組化，容器按版本打包；Postgres 與 MinIO 是所有容器共用的底座。
 - 單一入口、單一登入頁；登入後只看到被授權給自己的 app。
 - AI 盡力做事；AI 做不到的才變成 Need 派給員工，員工交成果，老闆驗收。
 - 本 repo 不執行 AI 模型。AI 是外部客戶端，只經 MCP 的六個動詞（browse、read、write、find、render、help）連入，MCP 永遠沒有 approve 工具。
 - 對外訊息一律先進發件箱，由規則決定放行或交老闆批准。
-- 香港與大陸各裝一份，是兩間獨立公司，帳戶分開。
+- 香港與大陸各裝一份，是兩間獨立公司，帳戶分開。主機是公司自己的電腦。
+- 安裝時選版本：國際版有完整的對外入口（夥伴、客戶、Cloudflare）；大陸版第一階段只做內網，通知以站內為主，選配企業微信與飛書。安裝將由 UI 精靈協助。
 
 ## 現在到哪裡（2026-11-04）
 
@@ -17,9 +18,9 @@
 
 進行中或等待：scrypt 參數調高（#66）、跨碟備份還原驗收（#64，等第二粒實體碟）、ports:check 顯示佔用者（#45）。
 
-還沒有：多容器架構（gateway、platform、各部門 app）、員工與授權、Need、MCP、發件箱與批准、Boss portal「今日」、部門 app、背景隊列、安裝精靈。老闆目前能看到的只有：建立老闆帳戶、登入、一個誠實的空「今日」頁。
+還沒有：多容器架構（gateway、platform、app-host、各部門 app）、員工與授權、Need、MCP、發件箱與批准、Boss portal「今日」、部門 app、背景隊列、LAN 存取、安裝精靈、國際版與大陸版 profile。老闆目前能看到的只有：建立老闆帳戶、登入、一個誠實的空「今日」頁。
 
-**注意：** 目前的程式仍是單一 api 加單一 web，目錄結構是整理前的狀態。目標結構與搬遷計劃見 `docs/architecture/REPO-MAP.md`；下面的開發與運行說明描述的是現況，在 S1-01 合併前有效。
+**注意：** 目前的程式仍是單一 api 加單一 web，目錄結構是整理前的狀態。目標結構見 `docs/architecture/CODE-MAP.md`，搬遷切片是 R1 至 R6；下面的開發與運行說明描述的是現況，在這些切片合併前有效。
 
 ## 文件入口
 
@@ -27,9 +28,10 @@
 | --- | --- |
 | `docs/INDEX.md` | 唯一入口與一個真相表 |
 | `AGENTS.md` | 給 AI agent 的開工規則與不變量 |
-| `docs/product/MASTER-PLAN.md` | 全盤計劃（source of truth）：架構、資料模型、78 張 issue 清單、里程碑 |
+| `docs/product/MASTER-PLAN.md` | 全盤計劃（source of truth）：架構、資料模型、93 張 issue 清單（含國際版）、里程碑 |
 | `docs/product/DECISIONS.md` | 決策日誌 |
-| `docs/architecture/REPO-MAP.md` | 目錄結構、邊界規則、容器清單 |
+| `docs/architecture/CODE-MAP.md` | 目錄、模組、分層、邊界規則、搬遷切片 |
+| `docs/architecture/REPO-MAP.md` | 現況對照、入口、容器與端口表 |
 | `docs/backup-restore.md` | 備份與還原 |
 
 以下是開發與運行說明（現況）。
@@ -52,11 +54,11 @@ docker compose up -d --build
 
 **首次啟動前必須在 `.env` 內的 `POSTGRES_PASSWORD`、`MINIO_ROOT_PASSWORD` 與 `LOGIN_FAILURE_HASH_KEY` 填入自己的值** —— 範本刻意留空，沒有可用的預設值；留空時 `docker compose` 會即時失敗，不會起一個弱密碼的服務。
 
-前端：<http://localhost:4210>；API：<http://localhost:4420/livez>。所有端口只綁 `127.0.0.1`，區網內其他機器連不到。
+前端：<http://localhost:4210>；API：<http://localhost:4420/livez>。所有端口現在只綁 `127.0.0.1`，區網內其他機器連不到；讓同事連線的 LAN 設定屬於 S2-02，尚未完成。
 
 `npm run ports:check` 會檢查 `.env` 內的端口能否綁定，再探測有沒有人正在回應（容器發佈的端口「綁得上」但其實已被佔用，所以兩樣都要查）；有衝突或無法確認會列出原因，並以 exit 1 結束。
 
-## 端口
+## 端口（現況）
 
 | 服務 | `.env` 變數 | 預設 |
 | --- | --- | --- |
@@ -66,9 +68,11 @@ docker compose up -d --build
 | storage（S3 API） | `PORT_MINIO_API` | 29000 |
 | storage（console） | `PORT_MINIO_CONSOLE` | 29001 |
 
+目標端口表（按容器、按版本）見 `docs/architecture/REPO-MAP.md`，由 R6 實現。
+
 ## 檔案儲存
 
-MinIO，版本固定：server `RELEASE.2025-10-15T17-29-55Z`、mc `RELEASE.2025-08-13T08-35-41Z`。上游不再發佈 Docker 映像，所以由 `docker/minio/Dockerfile` 在本機用官方原始碼的固定 tag 編譯（首次建置要數分鐘，需要連 github.com 與 Docker Hub）。授權是 AGPL-3.0，未修改原始碼，私有自架。
+MinIO，版本固定：server `RELEASE.2025-10-15T17-29-55Z`、mc `RELEASE.2025-08-13T08-35-41Z`。上游不再發佈 Docker 映像，所以由 `docker/minio/Dockerfile` 在本機用官方原始碼的固定 tag 編譯（首次建置要數分鐘，需要連 github.com 與 Docker Hub）。授權是 AGPL-3.0，未修改原始碼，私有自架。大陸版將提供預先建置的映像或離線安裝包（S2-06）。
 
 資料放在 Windows 資料夾（bind mount），不是 Docker volume。這是刻意的：檔案是唯一無法重新生成的資料，`docker compose down -v` 不可以刪得到它。
 
@@ -128,7 +132,7 @@ Migration 是 `db/migrations/NNNN_說明.sql` 的純 SQL，API 啟動時自動�
 
 ## 模組
 
-「有哪些部門軟件」只有一個來源：`modules/<id>/manifest.json`。加資料夾就是安裝，刪資料夾就是卸載，重啟 api 生效（沒有熱重載）。
+「有哪些部門軟件」只有一個來源：`modules/<id>/manifest.json`（R4 之後移到 `apps/<app>/manifest.json`）。加資料夾就是安裝，刪資料夾就是卸載，重啟 api 生效（沒有熱重載）。
 
 - 六個欄位：`id`（等於資料夾名）、`title`、`kind`（`console` 或 `department`）、`department`（部門模組必填，老闆台是 `null`）、`order`、`available`。
 - `available: false` 代表那個軟件尚未建立，網站會照實說，不會給一個按了沒反應的入口。
