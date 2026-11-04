@@ -140,10 +140,21 @@ npm run storage:smoke -- verify
 
 ## 資料庫
 
-Migration 是 `db/migrations/NNNN_說明.sql` 的純 SQL，API 啟動時自動套用；套不上就結束，不會起一個 schema 不完整的服務。
+Migration 是純 SQL，API 啟動時自動套用；套不上就結束，不會起一個 schema 不完整的服務。有兩種位置，可以同時存在：
 
-- 只往前加：已套用的檔案永不修改（內容一變就拒絕啟動），新檔編號接續，不可以跳號。
-- 加一個 migration：新增 `db/migrations/0002_xxx.sql`，重啟 api 就會套用。
+| 位置 | 屬於 | 編號 | ledger 內的名字 |
+|---|---|---|---|
+| `db/migrations/NNNN_說明.sql` | platform 自己的串（平目錄） | 由 `0001` 起連續 | `0001_audit_log.sql`（原樣，不加前綴） |
+| `db/migrations/<schema>/NNNN_說明.sql` | 一個 app 一串 | **每一串各自**由 `0001` 起連續 | `<schema>/0001_xxx.sql` |
+
+- 套用次序固定：**平目錄先，再按 schema 名稱字母順序**。不支援跨串依賴 —— 一個 app 的 migration 不可以假設另一個 app 的表已經存在。
+- 串的資料夾名就是 schema 名：小寫字母開頭，只用小寫英數與底線，最多 41 個字元；`public`、`information_schema`、`pg_` 開頭一律拒絕。資料夾裡有不合名的檔案（例如 `notes.txt`）也拒絕啟動。
+- 只往前加：已套用的檔案永不修改（內容一變就拒絕啟動），同一串內新檔編號接續，不可以跳號。
+- 加一個 app migration：新增 `db/migrations/<schema>/0001_xxx.sql`，重啟 api 就會套用。**不要**在 `db/migrations/` 下為任何 app 開資料夾，除非那個 app 真的要開始寫自己的表。
+- 串的檔案在同一個交易內先 `create schema if not exists`、再 `set local search_path`：schema 與表一齊成功或一齊消失，`SET LOCAL` 亦不會漏到下一串。所以未限定名稱的新表會落在該 schema，**不會**回退去 public 找表。
+- **`search_path` 不是權限隔離。** 它只控制未限定名稱怎樣解析；同一條有權限的連線仍然可以用 `public.表名` 讀寫任何表。app 之間的 runtime 權限隔離由真正的 Postgres ACL（`#88`）負責。
+- Migration 是**經審查、隨程式發佈的可信 SQL**，不是使用者可提交的任意 SQL；沒有公開的 migration 執行入口。正式 app migration 不得依賴其他 app 或 platform 的私有表 —— 這是審查契約，不由資料庫強制。
+- 檔案發現與各串 ledger 一致性**全部驗證完**才開始套用：發現不合法檔案時，不會先套用其他新 migration。執行 SQL 才失敗的話，先前已提交的檔案保留，之後的檔案不執行。
 - `audit_log` 只准追加：UPDATE／DELETE／TRUNCATE 由 trigger 擋掉（SQLSTATE `42501`）。
 - 整合測試用臨時資料庫 `co_test_<隨機>`，不寫入正式資料庫。
 
