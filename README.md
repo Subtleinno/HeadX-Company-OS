@@ -1,13 +1,15 @@
 # Company OS
 
-給任何一間公司的 AI 原生公司軟件底座（company starter）：一間公司裝一份，全部自架在 Docker，裝完是空的，由老闆建立帳戶後再設定公司。
+給任何一間公司的 AI 原生公司軟件（company starter）：一部機器一間公司，全部自架在 Docker，裝完是空的，由老闆建立帳戶後再設定公司。
 
 ## 這是什麼
 
-- Company OS（老闆台）只有老闆一個人用；部門軟件給員工用：設計／內容／網站、銷售、營運財務、人事、客服。所有部分共用同一個資料庫、同一個檔案儲存、同一套登入。
+- 公司由一個 **Boss portal**（老闆的入口）和多個部門 app 組成。每個 app 是一個容器、有自己的介面；Postgres 與 MinIO 是所有容器共用的底座。
+- 單一入口、單一登入頁；登入後只看到被授權給自己的 app。
 - AI 盡力做事；AI 做不到的才變成 Need 派給員工，員工交成果，老闆驗收。
 - 本 repo 不執行 AI 模型。AI 是外部客戶端，只經 MCP 的六個動詞（browse、read、write、find、render、help）連入，MCP 永遠沒有 approve 工具。
 - 對外訊息一律先進發件箱，由規則決定放行或交老闆批准。
+- 香港與大陸各裝一份，是兩間獨立公司，帳戶分開。
 
 ## 現在到哪裡（2026-11-04）
 
@@ -15,17 +17,22 @@
 
 進行中或等待：scrypt 參數調高（#66）、跨碟備份還原驗收（#64，等第二粒實體碟）、ports:check 顯示佔用者（#45）。
 
-還沒有：Need、員工與 agent 帳戶、MCP、發件箱與批准、老闆台「今日」、部門軟件、背景隊列、安裝精靈。老闆目前能看到的只有：建立老闆帳戶、登入、一個誠實的空「今日」頁。
+還沒有：多容器架構（gateway、platform、各部門 app）、員工與授權、Need、MCP、發件箱與批准、Boss portal「今日」、部門 app、背景隊列、安裝精靈。老闆目前能看到的只有：建立老闆帳戶、登入、一個誠實的空「今日」頁。
+
+**注意：** 目前的程式仍是單一 api 加單一 web，目錄結構是整理前的狀態。目標結構與搬遷計劃見 `docs/architecture/REPO-MAP.md`；下面的開發與運行說明描述的是現況，在 S1-01 合併前有效。
 
 ## 文件入口
 
 | 文件 | 內容 |
 | --- | --- |
-| `AGENTS.md` | 給 AI agent 的開工規則與十一條不變量 |
-| `docs/product/MASTER-PLAN.md` | 全盤計劃（source of truth）：架構、資料模型、66 張 issue 清單、里程碑 |
+| `docs/INDEX.md` | 唯一入口與一個真相表 |
+| `AGENTS.md` | 給 AI agent 的開工規則與不變量 |
+| `docs/product/MASTER-PLAN.md` | 全盤計劃（source of truth）：架構、資料模型、80 張 issue 清單、里程碑 |
+| `docs/product/DECISIONS.md` | 決策日誌 |
+| `docs/architecture/REPO-MAP.md` | 目錄結構、邊界規則、容器清單 |
 | `docs/backup-restore.md` | 備份與還原 |
 
-以下是開發與運行說明。
+以下是開發與運行說明（現況）。
 
 ## 需求
 

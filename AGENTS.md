@@ -1,15 +1,16 @@
 # AGENTS.md
 
-給在這個 repo 工作的 AI agent。開工前先讀完這一份，然後讀你被指派的 issue。
+給在這個 repo 工作的 AI agent。開工前先讀完這一份，然後讀 `docs/INDEX.md`、你要改的 app 的 `AGENTS.md` 與 `DESIGN.md`（如果有），最後讀你被指派的 issue。
 
 ## 這個 repo 是什麼
 
-company-os 是一間公司的整套軟件，全部放在這個 repo，全部跑在 Docker。
+company-os 是一間公司的整套軟件，全部放在這個 repo，全部跑在 Docker。一部機器 = 一間公司。
 
-- Company OS（老闆台）只有老闆一個人用。
-- 部門軟件給員工用：設計／內容／網站、銷售、營運 ERP＋財務、人事、客服＋CRM。
-- 所有部分共用同一個資料庫、同一個檔案儲存、同一套登入。
-- AI 盡力做事；AI 做不到的才變成 Need 派給員工，員工上傳成果，老闆台看得到所有 Need 有沒有完成。
+- Boss portal 是老闆的入口，看各部門的運作、產物質素與營運。
+- 每個部門是一個獨立的 app，有自己的介面和自己的容器：員工、設計／內容／網站、銷售、營運財務、人事、客服（日後會再加，例如研發）。
+- 單一入口（gateway）、單一登入頁；登入後只看到被授權的 app。
+- 所有容器共用同一個 Postgres 與同一個 MinIO。身份、授權、Need、發件箱、審計、設定、MCP 與背景隊列屬於 platform，不屬於任何一個 app。
+- AI 盡力做事；AI 做不到的才變成 Need 派給員工，員工上傳成果，老闆驗收。
 - 這個 repo 不執行 AI 模型。AI 是外部客戶端，經 MCP 連入，只能用固定六個動詞：browse、read、write、find、render、help。
 
 ## 開工規則
@@ -21,13 +22,16 @@ company-os 是一間公司的整套軟件，全部放在這個 repo，全部跑�
 5. issue 裡的驗收指令沒有全部通過，不要宣稱完成。
 6. 超出 issue 範圍的想法，開新 issue，不要順手做。
 7. 規格有空白或互相矛盾：停下，在 issue 留言提問，不要猜。
-8. 不要新增說明文件，也不要改這個檔案，除非 issue 明確要求。
+8. 不要新增說明文件，也不要改這個檔案，除非 issue 明確要求。`docs/` 與各 app 的 `DESIGN.md` 只在 issue 指定時才改。
+9. 只改你被指派的 app 資料夾。要改 `packages/` 或 platform，必須有獨立的 issue。
+10. app 之間不可互相 import；只能用 `packages/` 與 platform 的介面。
 
 ## 已定案的技術決定（要換請先開 issue 說明理由）
 
 - 語言：TypeScript（strict）。Node 用當日 LTS，版本同時寫在 .nvmrc 與 Dockerfile。
 - npm workspaces；後端 Fastify；前端 React＋Vite；單元測試 Vitest；e2e 測試 Playwright。
-- 資料庫：Postgres。純 SQL migration，檔名 NNNN_說明.sql，只往前加，不改已套用的檔案。
+- 一個 app = 一個容器（Fastify 同時提供 API 與建置好的前端）。入口是 gateway，用路徑分流。
+- 資料庫：一個 Postgres，每個 app 一個 schema、一個資料庫帳號，只能存取自己的 schema 與 platform 開放的介面。純 SQL migration，每個 schema 獨立編號 NNNN_說明.sql，只往前加，不改已套用的檔案。
 - 檔案儲存：MinIO，版本必須與 HxDesign 相同（server RELEASE.2025-10-15T17-29-55Z、mc RELEASE.2025-08-13T08-35-41Z），由官方原始碼在本機建置，不修改上游程式碼，資料放在 host 資料夾（bind mount）。MinIO 是 AGPL-3.0，私有自架已接受。
 - 不使用 Redis。背景工作用 Postgres 隊列。
 - 部署：Docker Compose。目標機器是長期開機的 Windows（Docker Desktop）。所有維運腳本用 Node 寫，不依賴 bash。.ps1 檔必須是 UTF-8 with BOM；.cmd 檔不得含中文。
@@ -48,6 +52,8 @@ company-os 是一間公司的整套軟件，全部放在這個 repo，全部跑�
 9. 門檻與政策寫在資料裡，不寫死在程式。不可為了讓測試通過而放寬門檻。
 10. 密碼、token、金鑰不進 repo、不進日誌、不在 API 回應中回傳。.env 不進 git。
 11. 不複製授權不明的程式碼；不使用 tldraw。
+12. app 不讀別的 app 的資料表。跨 app 只經 platform 介面或摘要介面。
+13. 敏感 app 的授權要老闆批准。授權、改權限、改設定一律寫審計。
 
 ## 完成的定義
 
