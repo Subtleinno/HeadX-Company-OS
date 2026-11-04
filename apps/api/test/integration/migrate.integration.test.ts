@@ -25,16 +25,19 @@ describe('migration 執行器', () => {
     await db.drop();
   });
 
-  it('空資料庫套用全部 migration，schema_migrations 只有 0001', async () => {
+  it('空資料庫套用全部 migration，schema_migrations 有 0001 與 0002', async () => {
     const applied = await migrate({ pool: db.pool, dir: migrationsDir, log: silent });
 
-    expect(applied).toEqual(['0001_audit_log.sql']);
+    expect(applied).toEqual(['0001_audit_log.sql', '0002_users_sessions.sql']);
 
     const rows = await db.pool.query<{ name: string; checksum: string }>(
       'select name, checksum from schema_migrations order by name',
     );
 
-    expect(rows.rows.map((row) => row.name)).toEqual(['0001_audit_log.sql']);
+    expect(rows.rows.map((row) => row.name)).toEqual([
+      '0001_audit_log.sql',
+      '0002_users_sessions.sql',
+    ]);
     expect(rows.rows[0]?.checksum).toMatch(/^[0-9a-f]{64}$/);
 
     const table = await db.pool.query("select to_regclass('public.audit_log') as reg");
@@ -61,10 +64,10 @@ describe('migration 執行器', () => {
         migrate({ pool: fresh.pool, dir: migrationsDir, log: silent }),
       ]);
 
-      expect(results.flat()).toEqual(['0001_audit_log.sql']);
+      expect(results.flat()).toEqual(['0001_audit_log.sql', '0002_users_sessions.sql']);
 
       const rows = await fresh.pool.query('select count(*)::int as n from schema_migrations');
-      expect(rows.rows[0]?.n).toBe(1);
+      expect(rows.rows[0]?.n).toBe(2);
     } finally {
       await fresh.drop();
     }

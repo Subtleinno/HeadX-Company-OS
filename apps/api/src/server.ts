@@ -1,5 +1,6 @@
 import { Pool } from 'pg';
 import { buildServer } from './app.js';
+import { registerAuth } from './auth/routes.js';
 import { attachPoolErrorHandler, createDbCheck } from './db.js';
 import { migrate } from './migrate.js';
 import type { Storage } from './storage/index.js';
@@ -63,6 +64,9 @@ async function main(): Promise<void> {
     },
     logger: true,
   });
+
+  // 登入與首次開機。COOKIE_SECURE=true 只在經 HTTPS 入口時開，否則瀏覽器不會存 cookie。
+  registerAuth(app, { pool, cookieSecure: process.env.COOKIE_SECURE === 'true' });
 
   attachPoolErrorHandler(pool, (error) => {
     // 只記錄訊息，避免把連線參數寫入日誌。
