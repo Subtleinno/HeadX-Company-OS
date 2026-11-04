@@ -14,7 +14,7 @@ Company OS 是 company starter：任何一間公司裝好 Docker 就能開始運
 | `AGENTS.md` | 給 AI agent 的開工規則與不變量 |
 | `docs/product/MASTER-PLAN.md` | 全盤計劃：架構、資料模型、權限、issue 清單、里程碑 |
 | `docs/product/DECISIONS.md` | 決策日誌（後者優先） |
-| `docs/architecture/REPO-MAP.md` | 目錄結構、邊界規則、容器清單 |
+| `docs/architecture/REPO-MAP.md` | 目錄結構、邊界規則、容器與端口 |
 | `docs/architecture/APP-DESIGN-TEMPLATE.md` | 每個 app 的設計範本 |
 | `apps/<app>/DESIGN.md` | 該 app 的設計（唯一一份；app 建立時才有） |
 | `docs/backup-restore.md` | 備份與還原 |
@@ -26,6 +26,7 @@ Company OS 是 company starter：任何一間公司裝好 Docker 就能開始運
 | 事實 | 唯一來源 | 流向 |
 |---|---|---|
 | 有哪些 app 與導航 | `apps/<app>/manifest.json` | manifest → platform 的 app 註冊 → 我的 Apps |
+| 端口與路由 | `apps/<app>/manifest.json`（`route`、`debugPort`） | manifest → gateway 路由、compose、`.env.example`、`ports:check`（CI 檢查一致） |
 | 誰能進哪個 app | `app_grant` 表 | 資料庫 → platform 介面 → 各 app、我的 Apps |
 | 資料形狀 | `db/migrations/<schema>/*.sql` | migration → 資料庫 → API |
 | 誰可以做什麼 | `packages/policy` | policy → API → 拒絕理由 |

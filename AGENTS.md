@@ -35,7 +35,7 @@ company-os 是一間公司的整套軟件，全部放在這個 repo，全部跑�
 - 檔案儲存：MinIO，版本固定（server RELEASE.2025-10-15T17-29-55Z、mc RELEASE.2025-08-13T08-35-41Z），不可升級；由官方原始碼在本機建置，不修改上游程式碼，資料放在 host 資料夾（bind mount）。MinIO 是 AGPL-3.0，私有自架已接受。
 - 不使用 Redis。背景工作用 Postgres 隊列。
 - 部署：Docker Compose。目標機器是長期開機的 Windows（Docker Desktop）。所有維運腳本用 Node 寫，不依賴 bash。.ps1 檔必須是 UTF-8 with BOM；.cmd 檔不得含中文。
-- 所有對外端口都可由 .env 覆寫，並提供 npm run ports:check。
+- 端口與路由：以各 app 的 manifest（`route`、`debugPort`）為唯一來源。日常只連 gateway；容器內一律 8080；主機端口只綁 127.0.0.1，可由 .env 覆寫；部門 app 預設不發佈主機端口，只在 debug profile 發佈。新增或更改端口，必須同時更新 manifest、gateway 路由、compose 與 .env.example，並讓 `npm run ports:check` 通過。端口表見 `docs/architecture/REPO-MAP.md`。
 - 語言：介面、commit、PR、程式註解一律繁體中文（香港）；程式識別字用英文。
 - 介面風格：Apple HIG。白底黑字、accent 黑色 #000、系統字體堆疊、綠色 #B8F36B 只當點綴、平鋪內容用細線分隔、浮層可用柔和陰影、不用 emoji、不用紫色漸層。
 

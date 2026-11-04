@@ -46,21 +46,37 @@ company-os/
 5. `packages/contracts` 只放型別與驗證，不放邏輯。
 6. 每個 app 的資料庫帳號只能存取自己的 schema 與 platform 開放的介面。
 
-## 容器
+## 容器與端口
 
-| 容器 | 作用 |
-|---|---|
-| gateway | 單一入口 |
-| platform | 身份、授權、Need、發件箱、通知、MCP、審計、設定 |
-| worker | 與 platform 同一映像，處理隊列 |
-| boss-portal | 老闆的入口 |
-| employees | 員工名冊與授權 |
-| design、sales、ops-finance、hr、support | 部門 app |
-| db（Postgres） | 共用 |
-| storage（MinIO） | 共用 |
+端口規則：
 
-端口一律只綁 127.0.0.1，可由 `.env` 覆寫，並由 `ports:check` 檢查。端口分配在 S1-01 定案後寫在這裡。
+1. 使用者與員工日常只連 gateway。
+2. 每個容器在容器內一律監聽 8080。
+3. 主機端口一律只綁 `127.0.0.1`，可由 `.env` 覆寫，由 `ports:check` 檢查。
+4. 每個 app 的 `manifest.json` 宣告自己的 `route`、`debugPort`、`sensitive`。gateway 路由、compose、`.env.example`、`ports:check` 全部由 manifest 對照，CI 檢查四者一致。
+5. 預設只發佈 gateway、platform、db、storage。部門 app 預設不發佈主機端口，只在 compose profile `debug` 才發佈 `debugPort`。
+6. 新增 app 由 `new:app` 自動取下一個 `debugPort`；兩個 app 宣告同一個端口，`ports:check` 失敗。
+
+| 容器 | `.env` 變數 | 預設 | 預設發佈 | gateway 路由 |
+|---|---|---|---|---|
+| gateway | `GATEWAY_PORT` | 4210 | 是（日常入口） | `/` |
+| platform | `PLATFORM_PORT` | 4420 | 是（維運與 MCP 測試） | `/auth`、`/api`、`/mcp` |
+| boss-portal | `BOSS_PORTAL_DEBUG_PORT` | 4431 | 否（debug） | `/boss` |
+| employees | `EMPLOYEES_DEBUG_PORT` | 4432 | 否（debug） | `/employees` |
+| design | `DESIGN_DEBUG_PORT` | 4433 | 否（debug） | `/design` |
+| sales | `SALES_DEBUG_PORT` | 4434 | 否（debug） | `/sales` |
+| ops-finance | `OPS_FINANCE_DEBUG_PORT` | 4435 | 否（debug） | `/ops-finance` |
+| hr | `HR_DEBUG_PORT` | 4436 | 否（debug） | `/hr` |
+| support | `SUPPORT_DEBUG_PORT` | 4437 | 否（debug） | `/support` |
+| research-dev（預留） | `RESEARCH_DEV_DEBUG_PORT` | 4438 | 否（debug） | `/research-dev` |
+| worker | 無 | — | — | — |
+| db（Postgres） | `DB_PORT` | 25432 | 是 | — |
+| storage（MinIO） | `PORT_MINIO_API`、`PORT_MINIO_CONSOLE` | 29000、29001 | 是 | — |
+
+4431 至 4499 保留給 app。與現況的關係：現在的 web（4210）成為 gateway，api（4420）成為 platform，數字不變，使用者習慣的網址不變。
+
+manifest 欄位：現有六欄位（`id`、`title`、`kind`、`department`、`order`、`available`）加上 `route`、`debugPort`、`sensitive`。載入器目前拒絕未知欄位，由 S1-01 一併放寬並加測試。
 
 ## 新增一個 app
 
-`npm run new:app <名稱>`（S5-00 完成後）會產生資料夾、Dockerfile、manifest、`DESIGN.md`、`AGENTS.md`、資料庫 schema、gateway 路由、compose 服務和「我的 Apps」入口。`compose profile` 決定這部機啟動哪些 app。
+`npm run new:app <名稱>`（S5-00 完成後）會產生資料夾、Dockerfile、manifest、`DESIGN.md`、`AGENTS.md`、資料庫 schema、gateway 路由、compose 服務、`.env.example` 的端口變數和「我的 Apps」入口。`compose profile` 決定這部機啟動哪些 app。

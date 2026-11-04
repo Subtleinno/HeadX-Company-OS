@@ -26,3 +26,4 @@
 - C22 公司特有的設定放在 `profiles/<公司>/`，不放進 starter 的預設。
 - C23 第一階段的 Boss portal 只看本機這間公司。老闆看兩間公司，要登入兩次。
 - C24 大陸的資料留在大陸機。任何境外存取（包括 VPN 回公司）的法律責任仍在公司，需專業意見；系統只負責審計與按政策控制。兩部機之間不建立跨境連線。
+- C25 端口與路由以各 app 的 manifest 為唯一來源（`route`、`debugPort`、`sensitive`）。日常只連 gateway；容器內一律 8080；主機端口只綁 127.0.0.1；預設只發佈 gateway、platform、db、storage，部門 app 只在 debug profile 發佈端口。gateway 路由、compose、`.env.example`、`ports:check` 由 CI 檢查與 manifest 一致。端口表見 `docs/architecture/REPO-MAP.md`。
