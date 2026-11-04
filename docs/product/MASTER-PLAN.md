@@ -1,6 +1,6 @@
-# Company OS 全盤計劃（v2）
+# Company OS 全盤計劃
 
-狀態：草稿 v2，取代 v1。本文件是計劃的 source of truth。一個真相表在 `docs/INDEX.md`，決策日誌在 `docs/product/DECISIONS.md`，目錄結構在 `docs/architecture/REPO-MAP.md`，每個 app 的設計在 `apps/<app>/DESIGN.md`。
+狀態：草稿。本文件是計劃的 source of truth。一個真相表在 `docs/INDEX.md`，決策日誌在 `docs/product/DECISIONS.md`，目錄結構在 `docs/architecture/REPO-MAP.md`，每個 app 的設計在 `apps/<app>/DESIGN.md`。
 
 版本：2026-11-04　撰寫：Company OS 開發管理者
 讀者：老闆（看第 1、2、13、15 節）、ZCode（QA／QC）、WorkBuddy（實作）
@@ -9,7 +9,7 @@
 
 Company OS 是 company starter：任何一間公司裝好 Docker 就能開始運作的整套公司軟件。全部自架，裝完是空的，由老闆建立帳戶後再設定公司。
 
-- 一部機器 = 一間公司。香港與大陸各裝一份，是兩間獨立公司，帳戶分開；往來當作兩間公司的交易，用 Email 傳單據。不做跨機聯邦。
+- 一部機器 = 一間公司。香港與大陸各裝一份，是兩間獨立公司，帳戶分開；往來當作兩間公司的交易，用 Email 傳單據。兩部機之間沒有跨機連線。
 - 一間公司可以有多個 brand 和多個國家分部，由老闆在「公司結構」自行定義，不鎖定。
 - 公司由一個 Boss portal（老闆的入口）和多個部門 app 組成。每個 app 一個容器、有自己的介面；Postgres 與 MinIO 是共用底座。
 - AI 盡力做事；AI 做不到的才變成 Need 派給員工；員工交成果，老闆驗收。AI 是外部客戶端，只經 MCP 六動詞（browse、read、write、find、render、help）連入，MCP 永遠沒有 approve 工具。
@@ -112,7 +112,7 @@ platform   boss-portal  employees  design  sales  ops-finance  hr  support  …
 
 ## 9. 介面
 
-- 風格：HxDesign。白底黑字，accent 黑色 #000，系統字體堆疊，綠 #B8F36B 只當點綴，平鋪內容用細線分隔，不用 emoji，不用紫色漸層。錯誤文字 #d70015。所有 app 共用 `design-tokens` 與 `ui-kit`。
+- 風格：Apple HIG。白底黑字，accent 黑色 #000，系統字體堆疊，綠 #B8F36B 只當點綴，平鋪內容用細線分隔，不用 emoji，不用紫色漸層。錯誤文字 #d70015。所有 app 共用 `design-tokens` 與 `ui-kit`。
 - 畫面：登入頁、我的 Apps、我的 Needs、Need 詳情、設定、公司結構（platform）；今日、批准收件匣、各部門摘要（Boss portal）；名冊與授權（employees）。
 - 規則：一行只給一個訊號；繼承或鎖定的內容收起但保留摘要；空狀態說真話；手機 390×844 不得橫向捲動。
 
@@ -134,7 +134,7 @@ platform   boss-portal  employees  design  sales  ops-finance  hr  support  …
 
 ## 12. 兩間公司（香港與大陸）
 
-兩部機各自獨立：各有老闆、員工、brand、資料庫與 MinIO，沒有跨機連線。老闆看兩邊要登入兩次。大陸資料留在大陸機；任何境外存取的法律責任仍在公司，需專業意見（見決策 C25）。
+兩部機各自獨立：各有老闆、員工、brand、資料庫與 MinIO，沒有跨機連線。老闆看兩邊要登入兩次。大陸資料留在大陸機；任何境外存取的法律責任仍在公司，需專業意見（見決策 C24）。
 
 ## 13. 里程碑
 
@@ -157,10 +157,9 @@ platform   boss-portal  employees  design  sales  ops-finance  hr  support  …
 |---|---|---|---|---|
 | P0-65 | #65 登入失敗審計去識別化（進行中） | — | M | A |
 | P0-66 | #66 scrypt N=2^17 與舊雜湊升級 | P0-65 | M | A |
-| P0-68 | #68 HxDesign 對齊文件 | — | S | C |
 | P0-64 | #64 跨碟備份還原驗收（等第二粒實體碟） | 硬體 | M | A |
 | P0-45 | #45 ports:check 顯示佔用者 | — | S | C |
-| S1-01 | 架構整理：apps/api→apps/platform、packages/、邊界 lint、compose 多服務骨架 | — | L | A |
+| S1-01 | 架構整理：apps/api→apps/platform、packages/、邊界 lint、compose 多服務骨架；清除程式碼與註解中對其他專案的引用 | — | L | A |
 | S1-02 | gateway 容器：單一入口、路徑分流、cookie、Origin | S1-01 | M | A |
 | S1-03 | CI 按 app 路徑分流與邊界檢查 | S1-01 | M | B |
 | S1-04 | 公司設定與政策表加種子檔 | S1-01, P0-66 | M | A |
@@ -207,7 +206,6 @@ platform   boss-portal  employees  design  sales  ops-finance  hr  support  …
 | D-01 | design：專案、brief、缺口轉 Need | S5-00, S3-10 | L | B |
 | D-02 | design：成品預覽與交回 | D-01 | M | B |
 | D-03 | design：知識與素材缺口規則 | D-01 | M | B |
-| D-04 | design：與 HxDesign 對接，不複製 | D-02 | M | B |
 | SA-01 | sales：客戶與商機最小表 | S5-00 | M | B |
 | SA-02 | sales：報價草稿→批准→寄出 | SA-01, S4-02 | L | A |
 | SA-03 | sales：跟進提醒轉 Need | SA-01 | S | B |
@@ -232,7 +230,7 @@ platform   boss-portal  employees  design  sales  ops-finance  hr  support  …
 | O-06 | 審計檢視與匯出 | S2-02 | M | B |
 | O-07 | 簡體語系 | S1-09 | M | B |
 | O-08 | 兩間公司往來單據的 Email 範本（採購單、出貨通知） | S4-02 | M | B |
-| O-09 | 外部安全審查與修補 | D-04 | L | A |
+| O-09 | 外部安全審查與修補 | D-03 | L | A |
 | O-10 | 使用手冊 | 全部 | M | C |
 | O-11 | research-dev app（流程確定後） | RD-01 | M | B |
 
@@ -242,15 +240,15 @@ platform   boss-portal  employees  design  sales  ops-finance  hr  support  …
 
 | 階段 | issue 數 | 序列工時 | 日曆估算 |
 |---|---|---|---|
-| 0 收尾 | 5 | 8 小時 | 約 1.7 個工作日 |
+| 0 收尾 | 4 | 7 小時 | 約 1.5 個工作日 |
 | 1 底座與第一個閉環 | 19 | 52 小時 | 約 11.3 個工作日 |
 | 2 可遠端使用 | 4 | 12 小時 | 約 2.6 個工作日 |
 | 3 AI 接入 | 11 | 30 小時 | 約 6.5 個工作日 |
 | 4 通知與出口 | 9 | 21 小時 | 約 4.5 個工作日 |
-| 5 app 範本與 Design | 5 | 14 小時 | 約 3.0 個工作日 |
+| 5 app 範本與 Design | 4 | 12 小時 | 約 2.6 個工作日 |
 | 6 其餘部門 | 16 | 36 小時 | 約 7.8 個工作日 |
 | 7 Starter 化與營運 | 11 | 30 小時 | 約 6.5 個工作日 |
-| 合計 | 80 | 203 小時 | 約 44 個工作日（約 8.8 星期） |
+| 合計 | 78 | 200 小時 | 約 43.3 個工作日（約 8.7 星期） |
 
 M1 是第一個完整可用的 Company OS，約 11 個工作日；WorkBuddy 連續運行時可縮短。外部依賴縮短不了，應盡早啟動：第二粒實體碟、對外入口方案、Lark／飛書應用審批、WhatsApp Business API 申請。
 
@@ -283,7 +281,7 @@ A 級：完整規格、先寫會 fail 的測試、變異測試、QA 獨立重跑
 | 多 schema 與多帳號的 migration 複雜 | S1-01 先做小實驗，確認執行器兼容既有 migration |
 | 部門流程猜錯 | 垂直切片先行；Need 類型放資料；每個 app 先做一條流程 |
 | WorkBuddy 環境不穩 | 完成定義含 PR；ZCode 可機械式補 push；進度以 GitHub 為準 |
-| 大陸資料與境外存取的法律責任 | 專業意見；系統只做審計與政策控制（C25） |
+| 大陸資料與境外存取的法律責任 | 專業意見；系統只做審計與政策控制（C24） |
 | 外部渠道規則變動 | adapter 隔離；先查證官方文件再寫 issue |
 | 過度設定 | 只有第二間公司需要才新增設定項 |
 | env.backup 在 Windows 為明文 | 第二碟到位後做磁碟或備份加密（O-04） |

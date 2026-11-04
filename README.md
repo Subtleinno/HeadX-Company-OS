@@ -27,7 +27,7 @@
 | --- | --- |
 | `docs/INDEX.md` | 唯一入口與一個真相表 |
 | `AGENTS.md` | 給 AI agent 的開工規則與不變量 |
-| `docs/product/MASTER-PLAN.md` | 全盤計劃（source of truth）：架構、資料模型、80 張 issue 清單、里程碑 |
+| `docs/product/MASTER-PLAN.md` | 全盤計劃（source of truth）：架構、資料模型、78 張 issue 清單、里程碑 |
 | `docs/product/DECISIONS.md` | 決策日誌 |
 | `docs/architecture/REPO-MAP.md` | 目錄結構、邊界規則、容器清單 |
 | `docs/backup-restore.md` | 備份與還原 |
@@ -68,7 +68,7 @@ docker compose up -d --build
 
 ## 檔案儲存
 
-MinIO，版本與 HxDesign 相同：server `RELEASE.2025-10-15T17-29-55Z`、mc `RELEASE.2025-08-13T08-35-41Z`。上游不再發佈 Docker 映像，所以由 `docker/minio/Dockerfile` 在本機用官方原始碼的固定 tag 編譯（首次建置要數分鐘，需要連 github.com 與 Docker Hub）。授權是 AGPL-3.0，未修改原始碼，私有自架。
+MinIO，版本固定：server `RELEASE.2025-10-15T17-29-55Z`、mc `RELEASE.2025-08-13T08-35-41Z`。上游不再發佈 Docker 映像，所以由 `docker/minio/Dockerfile` 在本機用官方原始碼的固定 tag 編譯（首次建置要數分鐘，需要連 github.com 與 Docker Hub）。授權是 AGPL-3.0，未修改原始碼，私有自架。
 
 資料放在 Windows 資料夾（bind mount），不是 Docker volume。這是刻意的：檔案是唯一無法重新生成的資料，`docker compose down -v` 不可以刪得到它。
 
