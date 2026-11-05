@@ -12,15 +12,19 @@
 - 香港與大陸各裝一份，是兩間獨立公司，帳戶分開。主機是公司自己的電腦。
 - 安裝時選版本：國際版有完整的對外入口（夥伴、客戶、Cloudflare）；大陸版第一階段只做內網，通知以站內為主，選配企業微信與飛書。安裝將由 UI 精靈協助。
 
-## 現在到哪裡（2026-11-04）
+## 現在到哪裡（2026-11-05）
 
-已完成（全是地基）：CI、端口只綁本機與 ports:check、MinIO 檔案儲存、migration 執行器與只准追加的審計表、首次開機與老闆登入、登入失敗審計去識別化、模組註冊、檔案層、網站外殼（一）、備份與還原程式、scrypt 參數調高至 N=2^17（舊雜湊登入時自動升級）。
+已完成的是底座，不是一間已經自動運作的公司。
 
-進行中或等待：跨碟備份還原驗收（#64，等第二粒實體碟）、ports:check 顯示佔用者（#45）。
+已合併：登入與 session、檔案層、審計、備份程式、scrypt、邊界檢查、`apps/platform`、共用介面 package、app manifest、多串 migration、`packages/edition-profile`、`gateway-internal`、`app-host` 空殼、CI、公司設定、組織單位、權限引擎、app 授權、員工與 agent 身份、背景工作隊列。
 
-還沒有：多容器架構（gateway、platform、app-host、各部門 app）、員工與授權、Need、MCP、發件箱與批准、Boss portal「今日」、部門 app、背景隊列、LAN 存取、安裝精靈、國際版與大陸版 profile。老闆目前能看到的只有：建立老闆帳戶、登入、一個誠實的空「今日」頁。
+老闆目前能看到的仍然是：建立老闆帳戶、登入、一個誠實的空「今日」頁。
 
-**注意：** 目前的程式仍是單一 api 加單一 web，目錄結構是整理前的狀態。目標結構見 `docs/architecture/CODE-MAP.md`，搬遷切片是 R1 至 R6；下面的開發與運行說明描述的是現況，在這些切片合併前有效。
+進行中或等待：#86 密碼管理、#88 app 資料庫帳號、#87 可信入口（等 #86）、#45 端口佔用者、#64 跨碟備份（等第二粒實體碟）、#68 HxDesign 只讀研究。
+
+還沒有：Need、MCP、發件箱、真正的部門 app、可用的 Boss portal 工作台、LAN、安裝精靈、ERPNext。app 自動化設計在分支 `docs/app-automation-design`，尚未合併，不是施工規格。
+
+**注意：** 下面的開發與運行說明描述的是 `main` 的現況。R1 至 R6 的搬遷已經合併；不要再把系統理解成整理前的單一 `apps/api`。
 
 ## 文件入口
 
@@ -30,6 +34,7 @@
 | `AGENTS.md` | 給 AI agent 的開工規則與不變量 |
 | `docs/product/MASTER-PLAN.md` | 全盤計劃（source of truth）：架構、資料模型、93 張 issue 清單（含國際版）、里程碑 |
 | `docs/product/DECISIONS.md` | 決策日誌 |
+| `docs/product/apps/00-DESIGN-PLAN.md`（分支 `docs/app-automation-design`） | 未合併的 app 自動化設計。不是施工規格 |
 | `docs/architecture/CODE-MAP.md` | 目錄、模組、分層、邊界規則、搬遷切片 |
 | `docs/architecture/REPO-MAP.md` | 現況對照、入口、容器與端口表 |
 | `docs/backup-restore.md` | 備份與還原 |
@@ -234,4 +239,3 @@ npm run env:check        # 只跑「compose 與 .env.example 對得上」這一�
 **分支保護請只要求 `ci-ok` 一個檢查**（在 GitHub 網頁 → Settings → Branches 設定，不在 repo 內）。`ci-ok` 的 `needs` 是另外五個，`skipped` 與 `cancelled` 都算不通過；之後新增檢查時把它加進 `ci-ok` 的 `needs`，分支保護不用改。
 
 `compose` 這個 job 的密碼是 `ci-dummy-not-a-secret`（寫在 workflow 的 env 區，用完即棄），因為 `.env.example` 的密碼刻意留空。最後一步會把假值拿掉再跑一次 `docker compose config`，它必須失敗並印出「請先複製 .env.example 為 .env」—— 這一步綠代表「缺密碼就即時失敗」的保護還在。
-
