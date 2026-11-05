@@ -10,6 +10,7 @@
     "@aws-sdk/client-s3": "^3.1161.0",
     "@company-os/contracts": "*",
     "@company-os/edition-profile": "*",
+    "@company-os/policy": "*",
     "fastify": "^5.12.8",
     "pg": "^8.23.1"
   },

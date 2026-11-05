@@ -557,7 +557,7 @@ describe('舊資料庫升級', () => {
       );
       expect(where.rows).toEqual([{ schema: 'public' }]);
 
-      // 2. 新執行器接手：只補舊庫沒有的（#80 的 0004、#81 的 0005），舊紀錄逐字不變。
+      // 2. 新執行器接手：只補舊庫沒有的（#80 的 0004、#81 的 0005、#83 的 0006），舊紀錄逐字不變。
       const logs: string[] = [];
       const applied = await migrate({
         pool: db.pool,
@@ -565,7 +565,11 @@ describe('舊資料庫升級', () => {
         log: (message) => logs.push(message),
       });
 
-      expect(applied).toEqual(['0004_company_settings.sql', '0005_org_units.sql']);
+      expect(applied).toEqual([
+        '0004_company_settings.sql',
+        '0005_org_units.sql',
+        '0006_app_grants.sql',
+      ]);
 
       const after = await db.pool.query<{ name: string; checksum: string; applied_at: Date }>(
         'select name, checksum, applied_at from public.schema_migrations order by name',
@@ -577,6 +581,7 @@ describe('舊資料庫升級', () => {
         '0003_stored_file.sql',
         '0004_company_settings.sql',
         '0005_org_units.sql',
+        '0006_app_grants.sql',
       ]);
 
       // 再跑一次才真的沒有待套用的，並且明講。
@@ -608,14 +613,15 @@ describe('舊資料庫升級', () => {
         'select name, checksum, applied_at from public.schema_migrations order by name',
       );
 
-      // 舊的五筆逐字不變（包含 applied_at），新串排在後面。
-      expect(final.rows.slice(0, 5)).toEqual(after.rows);
+      // 舊的六筆逐字不變（包含 applied_at），新串排在後面。
+      expect(final.rows.slice(0, 6)).toEqual(after.rows);
       expect(final.rows.map((row) => row.name)).toEqual([
         '0001_audit_log.sql',
         '0002_users_sessions.sql',
         '0003_stored_file.sql',
         '0004_company_settings.sql',
         '0005_org_units.sql',
+        '0006_app_grants.sql',
         'app_alpha/0001_alpha_one.sql',
       ]);
 

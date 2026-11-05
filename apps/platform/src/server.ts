@@ -4,6 +4,7 @@ import { LOGIN_HASH_KEY_ENV, loginHashKeyWarning, readLoginHashKey } from './aut
 import { registerAuth } from './auth/routes.js';
 import { attachPoolErrorHandler, createDbCheck } from './db.js';
 import { DEFAULT_MAX_UPLOAD_BYTES, registerFiles } from './files/routes.js';
+import { registerGrants } from './grants/index.js';
 import { migrate } from './migrate.js';
 import { loadModules } from './modules/registry/index.js';
 import { registerModules } from './modules/routes.js';
@@ -198,6 +199,18 @@ async function main(): Promise<void> {
 
   // 檔案層：上傳／下載（Range）／列表／軟刪除。key 前綴固定為 files/，
   // 用戶提供的檔名永遠不參與路徑。
+  // app 授權：申請、批准、拒絕、撤銷、查詢，以及接 #82 引擎的存取檢查。
+  //
+  // 入口由這個 adapter 決定。**現在刻意回 null**：session 還沒有 entry 這個欄位，
+  // 真實代理信任（gateway 的標記、cookie scope、mTLS）是後續 issue 的工作。
+  // 回 null 會令 /app-grants/access/* 一律 403 entry_untrusted —— 這是誠實的失敗；
+  // 如果這裡假設 internal，經夥伴入口進來的請求就會被當成內網員工。
+  registerGrants(app, {
+    pool,
+    registry,
+    resolveEntry: () => null,
+  });
+
   registerFiles(app, {
     pool,
     storage,

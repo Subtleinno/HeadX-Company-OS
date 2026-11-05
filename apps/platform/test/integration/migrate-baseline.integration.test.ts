@@ -5,7 +5,7 @@ import { migrate } from '../../src/migrate';
 import { createTempDatabase, type TempDatabase } from './temp-db';
 
 /**
- * 小實驗（#75 第一步）：在**現有**執行器下，臨時資料庫套用 0001 至 0005 之後，
+ * 小實驗（#75 第一步）：在**現有**執行器下，臨時資料庫套用 0001 至 0006 之後，
  * schema_migrations 到底長甚麼樣。
  *
  * 這一份是後面每個階段的基準線：
@@ -15,7 +15,7 @@ import { createTempDatabase, type TempDatabase } from './temp-db';
  * - applied_at 的排序與相對關係
  *
  * checksum 用字面值釘死：已套用的 migration 內容永不修改，所以這幾個 hex 字串也永不改變。
- * 新增 migration 時，把新的一行加在尾（#80 加了 0004）。
+ * 新增 migration 時，把新的一行加在尾（#80 加了 0004、#81 加了 0005、#83 加了 0006）。
  * 一旦有人動了 migration 的內容，這條測試會先於執行器本身的檢查爆出來。
  */
 const migrationsDir = resolve(process.cwd(), 'db/migrations');
@@ -28,9 +28,10 @@ const BASELINE = [
   ['0003_stored_file.sql', 'faf59654788d55f9e09a58b7dbd14facb68caf8a15e238b9164feff1f317453f'],
   ['0004_company_settings.sql', '46233f8294f3342dfe02e77fa55101b59cb08e2ff6e78590b7b6408dbb1a1a5b'],
   ['0005_org_units.sql', '43f52acfdbb6b55bcf735f42918895495333db4a8e1ee08d78c350bcfdb8e26c'],
+  ['0006_app_grants.sql', '31cc6dd2ffc9636aaa5da98bf6d87cc7e3b3535aa774452bbfd1c7de50d2d717'],
 ] as const;
 
-describe('基準線：現有執行器套用 0001 至 0005 之後的 ledger', () => {
+describe('基準線：現有執行器套用 0001 至 0006 之後的 ledger', () => {
   let db: TempDatabase;
 
   beforeAll(async () => {

@@ -834,8 +834,8 @@ describe('資料庫層防成環（不經 API）', () => {
   });
 });
 
-describe('舊資料庫升級（#80 的 0001–0004 → 0005）', () => {
-  it('只補 0005；company_setting 與 policy_rule 資料不變，新欄位全為空', async () => {
+describe('舊資料庫升級（#80 的 0001–0004 → 0005、0006）', () => {
+  it('只補 0005 與 0006；company_setting 與 policy_rule 資料不變，新欄位全為空', async () => {
     const db = await createTempDatabase();
 
     try {
@@ -868,9 +868,9 @@ describe('舊資料庫升級（#80 的 0001–0004 → 0005）', () => {
         'select id, domain, condition, action, priority, enabled, note from policy_rule order by id',
       );
 
-      // 3. 新程式接手：只補 0005。
+      // 3. 新程式接手：只補 0005 與 0006。
       const applied = await migrate({ pool: db.pool, dir: migrationsDir, log: silent });
-      expect(applied).toEqual(['0005_org_units.sql']);
+      expect(applied).toEqual(['0005_org_units.sql', '0006_app_grants.sql']);
 
       // 4. 既有資料一個字都沒動。
       expect((await db.pool.query('select key, value from company_setting order by key')).rows).toEqual(
