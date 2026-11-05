@@ -1,0 +1,6 @@
+{
+  "acceptance_rule": "owner",
+  "department_isolation": false,
+  "overdue_grace_hours": 0,
+  "notification_channels": ["inapp"]
+}

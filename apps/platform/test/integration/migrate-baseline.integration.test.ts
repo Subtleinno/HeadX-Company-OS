@@ -5,7 +5,7 @@ import { migrate } from '../../src/migrate';
 import { createTempDatabase, type TempDatabase } from './temp-db';
 
 /**
- * 小實驗（#75 第一步）：在**現有**執行器下，臨時資料庫套用 0001 至 0003 之後，
+ * 小實驗（#75 第一步）：在**現有**執行器下，臨時資料庫套用 0001 至 0004 之後，
  * schema_migrations 到底長甚麼樣。
  *
  * 這一份是後面每個階段的基準線：
@@ -14,7 +14,8 @@ import { createTempDatabase, type TempDatabase } from './temp-db';
  * - 三條紀錄的 name 與 checksum 逐字是甚麼
  * - applied_at 的排序與相對關係
  *
- * checksum 用字面值釘死：0001 至 0003 的內容永不修改，所以這三個 hex 字串也永不改變。
+ * checksum 用字面值釘死：已套用的 migration 內容永不修改，所以這幾個 hex 字串也永不改變。
+ * 新增 migration 時，把新的一行加在尾（#80 加了 0004）。
  * 一旦有人動了 migration 的內容，這條測試會先於執行器本身的檢查爆出來。
  */
 const migrationsDir = resolve(process.cwd(), 'db/migrations');
@@ -25,9 +26,10 @@ const BASELINE = [
   ['0001_audit_log.sql', 'bc2ed422b55c373f35c672130f49038b5d0f0e9d11c24b5c3d2493ad6a329f2e'],
   ['0002_users_sessions.sql', '2f4914035f2e675ad6d9e315c45592c93d7e70bf787f256b47a7b56544c85bad'],
   ['0003_stored_file.sql', 'faf59654788d55f9e09a58b7dbd14facb68caf8a15e238b9164feff1f317453f'],
+  ['0004_company_settings.sql', '46233f8294f3342dfe02e77fa55101b59cb08e2ff6e78590b7b6408dbb1a1a5b'],
 ] as const;
 
-describe('基準線：現有執行器套用 0001 至 0003 之後的 ledger', () => {
+describe('基準線：現有執行器套用 0001 至 0004 之後的 ledger', () => {
   let db: TempDatabase;
 
   beforeAll(async () => {
@@ -38,7 +40,7 @@ describe('基準線：現有執行器套用 0001 至 0003 之後的 ledger', () 
     await db.drop();
   });
 
-  it('ledger 落在 public，三筆的 name 與 checksum 逐字等於基準值', async () => {
+  it('ledger 落在 public，每一筆的 name 與 checksum 逐字等於基準值', async () => {
     const applied = await migrate({ pool: db.pool, dir: migrationsDir, log: silent });
     expect(applied).toEqual(BASELINE.map(([name]) => name));
 
@@ -59,7 +61,7 @@ describe('基準線：現有執行器套用 0001 至 0003 之後的 ledger', () 
     expect(where.rows).toEqual([{ schema: 'public' }]);
   });
 
-  it('applied_at 有預設值，且三筆同一批次寫入', async () => {
+  it('applied_at 有預設值，且同一批次寫入', async () => {
     const rows = await db.pool.query<{ name: string; at: Date | null }>(
       'select name, applied_at as at from public.schema_migrations order by name',
     );

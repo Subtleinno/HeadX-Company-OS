@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, resolve } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -512,7 +512,7 @@ describe('並發：兩個 runner 同時對同一個臨時庫', () => {
 });
 
 describe('舊資料庫升級', () => {
-  it('舊執行器套用 0001 至 0003 之後，新執行器說沒有待套用，ledger 與測試資料不變', async () => {
+  it('舊執行器套用 0001 至 0003 之後，新執行器只補新的 migration，ledger 與測試資料不變', async () => {
     await withTempDb(async (db) => {
       // 1. 舊行為：單一平目錄串、ledger 用未限定名稱建在 public。
       const legacyClient = await db.pool.connect();
@@ -557,7 +557,7 @@ describe('舊資料庫升級', () => {
       );
       expect(where.rows).toEqual([{ schema: 'public' }]);
 
-      // 2. 新執行器接手：沒有任何待套用的，並且明講。
+      // 2. 新執行器接手：只補舊庫沒有的那一個（#80 的 0004），舊紀錄逐字不變。
       const logs: string[] = [];
       const applied = await migrate({
         pool: db.pool,
@@ -565,18 +565,33 @@ describe('舊資料庫升級', () => {
         log: (message) => logs.push(message),
       });
 
-      expect(applied).toEqual([]);
-      expect(logs).toContain('沒有待套用的 migration');
+      expect(applied).toEqual(['0004_company_settings.sql']);
 
-      const after = await db.pool.query(
+      const after = await db.pool.query<{ name: string; checksum: string; applied_at: Date }>(
         'select name, checksum, applied_at from public.schema_migrations order by name',
       );
-      expect(after.rows).toEqual(beforeRows);
+      expect(after.rows.slice(0, beforeRows.length)).toEqual(beforeRows);
+      expect(after.rows.map((row) => row.name)).toEqual([
+        '0001_audit_log.sql',
+        '0002_users_sessions.sql',
+        '0003_stored_file.sql',
+        '0004_company_settings.sql',
+      ]);
+
+      // 再跑一次才真的沒有待套用的，並且明講。
+      expect(
+        await migrate({ pool: db.pool, dir: FLAT_DIR, log: (message) => logs.push(message) }),
+      ).toEqual([]);
+      expect(logs).toContain('沒有待套用的 migration');
 
       // 3. 再加一條新串：舊紀錄原封不動，新串照樣套用。
+      //    平目錄要放齊全部已套用的檔案（不只是 0001 至 0003）——執行器會把
+      //    「ledger 有、資料夾沒有」當成有人刪了 migration 而拒絕啟動。
       const dir = await tree({});
-      for (const file of await readFlat()) {
-        await writeFile(resolve(dir, file.name), file.sql, 'utf8');
+      const flatFiles = (await readdir(FLAT_DIR)).filter((name) => /^\d{4}_[a-z0-9_]+\.sql$/.test(name));
+
+      for (const name of flatFiles) {
+        await writeFile(resolve(dir, name), await readFile(resolve(FLAT_DIR, name), 'utf8'), 'utf8');
       }
       await mkdir(resolve(dir, 'app_alpha'), { recursive: true });
       await writeFile(
@@ -592,12 +607,13 @@ describe('舊資料庫升級', () => {
         'select name, checksum, applied_at from public.schema_migrations order by name',
       );
 
-      // 前三筆逐字不變（包含 applied_at）。
-      expect(final.rows.slice(0, 3)).toEqual(beforeRows);
+      // 舊的四筆逐字不變（包含 applied_at），新串排在後面。
+      expect(final.rows.slice(0, 4)).toEqual(after.rows);
       expect(final.rows.map((row) => row.name)).toEqual([
         '0001_audit_log.sql',
         '0002_users_sessions.sql',
         '0003_stored_file.sql',
+        '0004_company_settings.sql',
         'app_alpha/0001_alpha_one.sql',
       ]);
 
