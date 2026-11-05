@@ -13,6 +13,12 @@ COPY packages/ui-kit/package.json packages/ui-kit/package.json
 COPY packages/app-shell/package.json packages/app-shell/package.json
 COPY packages/contracts/package.json packages/contracts/package.json
 COPY packages/edition-profile/package.json packages/edition-profile/package.json
+# 權限引擎（issue #82）。platform 的 grants 路由用它的 canAccessApp。
+COPY packages/policy/package.json packages/policy/package.json
+# 這裡的 workspace 清單由 apps/platform/package.json 的 dependencies 決定：
+# 少一個，npm ci 之後 node_modules/@company-os/<name> 就沒有符號連結，
+# build 會以 TS2307／exit 2 無聲地失敗。apps/platform/test/modules/
+# dockerfile-workspaces.test.ts 會盯着三個位置是否齊，忘記加就會在 CI 紅。
 RUN npm ci
 
 COPY apps/platform apps/platform
@@ -23,6 +29,8 @@ COPY packages/contracts packages/contracts
 # 版本差異（入口、渠道目錄）的唯一來源；settings 用它驗 notification_channels，
 # 理由同上：入口是 src/index.ts，映像要帶住來源。
 COPY packages/edition-profile packages/edition-profile
+# 理由同上：入口是 src/index.ts，映像要帶住來源。
+COPY packages/policy packages/policy
 COPY db/migrations db/migrations
 # 種子檔（第一次啟動時填入預設值與政策規則）。只複製 profile，不是整個 profiles/ 的歷史。
 COPY profiles profiles
@@ -42,6 +50,7 @@ COPY --from=build /app/apps/platform/dist ./apps/platform/dist
 # 沒有這一行，require('@company-os/contracts') 會找不到。
 COPY --from=build /app/packages/contracts ./packages/contracts
 COPY --from=build /app/packages/edition-profile ./packages/edition-profile
+COPY --from=build /app/packages/policy ./packages/policy
 COPY --from=build /app/db/migrations ./db/migrations
 COPY --from=build /app/profiles ./profiles
 

@@ -8,7 +8,9 @@
     "declarationMap": true,
     "outDir": "./dist",
     "rootDir": "./src",
-    "types": []
+    "types": [],
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": true
   },
   "include": ["src/**/*.ts"]
 }

@@ -49,6 +49,13 @@ manifest 欄位：`id`、`title`、`kind`、`department`、`order`、`available`
 | `app-shell` | 頁面外殼、導航、登入守衛、空狀態與錯誤畫面 | 只依賴 ui-kit、platform-kit、i18n |
 | `i18n` | 繁體／簡體字串與格式 | 字串不寫死在元件裡 |
 
+### 映像怎樣拿到這些 package
+
+`packages/*` 的 `main`／`exports` 指向 `src/index.ts`；api 映像照樣搬來源進去，靠 Node 的型別剝離執行，不經 `dist`。這有兩個後果，各有守門測試：
+
+1. `apps/platform/Dockerfile` 要逐個 `COPY` platform 依賴的 workspace package —— `npm ci` 前一次 `package.json`、build 前一次完整來源、runtime stage 再一次。少一行，`npm ci` 之後 `node_modules/@company-os/<name>` 就沒有符號連結，`tsc` 以 TS2307／exit 2 失敗（`apps/platform/test/modules/dockerfile-workspaces.test.ts`）。
+2. 這些 package 內的相對匯入要寫 `.ts`。`rewriteRelativeImportExtensions` 會令 `tsc` 產出的 `dist` 仍然寫 `.js`，兩個消費端都正確。寫 `.js` 的話，tsc、vitest、容器 CI 全部看不出來，只有真正的容器以 `ERR_MODULE_NOT_FOUND` 起不來（`apps/platform/test/modules/packages-raw-ts.test.ts`）。
+
 ## 分層
 
 每個 app 與每個 platform 模組都用同一個方向：`web` 經 platform-kit 和 contracts 呼叫 api；`api` 呼叫 `domain`；`domain` 呼叫 `db` 介面。反方向的 import 一律是錯誤。`domain` 不引用 Fastify、資料庫或 React，所以可以直接單元測試。

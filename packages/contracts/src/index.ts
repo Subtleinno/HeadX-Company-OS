@@ -318,5 +318,12 @@ export type AppModule<TApp = unknown> = {
 /**
  * 身份、授權與組織範圍的共用契約（issue #82）。
  * 放在同一個 package 的原因：policy 與 platform 要認得同一個形狀。
+ *
+ * 這裡刻意寫 `.ts` 而不是 `.js`（issue #103）：api 映像直接執行這個來源
+ * （package.json 的 main 指向 src/index.ts，靠 Node 的型別剝離），而型別剝離
+ * **不會**把 `./identity.js` 改寫成 `./identity.ts` —— 寫 `.js` 會令容器以
+ * ERR_MODULE_NOT_FOUND 起不來。tsconfig 開 rewriteRelativeImportExtensions，
+ * 所以 `tsc` 產出的 dist 仍然是 `./identity.js`，兩個消費端都正確。
+ * apps/platform/test/modules/packages-raw-ts.test.ts 會盯着這件事。
  */
-export * from './identity.js';
+export * from './identity.ts';
