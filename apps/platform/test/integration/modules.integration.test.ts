@@ -50,8 +50,17 @@ describe('GET /modules', () => {
     await migrate({ pool: db.pool, dir: migrationsDir, log: silent });
 
     app = buildServer({ checkDb: ok, checkStorage: ok });
-    registerAuth(app, { pool: db.pool, loginHashKey: 'test-only-login-hash-key-0123456789abcdef' });
-    registerModules(app, { registry: loadModules(appsDir), pool: db.pool });
+    registerAuth(app, {
+      pool: db.pool,
+      loginHashKey: 'test-only-login-hash-key-0123456789abcdef',
+      resolveEntry: () => 'internal',
+    });
+    registerModules(app, {
+      registry: loadModules(appsDir),
+      pool: db.pool,
+      // 這一張測的是模組列表，不是入口：明確假定 internal（#87 的守衛另有專屬測試）。
+      resolveEntry: () => 'internal',
+    });
 
     await app.ready();
   });
@@ -86,7 +95,7 @@ describe('GET /modules', () => {
 
     const token = createSessionToken();
     await db.pool.query(
-      'insert into auth_session (token_hash, user_id, expires_at) values ($1, $2, $3)',
+      'insert into auth_session (token_hash, user_id, expires_at, entry) values ($1, $2, $3, \'internal\')',
       [
         hashSessionToken(token),
         inserted.rows[0]?.id,

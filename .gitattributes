@@ -5,3 +5,9 @@ db/migrations/*.sql text eol=lf
 
 # manifest 是給人看、也會被 diff 的 JSON；固定 LF，避免同一份檔在不同機器有兩種換行。
 modules/**/*.json text eol=lf
+
+# shell 腳本若被 checkout 成 CRLF，Linux 的 /bin/sh 會讀到 \r（典型症狀：
+# `pattern\r: not found`），而 apps/web/docker-entrypoint.d 內的檔會被 COPY 進
+# gateway 映像並在容器啟動時執行。這部機 core.autocrlf=true，所以一定要固定 LF，
+# 否則同一份 repo 在 Windows 建出來的映像會起不來、在 Linux 建出來卻正常。
+apps/web/docker-entrypoint.d/*.sh text eol=lf

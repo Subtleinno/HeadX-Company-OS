@@ -1,4 +1,5 @@
 import type { Pool, PoolClient } from 'pg';
+import type { TrustedEntry } from '@company-os/contracts';
 import { writeAudit } from '../audit.js';
 import type { FailedAttempts } from './rate-limit.js';
 
@@ -9,6 +10,15 @@ import type { FailedAttempts } from './rate-limit.js';
  */
 
 export type Role = 'owner' | 'staff';
+
+/**
+ * session 的入口（issue #87）。
+ *
+ * `legacy` 只會出現在升級前的舊列：那些 session 從來沒有經過入口驗證，
+ * migration 會把它們撤銷並標成 legacy，資料庫另外用 check constraint
+ * 保證「legacy 一定係已撤銷」。所以這個型別沒有「legacy 但仲可以用」這個狀態。
+ */
+export type SessionEntry = TrustedEntry | 'legacy';
 
 export type UserRow = {
   id: string;
@@ -67,6 +77,8 @@ export type CreateOwnerInput = {
   passwordHash: string;
   tokenHash: string;
   expiresAt: Date;
+  /** 建立這個 session 時已驗證的入口（issue #87）。 */
+  entry: TrustedEntry;
 };
 
 export type CreateOwnerResult =
@@ -133,8 +145,8 @@ export async function createOwnerWithSession(
     }
 
     await client.query(
-      'insert into auth_session (token_hash, user_id, expires_at) values ($1, $2, $3)',
-      [input.tokenHash, row.id, input.expiresAt],
+      'insert into auth_session (token_hash, user_id, expires_at, entry) values ($1, $2, $3, $4)',
+      [input.tokenHash, row.id, input.expiresAt, input.entry],
     );
 
     await audit(client, {
@@ -177,11 +189,11 @@ function audit(
 
 export async function insertSession(
   pool: Pool,
-  input: { tokenHash: string; userId: string; expiresAt: Date },
+  input: { tokenHash: string; userId: string; expiresAt: Date; entry: TrustedEntry },
 ): Promise<void> {
   await pool.query(
-    'insert into auth_session (token_hash, user_id, expires_at) values ($1, $2, $3)',
-    [input.tokenHash, input.userId, input.expiresAt],
+    'insert into auth_session (token_hash, user_id, expires_at, entry) values ($1, $2, $3, $4)',
+    [input.tokenHash, input.userId, input.expiresAt, input.entry],
   );
 }
 
@@ -196,13 +208,13 @@ export async function insertSession(
  */
 export async function insertSessionForEnabledUser(
   pool: Pool,
-  input: { tokenHash: string; userId: string; expiresAt: Date },
+  input: { tokenHash: string; userId: string; expiresAt: Date; entry: TrustedEntry },
 ): Promise<boolean> {
   const result = await pool.query(
-    `insert into auth_session (token_hash, user_id, expires_at)
-     select $1, u.id, $3 from app_user u
+    `insert into auth_session (token_hash, user_id, expires_at, entry)
+     select $1, u.id, $3, $4 from app_user u
       where u.id = $2 and u.disabled_at is null`,
-    [input.tokenHash, input.userId, input.expiresAt],
+    [input.tokenHash, input.userId, input.expiresAt, input.entry],
   );
 
   return (result.rowCount ?? 0) > 0;
@@ -227,6 +239,8 @@ export type ChangePasswordInput = {
   passwordHash: string;
   tokenHash: string;
   expiresAt: Date;
+  /** 輪替出來的新 session 沿用當次已驗證的入口（issue #87）。 */
+  entry: TrustedEntry;
   action: string;
   now: Date;
 };
@@ -275,8 +289,8 @@ export async function changePasswordWithSession(
     );
 
     await client.query(
-      'insert into auth_session (token_hash, user_id, expires_at) values ($1, $2, $3)',
-      [input.tokenHash, input.userId, input.expiresAt],
+      'insert into auth_session (token_hash, user_id, expires_at, entry) values ($1, $2, $3, $4)',
+      [input.tokenHash, input.userId, input.expiresAt, input.entry],
     );
 
     await audit(client, {
@@ -298,12 +312,16 @@ export async function changePasswordWithSession(
 
 /**
  * 由 token 的雜湊找目前有效的 session。
- * 過期、已撤銷、使用者已停用，一律當作沒有登入。
+ * 過期、已撤銷、使用者已停用、入口不相符，一律當作沒有登入。
+ *
+ * 入口（issue #87）是**查詢條件**而不是讀出來之後再比較：
+ * 放在 where 就沒有「先取回來、萬一後面忘記比」這種漏洞，也少一次搬資料。
  */
 export async function findSessionUser(
   pool: Pool,
   tokenHash: string,
   now: Date,
+  entry: TrustedEntry,
 ): Promise<UserRow | null> {
   const rows = await pool.query<UserRow>(
     `select u.id, u.email, u.display_name, u.role, u.department, u.password_hash,
@@ -313,9 +331,10 @@ export async function findSessionUser(
      where s.token_hash = $1
        and s.revoked_at is null
        and s.expires_at > $2
+       and s.entry = $3
        and u.disabled_at is null
      limit 1`,
-    [tokenHash, now],
+    [tokenHash, now, entry],
   );
 
   return rows.rows[0] ?? null;

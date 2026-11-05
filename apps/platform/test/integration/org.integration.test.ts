@@ -79,7 +79,7 @@ async function setup(): Promise<Harness> {
   await seedOrgUnits({ pool: db.pool, log: silent });
 
   const app = buildServer({ checkDb: ok, checkStorage: ok });
-  registerAuth(app, { pool: db.pool, loginHashKey: TEST_KEY });
+  registerAuth(app, { pool: db.pool, loginHashKey: TEST_KEY, resolveEntry: () => 'internal' });
   registerSettings(app, { pool: db.pool });
   registerOrg(app, { pool: db.pool });
   await app.ready();
@@ -133,8 +133,8 @@ async function signInStaff(db: TempDatabase): Promise<{ cookie: string }> {
   const token = createSessionToken();
 
   await db.pool.query(
-    `insert into auth_session (token_hash, user_id, expires_at)
-     values ($1, $2, now() + interval '1 day')`,
+    `insert into auth_session (token_hash, user_id, expires_at, entry)
+     values ($1, $2, now() + interval '1 day', 'internal')`,
     [hashSessionToken(token), inserted.rows[0]?.id],
   );
 
@@ -875,6 +875,7 @@ describe('舊資料庫升級（#80 的 0001–0004 → 0005 及之後）', () =>
         '0006_app_grants.sql',
         '0007_identities.sql',
         '0008_jobs.sql',
+        '0009_session_entry.sql',
       ]);
 
       // 4. 既有資料一個字都沒動。

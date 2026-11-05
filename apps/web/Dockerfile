@@ -24,6 +24,12 @@ FROM nginx:alpine
 # 結果寫到 /etc/nginx/conf.d/default.conf。要指向另一組 api 時只改環境變數。
 ENV API_UPSTREAM=api:4420
 COPY apps/web/nginx.conf /etc/nginx/templates/default.conf.template
+
+# 啟動守門（issue #87）：憑證未設定或格式不對就不啟動。
+# 放在 /docker-entrypoint.d/ 是因為 nginx 官方 entrypoint 按檔名排序執行那裡面的
+# *.sh，而且只執行有執行權限的檔 —— 所以要明確 chmod，不能靠 COPY 帶來的權限。
+COPY apps/web/docker-entrypoint.d/ /docker-entrypoint.d/
+RUN chmod +x /docker-entrypoint.d/10-require-gateway-token.sh
 COPY --from=build /app/apps/web/dist /usr/share/nginx/html
 
 EXPOSE 80

@@ -90,7 +90,7 @@ async function setup(options: SetupOptions = {}): Promise<Harness> {
   }
 
   const app = buildServer({ checkDb: ok, checkStorage: ok });
-  registerAuth(app, { pool: db.pool, loginHashKey: TEST_KEY });
+  registerAuth(app, { pool: db.pool, loginHashKey: TEST_KEY, resolveEntry: () => 'internal' });
   registerSettings(app, { pool: db.pool });
   await app.ready();
 
@@ -147,7 +147,7 @@ async function signInStaff(db: TempDatabase): Promise<{ cookie: string }> {
   const token = createSessionToken();
 
   await db.pool.query(
-    'insert into auth_session (token_hash, user_id, expires_at) values ($1, $2, now() + interval \'1 day\')',
+    'insert into auth_session (token_hash, user_id, expires_at, entry) values ($1, $2, now() + interval \'1 day\', \'internal\')',
     [hashSessionToken(token), inserted.rows[0]?.id],
   );
 

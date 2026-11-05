@@ -106,7 +106,12 @@ describe('檔案層', () => {
   function buildFilesApp(options: { storage?: Storage; hooks?: FilesHooks } = {}): FastifyInstance {
     const instance = buildServer({ checkDb: ok, checkStorage: ok });
 
-    registerAuth(instance, { pool: db.pool, now, loginHashKey: 'test-only-login-hash-key-0123456789abcdef' });
+    registerAuth(instance, {
+      pool: db.pool,
+      now,
+      loginHashKey: 'test-only-login-hash-key-0123456789abcdef',
+      resolveEntry: () => 'internal',
+    });
     registerFiles(instance, {
       pool: db.pool,
       storage: options.storage ?? rec.storage,
@@ -162,7 +167,7 @@ describe('檔案層', () => {
     const token = createSessionToken();
 
     await db.pool.query(
-      'insert into auth_session (token_hash, user_id, expires_at) values ($1, $2, $3)',
+      'insert into auth_session (token_hash, user_id, expires_at, entry) values ($1, $2, $3, \'internal\')',
       [hashSessionToken(token), id, new Date(clock.getTime() + 24 * 60 * 60 * 1000)],
     );
 

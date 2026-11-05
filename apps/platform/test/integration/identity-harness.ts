@@ -88,7 +88,13 @@ export async function createHarness(): Promise<Harness> {
   const app = buildServer({ checkDb: ok, checkStorage: ok });
   const registry = testRegistry();
   const staffHooks: StaffHooks = {};
-  registerAuth(app, { pool: db.pool, loginHashKey: TEST_LOGIN_HASH_KEY, hashRun });
+  registerAuth(app, {
+    pool: db.pool,
+    loginHashKey: TEST_LOGIN_HASH_KEY,
+    hashRun,
+    // 這幾張測身份與授權，不是測入口：明確假定 internal（#87 的守衛另有專屬測試）。
+    resolveEntry: () => 'internal',
+  });
   registerGrants(app, { pool: db.pool, registry, resolveEntry: () => entry.trusted });
   registerStaff(app, { pool: db.pool, hashRun, now: () => new Date(), hooks: staffHooks });
   registerAgents(app, {

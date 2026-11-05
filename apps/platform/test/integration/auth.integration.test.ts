@@ -79,7 +79,13 @@ describe('首次開機與老闆登入', () => {
     now = new Date();
 
     app = buildServer({ checkDb: ok, checkStorage: ok });
-    registerAuth(app, { pool: db.pool, now: () => now, loginHashKey: TEST_KEY });
+    registerAuth(app, {
+      pool: db.pool,
+      now: () => now,
+      loginHashKey: TEST_KEY,
+      // 入口由 #87 的守衛負責，這一張測的是登入本身：明確假定 internal。
+      resolveEntry: () => 'internal',
+    });
 
     // 測試專用路由：證明 requireOwner 對未登入回 401、對員工回 403。
     app.get('/test/owner-only', { preHandler: app.requireOwner }, async () => ({ ok: true }));
@@ -121,7 +127,7 @@ describe('首次開機與老闆登入', () => {
 
     const token = createSessionToken();
     await db.pool.query(
-      'insert into auth_session (token_hash, user_id, expires_at) values ($1, $2, $3)',
+      'insert into auth_session (token_hash, user_id, expires_at, entry) values ($1, $2, $3, \'internal\')',
       [
         hashSessionToken(token),
         inserted.rows[0]?.id,
@@ -232,6 +238,7 @@ describe('首次開機與老闆登入', () => {
       pool: db.pool,
       now: () => now,
       loginHashKey: TEST_KEY,
+      resolveEntry: () => 'internal',
       setupHooks: { afterOwnerCheck: gate },
     });
     await hooked.ready();

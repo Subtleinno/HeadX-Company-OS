@@ -102,6 +102,9 @@ npm run storage:check                     # 儲存空間遺失檢查
 
 - backup ID 格式 `YYYYMMDD-HHMMSS-<6 位十六進位>`（UTC）。
 - `manifest.json` **不含任何檔案內容**，也不含 `.env` 的值，只有路徑、大小與雜湊。
+- `config/env.backup` 亦包含容器之間的入口憑證 `INTERNAL_GATEWAY_TOKEN`（issue #87）。
+  還原之後兩端要用**同一個**值才起得來；文件只寫變數名稱，不在任何報告、issue 或清單
+  列出它的值。
 - `config/env.backup` 是明文機密，與備份放在同一粒碟上：備份碟本身要保管好，
   不要上傳到雲端、不要放在共用資料夾。
 

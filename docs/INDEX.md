@@ -20,6 +20,7 @@ Company OS 是 company starter：任何一間公司裝好 Docker 就能開始運
 | `apps/<app>/DESIGN.md` | 該 app 的設計（唯一一份；app 建立時才有） |
 | `docs/backup-restore.md` | 備份與還原 |
 | `docs/app-db-access.md` | app 的資料庫帳號、權限矩陣、PUBLIC 收斂與配置次序 |
+| `docs/trusted-entry.md` | 可信 internal 入口、入口憑證、`session.entry` 與升級影響 |
 
 ## 一個真相，一個方向
 
@@ -33,6 +34,7 @@ Company OS 是 company starter：任何一間公司裝好 Docker 就能開始運
 | 目錄、模組與邊界規則 | `docs/architecture/CODE-MAP.md` | 規則 → `lint:boundaries` |
 | 容器端口表 | `docs/architecture/REPO-MAP.md` | 文件 → edition-profile 對照檢查 |
 | session 從哪個入口登入 | `auth_session.entry` | gateway 寫入 → app 驗證是否接受 |
+| 哪些請求算「可信入口」 | `INTERNAL_GATEWAY_TOKEN`（只注入 gateway 與 platform） | gateway 覆寫標頭 → platform 驗證 → 寫入 `auth_session.entry` |
 | 誰能進哪個 app | `app_grant` 表 | 資料庫 → platform 介面 → 各 app、我的 Apps |
 | 資料形狀 | `db/migrations/<schema>/*.sql` | migration → 資料庫 → API |
 | 誰可以做什麼 | `packages/policy` | policy → API → 拒絕理由 |

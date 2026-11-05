@@ -1,6 +1,8 @@
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyRequest } from 'fastify';
+import type { TrustedEntry } from '@company-os/contracts';
 import type { Pool } from 'pg';
 import { getSignedInUser } from '../auth/current-user.js';
+import { entryOfRequest } from '../auth/trusted-entry.js';
 import type { ModuleKind, ModuleManifest, ModuleRegistry } from './registry/index.js';
 
 /**
@@ -40,13 +42,23 @@ export type ModuleDeps = {
   registry: ModuleRegistry;
   pool: Pool;
   now?: () => Date;
+  /**
+   * 這次請求由哪個入口進來（issue #87）。預設讀入口守衛放進請求的值。
+   * 測試可以注入固定值；正式接線不傳。
+   */
+  resolveEntry?: (request: FastifyRequest) => TrustedEntry | null;
 };
 
 export function registerModules(app: FastifyInstance, deps: ModuleDeps): void {
   const now = deps.now ?? ((): Date => new Date());
+  const resolveEntry =
+    deps.resolveEntry ?? ((request: FastifyRequest): TrustedEntry | null => entryOfRequest(request));
 
   app.get('/modules', async (request, reply) => {
-    const user = await getSignedInUser(deps.pool, request, now());
+    // 入口（issue #87）只可以由守衛放進請求的那一個值取：session 記住了
+    // 它是經由哪個入口發出的，入口不同就當成沒有登入。
+    const entry = resolveEntry(request);
+    const user = entry === null ? null : await getSignedInUser(deps.pool, request, now(), entry);
 
     if (user === null) {
       return reply.code(401).send({ error: 'not_signed_in' });

@@ -68,7 +68,7 @@ describe('密碼雜湊升級（issue #66）', () => {
     await migrate({ pool: db.pool, dir: migrationsDir, log: silent });
 
     app = buildServer({ checkDb: ok, checkStorage: ok });
-    registerAuth(app, { pool: db.pool, loginHashKey: TEST_KEY });
+    registerAuth(app, { pool: db.pool, loginHashKey: TEST_KEY, resolveEntry: () => 'internal' });
     await app.ready();
   });
 

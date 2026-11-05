@@ -1,5 +1,9 @@
+import type { FastifyRequest } from 'fastify';
 import { Pool } from 'pg';
 import { buildServer } from './app.js';
+import { registerEntryGuard } from './auth/entry-guard.js';
+import { GATEWAY_TOKEN_ENV, readGatewayToken } from './auth/gateway-token.js';
+import { entryOfRequest } from './auth/trusted-entry.js';
 import { LOGIN_HASH_KEY_ENV, loginHashKeyWarning, readLoginHashKey } from './auth/login-hash.js';
 import { createHashLimiter, parseHashLimits, type HashLimitsConfig } from './auth/hash-limits.js';
 import { registerAuth } from './auth/routes.js';
@@ -132,6 +136,22 @@ function readMaxUploadBytes(): number {
 }
 
 /**
+ * 入口憑證（issue #87）。
+ *
+ * 未設定或格式不合格就結束，不給預設值 —— 一個「大家都一樣」的憑證等於沒有憑證。
+ * 這一步排在所有事情之前：沒有可信入口的 platform 就算連得上資料庫，
+ * 也只會拒絕所有請求，早點死比晚點死好查。
+ */
+function readGatewayTokenOrExit(): string {
+  try {
+    return readGatewayToken(process.env[GATEWAY_TOKEN_ENV]);
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exit(1);
+  }
+}
+
+/**
  * 登入失敗審計的 HMAC key（issue #65）。
  * 未設定就大聲失敗並結束：沒有 key，唯一做得到的就是把使用者輸入的 email
  * 明文寫進只准追加的 audit_log，寫進去就永遠拿不走。
@@ -176,7 +196,9 @@ function readHashLimitsOrExit(): HashLimitsConfig {
 }
 
 async function main(): Promise<void> {
-  // 啟動設定先驗：缺 key 就不應該先去碰資料庫或任何外部服務。
+  // 入口憑證與登入審計 key 都是「沒有就不應該起服務」的設定，
+  // 兩者都要在碰資料庫或任何外部服務之前驗。
+  const gatewayToken = readGatewayTokenOrExit();
   const loginHashKey = readLoginHashKeyOrExit();
 
   // 雜湊的資源上限同樣先驗：設錯就不應該起服務。
@@ -212,6 +234,11 @@ async function main(): Promise<void> {
     logger: true,
   });
 
+  // 入口守衛（issue #87）：所有路由都要通過，只有 /livez 與 /health 例外。
+  // 一定要排在所有業務路由之前 —— 之後每一條路由都預設要驗證，
+  // 新增路由不用記得補，想豁免反而要改 entry-guard.ts。
+  registerEntryGuard(app, { token: gatewayToken });
+
   // 登入與首次開機。COOKIE_SECURE=true 只在經 HTTPS 入口時開，否則瀏覽器不會存 cookie。
   registerAuth(app, {
     pool,
@@ -222,7 +249,12 @@ async function main(): Promise<void> {
 
   // 員工與 agent 身份：全部只有老闆可以用（issue #84）。
   registerStaff(app, { pool, hashRun });
-  registerAgents(app, { pool, registry, resolveEntry: () => null });
+  registerAgents(app, {
+    pool,
+    registry,
+    // 入口只可以由守衛放進請求的那一個值取 —— 不讀 body、query 或標頭。
+    resolveEntry: (request) => entryOfRequest(request as FastifyRequest),
+  });
 
   registerModules(app, { registry, pool });
 
@@ -236,14 +268,13 @@ async function main(): Promise<void> {
   // 用戶提供的檔名永遠不參與路徑。
   // app 授權：申請、批准、拒絕、撤銷、查詢，以及接 #82 引擎的存取檢查。
   //
-  // 入口由這個 adapter 決定。**現在刻意回 null**：session 還沒有 entry 這個欄位，
-  // 真實代理信任（gateway 的標記、cookie scope、mTLS）是後續 issue 的工作。
-  // 回 null 會令 /app-grants/access/* 一律 403 entry_untrusted —— 這是誠實的失敗；
-  // 如果這裡假設 internal，經夥伴入口進來的請求就會被當成內網員工。
+  // 入口由入口守衛決定（issue #87）。守衛未通過時 entryOfRequest 回 null，
+  // /app-grants/access/* 會回 entry_untrusted —— 誠實的失敗。
+  // 這裡不假設 internal：假設一次，經夥伴入口進來的請求就會被當成內網員工。
   registerGrants(app, {
     pool,
     registry,
-    resolveEntry: () => null,
+    resolveEntry: (request) => entryOfRequest(request),
   });
 
   registerFiles(app, {

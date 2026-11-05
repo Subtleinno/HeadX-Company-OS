@@ -123,7 +123,7 @@ async function setup(): Promise<Harness> {
   const entry: Harness['entry'] = { trusted: 'internal' };
 
   const app = buildServer({ checkDb: ok, checkStorage: ok });
-  registerAuth(app, { pool: db.pool, loginHashKey: TEST_KEY });
+  registerAuth(app, { pool: db.pool, loginHashKey: TEST_KEY, resolveEntry: () => 'internal' });
   registerGrants(app, {
     pool: db.pool,
     registry,
@@ -220,8 +220,8 @@ async function createStaff(name: string): Promise<Actor> {
   const token = createSessionToken();
 
   await h.db.pool.query(
-    `insert into auth_session (token_hash, user_id, expires_at)
-     values ($1, $2, now() + interval '1 day')`,
+    `insert into auth_session (token_hash, user_id, expires_at, entry)
+     values ($1, $2, now() + interval '1 day', 'internal')`,
     [hashSessionToken(token), id],
   );
 

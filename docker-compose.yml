@@ -66,6 +66,10 @@ services:
       # 登入失敗審計用的 HMAC key；沒有預設值，未設定時 compose 即時失敗，
       # API 自己也再擋一次（不會用空字串當 key）。
       LOGIN_FAILURE_HASH_KEY: ${LOGIN_FAILURE_HASH_KEY:?請在 .env 設定登入失敗審計用的 HMAC key}
+      # 入口憑證（issue #87）：只注入 gateway-internal 與 api 兩個容器。
+      # 刻意用 ${VAR:-} 而不是 ${VAR:?}：缺值時由程式自己大聲拒絕啟動
+      # （platform 與 gateway 兩邊都有守門），而不是由 compose 講一句看不懂的話。
+      INTERNAL_GATEWAY_TOKEN: ${INTERNAL_GATEWAY_TOKEN:-}
     ports:
       - "127.0.0.1:${API_PORT:-4420}:4420"
     depends_on:
@@ -83,6 +87,10 @@ services:
       context: .
       dockerfile: apps/web/Dockerfile
     restart: unless-stopped
+    environment:
+      # 入口憑證（issue #87）。nginx 模板用 envsubst 把它寫進 proxy_set_header；
+      # 容器啟動時先驗格式，不合格就不起來（見 apps/web/docker-entrypoint.d）。
+      INTERNAL_GATEWAY_TOKEN: ${INTERNAL_GATEWAY_TOKEN:-}
     ports:
       - "127.0.0.1:${GATEWAY_INTERNAL_PORT:-${WEB_PORT:-4210}}:80"
     depends_on:

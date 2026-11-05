@@ -1,7 +1,9 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+import type { TrustedEntry } from '@company-os/contracts';
 import type { Pool } from 'pg';
 import { writeAudit } from '../audit.js';
 import { getSignedInUser } from './current-user.js';
+import { entryOfRequest, UNTRUSTED_ENTRY_ERROR } from './trusted-entry.js';
 import { isValidEmail, normalizeEmail } from './email.js';
 import { HashBusyError, type HashRun } from './hash-limits.js';
 import { loginFailureTarget, readLoginHashKey } from './login-hash.js';
@@ -74,6 +76,13 @@ export type AuthDeps = {
    * agents 三個模組收到同一個實例，才叫做「同一個資源限制」。
    */
   hashRun?: HashRun;
+  /**
+   * 這次請求由哪個入口進來（issue #87）。
+   *
+   * 預設讀入口守衛放進請求的值。測試可以注入固定值（例如 `() => 'internal'`），
+   * 但正式接線永遠不傳 —— 沒有「自動當成 internal」這條後路。
+   */
+  resolveEntry?: (request: FastifyRequest) => TrustedEntry | null;
 };
 
 /**
@@ -105,6 +114,21 @@ export function registerAuth(app: FastifyInstance, deps: AuthDeps): void {
   const sessionTtlMs = deps.sessionTtlMs ?? SESSION_TTL_MS;
   // 未注入時直接執行：單元測試不需要限制器，但仍然只有一條呼叫路徑。
   const hashRun: HashRun = deps.hashRun ?? (<T>(task: () => Promise<T>): Promise<T> => task());
+
+  /**
+   * 這次請求的入口。守衛未通過（或者根本未接線）就係 `null`。
+   * 入口係「session 要綁乜」與「policy 要憑乜」的同一個來源。
+   */
+  const resolveEntry =
+    deps.resolveEntry ?? ((request: FastifyRequest): TrustedEntry | null => entryOfRequest(request));
+
+  /** 沒有可信入口：與守衛同一個通用回應，不講差在哪裡。 */
+  function untrustedEntry(reply: FastifyReply): FastifyReply {
+    return reply.code(403).send({
+      error: UNTRUSTED_ENTRY_ERROR,
+      message: '這個請求不是經由可信的內部入口轉發過來，一律拒絕',
+    });
+  }
 
   /** 雜湊滿載：回通用的 503，不透露是哪一個帳戶令我們忙。 */
   function busy(reply: FastifyReply, error: HashBusyError): FastifyReply {
@@ -198,7 +222,14 @@ export function registerAuth(app: FastifyInstance, deps: AuthDeps): void {
   }
 
   async function currentUser(request: FastifyRequest): Promise<UserRow | null> {
-    return getSignedInUser(deps.pool, request, now());
+    const entry = resolveEntry(request);
+
+    // 沒有可信入口就連查都不查：無入口的請求不應該有能力「順便」用到 session。
+    if (entry === null) {
+      return null;
+    }
+
+    return getSignedInUser(deps.pool, request, now(), entry);
   }
 
   app.get('/auth/state', async (request) => {
@@ -247,6 +278,14 @@ export function registerAuth(app: FastifyInstance, deps: AuthDeps): void {
       throw error;
     }
 
+    // 第一個 session 一樣要綁入口：可信入口是「由邊個轉發」的憑證，
+    // 不是「你係邊個」。冇入口就冇 session，唔會開一個無主的。
+    const entry = resolveEntry(request);
+
+    if (entry === null) {
+      return untrustedEntry(reply);
+    }
+
     const token = createSessionToken();
 
     const result = await createOwnerWithSession(
@@ -257,6 +296,7 @@ export function registerAuth(app: FastifyInstance, deps: AuthDeps): void {
         passwordHash,
         tokenHash: hashSessionToken(token),
         expiresAt: sessionExpiry(at),
+        entry,
       },
       deps.setupHooks,
     );
@@ -327,6 +367,12 @@ export function registerAuth(app: FastifyInstance, deps: AuthDeps): void {
     // 舊參數的雜湊在這裡換成新參數。失敗照樣放行，只是留下審計紀錄。
     await upgradePasswordHash(user, password);
 
+    const entry = resolveEntry(request);
+
+    if (entry === null) {
+      return untrustedEntry(reply);
+    }
+
     const token = createSessionToken();
 
     // 條件寫入：如果這一句之前帳戶被停用，這裡會回 false（見 store 的註釋）。
@@ -335,6 +381,7 @@ export function registerAuth(app: FastifyInstance, deps: AuthDeps): void {
       tokenHash: hashSessionToken(token),
       userId: user.id,
       expiresAt: sessionExpiry(at),
+      entry,
     });
 
     if (!issued) {
@@ -483,6 +530,14 @@ export function registerAuth(app: FastifyInstance, deps: AuthDeps): void {
         throw error;
       }
 
+      // currentUser 已經證明入口存在過，但入口本身要傳落去 ——
+      // 輪替出來的新 session 必須綁同一個入口，否則改完密碼就等於降級。
+      const entry = resolveEntry(request);
+
+      if (entry === null) {
+        return untrustedEntry(reply);
+      }
+
       const token = createSessionToken();
 
       const result = await changePasswordWithSession(deps.pool, {
@@ -491,6 +546,7 @@ export function registerAuth(app: FastifyInstance, deps: AuthDeps): void {
         passwordHash,
         tokenHash: hashSessionToken(token),
         expiresAt: sessionExpiry(at),
+        entry,
         // 審計的分量不同：員工改自己的密碼是日常事，老闆改是另一件事。
         action: user.role === 'owner' ? 'auth.password_change' : 'staff.password_change',
         now: at,

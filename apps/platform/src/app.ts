@@ -1,5 +1,6 @@
 import Fastify, { type FastifyInstance } from 'fastify';
 import { isSameOrigin } from './auth/origin.js';
+import { withRedaction } from './logging.js';
 import { DEFAULT_STORAGE_TIMEOUT_MS, type StorageDiagnosis } from './storage/diagnose.js';
 
 export type HealthCheck = () => Promise<void>;
@@ -20,7 +21,11 @@ export type ServerOptions = {
   storageTimeoutMs?: number;
   /** /health/storage 的診斷；沒有注入時一律回 storage_error，不會假裝正常。 */
   diagnoseStorage?: () => Promise<StorageDiagnosis>;
-  logger?: boolean;
+  /**
+   * `true` 用預設設定；亦可以傳 pino 選項物件（測試用它接住輸出）。
+   * 兩種情況都會被併入日誌遮罩，呼叫者關不掉（見 logging.ts）。
+   */
+  logger?: boolean | Record<string, unknown>;
 };
 
 type CheckResult = boolean;
@@ -93,7 +98,12 @@ function registerJsonParser(app: FastifyInstance): void {
  * 建立 API 實例。db 與 storage 檢查以參數注入，測試可以模擬通、不通、卡住。
  */
 export function buildServer(options: ServerOptions): FastifyInstance {
-  const app = Fastify({ logger: options.logger ?? false });
+  const logger =
+    options.logger === undefined || options.logger === false
+      ? false
+      : withRedaction(options.logger === true ? {} : options.logger);
+
+  const app = Fastify({ logger });
 
   registerJsonParser(app);
 
