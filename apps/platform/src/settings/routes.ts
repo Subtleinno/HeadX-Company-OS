@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { Pool } from 'pg';
 import { writeAudit } from '../audit.js';
+import { findUnit } from '../org/store.js';
 import { parseRuleInput, type RuleInput } from './policy.js';
 import {
   SETTING_DESCRIPTIONS,
@@ -55,6 +56,20 @@ function actorIdOf(request: FastifyRequest): string {
 
 function invalid(reply: FastifyReply, error: string, reasons: string[]): FastifyReply {
   return reply.code(422).send({ error, reasons });
+}
+
+/**
+ * 規則指向的單位存在嗎？回傳一句錯誤訊息，或者 null 代表沒問題。
+ * 未給（undefined）與 null 都代表整間公司，不需要查。
+ */
+async function missingUnit(pool: Pool, orgUnitId: string | null | undefined): Promise<string | null> {
+  if (orgUnitId === undefined || orgUnitId === null) {
+    return null;
+  }
+
+  const unit = await findUnit(pool, orgUnitId);
+
+  return unit === null ? `orgUnitId 指向的單位不存在或已刪除：${orgUnitId}` : null;
 }
 
 export function registerSettings(app: FastifyInstance, deps: SettingsDeps): void {
@@ -142,6 +157,13 @@ export function registerSettings(app: FastifyInstance, deps: SettingsDeps): void
 
     const input = parsed.value as RuleInput;
 
+    // 規則可以只對某個單位生效（issue #81）；那個單位一定要存在而且未刪除。
+    const missing = await missingUnit(deps.pool, input.orgUnitId);
+
+    if (missing !== null) {
+      return invalid(reply, 'invalid_policy_rule', [missing]);
+    }
+
     const row = await insertPolicyRule(deps.pool, {
       domain: input.domain,
       condition: input.condition,
@@ -149,6 +171,7 @@ export function registerSettings(app: FastifyInstance, deps: SettingsDeps): void
       priority: input.priority,
       enabled: input.enabled,
       note: input.note,
+      orgUnitId: input.orgUnitId ?? null,
       createdBy: actorIdOf(request),
     });
 
@@ -191,6 +214,12 @@ export function registerSettings(app: FastifyInstance, deps: SettingsDeps): void
 
     if (before === null) {
       return reply.code(404).send({ error: 'policy_rule_not_found', id });
+    }
+
+    const missing = await missingUnit(deps.pool, parsed.value.orgUnitId);
+
+    if (missing !== null) {
+      return invalid(reply, 'invalid_policy_rule', [missing]);
     }
 
     const row = await updatePolicyRule(deps.pool, id, parsed.value);

@@ -795,9 +795,10 @@ describe('舊資料庫升級：0001 至 0003 的庫加新程式', () => {
       const beforeUsers = await db.pool.query('select id, email, role from app_user order by id');
       const beforeAudit = await db.pool.query('select count(*)::int as n from audit_log');
 
-      // 2. 新程式接手：只補 0004。
+      // 2. 新程式接手：只補舊庫沒有的（0004 與之後新增的）。
       const applied = await migrate({ pool: db.pool, dir: migrationsDir, log: silent });
-      expect(applied).toEqual(['0004_company_settings.sql']);
+      expect(applied).toContain('0004_company_settings.sql');
+      expect(applied).not.toContain('0003_stored_file.sql');
 
       // 3. 既有資料一個字都沒動。
       const afterUsers = await db.pool.query('select id, email, role from app_user order by id');

@@ -47,6 +47,11 @@ export type PolicyRule = {
   action: PolicyAction;
   priority: number;
   enabled: boolean;
+  /**
+   * 這條規則屬於哪個組織單位（issue #81）；null／未給＝整間公司。
+   * 只有當呼叫者帶了 unitOrder 才會被考慮 —— 沒有單位概念的流程行為完全不變。
+   */
+  orgUnitId?: string | null;
   deletedAt?: Date | null;
 };
 
@@ -55,6 +60,14 @@ export type Decision = {
   /** 命中的規則；沒有任何規則命中時是 null。 */
   ruleId: string | null;
   reason: 'rule_matched' | 'no_rule_matched';
+};
+
+export type DecideOptions = {
+  /**
+   * 由近到遠的單位 id（含自己），通常來自組織圖的 unitOrder()。
+   * 不給＝只看整間公司的規則（#80 的行為）。
+   */
+  unitOrder?: readonly string[];
 };
 
 const CLAUSE_FIELDS: readonly string[] = ['field', 'op', 'value', 'currency'];
@@ -236,17 +249,46 @@ function ruleMatches(rule: PolicyRule, domain: string, facts: PolicyFacts): bool
  * 只考慮 enabled 且未刪除、domain 相同的規則；按 priority 由小到大，第一條命中者勝。
  * 完全沒有命中時回 require_approval（決策 C04）。
  *
+ * 帶 `unitOrder`（由近到遠的單位 id，含自己）時（issue #81）：
+ *   - 只考慮這些單位的規則，加上整間公司（orgUnitId 為空）的規則；
+ *   - 越近的單位越先考慮，**同一個單位之內**才按 priority；
+ *   - 不帶時只看整間公司的規則 —— 與 #80 完全一樣，既有流程的行為不會被悄悄改掉。
+ *
  * 不修改傳入的陣列 —— 排序在副本上做，呼叫者拿到的次序不會被偷偷改掉。
  */
 export function decide(
   rules: readonly PolicyRule[],
   domain: string,
   facts: PolicyFacts,
+  options: DecideOptions = {},
 ): Decision {
+  const unitOrder = options.unitOrder;
+
+  /** 排序用的「多近」：0 是最近的單位；整間公司排在最後；-1 代表不考慮。 */
+  const rankOf = (rule: PolicyRule): number => {
+    const unitId = rule.orgUnitId ?? null;
+
+    if (unitId === null) {
+      return unitOrder === undefined ? 0 : unitOrder.length;
+    }
+
+    if (unitOrder === undefined) {
+      return -1;
+    }
+
+    return unitOrder.indexOf(unitId);
+  };
+
   const candidates = rules
     .filter((rule) => rule.enabled && (rule.deletedAt ?? null) === null)
-    .slice()
-    .sort((left, right) => left.priority - right.priority);
+    .map((rule) => ({ rule, rank: rankOf(rule) }))
+    .filter((entry) => entry.rank >= 0)
+    .sort((left, right) =>
+      left.rank === right.rank
+        ? left.rule.priority - right.rule.priority
+        : left.rank - right.rank,
+    )
+    .map((entry) => entry.rule);
 
   for (const rule of candidates) {
     if (ruleMatches(rule, domain, facts)) {
@@ -258,11 +300,13 @@ export function decide(
 }
 
 /**
- * 把一組規則綁進來的版本，對外就是 `decide(domain, facts)`。
+ * 把一組規則綁進來的版本，對外就是 `decide(domain, facts, options?)`。
  * 讀一次規則、判斷多次時用這個，避免每次呼叫都重新排序。
  */
-export function createDecider(rules: readonly PolicyRule[]): (domain: string, facts: PolicyFacts) => Decision {
-  return (domain, facts) => decide(rules, domain, facts);
+export function createDecider(
+  rules: readonly PolicyRule[],
+): (domain: string, facts: PolicyFacts, options?: DecideOptions) => Decision {
+  return (domain, facts, options) => decide(rules, domain, facts, options);
 }
 
 // ---------------------------------------------------------------------------
@@ -277,12 +321,25 @@ export type RuleInput = {
   priority: number;
   enabled: boolean;
   note: string | null;
+  /** 屬於哪個組織單位（issue #81）；null／未給＝整間公司。 */
+  orgUnitId?: string | null;
 };
 
-const RULE_FIELDS: readonly string[] = ['domain', 'condition', 'action', 'priority', 'enabled', 'note'];
+const RULE_FIELDS: readonly string[] = [
+  'domain',
+  'condition',
+  'action',
+  'priority',
+  'enabled',
+  'note',
+  'orgUnitId',
+];
 
 /** domain 的形狀：小寫字母開頭，只用小寫英數與底線（例如 payment、outbound）。 */
 const DOMAIN_PATTERN = /^[a-z][a-z0-9_]*$/;
+
+/** orgUnitId 只接受標準 UUID 形狀；是否存在由路由查（這裡不知道資料庫）。 */
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export const NOTE_MAX_LENGTH = 500;
 
@@ -391,6 +448,18 @@ export function parseRuleInput(
     }
   } else if (!partial) {
     value.note = null;
+  }
+
+  // 沒給就不放進 value（undefined），插入時當作整間公司的規則。
+  // 這樣 #80 既有的 toEqual 期望不會因為多了一個 key 而變。
+  if (record.orgUnitId !== undefined) {
+    const orgUnitId = record.orgUnitId;
+
+    if (orgUnitId !== null && (typeof orgUnitId !== 'string' || !UUID_PATTERN.test(orgUnitId))) {
+      errors.push(`orgUnitId 必須是 UUID 或 null（null 代表整間公司，現在是 ${describe(orgUnitId)}）`);
+    } else {
+      value.orgUnitId = orgUnitId as string | null;
+    }
   }
 
   return { value, errors };

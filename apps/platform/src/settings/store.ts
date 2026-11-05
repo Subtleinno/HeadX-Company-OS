@@ -102,6 +102,8 @@ export type PolicyRuleRow = {
   priority: number;
   enabled: boolean;
   note: string | null;
+  /** 這條規則屬於哪個單位（issue #81）；null＝整間公司。 */
+  org_unit_id: string | null;
   created_at: Date;
   updated_at: Date;
 };
@@ -114,11 +116,13 @@ export type PolicyRuleView = {
   priority: number;
   enabled: boolean;
   note: string | null;
+  orgUnitId: string | null;
   createdAt: string;
   updatedAt: string;
 };
 
-const RULE_COLUMNS = 'id, domain, condition, action, priority, enabled, note, created_at, updated_at';
+const RULE_COLUMNS =
+  'id, domain, condition, action, priority, enabled, note, org_unit_id, created_at, updated_at';
 
 export function toRuleView(row: PolicyRuleRow): PolicyRuleView {
   return {
@@ -129,6 +133,7 @@ export function toRuleView(row: PolicyRuleRow): PolicyRuleView {
     priority: row.priority,
     enabled: row.enabled,
     note: row.note,
+    orgUnitId: row.org_unit_id,
     createdAt: row.created_at.toISOString(),
     updatedAt: row.updated_at.toISOString(),
   };
@@ -171,13 +176,15 @@ export type NewPolicyRule = {
   priority: number;
   enabled: boolean;
   note: string | null;
+  orgUnitId: string | null;
   createdBy: string;
 };
 
 export async function insertPolicyRule(db: Pool, input: NewPolicyRule): Promise<PolicyRuleRow> {
   const result = await db.query<PolicyRuleRow>(
-    `insert into policy_rule (domain, condition, action, priority, enabled, note, created_by)
-     values ($1, $2::jsonb, $3, $4, $5, $6, $7)
+    `insert into policy_rule
+       (domain, condition, action, priority, enabled, note, org_unit_id, created_by)
+     values ($1, $2::jsonb, $3, $4, $5, $6, $7, $8)
      returning ${RULE_COLUMNS}`,
     [
       input.domain,
@@ -186,6 +193,7 @@ export async function insertPolicyRule(db: Pool, input: NewPolicyRule): Promise<
       input.priority,
       input.enabled,
       input.note,
+      input.orgUnitId,
       input.createdBy,
     ],
   );
@@ -206,6 +214,7 @@ export type PolicyRulePatch = Partial<{
   priority: number;
   enabled: boolean;
   note: string | null;
+  orgUnitId: string | null;
 }>;
 
 /** 部分更新；只改有帶的欄位，updated_at 一定會換。找不到（或已刪除）回 null。 */
@@ -239,6 +248,9 @@ export async function updatePolicyRule(
   }
   if (patch.note !== undefined) {
     set('note', patch.note);
+  }
+  if (patch.orgUnitId !== undefined) {
+    set('org_unit_id', patch.orgUnitId);
   }
 
   assignments.push('updated_at = now()');

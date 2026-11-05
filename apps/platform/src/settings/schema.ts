@@ -39,6 +39,23 @@ export const SETTING_KEYS: readonly SettingKey[] = [
 /** 安裝時決定、之後不可經 API 修改。 */
 const IMMUTABLE_KEYS: readonly SettingKey[] = ['edition', 'install_code'];
 
+/**
+ * 可以由組織單位覆寫的 key（issue #81）。其餘三個講的是「這一台安裝」本身：
+ * 版本、安裝代碼、部門隔離是整間公司的事，寫在分部上會變成兩個互相矛盾的事實。
+ *
+ * 次序就是文件與 API 回應的次序。
+ */
+export const OVERRIDABLE_KEYS: readonly SettingKey[] = [
+  'company_locale',
+  'notification_channels',
+  'overdue_grace_hours',
+  'acceptance_rule',
+];
+
+export function isOverridableKey(key: SettingKey): boolean {
+  return OVERRIDABLE_KEYS.includes(key);
+}
+
 export const COMPANY_LOCALES: readonly string[] = ['zh-HK', 'zh-CN'];
 export const ACCEPTANCE_RULES: readonly string[] = ['owner', 'dept_head', 'on_submit'];
 export const OVERDUE_GRACE_HOURS_MIN = 0;

@@ -25,7 +25,7 @@ describe('migration 執行器', () => {
     await db.drop();
   });
 
-  it('空資料庫套用全部 migration，schema_migrations 有 0001 至 0004', async () => {
+  it('空資料庫套用全部 migration，schema_migrations 有 0001 至 0005', async () => {
     const applied = await migrate({ pool: db.pool, dir: migrationsDir, log: silent });
 
     expect(applied).toEqual([
@@ -33,6 +33,7 @@ describe('migration 執行器', () => {
       '0002_users_sessions.sql',
       '0003_stored_file.sql',
       '0004_company_settings.sql',
+      '0005_org_units.sql',
     ]);
 
     const rows = await db.pool.query<{ name: string; checksum: string }>(
@@ -44,6 +45,7 @@ describe('migration 執行器', () => {
       '0002_users_sessions.sql',
       '0003_stored_file.sql',
       '0004_company_settings.sql',
+      '0005_org_units.sql',
     ]);
     expect(rows.rows[0]?.checksum).toMatch(/^[0-9a-f]{64}$/);
 
@@ -79,10 +81,11 @@ describe('migration 執行器', () => {
         '0002_users_sessions.sql',
         '0003_stored_file.sql',
         '0004_company_settings.sql',
+        '0005_org_units.sql',
       ]);
 
       const rows = await fresh.pool.query('select count(*)::int as n from schema_migrations');
-      expect(rows.rows[0]?.n).toBe(4);
+      expect(rows.rows[0]?.n).toBe(5);
     } finally {
       await fresh.drop();
     }

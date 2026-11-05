@@ -7,6 +7,7 @@ import { DEFAULT_MAX_UPLOAD_BYTES, registerFiles } from './files/routes.js';
 import { migrate } from './migrate.js';
 import { loadModules } from './modules/registry/index.js';
 import { registerModules } from './modules/routes.js';
+import { registerOrg, seedOrgUnits } from './org/index.js';
 import { DEFAULT_PROFILE_DIR, registerSettings, seedSettings } from './settings/index.js';
 import type { Storage } from './storage/index.js';
 import { createStorageDiagnosis } from './storage/diagnose.js';
@@ -57,11 +58,13 @@ async function runMigrations(): Promise<void> {
 }
 
 /**
- * 設定與政策規則的第一次填入（issue #80）。
+ * 設定、政策規則與根單位的第一次填入（issue #80、#81）。
  *
  * 順序一定在 migration 之後：表還沒有之前填不進去。
  * 填不進去就大聲失敗並結束 —— 帶著一份不完整的設定開機，之後每個判斷都會用一個
  * 沒有人決定了的值。
+ *
+ * 根單位排在設定之後：它有依賴「整間公司」這個概念的設定，先有設定再有單位比較好讀。
  */
 async function runSeed(): Promise<void> {
   try {
@@ -72,9 +75,11 @@ async function runSeed(): Promise<void> {
       env: process.env,
       log: (message) => console.log(message),
     });
+
+    await seedOrgUnits({ pool, log: (message) => console.log(message) });
   } catch (error) {
     console.error(
-      `種子設定填入失敗，API 不會啟動：${error instanceof Error ? error.message : String(error)}`,
+      `種子填入失敗，API 不會啟動：${error instanceof Error ? error.message : String(error)}`,
     );
     await pool.end();
     process.exit(1);
@@ -187,6 +192,9 @@ async function main(): Promise<void> {
 
   // 公司設定與政策規則：全部要老闆，寫入留審計。
   registerSettings(app, { pool });
+
+  // 組織單位、多上級與設定繼承：一樣全部要老闆。
+  registerOrg(app, { pool });
 
   // 檔案層：上傳／下載（Range）／列表／軟刪除。key 前綴固定為 files/，
   // 用戶提供的檔名永遠不參與路徑。
