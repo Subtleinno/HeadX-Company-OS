@@ -20,7 +20,7 @@
 
 老闆目前能看到的仍然是：建立老闆帳戶、登入、一個誠實的空「今日」頁。
 
-進行中或等待：#45 端口佔用者、#64 跨碟備份（等第二粒實體碟）、#68 HxDesign 只讀研究、#70 版本範圍研究。已完成：#86 密碼管理、#88 app 資料庫帳號、#87 可信入口（見 `docs/trusted-entry.md`）。
+進行中或等待：#64 跨碟備份（等第二粒實體碟）、#68 HxDesign 只讀研究、#70 版本範圍研究。已完成：#86 密碼管理、#88 app 資料庫帳號、#87 可信入口（見 `docs/trusted-entry.md`）、#45 端口佔用者。
 
 還沒有：Need、MCP、發件箱、真正的部門 app、可用的 Boss portal 工作台、LAN、安裝精靈、ERPNext。app 自動化設計在分支 `docs/app-automation-design`，尚未合併，不是施工規格。
 
@@ -61,7 +61,7 @@ docker compose up -d --build
 
 前端：<http://localhost:4210>；API：<http://localhost:4420/livez>。所有端口現在只綁 `127.0.0.1`，區網內其他機器連不到；讓同事連線的 LAN 設定屬於 S2-02，尚未完成。
 
-`npm run ports:check` 會檢查 `.env` 內的端口能否綁定，再探測有沒有人正在回應（容器發佈的端口「綁得上」但其實已被佔用，所以兩樣都要查）；有衝突或無法確認會列出原因，並以 exit 1 結束。它現在讀 `packages/edition-profile` 的版本設定：版本由 `EDITION` 決定（預設 `intl`，另一個是 `cn`），未知的值會即時報錯，不會默默當成國際版。
+`npm run ports:check` 會檢查 `.env` 內的端口能否綁定，再探測有沒有人正在回應（容器發佈的端口「綁得上」但其實已被佔用，所以兩樣都要查）；有衝突或無法確認會列出原因，並以 exit 1 結束。在 Windows 上它會用 `netstat`／`tasklist` 指出佔用的是哪個程序（例如「佔用者 com.docker.backend.exe（PID 3552），可能是其他 compose 專案」）；查不到誰佔用會明說「無法識別佔用者」，一樣 exit 1，不會把查不到當成沒問題。它現在讀 `packages/edition-profile` 的版本設定：版本由 `EDITION` 決定（預設 `intl`，另一個是 `cn`），未知的值會即時報錯，不會默默當成國際版。
 
 ## 端口（現況）
 

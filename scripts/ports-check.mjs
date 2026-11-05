@@ -226,6 +226,175 @@ export function probePort(host, port, timeoutMs = PROBE_TIMEOUT_MS) {
 }
 
 /**
+ * 由 `netstat -ano` 的輸出找出 Listening 該端口的 PID（issue #45）。
+ *
+ * 只認 `LISTENING`：`ESTABLISHED` 代表「有連線」，唔代表「有程式霸住個端口」，
+ * 而我們要答的問題係「邊個唔放個端口」。
+ *
+ * 端口比對用 `local` 欄的 `:port` 結尾，不是 `includes`：否則 4210 會撞到
+ * 14210 與 42100。IPv4 與 IPv6 兩行都會出現（`0.0.0.0:4210`、`[::]:4210`），
+ * 同一個 PID 只回一次。
+ */
+export function parseNetstatPids(stdout, port) {
+  const pids = [];
+  const suffix = `:${port}`;
+
+  for (const rawLine of String(stdout ?? '').split(/\r?\n/)) {
+    const columns = rawLine.trim().split(/\s+/);
+
+    // Proto、Local、Foreign、State、PID —— 少過五欄就不是我們要的行。
+    if (columns.length < 5) {
+      continue;
+    }
+
+    const [proto, local, , state, pid] = columns;
+
+    if (proto !== 'TCP' || state !== 'LISTENING') {
+      continue;
+    }
+
+    if (!local.endsWith(suffix)) {
+      continue;
+    }
+
+    const value = Number(pid);
+
+    if (!Number.isInteger(value) || value <= 0) {
+      continue;
+    }
+
+    if (!pids.includes(value)) {
+      pids.push(value);
+    }
+  }
+
+  return pids;
+}
+
+/**
+ * 由 `tasklist /FO CSV /NH` 的第一欄取程序名（issue #45）。
+ *
+ * 用 CSV 而不是預設的空白對齊：`tasklist` 的空白對齊不是固定分隔，程序名本身
+ * 亦可能有空格（例如 `Windows Defender.exe`），用 split 會切爛。
+ *
+ * 查不到時 `tasklist` 會印一句本地化訊息（沒有引號），一律回 null ——
+ * 「查不到」與「查到但無名」都不可以當成識別成功。
+ */
+export function parseTasklistName(stdout) {
+  const firstLine = String(stdout ?? '')
+    .split(/\r?\n/)
+    .find((line) => line.trim() !== '');
+
+  if (firstLine === undefined) {
+    return null;
+  }
+
+  const match = /^"([^"]*)"/.exec(firstLine.trim());
+
+  if (match === null || match[1] === '') {
+    return null;
+  }
+
+  return match[1];
+}
+
+async function runNetstat() {
+  const { stdout } = await execFileAsync('netstat', ['-ano'], { windowsHide: true, maxBuffer: 8 << 20 });
+
+  return stdout;
+}
+
+async function runTasklist(pid) {
+  const { stdout } = await execFileAsync(
+    'tasklist',
+    ['/FI', `PID eq ${pid}`, '/FO', 'CSV', '/NH'],
+    { windowsHide: true },
+  );
+
+  return stdout;
+}
+
+/**
+ * 認出佔用某個端口的程序（issue #45）。
+ *
+ * 回傳三種結果，呼叫者不可以把第二種當成第一種：
+ *   `{ kind: 'identified', name, pid }` —— 認得到，訊息會寫出程序名與 PID。
+ *   `{ kind: 'unidentified', reason }` —— 查不到。**仍然是問題**，exit code 不變。
+ *   `{ kind: 'unsupported' }` —— 非 Windows。`netstat` 參數不同，寧願唔講，
+ *                                都唔可以亂猜一個 PID 出嚟。
+ *
+ * 只用系統內建工具（netstat、tasklist），不依賴 Docker CLI —— 佔用者可能係
+ * 另一個 compose 專案、一個 python 腳本，或者任何東西。
+ */
+export async function describeOwner(port, deps = {}) {
+  const platform = deps.platform ?? process.platform;
+
+  if (platform !== 'win32') {
+    return { kind: 'unsupported' };
+  }
+
+  const netstat = deps.netstat ?? runNetstat;
+  const tasklist = deps.tasklist ?? runTasklist;
+
+  let output;
+
+  try {
+    output = await netstat();
+  } catch {
+    // 權限、netstat 不存在、輸出過大：都是「識別不到」，不是「無問題」。
+    return { kind: 'unidentified', reason: 'netstat 執行失敗' };
+  }
+
+  const pids = parseNetstatPids(output, port);
+
+  if (pids.length === 0) {
+    return { kind: 'unidentified', reason: 'netstat 沒有對應 PID' };
+  }
+
+  const pid = pids[0];
+
+  let listing;
+
+  try {
+    listing = await tasklist(pid);
+  } catch {
+    return { kind: 'unidentified', reason: `tasklist 查不到 PID ${pid}` };
+  }
+
+  const name = parseTasklistName(listing);
+
+  if (name === null) {
+    return { kind: 'unidentified', reason: `tasklist 查不到 PID ${pid}` };
+  }
+
+  return { kind: 'identified', name, pid };
+}
+
+/**
+ * 佔用者那一段文字。
+ *
+ * `vague` 代表原本那句「可能由容器或代理髮布」是否適用（只有在「有程式回應」
+ * 那條分支才有）。識別得到就講具體，識別不到就明講識別不到 —— 唔可以沿用
+ * 一句聽起來好似已經解釋咗嘅話。
+ */
+function ownerClause(owner, vague) {
+  if (owner === undefined || owner === null) {
+    return vague ? '，可能由容器或代理髮布' : '';
+  }
+
+  if (owner.kind === 'identified') {
+    return `，佔用者 ${owner.name}（PID ${owner.pid}），可能是其他 compose 專案`;
+  }
+
+  if (owner.kind === 'unidentified') {
+    return `，${vague ? '但' : '且'}無法識別佔用者（${owner.reason}）`;
+  }
+
+  // unsupported：與以前一樣，唔假裝識別到。
+  return vague ? '，可能由容器或代理髮布' : '';
+}
+
+/**
  * 判斷一個端口能否安全使用。
  * 回傳問題描述字串，或 null 代表沒有問題。
  * 依賴可注入，測試不需要真的開端口或 Docker。
@@ -235,11 +404,14 @@ export async function judgePort(target, deps = {}) {
   const probe = deps.probe ?? probePort;
   const hosts = deps.hosts ?? PROBE_HOSTS;
   const timeoutMs = deps.timeoutMs ?? PROBE_TIMEOUT_MS;
+  const owner = deps.owner;
   const { key, service, port } = target;
 
   const bound = await tryBind(port);
   if (!bound.ok) {
-    return `端口 ${port}（${key}，${service}）${bound.reason}`;
+    // 只有真的有問題才去查佔用者：空閒的端口不需要跑 netstat。
+    const reported = owner === undefined ? undefined : await owner(port);
+    return `端口 ${port}（${key}，${service}）${bound.reason}${ownerClause(reported, false)}`;
   }
 
   const answeringHosts = [];
@@ -259,7 +431,8 @@ export async function judgePort(target, deps = {}) {
   }
 
   if (answeringHosts.length > 0) {
-    return `端口 ${port}（${key}，${service}）有程式正在回應（${answeringHosts.join('、')}），可能由容器或代理髮布`;
+    const reported = owner === undefined ? undefined : await owner(port);
+    return `端口 ${port}（${key}，${service}）有程式正在回應（${answeringHosts.join('、')}）${ownerClause(reported, true)}`;
   }
 
   if (unknown !== null) {
@@ -340,7 +513,12 @@ export async function main() {
       continue;
     }
 
-    const problem = await judgePort({ key, service, port });
+    const problem = await judgePort(
+      { key, service, port },
+      // 只在 Windows 有效；其他平台 describeOwner 會回 unsupported，
+      // 訊息與以前一樣（唔會亂報 PID）。
+      { owner: (value) => describeOwner(value) },
+    );
     if (problem !== null) {
       problems.push(problem);
     }

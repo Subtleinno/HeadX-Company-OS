@@ -48,7 +48,7 @@
 3. 主機端口預設只綁 `127.0.0.1`。唯一例外是 gateway-internal：它綁管理者選定的 LAN 位址，並配合主機防火牆限制公司子網，讓同事的電腦能連線。Docker 在沒有指定位址時會把端口綁到所有網絡介面，所以安裝器不可使用未指定位址的設定。
 4. app 容器、platform、資料庫與 MinIO 的端口永不對 LAN 或互聯網發佈。
 5. 單獨開發、測試或更新某個 app：用 `APP_SET=<該 app>` 起一個 app-host，使用開發用的本機端口。
-6. `ports:check` 按目前版本的 edition-profile 檢查端口能否綁定、有沒有人佔用，並確認 compose 與 `.env.example` 一致。
+6. `ports:check` 按目前版本的 edition-profile 檢查端口能否綁定、有沒有人佔用（Windows 上會指出佔用的程序與 PID；識別不到就明說），並確認 compose 與 `.env.example` 一致。
 
 | 容器 | `.env` 變數 | 預設 | 大陸版 | 國際版 |
 |---|---|---|---|---|
