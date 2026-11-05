@@ -188,13 +188,35 @@ export async function hashPassword(password: string): Promise<string> {
 }
 
 /**
+ * 補時用的密碼。只為消耗與現行參數相同的時間，不對應任何帳戶。
+ * 每次都配新 salt，所以派生結果不會被重用、也不會與任何真帳戶撞。
+ */
+const PAD_PASSWORD = 'timing-pad-not-a-real-password';
+
+/** 用現行目標參數派生一次並丟掉結果。只為時間，不為安全性。 */
+async function padToTargetCost(): Promise<void> {
+  const salt = randomBytes(SALT_BYTES);
+
+  await scryptAsync(PAD_PASSWORD, salt, SCRYPT_PARAMS.keylen, {
+    N: SCRYPT_PARAMS.N,
+    r: SCRYPT_PARAMS.r,
+    p: SCRYPT_PARAMS.p,
+    maxmem: SCRYPT_PARAMS.maxmem,
+  });
+}
+
+/**
  * 驗證密碼。資料庫裡的雜湊壞掉時回 false，不擲錯：登入端點不應該因為一筆壞紀錄回 500。
  *
- * 兩個關鍵點：
+ * 三個關鍵點：
  * 1. 用該筆雜湊自己記錄的 N／r／p 驗證，所以舊參數仍然登入得入。
  * 2. 派生長度固定用目標 keylen，**不是**用字串裡 hash 的長度。
  *    scrypt 的輸出是前綴穩定的：若用 hash.length 當 keylen，一把被剪短的雜湊
  *    派生出的前 N bytes 剛好等於原本 digest 的前 N bytes，於是「截短」反而驗得過。
+ * 3. **舊參數要補時**（issue #84 實測）：N=2^14 只需 75 ms，而目標 2^17 要 637 ms，
+ *    相差 8 倍。如果不補，回應時間本身就講得出「這個帳戶仍然用 2024 年的雜湊」——
+ *    而「存在但未升級」是一種帳戶存在性的訊號。所以在回答案之前，用目標參數
+ *    再派生一次並丟掉，令兩條路徑的總時間接近（實測 1.1 倍，落在量測噪音之內）。
  */
 export async function verifyPassword(password: string, stored: string): Promise<boolean> {
   let parts: PasswordHashParts;
@@ -226,7 +248,14 @@ export async function verifyPassword(password: string, stored: string): Promise<
     return false;
   }
 
-  return safeEqual(derivedKey, parts.hash);
+  const matches = safeEqual(derivedKey, parts.hash);
+
+  if (needsRehash(parts)) {
+    // 無論對錯都補：錯密碼更快返回一樣會洩漏「這個帳戶存在但未升級」。
+    await padToTargetCost();
+  }
+
+  return matches;
 }
 
 /**

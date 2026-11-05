@@ -18,6 +18,8 @@ export type UserRow = {
   department: string | null;
   password_hash: string;
   disabled_at: Date | null;
+  /** 首次登入要改密碼（issue #84）。舊帳戶一律 false。 */
+  must_change_password: boolean;
 };
 
 export type PublicUser = {
@@ -25,6 +27,7 @@ export type PublicUser = {
   email: string;
   displayName: string;
   role: Role;
+  mustChangePassword: boolean;
 };
 
 /** 首次開機的鎖：兩個併發 setup 只會有一個成功。 */
@@ -36,6 +39,7 @@ export function toPublicUser(row: UserRow): PublicUser {
     email: row.email,
     displayName: row.display_name,
     role: row.role,
+    mustChangePassword: row.must_change_password,
   };
 }
 
@@ -47,7 +51,7 @@ export async function hasOwner(pool: Pool): Promise<boolean> {
 
 export async function findUserByEmail(pool: Pool, email: string): Promise<UserRow | null> {
   const rows = await pool.query<UserRow>(
-    `select id, email, display_name, role, department, password_hash, disabled_at
+    `select id, email, display_name, role, department, password_hash, disabled_at, must_change_password
      from app_user
      where lower(email) = $1
      limit 1`,
@@ -144,7 +148,13 @@ export async function createOwnerWithSession(
 
     return {
       status: 'created',
-      user: { id: row.id, email: row.email, displayName: row.display_name, role: row.role },
+      user: {
+        id: row.id,
+        email: row.email,
+        displayName: row.display_name,
+        role: row.role,
+        mustChangePassword: false,
+      },
     };
   } catch (error) {
     await client.query('rollback').catch(() => undefined);
@@ -176,6 +186,117 @@ export async function insertSession(
 }
 
 /**
+ * 只在帳戶這一刻仍然有效時才寫 session（issue #84 的並發要求）。
+ *
+ * 「先查有沒停用、再寫 session」中間一定有窗口：停用可能在兩步之間提交。
+ * 這一句 insert … select 把判斷與寫入壓成同一個語句，由資料庫決定寫不寫 ——
+ * 停用的交易持有該列的 for update 鎖時，這句會等它提交，然後見到 disabled_at。
+ *
+ * 回 false 代表「簽發唔到」，呼叫者要當成登入失敗處理，不可以照樣回 cookie。
+ */
+export async function insertSessionForEnabledUser(
+  pool: Pool,
+  input: { tokenHash: string; userId: string; expiresAt: Date },
+): Promise<boolean> {
+  const result = await pool.query(
+    `insert into auth_session (token_hash, user_id, expires_at)
+     select $1, u.id, $3 from app_user u
+      where u.id = $2 and u.disabled_at is null`,
+    [input.tokenHash, input.userId, input.expiresAt],
+  );
+
+  return (result.rowCount ?? 0) > 0;
+}
+
+/** 撤銷某人的全部 session；回傳撤銷了幾筆。 */
+export async function revokeAllSessions(
+  db: { query: (text: string, values?: unknown[]) => Promise<unknown> },
+  userId: string,
+  now: Date,
+): Promise<void> {
+  await db.query(
+    'update auth_session set revoked_at = $2 where user_id = $1 and revoked_at is null',
+    [userId, now],
+  );
+}
+
+export type ChangePasswordInput = {
+  userId: string;
+  /** 登入／讀取時見到的那一串，條件更新用：期間有人改過就不覆蓋。 */
+  expectedHash: string;
+  passwordHash: string;
+  tokenHash: string;
+  expiresAt: Date;
+  action: string;
+  now: Date;
+};
+
+/**
+ * 改密碼：換雜湊、清旗標、撤銷全部舊 session、開一個新 session、寫審計 —— 一個交易。
+ *
+ * 為甚麼要撤銷全部而不是只撤銷目前這個：改密碼的常見理由是「懷疑有人知道我的密碼」，
+ * 只留住目前 session 等於假設「其他人唔會同時開住」。新 session 在交易內建，
+ * 所以用戶不會被登出之餘又拿不到新 cookie。
+ */
+export async function changePasswordWithSession(
+  pool: Pool,
+  input: ChangePasswordInput,
+): Promise<'ok' | 'user_missing' | 'hash_changed'> {
+  const client = await pool.connect();
+
+  try {
+    await client.query('begin');
+
+    const locked = await client.query<{ id: string }>(
+      'select id from app_user where id = $1 and disabled_at is null for update',
+      [input.userId],
+    );
+
+    if (locked.rows.length === 0) {
+      await client.query('rollback');
+      return 'user_missing';
+    }
+
+    const updated = await client.query(
+      `update app_user
+          set password_hash = $1, must_change_password = false
+        where id = $2 and password_hash = $3`,
+      [input.passwordHash, input.userId, input.expectedHash],
+    );
+
+    if ((updated.rowCount ?? 0) === 0) {
+      await client.query('rollback');
+      return 'hash_changed';
+    }
+
+    await client.query(
+      'update auth_session set revoked_at = $2 where user_id = $1 and revoked_at is null',
+      [input.userId, input.now],
+    );
+
+    await client.query(
+      'insert into auth_session (token_hash, user_id, expires_at) values ($1, $2, $3)',
+      [input.tokenHash, input.userId, input.expiresAt],
+    );
+
+    await audit(client, {
+      actorType: 'human',
+      actorId: input.userId,
+      action: input.action,
+      target: input.userId,
+    });
+
+    await client.query('commit');
+    return 'ok';
+  } catch (error) {
+    await client.query('rollback').catch(() => undefined);
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+/**
  * 由 token 的雜湊找目前有效的 session。
  * 過期、已撤銷、使用者已停用，一律當作沒有登入。
  */
@@ -185,7 +306,8 @@ export async function findSessionUser(
   now: Date,
 ): Promise<UserRow | null> {
   const rows = await pool.query<UserRow>(
-    `select u.id, u.email, u.display_name, u.role, u.department, u.password_hash, u.disabled_at
+    `select u.id, u.email, u.display_name, u.role, u.department, u.password_hash,
+            u.disabled_at, u.must_change_password
      from auth_session s
      join app_user u on u.id = s.user_id
      where s.token_hash = $1

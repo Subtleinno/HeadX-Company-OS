@@ -14,7 +14,10 @@ import type { GrantRole, GrantState } from './types.js';
 
 export type GrantRow = {
   id: string;
-  user_id: string;
+  /** 人類受益人；與 agent_id 二選一（issue #84 的 check 約束）。 */
+  user_id: string | null;
+  /** agent 受益人；與 user_id 二選一。 */
+  agent_id: string | null;
   app_id: string;
   role: GrantRole;
   scope_kind: UnitScope['kind'];
@@ -35,7 +38,8 @@ export type GrantRow = {
 
 export type GrantView = {
   id: string;
-  userId: string;
+  userId: string | null;
+  agentId: string | null;
   appId: string;
   role: GrantRole;
   scope: UnitScope;
@@ -52,7 +56,24 @@ export type GrantView = {
 };
 
 const COLUMNS =
-  'id, user_id, app_id, role, scope_kind, scope_unit_ids, state, requested_by, approved_by, requested_at, approved_at, activated_at, revoked_at, rejection_reason, replaces_id, version, created_at, updated_at';
+  'id, user_id, agent_id, app_id, role, scope_kind, scope_unit_ids, state, requested_by, approved_by, requested_at, approved_at, activated_at, revoked_at, rejection_reason, replaces_id, version, created_at, updated_at';
+
+/**
+ * 受益人 id，不分是人還是 agent。
+ *
+ * 畫面上、審計裡都只需要「這筆授權係邊個嘅」，而兩欄是互斥的；
+ * 與其每個呼叫者自己寫 `user_id ?? agent_id ?? throw`，不如只寫一次。
+ * 兩欄同時為 null 在資料庫層寫不進去，所以在這裡拋錯等於「資料庫出了問題」。
+ */
+export function subjectIdOf(row: Pick<GrantRow, 'user_id' | 'agent_id'>): string {
+  const id = row.user_id ?? row.agent_id;
+
+  if (id === null) {
+    throw new Error('授權沒有受益人（user_id 與 agent_id 都是 null）');
+  }
+
+  return id;
+}
 
 export function toScope(row: Pick<GrantRow, 'scope_kind' | 'scope_unit_ids'>): UnitScope {
   if (row.scope_kind === 'all') {
@@ -67,6 +88,7 @@ export function toGrantView(row: GrantRow): GrantView {
   return {
     id: row.id,
     userId: row.user_id,
+    agentId: row.agent_id,
     appId: row.app_id,
     role: row.role,
     scope: toScope(row),
@@ -87,7 +109,10 @@ export function toGrantView(row: GrantRow): GrantView {
 export type Queryable = Pick<Pool, 'query'>;
 
 export type NewGrant = {
-  userId: string;
+  /** 人類受益人；與 agentId 二選一（issue #84 之後兩者互斥）。 */
+  userId?: string;
+  /** agent 受益人；與 userId 二選一。 */
+  agentId?: string;
   appId: string;
   role: GrantRole;
   scope: UnitScope;
@@ -103,19 +128,20 @@ export async function createGrant(db: Queryable, input: NewGrant): Promise<Grant
 
   const result = await db.query<GrantRow>(
     `insert into app_grant (
-       user_id, app_id, role, scope_kind, scope_unit_ids, state,
+       user_id, agent_id, app_id, role, scope_kind, scope_unit_ids, state,
        requested_by, approved_by, approved_at, activated_at, replaces_id
      ) values (
-       $1, $2, $3, $4, $5::uuid[], $6,
-       $7,
-       case when $6 = 'active' then $8::uuid else null end,
-       case when $6 = 'active' then now() else null end,
-       case when $6 = 'active' then now() else null end,
-       $9
+       $1, $2, $3, $4, $5, $6::uuid[], $7,
+       $8,
+       case when $7 = 'active' then $9::uuid else null end,
+       case when $7 = 'active' then now() else null end,
+       case when $7 = 'active' then now() else null end,
+       $10
      )
      returning ${COLUMNS}`,
     [
-      input.userId,
+      input.userId ?? null,
+      input.agentId ?? null,
       input.appId,
       input.role,
       input.scope.kind,

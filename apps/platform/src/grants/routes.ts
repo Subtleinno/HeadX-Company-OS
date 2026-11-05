@@ -35,6 +35,7 @@ import {
   listGrants,
   lockGrant,
   revokeOtherActive,
+  subjectIdOf,
   toGrantView,
   toScope,
   transition,
@@ -193,7 +194,7 @@ function findApp(registry: ModuleRegistry, appId: string): ModuleManifest | null
 
 function toGrantLike(row: GrantRow): GrantLike {
   return {
-    userId: row.user_id,
+    userId: subjectIdOf(row),
     appId: row.app_id,
     role: row.role,
     state: row.state,
@@ -207,7 +208,7 @@ function canSee(actor: Actor, org: Org, row: GrantRow): boolean {
     return true;
   }
 
-  if (row.user_id === actor.id) {
+  if (subjectIdOf(row) === actor.id) {
     return true;
   }
 
@@ -323,7 +324,7 @@ export function registerGrants(app: FastifyInstance, deps: GrantsDeps): void {
     // 只有 active 的授權會出現在這裡 —— 這就是「申請中／已批准未生效不算」的落點。
     const grants: AppGrant[] = rows.map((row) => ({
       appId: row.app_id,
-      subjectId: row.user_id,
+      subjectId: subjectIdOf(row),
       subjectKind: 'human',
       status: 'active',
       unitScope: toScope(row),
@@ -454,7 +455,7 @@ export function registerGrants(app: FastifyInstance, deps: GrantsDeps): void {
           action: 'app_grant.request',
           target: created.id,
           detail: {
-            subjectId: created.user_id,
+            subjectId: subjectIdOf(created),
             appId: created.app_id,
             role: created.role,
             scope: toScope(created),
@@ -552,7 +553,7 @@ export function registerGrants(app: FastifyInstance, deps: GrantsDeps): void {
           action: 'app_grant.approve',
           target: id,
           detail: {
-            subjectId: approved.user_id,
+            subjectId: subjectIdOf(approved),
             appId: approved.app_id,
             role: approved.role,
             scope: toScope(approved),
@@ -577,7 +578,7 @@ export function registerGrants(app: FastifyInstance, deps: GrantsDeps): void {
       }
 
       const replaced = await revokeOtherActive(client, {
-        userId: current.user_id,
+        userId: subjectIdOf(current),
         appId: current.app_id,
         exceptId: current.id,
       });
@@ -588,7 +589,7 @@ export function registerGrants(app: FastifyInstance, deps: GrantsDeps): void {
           actorId: user.id,
           action: 'app_grant.revoke',
           target: old.id,
-          detail: { reason: 'superseded', replacedBy: current.id, appId: old.app_id, subjectId: old.user_id },
+          detail: { reason: 'superseded', replacedBy: current.id, appId: old.app_id, subjectId: subjectIdOf(old) },
         });
       }
 
@@ -608,7 +609,7 @@ export function registerGrants(app: FastifyInstance, deps: GrantsDeps): void {
         action: 'app_grant.activate',
         target: id,
         detail: {
-          subjectId: active.user_id,
+          subjectId: subjectIdOf(active),
           appId: active.app_id,
           role: active.role,
           scope: toScope(active),
@@ -686,7 +687,7 @@ export function registerGrants(app: FastifyInstance, deps: GrantsDeps): void {
       }
 
       const replaced = await revokeOtherActive(client, {
-        userId: row.user_id,
+        userId: subjectIdOf(row),
         appId: row.app_id,
         exceptId: row.id,
       });
@@ -697,7 +698,7 @@ export function registerGrants(app: FastifyInstance, deps: GrantsDeps): void {
           actorId: user.id,
           action: 'app_grant.revoke',
           target: old.id,
-          detail: { reason: 'superseded', replacedBy: row.id, appId: old.app_id, subjectId: old.user_id },
+          detail: { reason: 'superseded', replacedBy: row.id, appId: old.app_id, subjectId: subjectIdOf(old) },
         });
       }
 
@@ -717,7 +718,7 @@ export function registerGrants(app: FastifyInstance, deps: GrantsDeps): void {
         action: 'app_grant.activate',
         target: id,
         detail: {
-          subjectId: active.user_id,
+          subjectId: subjectIdOf(active),
           appId: active.app_id,
           role: active.role,
           scope: toScope(active),
@@ -786,7 +787,7 @@ export function registerGrants(app: FastifyInstance, deps: GrantsDeps): void {
         action: 'app_grant.reject',
         target: id,
         detail: {
-          subjectId: rejected.user_id,
+          subjectId: subjectIdOf(rejected),
           appId: rejected.app_id,
           role: rejected.role,
           scope: toScope(rejected),
@@ -857,7 +858,7 @@ export function registerGrants(app: FastifyInstance, deps: GrantsDeps): void {
         action: 'app_grant.revoke',
         target: id,
         detail: {
-          subjectId: revoked.user_id,
+          subjectId: subjectIdOf(revoked),
           appId: revoked.app_id,
           role: revoked.role,
           scope: toScope(revoked),
@@ -953,7 +954,7 @@ export function registerGrants(app: FastifyInstance, deps: GrantsDeps): void {
         }
 
         const created = await createGrant(client, {
-          userId: row.user_id,
+          userId: subjectIdOf(row),
           appId: row.app_id,
           role: targetRole,
           scope: targetScope,
@@ -968,7 +969,7 @@ export function registerGrants(app: FastifyInstance, deps: GrantsDeps): void {
           actorId: user.id,
           action: 'app_grant.revoke',
           target: id,
-          detail: { reason: 'superseded', replacedBy: created.id, appId: row.app_id, subjectId: row.user_id },
+          detail: { reason: 'superseded', replacedBy: created.id, appId: row.app_id, subjectId: subjectIdOf(row) },
         });
 
         await audit(client, {
@@ -977,7 +978,7 @@ export function registerGrants(app: FastifyInstance, deps: GrantsDeps): void {
           action: 'app_grant.shrink',
           target: created.id,
           detail: {
-            subjectId: created.user_id,
+            subjectId: subjectIdOf(created),
             appId: created.app_id,
             role: created.role,
             scope: toScope(created),
@@ -995,7 +996,7 @@ export function registerGrants(app: FastifyInstance, deps: GrantsDeps): void {
       // 擴大範圍或改角色：舊的保持原狀（規則 5：新版本生效前保留原範圍），
       // 新的由 requested 開始，要人批准。
       const created = await createGrant(client, {
-        userId: row.user_id,
+        userId: subjectIdOf(row),
         appId: row.app_id,
         role: targetRole,
         scope: targetScope,
@@ -1010,7 +1011,7 @@ export function registerGrants(app: FastifyInstance, deps: GrantsDeps): void {
         action: 'app_grant.request',
         target: created.id,
         detail: {
-          subjectId: created.user_id,
+          subjectId: subjectIdOf(created),
           appId: created.app_id,
           role: created.role,
           scope: toScope(created),

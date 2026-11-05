@@ -1,7 +1,10 @@
 import { Pool } from 'pg';
 import { buildServer } from './app.js';
 import { LOGIN_HASH_KEY_ENV, loginHashKeyWarning, readLoginHashKey } from './auth/login-hash.js';
+import { createHashLimiter, parseHashLimits, type HashLimitsConfig } from './auth/hash-limits.js';
 import { registerAuth } from './auth/routes.js';
+import { registerAgents } from './agents/index.js';
+import { registerStaff } from './staff/index.js';
 import { attachPoolErrorHandler, createDbCheck } from './db.js';
 import { DEFAULT_MAX_UPLOAD_BYTES, registerFiles } from './files/routes.js';
 import { registerGrants } from './grants/index.js';
@@ -150,9 +153,36 @@ function readLoginHashKeyOrExit(): string {
   }
 }
 
+/**
+ * 雜湊資源上限（issue #84）。
+ *
+ * 預設 2 併發／8 排隊／5 秒。設定不合法就結束 —— 一個「部分套用」的限制器
+ * 比起沒有更難查，而這個數字直接關係到會不會把整部機的記憶體用光
+ * （每個 scrypt 要 132 MiB，見 auth/password.ts）。
+ */
+function readHashLimitsOrExit(): HashLimitsConfig {
+  const parsed = parseHashLimits({
+    HASH_MAX_CONCURRENT: process.env.HASH_MAX_CONCURRENT,
+    HASH_MAX_QUEUE: process.env.HASH_MAX_QUEUE,
+    HASH_TIMEOUT_MS: process.env.HASH_TIMEOUT_MS,
+  });
+
+  if (!parsed.ok) {
+    console.error(`雜湊資源限制設定不正確：${parsed.errors.join('；')}`);
+    process.exit(1);
+  }
+
+  return parsed.value;
+}
+
 async function main(): Promise<void> {
   // 啟動設定先驗：缺 key 就不應該先去碰資料庫或任何外部服務。
   const loginHashKey = readLoginHashKeyOrExit();
+
+  // 雜湊的資源上限同樣先驗：設錯就不應該起服務。
+  const hashLimits = readHashLimitsOrExit();
+  const hashLimiter = createHashLimiter(hashLimits);
+  const hashRun = <T>(task: () => Promise<T>): Promise<T> => hashLimiter.run(task);
 
   // 模組清單先驗：壞掉的 manifest 不應該先去碰資料庫。
   const registry = loadModuleRegistry();
@@ -187,7 +217,12 @@ async function main(): Promise<void> {
     pool,
     cookieSecure: process.env.COOKIE_SECURE === 'true',
     loginHashKey,
+    hashRun,
   });
+
+  // 員工與 agent 身份：全部只有老闆可以用（issue #84）。
+  registerStaff(app, { pool, hashRun });
+  registerAgents(app, { pool, registry, resolveEntry: () => null });
 
   registerModules(app, { registry, pool });
 

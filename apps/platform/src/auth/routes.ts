@@ -3,6 +3,7 @@ import type { Pool } from 'pg';
 import { writeAudit } from '../audit.js';
 import { getSignedInUser } from './current-user.js';
 import { isValidEmail, normalizeEmail } from './email.js';
+import { HashBusyError, type HashRun } from './hash-limits.js';
 import { loginFailureTarget, readLoginHashKey } from './login-hash.js';
 import {
   hashPassword,
@@ -20,11 +21,12 @@ import {
 } from './session-cookie.js';
 import { createSessionToken, hashSessionToken } from './token.js';
 import {
+  changePasswordWithSession,
   countFailedAttempts,
   createOwnerWithSession,
   findUserByEmail,
   hasOwner,
-  insertSession,
+  insertSessionForEnabledUser,
   revokeSession,
   toPublicUser,
   updatePasswordHash,
@@ -61,6 +63,12 @@ export type AuthDeps = {
    * 所以這裡刻意不給預設值：未設定就拋錯，服務不會啟動。
    */
   loginHashKey: string;
+  /**
+   * 密碼雜湊的有界資源限制（issue #84）。
+   * 所有用到 scrypt 的流程都要經這一個函數，所以佢由外面注入：auth、staff、
+   * agents 三個模組收到同一個實例，才叫做「同一個資源限制」。
+   */
+  hashRun?: HashRun;
 };
 
 /**
@@ -90,6 +98,14 @@ export function registerAuth(app: FastifyInstance, deps: AuthDeps): void {
   const now = deps.now ?? ((): Date => new Date());
   const cookieSecure = deps.cookieSecure ?? false;
   const sessionTtlMs = deps.sessionTtlMs ?? SESSION_TTL_MS;
+  // 未注入時直接執行：單元測試不需要限制器，但仍然只有一條呼叫路徑。
+  const hashRun: HashRun = deps.hashRun ?? (<T>(task: () => Promise<T>): Promise<T> => task());
+
+  /** 雜湊滿載：回通用的 503，不透露是哪一個帳戶令我們忙。 */
+  function busy(reply: FastifyReply, error: HashBusyError): FastifyReply {
+    reply.header('retry-after', String(error.retryAfterSeconds));
+    return reply.code(503).send({ error: 'service_busy' });
+  }
 
   function sessionExpiry(at: Date): Date {
     return new Date(at.getTime() + sessionTtlMs);
@@ -153,8 +169,13 @@ export function registerAuth(app: FastifyInstance, deps: AuthDeps): void {
     let passwordHash: string;
 
     try {
-      passwordHash = await hashPassword(password);
-    } catch {
+      passwordHash = await hashRun(() => hashPassword(password));
+    } catch (error) {
+      // 名額滿：放棄一次「升級雜湊」而已，用戶剛剛證明是本人，不要因此被擋。
+      if (error instanceof HashBusyError) {
+        return;
+      }
+
       await recordUpgradeFailure(user.id, 'hash_failed', null);
       return;
     }
@@ -209,7 +230,18 @@ export function registerAuth(app: FastifyInstance, deps: AuthDeps): void {
     const at = now();
 
     // 雜湊在交易之外做：scrypt 要幾十毫秒，不應該佔著首次開機的鎖。
-    const passwordHash = await hashPassword(password);
+    let passwordHash: string;
+
+    try {
+      passwordHash = await hashRun(() => hashPassword(password));
+    } catch (error) {
+      if (error instanceof HashBusyError) {
+        return busy(reply, error);
+      }
+
+      throw error;
+    }
+
     const token = createSessionToken();
 
     const result = await createOwnerWithSession(
@@ -260,7 +292,20 @@ export function registerAuth(app: FastifyInstance, deps: AuthDeps): void {
     const user = await findUserByEmail(deps.pool, email);
 
     // 不存在的 email 照樣跑一次 scrypt，回應時間與錯密碼相近。
-    const matches = await verifyPassword(password, user?.password_hash ?? (await dummyPasswordHash()));
+    // 兩者都要經同一個資源限制：否則攻擊者可以用一堆不存在的 email 繞過上限。
+    let matches: boolean;
+
+    try {
+      matches = await hashRun(async () =>
+        verifyPassword(password, user?.password_hash ?? (await dummyPasswordHash())),
+      );
+    } catch (error) {
+      if (error instanceof HashBusyError) {
+        return busy(reply, error);
+      }
+
+      throw error;
+    }
 
     if (user === null || !matches || user.disabled_at !== null) {
       await writeAudit(deps.pool, {
@@ -279,11 +324,25 @@ export function registerAuth(app: FastifyInstance, deps: AuthDeps): void {
 
     const token = createSessionToken();
 
-    await insertSession(deps.pool, {
+    // 條件寫入：如果這一句之前帳戶被停用，這裡會回 false（見 store 的註釋）。
+    // 停用與登入並發時，這是「不會留下可用 session」的那一手。
+    const issued = await insertSessionForEnabledUser(deps.pool, {
       tokenHash: hashSessionToken(token),
       userId: user.id,
       expiresAt: sessionExpiry(at),
     });
+
+    if (!issued) {
+      await writeAudit(deps.pool, {
+        actorType: 'human',
+        actorId: 'anonymous',
+        action: 'auth.login_failed',
+        target: failureTarget,
+        detail: { reason: 'identity_disabled' },
+      });
+
+      return reply.code(401).send({ error: 'invalid_credentials' });
+    }
 
     await writeAudit(deps.pool, {
       actorType: 'human',
@@ -317,15 +376,123 @@ export function registerAuth(app: FastifyInstance, deps: AuthDeps): void {
     return reply.code(204).send();
   });
 
-  app.get('/me', async (request, reply) => {
-    const user = await currentUser(request);
+  /**
+   * 改密碼（issue #84）。首次登入被閘門擋住的人也可以呼叫這一個 ——
+   * 否則就要另開一個「免閘門」的例外清單，而那清單總有一天會多一個不該有的路由。
+   */
+  app.post(
+    '/auth/password',
+    { config: { allowPendingPasswordChange: true } },
+    async (request, reply) => {
+      const user = await currentUser(request);
 
-    if (user === null) {
-      return reply.code(401).send({ error: 'not_signed_in' });
-    }
+      if (user === null) {
+        return reply.code(401).send({ error: 'not_signed_in' });
+      }
 
-    return { user: toPublicUser(user) };
-  });
+      const body = request.body;
+
+      if (typeof body === 'object' && body !== null) {
+        const unknown = Object.keys(body).filter(
+          (key) => key !== 'currentPassword' && key !== 'newPassword',
+        );
+
+        if (unknown.length > 0) {
+          return reply.code(422).send({
+            error: 'invalid_input',
+            reasons: [`未知欄位 ${unknown.join('、')}（只可以有 currentPassword、newPassword）`],
+          });
+        }
+      }
+
+      const currentPassword = readString(body, 'currentPassword');
+      const newPassword = readString(body, 'newPassword');
+
+      if (currentPassword === '') {
+        return reply
+          .code(422)
+          .send({ error: 'invalid_input', field: 'currentPassword', reason: 'missing' });
+      }
+
+      if (validatePassword(newPassword) !== null) {
+        return reply
+          .code(422)
+          .send({ error: 'invalid_input', field: 'newPassword', reason: 'too_short' });
+      }
+
+      // 同一個密碼再「改」一次只是自欺：旗標會被清掉，但密碼其實沒有變。
+      if (newPassword === currentPassword) {
+        return reply
+          .code(422)
+          .send({ error: 'invalid_input', field: 'newPassword', reason: 'same_as_current' });
+      }
+
+      let matches: boolean;
+
+      try {
+        matches = await hashRun(() => verifyPassword(currentPassword, user.password_hash));
+      } catch (error) {
+        if (error instanceof HashBusyError) {
+          return busy(reply, error);
+        }
+
+        throw error;
+      }
+
+      if (!matches) {
+        return reply.code(403).send({ error: 'invalid_current_password' });
+      }
+
+      let passwordHash: string;
+
+      try {
+        passwordHash = await hashRun(() => hashPassword(newPassword));
+      } catch (error) {
+        if (error instanceof HashBusyError) {
+          return busy(reply, error);
+        }
+
+        throw error;
+      }
+
+      const at = now();
+      const token = createSessionToken();
+
+      const result = await changePasswordWithSession(deps.pool, {
+        userId: user.id,
+        expectedHash: user.password_hash,
+        passwordHash,
+        tokenHash: hashSessionToken(token),
+        expiresAt: sessionExpiry(at),
+        // 審計的分量不同：員工改自己的密碼是日常事，老闆改是另一件事。
+        action: user.role === 'owner' ? 'auth.password_change' : 'staff.password_change',
+        now: at,
+      });
+
+      if (result !== 'ok') {
+        // 期間有人改過（或帳戶被停用）：不要覆蓋別人的新密碼。
+        return reply.code(409).send({ error: 'password_changed_elsewhere' });
+      }
+
+      reply.header('set-cookie', buildSessionCookie(token, { secure: cookieSecure }));
+
+      return { user: { ...toPublicUser(user), mustChangePassword: false } };
+    },
+  );
+
+  app.get(
+    '/me',
+    { config: { allowPendingPasswordChange: true } },
+    async (request, reply) => {
+      const user = await currentUser(request);
+
+      if (user === null) {
+        return reply.code(401).send({ error: 'not_signed_in' });
+      }
+
+      return { user: toPublicUser(user) };
+    },
+  );
 
   app.decorateRequest('currentUser', null);
 
@@ -335,6 +502,10 @@ export function registerAuth(app: FastifyInstance, deps: AuthDeps): void {
       const user = await currentUser(request);
 
       if (denyIfNotSignedIn(reply, user)) {
+        return;
+      }
+
+      if (denyIfPasswordChangePending(request, reply, user)) {
         return;
       }
 
@@ -351,6 +522,10 @@ export function registerAuth(app: FastifyInstance, deps: AuthDeps): void {
         return;
       }
 
+      if (denyIfPasswordChangePending(request, reply, user)) {
+        return;
+      }
+
       if (user?.role !== 'owner') {
         reply.code(403).send({ error: 'forbidden' });
         return;
@@ -359,6 +534,32 @@ export function registerAuth(app: FastifyInstance, deps: AuthDeps): void {
       request.currentUser = user;
     },
   );
+}
+
+/**
+ * 首次登入未改密碼：除了標明 `allowPendingPasswordChange` 的路由，一律 403（issue #84）。
+ *
+ * 為甚麼要在裝飾器這一層擋，而不是每個路由自己記得：新加一條路由的人不會知道
+ * 有這個旗標，而「不知道」的結果不可以是「可以讀公司資料」。所以預設是拒絕，
+ * 例外要明寫在路由上 —— 錯的方向應該是「功能用不到」，不是「資料漏出去」。
+ */
+function denyIfPasswordChangePending(
+  request: FastifyRequest,
+  reply: FastifyReply,
+  user: UserRow | null,
+): boolean {
+  if (user === null || !user.must_change_password) {
+    return false;
+  }
+
+  const config = request.routeOptions?.config as { allowPendingPasswordChange?: boolean } | undefined;
+
+  if (config?.allowPendingPasswordChange === true) {
+    return false;
+  }
+
+  void reply.code(403).send({ error: 'password_change_required' });
+  return true;
 }
 
 /**
