@@ -5,7 +5,7 @@ import { migrate } from '../../src/migrate';
 import { createTempDatabase, type TempDatabase } from './temp-db';
 
 /**
- * 小實驗（#75 第一步）：在**現有**執行器下，臨時資料庫套用 0001 至 0007 之後，
+ * 小實驗（#75 第一步）：在**現有**執行器下，臨時資料庫套用 0001 至 0008 之後，
  * schema_migrations 到底長甚麼樣。
  *
  * 這一份是後面每個階段的基準線：
@@ -30,9 +30,10 @@ const BASELINE = [
   ['0005_org_units.sql', '43f52acfdbb6b55bcf735f42918895495333db4a8e1ee08d78c350bcfdb8e26c'],
   ['0006_app_grants.sql', '31cc6dd2ffc9636aaa5da98bf6d87cc7e3b3535aa774452bbfd1c7de50d2d717'],
   ['0007_identities.sql', '29a3a59352c86d04edba6a4ffedb8ff922b2a44598fcae1ca2104cb00221ff9c'],
+  ['0008_jobs.sql', 'c5d47b075dd054ec66feee1053e5158cbf87eaf19f06c9e5c54d9c9d1e0348ac'],
 ] as const;
 
-describe('基準線：現有執行器套用 0001 至 0007 之後的 ledger', () => {
+describe('基準線：現有執行器套用 0001 至 0008 之後的 ledger', () => {
   let db: TempDatabase;
 
   beforeAll(async () => {

@@ -870,7 +870,12 @@ describe('舊資料庫升級（#80 的 0001–0004 → 0005 及之後）', () =>
 
       // 3. 新程式接手：只補 0005 之後的。
       const applied = await migrate({ pool: db.pool, dir: migrationsDir, log: silent });
-      expect(applied).toEqual(['0005_org_units.sql', '0006_app_grants.sql', '0007_identities.sql']);
+      expect(applied).toEqual([
+        '0005_org_units.sql',
+        '0006_app_grants.sql',
+        '0007_identities.sql',
+        '0008_jobs.sql',
+      ]);
 
       // 4. 既有資料一個字都沒動。
       expect((await db.pool.query('select key, value from company_setting order by key')).rows).toEqual(
