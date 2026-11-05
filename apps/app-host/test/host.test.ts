@@ -47,6 +47,8 @@ async function start(env: NodeJS.ProcessEnv, options: RunOptions = {}): Promise<
       listen: false,
       logLine: (line) => lines.push(line),
       logError: (line) => errors.push(line),
+      // 單元測試冇真資料庫：角色檢查是 #88 的行為，另有整合測試用真 Postgres 驗。
+      verifyRole: async () => undefined,
       ...options,
     },
   );

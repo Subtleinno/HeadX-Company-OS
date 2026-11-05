@@ -25,7 +25,8 @@
     "backup:list": "node scripts/backup/cli.mjs list",
     "backup:prune": "node scripts/backup/cli.mjs prune",
     "backup:schedule": "node scripts/backup/cli.mjs schedule",
-    "restore": "node scripts/backup/cli.mjs restore"
+    "restore": "node scripts/backup/cli.mjs restore",
+    "db:app-access": "npm run db:app-access --workspace @company-os/platform --"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1161.0"

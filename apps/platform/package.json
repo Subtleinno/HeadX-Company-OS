@@ -5,7 +5,8 @@
   "scripts": {
     "build": "tsc --build tsconfig.json",
     "start": "node dist/server.js",
-    "worker": "node dist/worker.js"
+    "worker": "node dist/worker.js",
+    "db:app-access": "node dist/db-access/main.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1161.0",

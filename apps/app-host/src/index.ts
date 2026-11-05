@@ -1,3 +1,4 @@
+import type { Pool } from 'pg';
 import { AppHostError, readConfig } from './config';
 import { buildHost, type BuiltHost, type ModuleLoader } from './host';
 
@@ -11,6 +12,8 @@ import { buildHost, type BuiltHost, type ModuleLoader } from './host';
 
 export type RunOptions = {
   loadModule?: ModuleLoader;
+  /** #88：單元測試冇真資料庫，可以注入 no-op；正式路徑不傳。 */
+  verifyRole?: (pool: Pool, role: string) => Promise<void>;
   /** 測試用：`false` 代表只建 host 不監聽。 */
   listen?: boolean;
   logLine?: (line: string) => void;
@@ -32,6 +35,7 @@ export async function runMain(
       config,
       env,
       ...(options.loadModule === undefined ? {} : { loadModule: options.loadModule }),
+      ...(options.verifyRole === undefined ? {} : { verifyRole: options.verifyRole }),
       log: {
         info: logLine,
         warn: logError,

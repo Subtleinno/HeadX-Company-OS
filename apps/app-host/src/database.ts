@@ -65,3 +65,59 @@ export function createAppPool(appId: string, env: NodeJS.ProcessEnv, credentials
     options: `-c search_path=${appId}`,
   });
 }
+
+/**
+ * 啟動時核對「這條連線真的是一個最小的 runtime 帳號」（issue #88）。
+ *
+ * 為甚麼要查：`APP_DB_<ID>_USER` 是環境變數，打錯成管理員帳號不會有任何錯誤，
+ * 系統照樣跑得動 —— 直到有一日某個 app 讀到別人的表。所以寧願起唔到，
+ * 都要在啟動第一秒講清楚：這個帳號有 SUPERUSER／CREATEDB／CREATEROLE／
+ * REPLICATION／BYPASSRLS，或者加入了其他角色。
+ *
+ * 刻意唔查「具體有咩權限」：那是 `npm run db:app-access -- verify` 的工作，
+ * 它在部署時已經跑過；這裡只擋「明顯唔係 runtime 帳號」這一類錯誤。
+ */
+export async function assertRuntimeRole(pool: Pool, expectedRole: string): Promise<void> {
+  const rows = await pool.query<{
+    current_user: string;
+    rolsuper: boolean;
+    rolcreatedb: boolean;
+    rolcreaterole: boolean;
+    rolreplication: boolean;
+    rolbypassrls: boolean;
+    member_of: number;
+  }>(
+    `select current_user as current_user,
+            r.rolsuper, r.rolcreatedb, r.rolcreaterole, r.rolreplication, r.rolbypassrls,
+            (select count(*)::int from pg_auth_members m where m.member = r.oid) as member_of
+       from pg_roles r
+      where r.rolname = current_user`,
+  );
+
+  const row = rows.rows[0];
+
+  if (row === undefined) {
+    throw new AppHostError(`查不到目前連線的角色 ${expectedRole}，拒絕啟動`);
+  }
+
+  if (row.current_user !== expectedRole) {
+    throw new AppHostError(
+      `連線身分是 ${row.current_user}，但設定的是 ${expectedRole}（拒絕啟動）`,
+    );
+  }
+
+  const elevated: string[] = [];
+
+  if (row.rolsuper) elevated.push('SUPERUSER');
+  if (row.rolcreatedb) elevated.push('CREATEDB');
+  if (row.rolcreaterole) elevated.push('CREATEROLE');
+  if (row.rolreplication) elevated.push('REPLICATION');
+  if (row.rolbypassrls) elevated.push('BYPASSRLS');
+  if (row.member_of > 0) elevated.push(`加入了 ${row.member_of} 個角色`);
+
+  if (elevated.length > 0) {
+    throw new AppHostError(
+      `${expectedRole} 唔係最小權限的 runtime 帳號（${elevated.join('、')}），拒絕啟動`,
+    );
+  }
+}

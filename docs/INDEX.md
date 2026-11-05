@@ -19,6 +19,7 @@ Company OS 是 company starter：任何一間公司裝好 Docker 就能開始運
 | `docs/architecture/APP-DESIGN-TEMPLATE.md` | 每個 app 的設計範本 |
 | `apps/<app>/DESIGN.md` | 該 app 的設計（唯一一份；app 建立時才有） |
 | `docs/backup-restore.md` | 備份與還原 |
+| `docs/app-db-access.md` | app 的資料庫帳號、權限矩陣、PUBLIC 收斂與配置次序 |
 
 ## 一個真相，一個方向
 
@@ -50,6 +51,7 @@ Company OS 是 company starter：任何一間公司裝好 Docker 就能開始運
 | 隊列工作 | `job` | 資料庫 → worker |
 | MCP token | `mcp_token`（只存 SHA-256） | 建立時顯示一次 |
 | 各 app 的摘要數字 | 該 app 的摘要介面 | app → Boss portal（Boss portal 不讀別人的資料表） |
+| app 的資料庫帳號與權限 | `npm run db:app-access`（角色名由 app id 決定） | 工具 → Postgres ACL → app-host |
 | 審計 | `audit_log`（trigger 只准追加） | 只能寫入 |
 | 被刪除的東西 | `deleted_at` | 回收桶 |
 | 備份 | `BACKUP_ROOT` 的備份目錄加 manifest | 見 `docs/backup-restore.md` |

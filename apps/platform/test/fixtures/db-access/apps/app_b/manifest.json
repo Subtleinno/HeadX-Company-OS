@@ -1,0 +1,11 @@
+{
+  "id": "app_b",
+  "title": "測試應用乙",
+  "kind": "department",
+  "department": "ops",
+  "order": 2,
+  "available": false,
+  "route": "/app-b",
+  "exposure": "internal",
+  "sensitive": false
+}

@@ -123,4 +123,31 @@ describe('app 的資料庫連線', () => {
       'apps/sales 需要資料庫，但沒有設定 APP_DB_SALES_USER 與 APP_DB_SALES_PASSWORD（不會回退用共用帳號）',
     );
   });
+
+  it('帳號有管理員屬性（CREATEROLE）：拒絕啟動，並講出是哪一個屬性', async () => {
+    const elevated = `co_elev_${env.database.slice(-8)}`;
+
+    await env.pool.query(
+      `create role "${elevated}" login createrole password '${env.password.replace(/'/g, "''")}'`,
+    );
+    await env.pool.query(`grant usage on schema sales to "${elevated}"`);
+
+    try {
+      await expect(
+        buildHost({
+          config: { appIds: ['sales'], appsDir: APPS_DIR, port: 8080 },
+          env: {
+            PGHOST: env.config.host,
+            PGPORT: String(env.config.port),
+            PGDATABASE: env.config.database,
+            APP_DB_SALES_USER: elevated,
+            APP_DB_SALES_PASSWORD: env.password,
+          },
+        }),
+      ).rejects.toThrow(/唔係最小權限的 runtime 帳號（CREATEROLE）/);
+    } finally {
+      await env.pool.query(`revoke usage on schema sales from "${elevated}"`);
+      await env.pool.query(`drop role if exists "${elevated}"`);
+    }
+  });
 });

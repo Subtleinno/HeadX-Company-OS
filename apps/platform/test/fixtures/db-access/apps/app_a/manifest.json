@@ -1,0 +1,11 @@
+{
+  "id": "app_a",
+  "title": "測試應用甲",
+  "kind": "department",
+  "department": "lab",
+  "order": 1,
+  "available": false,
+  "route": "/app-a",
+  "exposure": "internal",
+  "sensitive": false
+}
