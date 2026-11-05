@@ -340,18 +340,22 @@ export async function revokeSession(
 
 /**
  * 數窗口內的失敗次數。
- * `target` 是 loginFailureTarget 算出來的識別碼，不是 email —— 審計表裡沒有 email。
+ * `target` 是識別碼（登入用 loginFailureTarget，已登入的密碼操作用帳戶 id），
+ * 不是 email —— 審計表裡沒有 email。
+ *
+ * `action` 預設是登入失敗，issue #86 之後同一條查詢也用於改密碼與重設的失敗紀錄。
  */
 export async function countFailedAttempts(
   pool: Pool,
   target: string,
   since: Date,
+  action = 'auth.login_failed',
 ): Promise<FailedAttempts> {
   const rows = await pool.query<{ count: number; oldest_at: Date | null }>(
     `select count(*)::int as count, min(at) as oldest_at
      from audit_log
-     where action = 'auth.login_failed' and target = $1 and at > $2`,
-    [target, since],
+     where action = $3 and target = $1 and at > $2`,
+    [target, since, action],
   );
 
   const row = rows.rows[0];

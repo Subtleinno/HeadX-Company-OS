@@ -69,3 +69,44 @@ export function parseCreateStaffInput(raw: unknown): ParseResult<CreateStaffInpu
 export function isValidUuid(value: unknown): value is string {
   return typeof value === 'string' && UUID.test(value);
 }
+
+const RESET_FIELDS = ['ownerPassword', 'newTemporaryPassword'] as const;
+
+export type ResetPasswordInput = {
+  ownerPassword: string;
+  newTemporaryPassword: string;
+};
+
+/**
+ * 老闆重設員工密碼的輸入（issue #86）。
+ *
+ * 只收兩個欄位，而且都不可以空白：`ownerPassword` 是「重新驗證老闆本人」的唯一來源，
+ * 前端沒有任何旗標可以代替它。多一個欄位就拒絕 —— 特別是 `mustChangePassword`，
+ * 那個一定是 true，不應該由呼叫者決定。
+ */
+export function parseResetPasswordInput(raw: unknown): ParseResult<ResetPasswordInput> {
+  if (!isRecord(raw)) {
+    return { errors: ['body 必須是一個物件'] };
+  }
+
+  const errors = unknownFields(raw, RESET_FIELDS, 'body');
+
+  const ownerPassword = typeof raw.ownerPassword === 'string' ? raw.ownerPassword : '';
+
+  if (ownerPassword === '') {
+    errors.push('ownerPassword 不可以是空白');
+  }
+
+  const newTemporaryPassword =
+    typeof raw.newTemporaryPassword === 'string' ? raw.newTemporaryPassword : '';
+
+  if (validatePassword(newTemporaryPassword) !== null) {
+    errors.push('newTemporaryPassword 太短（最少 12 個字）');
+  }
+
+  if (errors.length > 0) {
+    return { errors };
+  }
+
+  return { errors: [], value: { ownerPassword, newTemporaryPassword } };
+}

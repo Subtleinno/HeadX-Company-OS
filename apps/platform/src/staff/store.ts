@@ -122,8 +122,7 @@ export async function createStaffAccount(
   }
 }
 
-/** 員工列表：建立次序（created_at asc, id asc），同一秒也有穩定次序。 */
-export async function listStaffAccounts(
+/** 員工列表：建立次序（created_at asc, id asc），同一秒也有穩定次序。 */export async function listStaffAccounts(
   pool: Pool,
   input: { limit: number; offset: number },
 ): Promise<{ rows: StaffRow[]; total: number }> {
@@ -224,6 +223,133 @@ export async function disableStaffAccount(
 
     if (staff === undefined) {
       throw new Error('停用員工之後沒有回傳列');
+    }
+
+    return { status: 'ok', staff: toStaffView(staff) };
+  } catch (error) {
+    await client.query('rollback').catch(() => undefined);
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * 測試專用的鉤子（issue #86），正式路徑不傳。
+ *
+ * 為甚麼需要它：「老闆憑證在請求途中被換掉」這個競態如果沒有鉤子，
+ * 測試只能靠時間差去猜，而靠猜的測試會時好時壞。`afterOwnerVerified`
+ * 讓測試把「驗完老闆密碼」與「開交易」之間撐開，令第二個請求真的插進來。
+ */
+export type StaffHooks = {
+  afterOwnerVerified?: () => Promise<void>;
+};
+
+export type ResetStaffPasswordParams = {
+  id: string;
+  actorId: string;
+  /**
+   * 驗證老闆密碼時讀到的那一串。交易內會再讀一次並比較：
+   * 如果期間老闆自己換了密碼，這裡會回 stale_credentials 而不是照樣重設。
+   */
+  expectedOwnerHash: string;
+  passwordHash: string;
+  now: Date;
+};
+
+export type ResetStaffPasswordResult =
+  | { status: 'ok'; staff: StaffView }
+  | { status: 'not_found' }
+  | { status: 'owner_protected' }
+  | { status: 'actor_missing' }
+  | { status: 'stale_credentials' };
+
+/**
+ * 老闆重設員工密碼（issue #86）：換雜湊、設 must_change_password、撤銷目標全部
+ * session、寫審計 —— 一個交易，任何一步失敗整筆回滾。
+ *
+ * 幾個刻意的選擇：
+ *   1. **不開 session 給目標**。這是重設，不是代登入；臨時密碼的線下交付由人負責。
+ *   2. **不動 disabled_at**。停用的帳戶重設之後仍然停用 —— 重設密碼不是復活程序。
+ *   3. **先鎖操作者，再鎖目標**。鎖次序固定，兩個重設撞在一起時只會排隊，不會死鎖。
+ *   4. **操作者的 password_hash 要對得上**。`for update` 之後再比較，
+ *      所以「驗證時是舊密碼、提交時已經是另一串」這種情況會回 409 而不是靜靜放行。
+ */
+export async function resetStaffPassword(
+  pool: Pool,
+  params: ResetStaffPasswordParams,
+): Promise<ResetStaffPasswordResult> {
+  const client = await pool.connect();
+
+  try {
+    await client.query('begin');
+
+    const actor = await client.query<{ password_hash: string }>(
+      'select password_hash from app_user where id = $1 and disabled_at is null for update',
+      [params.actorId],
+    );
+
+    const actorRow = actor.rows[0];
+
+    if (actorRow === undefined) {
+      await client.query('rollback');
+      return { status: 'actor_missing' };
+    }
+
+    if (actorRow.password_hash !== params.expectedOwnerHash) {
+      await client.query('rollback');
+      return { status: 'stale_credentials' };
+    }
+
+    const locked = await client.query<{ role: string }>(
+      'select role from app_user where id = $1 for update',
+      [params.id],
+    );
+
+    const row = locked.rows[0];
+
+    if (row === undefined) {
+      await client.query('rollback');
+      return { status: 'not_found' };
+    }
+
+    if (row.role === 'owner') {
+      await client.query('rollback');
+      return { status: 'owner_protected' };
+    }
+
+    const updated = await client.query<StaffRow>(
+      `update app_user
+          set password_hash = $2, must_change_password = true
+        where id = $1
+        returning ${COLUMNS}`,
+      [params.id, params.passwordHash],
+    );
+
+    await revokeAllSessions(
+      { query: (text, values) => client.query(text, values) },
+      params.id,
+      params.now,
+    );
+
+    await writeAudit(
+      { query: (text, values) => client.query(text, values) },
+      {
+        actorType: 'human',
+        actorId: params.actorId,
+        action: 'staff.password_reset',
+        target: params.id,
+        // 只有「做了甚麼」，沒有密碼、salt、雜湊、cookie 或 token。
+        detail: { sessionsRevoked: true, mustChangePassword: true },
+      },
+    );
+
+    await client.query('commit');
+
+    const staff = updated.rows[0];
+
+    if (staff === undefined) {
+      throw new Error('重設員工密碼之後沒有回傳列');
     }
 
     return { status: 'ok', staff: toStaffView(staff) };

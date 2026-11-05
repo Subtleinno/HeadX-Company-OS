@@ -403,7 +403,7 @@ describe('首次改密碼的閘門', () => {
 
     const changed = await h.app.inject({
       method: 'POST',
-      url: '/auth/password',
+      url: '/auth/change-password',
       headers: { cookie: oldCookie },
       payload: { currentPassword: staff.password, newPassword },
     });
@@ -442,7 +442,7 @@ describe('首次改密碼的閘門', () => {
 
     const wrong = await h.app.inject({
       method: 'POST',
-      url: '/auth/password',
+      url: '/auth/change-password',
       headers: { cookie },
       payload: { currentPassword: 'wrong-password-1234', newPassword: password() },
     });
@@ -451,7 +451,7 @@ describe('首次改密碼的閘門', () => {
 
     const same = await h.app.inject({
       method: 'POST',
-      url: '/auth/password',
+      url: '/auth/change-password',
       headers: { cookie },
       payload: { currentPassword: staff.password, newPassword: staff.password },
     });
@@ -465,7 +465,7 @@ describe('首次改密碼的閘門', () => {
 
     await h.app.inject({
       method: 'POST',
-      url: '/auth/password',
+      url: '/auth/change-password',
       headers: { cookie },
       payload: { currentPassword: staff.password, newPassword: password() },
     });
@@ -485,7 +485,7 @@ describe('首次改密碼的閘門', () => {
 
     const changed = await h.app.inject({
       method: 'POST',
-      url: '/auth/password',
+      url: '/auth/change-password',
       headers: { cookie },
       payload: { currentPassword: staff.password, newPassword: password() },
     });
@@ -507,7 +507,7 @@ describe('停用員工', () => {
 
     await h.app.inject({
       method: 'POST',
-      url: '/auth/password',
+      url: '/auth/change-password',
       headers: { cookie },
       payload: { currentPassword: staff.password, newPassword: password() },
     });

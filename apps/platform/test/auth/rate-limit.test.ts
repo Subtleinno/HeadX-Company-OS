@@ -2,8 +2,11 @@ import { describe, expect, it } from 'vitest';
 import {
   LOGIN_WINDOW_MS,
   MAX_LOGIN_FAILURES,
+  PASSWORD_LIMITS,
+  PASSWORD_WINDOW_MS,
   evaluateLockout,
   loginWindowStart,
+  passwordWindowStart,
 } from '../../src/auth/rate-limit';
 
 const NOW = new Date('2026-11-04T00:00:00.000Z');
@@ -57,5 +60,29 @@ describe('登入限流', () => {
     expect(evaluateLockout({ count: MAX_LOGIN_FAILURES, oldestAt }, NOW).retryAfterSeconds).toBe(
       LOGIN_WINDOW_MS / 1000,
     );
+  });
+});
+
+describe('已登入之後的密碼操作限流（issue #86）', () => {
+  it('與登入共用同一組窗口與上限，窗口起點一樣', () => {
+    expect(PASSWORD_WINDOW_MS).toBe(LOGIN_WINDOW_MS);
+    expect(PASSWORD_LIMITS).toEqual({
+      windowMs: LOGIN_WINDOW_MS,
+      maxFailures: MAX_LOGIN_FAILURES,
+    });
+    expect(passwordWindowStart(NOW).toISOString()).toBe(loginWindowStart(NOW).toISOString());
+  });
+
+  it('自訂上限時，未到上限不鎖、到上限才鎖', () => {
+    const limits = { windowMs: 60_000, maxFailures: 2 };
+
+    expect(evaluateLockout({ count: 1, oldestAt: NOW }, NOW, limits)).toEqual({
+      locked: false,
+      retryAfterSeconds: 0,
+    });
+    expect(evaluateLockout({ count: 2, oldestAt: NOW }, NOW, limits)).toEqual({
+      locked: true,
+      retryAfterSeconds: 60,
+    });
   });
 });

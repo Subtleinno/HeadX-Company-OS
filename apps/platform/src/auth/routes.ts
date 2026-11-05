@@ -12,6 +12,11 @@ import {
   validatePassword,
   verifyPassword,
 } from './password.js';
+import {
+  checkPasswordThrottle,
+  PASSWORD_FAILURE_ACTIONS,
+  recordPasswordFailure,
+} from './password-throttle.js';
 import { evaluateLockout, loginWindowStart } from './rate-limit.js';
 import {
   buildClearSessionCookie,
@@ -377,11 +382,16 @@ export function registerAuth(app: FastifyInstance, deps: AuthDeps): void {
   });
 
   /**
-   * 改密碼（issue #84）。首次登入被閘門擋住的人也可以呼叫這一個 ——
+   * 改密碼（issue #84 建立，issue #86 接上節流與正式路徑）。
+   *
+   * 首次登入被閘門擋住的人也可以呼叫這一個 ——
    * 否則就要另開一個「免閘門」的例外清單，而那清單總有一天會多一個不該有的路由。
+   *
+   * 路徑由 #86 定為 `/auth/change-password`：issue 的 API 契約寫的是這一個，
+   * 而 #84 當時的 `/auth/password` 未有任何前端使用，所以直接改名，不留兩個入口。
    */
   app.post(
-    '/auth/password',
+    '/auth/change-password',
     { config: { allowPendingPasswordChange: true } },
     async (request, reply) => {
       const user = await currentUser(request);
@@ -427,6 +437,21 @@ export function registerAuth(app: FastifyInstance, deps: AuthDeps): void {
           .send({ error: 'invalid_input', field: 'newPassword', reason: 'same_as_current' });
       }
 
+      const at = now();
+
+      // 名額用完就連正確密碼都拒絕：否則「錯舊密碼」這條路可以無限試。
+      const throttle = await checkPasswordThrottle(
+        deps.pool,
+        PASSWORD_FAILURE_ACTIONS.change,
+        user.id,
+        at,
+      );
+
+      if (throttle.locked) {
+        reply.header('retry-after', String(throttle.retryAfterSeconds));
+        return reply.code(429).send({ error: 'too_many_attempts' });
+      }
+
       let matches: boolean;
 
       try {
@@ -440,6 +465,9 @@ export function registerAuth(app: FastifyInstance, deps: AuthDeps): void {
       }
 
       if (!matches) {
+        // 留痕是節流的資料來源，也是「有人在試」的唯一紀錄。
+        await recordPasswordFailure(deps.pool, PASSWORD_FAILURE_ACTIONS.change, user.id);
+
         return reply.code(403).send({ error: 'invalid_current_password' });
       }
 
@@ -455,7 +483,6 @@ export function registerAuth(app: FastifyInstance, deps: AuthDeps): void {
         throw error;
       }
 
-      const at = now();
       const token = createSessionToken();
 
       const result = await changePasswordWithSession(deps.pool, {

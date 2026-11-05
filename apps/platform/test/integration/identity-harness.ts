@@ -8,6 +8,7 @@ import { createHashLimiter, type HashLimiter } from '../../src/auth/hash-limits'
 import { registerAgents } from '../../src/agents/index';
 import { registerGrants } from '../../src/grants/index';
 import { registerStaff } from '../../src/staff/index';
+import type { StaffHooks } from '../../src/staff/store';
 import { migrate } from '../../src/migrate';
 import type { ModuleManifest, ModuleRegistry } from '../../src/modules/registry/index';
 import { createTempDatabase, type TempDatabase } from './temp-db';
@@ -26,13 +27,22 @@ const ok = async (): Promise<void> => undefined;
 
 export const TEST_LOGIN_HASH_KEY = 'test-only-login-hash-key-0123456789abcdef';
 
-export type Actor = { id: string; cookie: string };
+/**
+ * `email` 與 `password` 是給 #86 的：老闆重設員工密碼要「重新驗證自己的密碼」，
+ * 所以測試要拿得到那串密碼。這一組只存在於測試骨架，不會經 API 回傳。
+ */
+export type Actor = { id: string; cookie: string; email: string; password: string };
 
 export type Harness = {
   app: FastifyInstance;
   db: TempDatabase;
   /** 測試可以換成自己控制的限制器（例如把它塞滿）。 */
   limiter: { current: HashLimiter };
+  /**
+   * 測試專用的併發鉤子（issue #86）。物件本身在 app 建立前就交了出去，
+   * 所以測試可以在事後才塞入鉤子，而路由每次請求都會重新讀。
+   */
+  staffHooks: StaffHooks;
   entry: { trusted: 'internal' | 'partner' | 'customer' | null };
   units: { root: string; hk: string; shop: string };
   drop: () => Promise<void>;
@@ -77,9 +87,10 @@ export async function createHarness(): Promise<Harness> {
 
   const app = buildServer({ checkDb: ok, checkStorage: ok });
   const registry = testRegistry();
+  const staffHooks: StaffHooks = {};
   registerAuth(app, { pool: db.pool, loginHashKey: TEST_LOGIN_HASH_KEY, hashRun });
   registerGrants(app, { pool: db.pool, registry, resolveEntry: () => entry.trusted });
-  registerStaff(app, { pool: db.pool, hashRun, now: () => new Date() });
+  registerStaff(app, { pool: db.pool, hashRun, now: () => new Date(), hooks: staffHooks });
   registerAgents(app, {
     pool: db.pool,
     registry,
@@ -90,7 +101,7 @@ export async function createHarness(): Promise<Harness> {
 
   const units = await seedUnits(db);
 
-  return { app, db, limiter, entry, units, drop: db.drop };
+  return { app, db, limiter, staffHooks, entry, units, drop: db.drop };
 }
 
 async function seedUnits(db: TempDatabase): Promise<Harness['units']> {
@@ -119,7 +130,7 @@ async function seedUnits(db: TempDatabase): Promise<Harness['units']> {
   return { root, hk, shop };
 }
 
-function cookieFrom(response: { headers: Record<string, unknown> }): string {
+export function cookieFrom(response: { headers: Record<string, unknown> }): string {
   const raw = response.headers['set-cookie'];
   const value = Array.isArray(raw) ? raw[0] : raw;
 
@@ -142,7 +153,7 @@ export async function signUpOwner(h: Harness): Promise<Actor> {
   const cookie = cookieFrom(response);
   const me = await h.app.inject({ method: 'GET', url: '/me', headers: { cookie } });
 
-  return { id: (me.json() as { user: { id: string } }).user.id, cookie };
+  return { id: (me.json() as { user: { id: string } }).user.id, cookie, email, password };
 }
 
 /** 用 email／密碼登入，回傳 cookie。 */
