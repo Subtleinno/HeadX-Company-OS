@@ -314,3 +314,9 @@ export type AppModule<TApp = unknown> = {
   needsDatabase?: boolean;
   registerApi: (app: TApp, ctx: AppContext) => void | Promise<void>;
 };
+
+/**
+ * 身份、授權與組織範圍的共用契約（issue #82）。
+ * 放在同一個 package 的原因：policy 與 platform 要認得同一個形狀。
+ */
+export * from './identity.js';

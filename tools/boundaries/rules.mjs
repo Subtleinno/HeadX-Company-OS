@@ -154,6 +154,20 @@ export function buildForbiddenRules(layout) {
     });
   }
 
+  // packages/ 是共用的底座，不可以反過來依賴任何 app（issue #82）：
+  // `@company-os/policy` 這種純邏輯要在 platform、app-host、甚至將來的 worker 都能用，
+  // 一旦它 import 了某個 app，就只在那個 app 存在的地方跑得起來。
+  // 沒有這一條的話，測試只可以「證明今天沒有人這樣寫」，不能阻止下一次。
+  if (layout.packageIds.length > 0) {
+    rules.push({
+      name: 'package-no-app-import',
+      severity: 'error',
+      comment: 'packages/* 不可引用 apps/*（共用底座不可以依賴任何 app）。',
+      from: { path: '(^|/)packages/' },
+      to: { path: '(^|/)apps/' },
+    });
+  }
+
   for (const packageId of layout.packageIds) {
     const entries = layout.packageEntries?.[packageId] ?? ['index.ts', 'src/index.ts'];
     const allowed = entries.map((entry) => entry.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');

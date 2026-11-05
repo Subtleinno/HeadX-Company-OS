@@ -80,6 +80,11 @@ const CASES: { file: string; rule: string; what: string }[] = [
     what: 'platform 不可引用任何 app',
   },
   {
+    file: 'fixtures/violations/packages/kit/src/app-import.ts',
+    rule: 'package-no-app-import',
+    what: 'packages/* 不可引用 apps/*（#82）',
+  },
+  {
     file: 'fixtures/violations/apps/alpha/src/deep-package.ts',
     rule: 'package-deep-import-kit',
     what: 'package 只可經 index.ts 被引用',
@@ -116,6 +121,7 @@ const FAMILIES = [
   'app-cross-import',
   'platform-no-app-import',
   'package-deep-import',
+  'package-no-app-import',
   'module-deep-import',
   'no-circular',
   'layer-web-no-domain-db',
