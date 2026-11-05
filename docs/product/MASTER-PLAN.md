@@ -50,6 +50,34 @@ platform  apps-internal  apps-partner  supplier-portal  customer-portal
 - portal app：customer-portal 與 supplier-portal，專門對客戶與供應商開放，只在國際版。
 - 邊界與分層：見 `docs/architecture/CODE-MAP.md`，由 `lint:boundaries` 在 CI 強制。
 
+### 2.1 兩個版本的分別只寫在 edition-profile
+
+`packages/edition-profile/src/index.ts` 是版本差異的唯一來源。容器、端口、入口、通知渠道與預設語言都從這裡出來；`docker-compose.yml`、`.env.example` 與 `docs/architecture/REPO-MAP.md` 的端口表要跟它一致，由 `consistency.test.ts` 在 `npm test` 內逐項核對。所以下面講的是「這個 profile 的意思是甚麼」，不是第二份清單；要看端口數字，去 REPO-MAP 那張表（它才是被 CI 對照的那一份）。
+
+`EDITION` 決定用哪一份 profile，預設 `intl`。寫錯的值會即時報錯，不會默默當成國際版。
+
+**國際版（`EDITION=intl`）**
+
+- 入口：`internal`、`partner`、`customer` 三層。
+- 通知渠道：站內、Email、Lark、飛書、WhatsApp Business、企業微信、釘釘、SMS、Slack、Teams、Telegram、通用 webhook。
+- 預設語言：`zh-HK`。
+- 容器：現有 `gateway-internal`、`platform`、`db`、`storage`；計劃中 `gateway-partner`、`gateway-customer`、`cloudflared`、`apps-internal`、`apps-partner`、`supplier-portal`、`customer-portal`。
+
+**大陸版（`EDITION=cn`）**
+
+- 入口：只有 `internal`。session 的 `entry` 只會是 `internal`。
+- 通知渠道：站內、企業微信、飛書。後兩者都是出站、可選，由管理者逐個啟用。
+- 預設語言：`zh-CN`。
+- 容器：`gateway-internal`、`platform`、`apps`、`db`、`storage`。全部部門 app 在同一個 `apps` 容器，因為沒有對外入口，不需要按曝露程度分容器。
+- 不含：`gateway-partner`、`gateway-customer`、`cloudflared`、`apps-internal`、`apps-partner`、`supplier-portal`、`customer-portal`。
+
+兩件容易搞錯的事：
+
+- 大陸版是「profile 不啟用外部入口」，不是把功能刪掉。日後要開放，要另開決策與審查；只寫文件不算開放，改 profile 才算，沒改 profile 就等於沒開。
+- 兩版都不會因為通知整合而打開公網回調、遠端登入或外部 AI 連入。通知只帶必要摘要與內網連結；使用者不在公司網絡時連結打不開是預期行為。
+
+**現時實際做得到哪一步。** 上面只有 `gateway-internal`、`platform`、`apps`、`db`、`storage` 五個容器真的存在於 `docker-compose.yml`；標為計劃中的一律未有容器。安裝精靈（C36）與大陸版的離線安裝包、簡體語系（S2-06、S2-07）都未有。國際版現時起得來的仍然只有內網那一層，對外三層要等階段 8。
+
 ## 3. 身份、授權、組織
 
 ### 3.1 角色與授權
