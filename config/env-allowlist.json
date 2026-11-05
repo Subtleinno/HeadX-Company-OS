@@ -1,0 +1,6 @@
+[
+  {
+    "name": "WEB_PORT",
+    "reason": "gateway-internal 的舊名（#78 改名為 GATEWAY_INTERNAL_PORT）。docker-compose.yml 仍然讀它作 fallback，讓只有舊名的 .env 照樣在 4210 起來；範本刻意只寫新名，否則新使用者會兩個都設，又變成兩份真相。等舊 .env 都換掉就可以拿掉這條。"
+  }
+]

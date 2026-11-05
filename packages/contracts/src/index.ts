@@ -34,6 +34,46 @@ export const EXPOSURES: readonly ModuleExposure[] = ['internal', 'partner', 'cus
 export const ID_PATTERN = /^[a-z][a-z0-9_]*$/;
 
 /**
+ * 保留路由（issue #79）。這些路徑已經有主人，app 不可以在上面開自己的頁面：
+ *
+ *   /api      入口把 /api/* 反向代理去 API；app 用這個 route 會永遠打不開。
+ *   /auth     登入相關端點（cookie 的 scope、redirect 目標）。
+ *   /healthz  入口自己的健康檢查（nginx `location = /healthz`）。
+ *   /livez    app-host 的存活檢查。
+ *   /health   app-host 的 readiness（`{ ok, exposure, apps }`）。
+ *   /assets   前端靜態資源。
+ *   /files    檔案下載／上傳（儲存空間）。
+ *
+ * 判斷「撞」的方式：route 等於保留路徑，或位於它之下（`/api/x`）。
+ * `/apix`、`/api-docs` 只是同字首，不是同一段，不算撞 —— 純字串前綴比對會誤殺。
+ */
+export const RESERVED_ROUTES: readonly string[] = [
+  '/api',
+  '/auth',
+  '/healthz',
+  '/livez',
+  '/health',
+  '/assets',
+  '/files',
+];
+
+/**
+ * route 撞到哪一個保留路徑；沒有撞就回 null。
+ * 結尾斜線先去掉：`/api/` 與 `/api` 在入口是同一個東西。
+ */
+export function findReservedRoute(route: string): string | null {
+  const normalized = route.replace(/\/+$/, '');
+
+  for (const reserved of RESERVED_ROUTES) {
+    if (normalized === reserved || normalized.startsWith(`${reserved}/`)) {
+      return reserved;
+    }
+  }
+
+  return null;
+}
+
+/**
  * 掃描根的顯示名稱。呼叫者收的是一個目錄路徑，但錯誤訊息要講「apps」——
  * 路徑可能是 repo 的 apps/，也可能是映像內的 /app/apps，講絕對路徑對人沒有幫助。
  */
@@ -127,6 +167,13 @@ export function validateManifest(folder: string, record: Record<string, unknown>
     errors.push(`${where}：route 必須是非空字串，而且以 / 開頭`);
   } else if (!route.startsWith('/')) {
     errors.push(`${where}：route 必須以 / 開頭（現在是 ${JSON.stringify(route)}）`);
+  } else {
+    const reserved = findReservedRoute(route);
+    if (reserved !== null) {
+      errors.push(
+        `${where}：route ${route} 撞到保留路徑 ${reserved}（${RESERVED_ROUTES.join('、')} 由入口與平台佔用，app 不可以使用）`,
+      );
+    }
   }
 
   // exposure 可以省略，省略就是 internal；但填了錯的值要報，不會默默降級。

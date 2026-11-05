@@ -17,6 +17,7 @@
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "build": "npm run build --workspaces --if-present",
     "ports:check": "node scripts/ports-check.mjs",
+    "env:check": "node scripts/env-vars.mjs",
     "storage:smoke": "node scripts/storage-smoke.mjs",
     "storage:check": "node scripts/backup/cli.mjs storage-check",
     "backup:create": "node scripts/backup/cli.mjs create",

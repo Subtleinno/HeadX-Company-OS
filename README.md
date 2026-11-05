@@ -215,4 +215,23 @@ npm test                 # 單元測試（CI 跑這一個）
 npm run test:integration # 整合測試，需要 storage 在跑
 npm run lint
 npm run build
+npm run env:check        # 只跑「compose 與 .env.example 對得上」這一個檢查
 ```
+
+## CI 檢查
+
+六個獨立檢查，每次 PR 與 push 到 main 都全部跑一次（沒有 paths 過濾）。
+
+| 檢查 | 用途 |
+| --- | --- |
+| `lint` | 風格與型別規則 |
+| `test` | 單元測試（含設定閘門：端口、上傳上限、變數對照、保留路由） |
+| `build` | 每個 workspace 能否建置 |
+| `boundaries` | 資料夾之間誰可以引用誰；含「故意違反」的 fixtures，規則失效時會紅 |
+| `compose` | `docker compose config -q` 驗預設與 `apps` profile；再反向驗「不給密碼必須失敗」 |
+| `ci-ok` | 總檢查，只要求這一個 |
+
+**分支保護請只要求 `ci-ok` 一個檢查**（在 GitHub 網頁 → Settings → Branches 設定，不在 repo 內）。`ci-ok` 的 `needs` 是另外五個，`skipped` 與 `cancelled` 都算不通過；之後新增檢查時把它加進 `ci-ok` 的 `needs`，分支保護不用改。
+
+`compose` 這個 job 的密碼是 `ci-dummy-not-a-secret`（寫在 workflow 的 env 區，用完即棄），因為 `.env.example` 的密碼刻意留空。最後一步會把假值拿掉再跑一次 `docker compose config`，它必須失敗並印出「請先複製 .env.example 為 .env」—— 這一步綠代表「缺密碼就即時失敗」的保護還在。
+

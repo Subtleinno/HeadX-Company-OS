@@ -1,5 +1,8 @@
-# CI 流水線：四個獨立檢查 lint、test、build、boundaries。
+# CI 流水線：六個獨立檢查 lint、test、build、boundaries、compose、ci-ok。
 # Node 版本一律由 .nvmrc 決定，這裡不寫死版本號，避免兩處真相。
+#
+# 分支保護只需要求 ci-ok 一個檢查（設定在 GitHub 網頁，不在 repo 內）。
+# 之後新增檢查時，把它加進 ci-ok 的 needs，分支保護不用改。
 name: ci
 
 on:
@@ -89,3 +92,98 @@ jobs:
       # 不是代表程式碼有問題。
       - name: 故意違反的 fixtures 測試
         run: npx vitest run tools/boundaries
+
+  # compose 驗證（issue #79 第 3 項）：只做 `docker compose config`，不 build、不 up。
+  # 它擋的是「compose 檔語法壞了」「某個 profile 的服務寫錯」「新增的服務漏了必填變數」，
+  # 這些都不會在任何單元測試出現。
+  #
+  # .env.example 的密碼刻意留空（範本不可以放可用的密碼），所以在 job 的 env 區
+  # 提供明顯是假的值，讓 compose 的 :? 必填檢查通過。最後一步再把假值拿掉，
+  # 證明「缺密碼就即時失敗」這個保護還在。
+  compose:
+    name: compose
+    runs-on: ubuntu-latest
+    env:
+      POSTGRES_PASSWORD: ci-dummy-not-a-secret
+      MINIO_ROOT_PASSWORD: ci-dummy-not-a-secret
+      LOGIN_FAILURE_HASH_KEY: ci-dummy-not-a-secret-32-bytes
+    steps:
+      - name: 取出程式碼
+        uses: actions/checkout@v7
+      - name: 驗證預設組合的 compose 檔
+        run: docker compose --env-file .env.example config -q
+      - name: 驗證 apps profile 的 compose 檔
+        run: docker compose --env-file .env.example --profile apps config -q
+      # 反向測試：不給密碼時 docker compose 必須失敗。這一步綠代表保護還在工作，
+      # 紅代表有人把 :? 改成了預設值 —— 那才是真正要擋的改動。
+      - name: 反向測試：不給密碼時必須失敗
+        env:
+          POSTGRES_PASSWORD: ''
+        run: |
+          set +e
+          output=$(docker compose --env-file .env.example config -q 2>&1)
+          code=$?
+          set -e
+
+          printf '%s\n' "$output"
+
+          if [ "$code" -eq 0 ]; then
+            echo '::error::沒有 POSTGRES_PASSWORD 時 docker compose config 竟然成功，必填檢查已經失效'
+            exit 1
+          fi
+
+          case "$output" in
+            *'請先複製 .env.example 為 .env'*)
+              echo '反向測試通過：缺密碼時即時失敗，訊息正確'
+              ;;
+            *)
+              echo '::error::失敗了，但不是預期的訊息（請先複製 .env.example 為 .env）'
+              exit 1
+              ;;
+          esac
+
+  # 總檢查（issue #79 第 4 項）：分支保護只要求這一個。
+  # if: always() 讓它在任何一個 needs 失敗時仍然執行 —— 否則失敗時它會被跳過，
+  # 而「被跳過」在有 required check 的分支保護下等於「卡住」。
+  # skipped 與 cancelled 都算不通過：少跑一個檢查不可以被當成通過。
+  ci-ok:
+    name: ci-ok
+    runs-on: ubuntu-latest
+    needs:
+      - lint
+      - test
+      - build
+      - boundaries
+      - compose
+    if: always()
+    steps:
+      - name: 六個檢查的結果
+        shell: bash
+        env:
+          LINT: ${{ needs.lint.result }}
+          TEST: ${{ needs.test.result }}
+          BUILD: ${{ needs.build.result }}
+          BOUNDARIES: ${{ needs.boundaries.result }}
+          COMPOSE: ${{ needs.compose.result }}
+        run: |
+          failed=0
+
+          check() {
+            printf '%-12s %s\n' "$1" "$2"
+            if [ "$2" != 'success' ]; then
+              echo "::error::檢查 $1 的結果是 $2，只有 success 才算通過（skipped／cancelled 都算不通過）"
+              failed=1
+            fi
+          }
+
+          check lint "$LINT"
+          check test "$TEST"
+          check build "$BUILD"
+          check boundaries "$BOUNDARIES"
+          check compose "$COMPOSE"
+
+          if [ "$failed" -ne 0 ]; then
+            exit 1
+          fi
+
+          echo 'CI_OK：六個檢查全部成功'
