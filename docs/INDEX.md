@@ -14,6 +14,7 @@ Company OS 是 company starter：任何一間公司裝好 Docker 就能開始運
 | `AGENTS.md` | 給 AI agent 的開工規則與不變量 |
 | `docs/product/MASTER-PLAN.md` | 全盤計劃：架構、資料模型、權限、issue 清單、里程碑 |
 | `docs/product/DECISIONS.md` | 決策日誌（後者優先） |
+| `docs/planning-loop.md` | 規劃與施工的分工：PM、Project、issue 與驗收 |
 | `docs/architecture/CODE-MAP.md` | 目錄、模組、分層、邊界規則、搬遷切片 |
 | `docs/architecture/REPO-MAP.md` | 現況對照、入口、容器與端口表 |
 | `docs/architecture/APP-DESIGN-TEMPLATE.md` | 每個 app 的設計範本 |
