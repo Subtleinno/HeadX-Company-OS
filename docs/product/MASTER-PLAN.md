@@ -1,8 +1,8 @@
 # Company OS 全盤計劃
 
-狀態：草稿。本文件是計劃的 source of truth。一個真相表在 `docs/INDEX.md`，決策日誌在 `docs/product/DECISIONS.md`，目錄、模組與邊界規則在 `docs/architecture/CODE-MAP.md`，入口、容器與端口表在 `docs/architecture/REPO-MAP.md`，每個 app 的設計在 `apps/<app>/DESIGN.md`。
+狀態：草稿，2026-11-06 對齊現況（見第 13、14、15、16 節的「現況」標註）。本文件是計劃的 source of truth。一個真相表在 `docs/INDEX.md`，決策日誌在 `docs/product/DECISIONS.md`，目錄、模組與邊界規則在 `docs/architecture/CODE-MAP.md`，入口、容器與端口表在 `docs/architecture/REPO-MAP.md`，每個 app 的設計在 `apps/<app>/DESIGN.md`。
 
-版本：2026-11-04　撰寫：Company OS 開發管理者
+版本：2026-11-04（2026-11-06 加現況對照）　撰寫：Company OS 開發管理者（現由 Perplexity Space 的 PM 角色擔任，見 `docs/planning-loop.md`）
 讀者：老闆（看第 1、2、13、15 節）、ZCode（QA／QC）、WorkBuddy（實作）
 
 ## 1. 這是什麼
@@ -218,16 +218,20 @@ platform  apps-internal  apps-partner  supplier-portal  customer-portal
 | M7 | 7 Starter 化與營運 | 公司範本匯出匯入、備份排程、一鍵安裝程式、升級路徑 |
 | M8 | 8 國際版對外入口 | 三層入口、Cloudflare、外部帳戶、客戶與供應商入口 |
 
+**現況（2026-11-06）：** M0 未完成，因為 #64（跨碟備份驗收）仍是 open，等第二粒實體碟。M1 未達成：階段 1 的後端底座大部分已合併，但登入頁、我的 Apps、employees、Boss portal 外殼、Need 整條鏈與端到端驗收都還沒有 issue。M2 至 M8 未開始（S2-03 的後端部分除外）。老闆今天能看到的，仍然只有建立老闆帳戶、登入與一個誠實的空「今日」頁。
+
 ## 14. issue 清單
+
+本節是規劃藍圖，不是已建立的 issue 清單（見決策 C40，取代 C39）：issue 依 `docs/planning-loop.md` 先總綱、後單張，一次只展開一張。下面表格裡的編號是總綱編號；哪些已對應 GitHub issue，看表後的「GitHub 對照」。
 
 大小：S=1、M=2、L=4 小時（含實作、QA 驗收與一次退回的預期）。級別：A=安全、審計、權限、金錢、對外發送，完整規格加變異測試；B=產品功能，真實瀏覽器端到端加單元測試；C=文件或小修。每張 issue 的完整驗收，在建立時才寫。標題標明「大陸版專屬」或「國際版」的只屬該版，未標示的兩版共用。
 
 | ID | 標題 | 依賴 | 大小 | 級別 |
 |---|---|---|---|---|
-| P0-65 | #65 登入失敗審計去識別化（進行中） | — | M | A |
-| P0-66 | #66 scrypt N=2^17 與舊雜湊升級 | P0-65 | M | A |
-| P0-64 | #64 跨碟備份還原驗收（等第二粒實體碟） | 硬體 | M | A |
-| P0-45 | #45 ports:check 顯示佔用者 | — | S | C |
+| P0-65 | #65 登入失敗審計去識別化（已關閉） | — | M | A |
+| P0-66 | #66 scrypt N=2^17 與舊雜湊升級（已關閉） | P0-65 | M | A |
+| P0-64 | #64 跨碟備份還原驗收（等第二粒實體碟；目前唯一 open 的 issue） | 硬體 | M | A |
+| P0-45 | #45 ports:check 顯示佔用者（已關閉） | — | S | C |
 | R1 | 邊界與工具：packages/* 加入 workspaces、lint:boundaries、project references、故意違反測試；不搬任何檔案 | — | M | A |
 | R2 | apps/api 改名 apps/platform（git mv），S3 SDK 移進 platform | R1 | S | B |
 | R3 | 拆 apps/web：登入、首次開機、外殼歸 platform，「今日」歸 boss-portal；抽出 ui-kit、app-shell、design-tokens、i18n | R2 | L | B |
@@ -318,6 +322,37 @@ platform  apps-internal  apps-partner  supplier-portal  customer-portal
 | SP-02 | supplier-portal：採購單與付款進度 | SP-01, OF-02 | M | B |
 | S8-09 | 國際版外部安全審查與修補 | D-03, CP-01 | L | A |
 
+### GitHub 對照（2026-11-06，按 GitHub issue 標題核對）
+
+只列已有 GitHub issue 的項目；上表其餘項目都還沒有 issue。
+
+| 總綱編號 | GitHub | 狀態 |
+|---|---|---|
+| P0-65 | #65 | 已關閉 |
+| P0-66 | #66 | 已關閉 |
+| P0-64 | #64 | open（#61 的驗收債務；#61 已關閉） |
+| P0-45 | #45 | 已關閉（PR #111） |
+| R1 | #71 | 已關閉 |
+| R2 | #72 | 已關閉 |
+| R3 | #73 | 已關閉，但只抽出四個共用 package；拆 apps/web 的部分沒有做，也沒有 issue（見 CODE-MAP） |
+| R4 | #74 | 已關閉 |
+| R5 | #75 | 已關閉 |
+| R6 | #76 | 已關閉，只含 edition-profile 與端口一致性檢查，不改容器 |
+| （總綱沒有） | #77 | R8：app-host 骨架，由 R6 分出，已關閉 |
+| S1-02 | #78 | 已關閉 |
+| S1-03 | #79 | 已關閉 |
+| S1-04 | #80 | 已關閉 |
+| S1-05 | #81 | 已關閉 |
+| S1-06 | #82 | 已關閉 |
+| S1-07 | #83 | 已關閉 |
+| S1-08 | #84 | 已關閉（員工與 agent 身份底座，後端） |
+| S1-18 | #85 | 已關閉（比 S1-09 至 S1-17 先做） |
+| S2-03 | #86 | 已關閉（後端；比其餘階段 2 先做） |
+| （總綱沒有，底座補漏） | #87、#88、#103 | 可信 internal 入口與 session.entry、app 專用資料庫帳號、api 映像補帶 packages/policy；皆已關閉 |
+| （總綱沒有，研究與決策） | #68、#70 | HxDesign 研究觀察報告、版本範圍決策與研究紀錄；皆已關閉 |
+
+「底座補漏」是總綱原本沒有的類別：施工時發現規格缺口或映像漏帶，另開 issue 補上（見 C40）。
+
 ## 15. 時間估算與交付順序
 
 假設：一個 WorkBuddy 序列施工，每日約 6 個有效小時，另加 30% 緩衝。
@@ -353,13 +388,15 @@ platform  apps-internal  apps-partner  supplier-portal  customer-portal
 
 M1（階段 0 至 1）是第一個完整可用的 Company OS，約 15.2 個工作日；WorkBuddy 連續運行時可縮短。外部依賴縮短不了，應盡早啟動：第二粒實體碟、國際版的對外網域與 Cloudflare 帳戶、WhatsApp Business API 申請；以及較後期才用到、但審批耗時的 Lark、飛書、企業微信應用審批與真實大陸網絡的映像下載測試。
 
+**現況（2026-11-06）：** 目前在 W1 之內。已完成：階段 0 的 P0-65、P0-66、P0-45（P0-64 等硬體）；階段 1 的 R1 至 R6（R3 與 R6 只部分完成）、R8、S1-02 至 S1-08、S1-18；階段 2 的 S2-03（後端）。這些在 2026-11-04 至 11-05 合併。未開始（沒有 issue）：S1-09 至 S1-17 與 S1-19，即登入頁與「我的 Apps」、employees、Boss portal 外殼、整條 Need 鏈、「今日」、端到端驗收。上面的工時估算沒有按實際速度重新校準。
+
 ## 16. GitHub 與流程制度
 
 ### 16.1 驗收級別與完成定義
 A 級：完整規格、先寫會 fail 的測試、變異測試、QA 獨立重跑。B 級：真實瀏覽器走完整流程加單元測試。C 級：CI 通過。完成 = 分支已 push、PR 已開並指向 main、PR 描述含為什麼／改了什麼／驗證／不做什麼、CI 全綠。沒有 PR 不算完成。
 
 ### 16.2 分工
-- 開發管理者：寫 issue 全文並直接建立在 GitHub、裁定合併、維護本文件與決策日誌。
+- 開發管理者（PM）：寫 issue 全文並建立在 GitHub、裁定合併、維護本文件與決策日誌。建立或更新 GitHub 內容之前，必須先把完整全文給老闆看並由老闆確認；批准只能人按。issue 一次只展開一張（見 C40 與 `docs/planning-loop.md`）。
 - ZCode：獨立驗收、催 PR、必要時機械式 push 與開 PR，不改程式碼；對 R 系列切片另加「故意違反邊界」的變異測試。
 - WorkBuddy：實作，一次一片，只改被指派的範圍。
 - 老闆：回答業務問題、決定外部依賴、驗收畫面。
@@ -367,11 +404,11 @@ A 級：完整規格、先寫會 fail 的測試、變異測試、QA 獨立重跑
 ### 16.3 repo 設定
 - 每個 app 有自己的 `AGENTS.md`，寫明只能改自己的資料夾。
 - CI 按路徑分流：只改某個 app，只跑該 app 與它依賴的 packages；邊界 lint 全跑。
-- 標籤：`app:<名稱>`、`area:platform`、`tier:A|B|C`、`phase:0..8`、`batch:W1..W7`、`blocked:external`、`edition:intl`、`edition:cn`、`needs-refine`。
+- 標籤：`app:<名稱>`、`area:platform`、`tier:A|B|C`、`phase:0..8`、`batch:W1..W7`、`blocked:external`、`edition:intl`、`edition:cn`、`needs-refine`。planning-loop 另外規定 `cat:<範疇>` 與 `status:building`。
 - 里程碑：M0 至 M8。Project 看板欄位：階段、批次、級別、app、大小、依賴。
-- main 的分支保護：必須經 PR、CI 綠燈、禁止強制推送。
+- main 的分支保護：必須經 PR、CI 綠燈、禁止強制推送。**現況（2026-11-06）：** 經 GitHub API 查詢，main 的 `protected` 欄位為 false；這個欄位可能不反映新版 rulesets，需老闆到 GitHub 網頁 Settings 核實。在核實之前，不應假設分支保護已生效。
 - issue 範本已加入 `.github/ISSUE_TEMPLATE/task.md`；PR 範本待確認 `.github/pr-evidence` 的要求後再加。
-- 標籤、里程碑、Project、分支保護與倉庫描述，需要在 GitHub 網頁上設定（我的連接器沒有這些工具）。
+- 標籤、里程碑、Project、分支保護與倉庫描述，需要在 GitHub 網頁上設定（我的連接器沒有這些工具）。標籤、里程碑與 Project 的實際設定，這次沒有核實。
 
 ## 17. 風險
 

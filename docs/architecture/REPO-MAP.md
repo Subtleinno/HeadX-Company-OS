@@ -2,19 +2,24 @@
 
 目錄結構、模組、分層與邊界規則只在 `docs/architecture/CODE-MAP.md`；這份只放現況對照、入口與容器端口表。
 
-## 現況對照（2026-11-04）
+## 現況對照（2026-11-06）
 
-| 現在 | 之後 | 切片 |
+R1 至 R6、R8 已合併。下表是每一片在 `main` 上的實際結果，按 GitHub 的 issue 與目錄實況核對；「目標」代表尚未做到。
+
+| 切片 | issue | 實際結果 |
 |---|---|---|
-| `apps/api` | `apps/platform`（改名；`src/auth`、`src/files`、`src/storage`、`audit.ts`、`migrate.ts` 保留） | R2 |
-| `apps/web` | 登入、首次開機、外殼 → platform；「今日」→ `apps/boss-portal`；共用元件 → `packages/ui-kit`、`packages/app-shell` | R3 |
-| `apps/api/src/modules`（載入器） | `apps/platform/src/modules/registry` | R4 |
-| `modules/<dept>/manifest.json` | `apps/<app>/manifest.json` | R4 |
-| `db/migrations/000N_*.sql` | 既有檔案不搬、不改；新 schema 從 `db/migrations/<schema>/0001_*.sql` 開始 | R5 |
-| 單一 web 加單一 api 的 compose | 多容器 compose、app-host、edition-profile | R6 |
-| `scripts/` | `ops/`（backup、ports-check、storage-smoke）與 `dev/` | R6 |
+| R1 | #71 | 邊界檢查與 `lint:boundaries` 已加入，並附故意違反的測試 |
+| R2 | #72 | `apps/api` 已改名 `apps/platform` |
+| R3 | #73 | 只做了一半：抽出 `packages/design-tokens`、`ui-kit`、`app-shell`、`i18n`（issue 標題：網站外觀與行為不變）。`apps/web` 仍是完整的 Vite 前端加 nginx，登入、首次開機與外殼沒有搬進 platform，「今日」沒有搬到 `apps/boss`。這部分仍是目標，未見對應 issue |
+| R4 | #74 | manifest 已搬到 `apps/<id>/manifest.json`，載入器在 platform。`apps/boss` 目前只有 `manifest.json`；現行 id 是 `boss`，不是文件早前寫的 `boss-portal` |
+| R5 | #75 | migration 執行器已支援舊的平目錄與每 schema 編號 |
+| R6 | #76 | 已有 `packages/edition-profile` 與端口一致性檢查；issue 標題註明不改任何容器 |
+| R8 | #77 | `apps/app-host` 骨架已存在，`APP_SET` 留空時不載入任何 app。R7 沒有找到對應 issue |
+| scripts | — | `scripts/` 仍在（backup、ports-check、storage-smoke 等）；`ops/` 與 `dev/` 目錄不存在，屬目標 |
 
-在這些切片合併之前，README 描述的是現況。
+`packages/` 現況只有 `app-shell`、`contracts`、`design-tokens`、`edition-profile`、`i18n`、`policy`、`ui-kit`。`platform-kit` 與 `db-kit` 不存在，屬目標。
+
+`README.md` 描述 `main` 的現況；下面的入口與容器端口表描述目標，與現況的差別另列在「容器與端口」一節末。
 
 ## 入口與對外程度
 
@@ -65,7 +70,14 @@
 | db（Postgres） | `DB_PORT` | 25432 | 有 | 有 |
 | storage（MinIO） | `PORT_MINIO_API`、`PORT_MINIO_CONSOLE` | 29000、29001 | 有 | 有 |
 
-4431 至 4499 保留給 app 容器。與現況的關係：現在的 web（4210）成為 gateway-internal，api（4420）成為 platform，數字不變；以上是 R6 完成後的目標，現在 README 的端口表仍是現況。
+4431 至 4499 保留給 app 容器。
+
+**現況與上表的差別（2026-11-06，已核對 `docker-compose.yml` 與 `.env.example`）：**
+
+- `docker-compose.yml` 裡真的存在的只有五個服務：`db`、`storage`、`api`、`gateway-internal`、`apps`。其中 `apps` 在 `apps` profile 之下，預設 `docker compose up` 不會啟動它。表內其餘容器都是目標，尚未有容器。
+- `api` 服務由 `apps/platform/Dockerfile` 建置，服務名仍然是 `api`，不是 `platform`；`gateway-internal` 由 `apps/web/Dockerfile` 建置（nginx）。端口 4210 與 4420 不變。服務名一旦改成 `platform`，`.env.example` 的 `BACKUP_QUIESCE_CONTAINERS` 預設值（指向 compose 依專案名與服務名自動生成的 api 容器名）也要一併改，否則備份會停不到容器而失敗；`tools/rename/rename-guard.test.ts` 的允許清單也要同步調整。
+- 現況的環境變數是 `API_PORT`（預設 4420），`PLATFORM_PORT` 在 `.env.example` 與 compose 都不存在，上表的 `PLATFORM_PORT` 是目標名稱。`WEB_PORT` 是 `GATEWAY_INTERNAL_PORT` 的舊名，仍然生效。
+- `APPS_PORT` 與 `APP_SET` 在 `.env.example` 內，只屬大陸版（`apps` profile）。
 
 ## 新增一個 app
 
