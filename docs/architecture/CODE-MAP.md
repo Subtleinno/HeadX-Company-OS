@@ -36,11 +36,11 @@ company-os/
 ### 目錄現況（2026-11-06，已核對 `main`）
 
 - `apps/` 實際有：`app-host`、`boss`、`design`、`hr`、`ops_finance`、`platform`、`sales`、`support`、`web`。
-- 沒有 `apps/gateway`。README 稱 gateway-internal 由原本的 web 容器改名而來；`apps/web` 仍是完整的 Vite 前端加 nginx，沒有被拆掉。
-- `apps/boss` 只有 `manifest.json`，目錄與 id 都是 `boss`，不是 `boss-portal`。`design`、`hr`、`ops_finance`、`sales`、`support` 的內容這次未逐個打開核實；README 稱現時沒有任何真實的部門 app。
+- 沒有 `apps/gateway`。`docker-compose.yml` 的 `gateway-internal` 服務由 `apps/web/Dockerfile` 建置（已核實）；`apps/web` 仍是完整的 Vite 前端加 nginx，沒有被拆掉。
+- `apps/boss` 只有 `manifest.json`，目錄與 id 都是 `boss`，不是 `boss-portal`。`design`、`hr`、`ops_finance`、`sales`、`support` 也都只有 `manifest.json`（2026-11-06 逐個核實），現時沒有任何真實的部門 app。
 - 資料夾與 id 用底線寫法（`ops_finance`），上面目標圖與其他文件寫連字號（`ops-finance`）；README 的 manifest 表顯示 id 用底線、路由用連字號（`/ops-finance`）。
 - `apps/platform/src` 實際按功能分資料夾：`agents`、`auth`、`db-access`、`files`、`grants`、`jobs`、`modules`、`org`、`settings`、`staff`、`storage`，另有 `app.ts`、`audit.ts`、`db.ts`、`logging.ts`、`migrate.ts`、`pagination.ts`、`server.ts`、`worker.ts`。這與上面目標圖的 `src/modules/<name>/index.ts` 一律放進 `modules/` 的寫法不同；`modules/` 內現時放載入器（見下）。
-- 根目錄實際有 `apps`、`config`、`db`、`docker`、`docs`、`packages`、`profiles`、`scripts`、`tools`。`scripts/` 仍在，`ops/` 與 `dev/` 不存在；`e2e/` 這次未核實。
+- 根目錄實際有 `apps`、`config`、`db`、`docker`、`docs`、`packages`、`profiles`、`scripts`、`tools`。`scripts/` 仍在，`ops/`、`dev/`、`e2e/` 都不存在（已核實）。
 
 manifest 欄位：`id`、`title`、`kind`、`department`、`order`、`available`，加上 `route`、`exposure`、`sensitive`。端口不寫在 manifest，由 edition-profile 與 REPO-MAP 的容器端口表決定。R4 已完成：載入器在 `apps/platform/src/modules/registry/index.ts`，九個欄位全部納入驗證，未知欄位仍然拒絕。
 
@@ -107,7 +107,7 @@ manifest 欄位：`id`、`title`、`kind`、`department`、`order`、`available`
 | customer-portal | 無 | 有 | customer-portal |
 | Postgres、MinIO | 有 | 有 | — |
 
-上表是目標。現況只有 gateway-internal、platform、apps（`apps` profile，預設不啟動，`APP_SET` 留空）、Postgres、MinIO 五個容器，見 REPO-MAP。
+上表是目標。現況只有 `db`、`storage`、`api`、`gateway-internal`、`apps` 五個 compose 服務（`apps` 在 `apps` profile 之下，預設不啟動，`APP_SET` 留空；`api` 服務由 `apps/platform` 建置，服務名仍是 `api`），見 REPO-MAP。
 
 ## 搬遷切片
 
@@ -120,7 +120,7 @@ manifest 欄位：`id`、`title`、`kind`、`department`、`order`、`available`
 | R3 | 拆 `apps/web`：登入、首次開機、外殼歸 platform，「今日」歸 boss-portal；抽出 ui-kit、app-shell、design-tokens、i18n | 中 | 部分完成（#73）：只抽出四個 package，`apps/web` 沒有拆，「今日」仍在 web。拆 web 的部分尚無 issue |
 | R4 | `modules/<dept>/manifest.json` 移成 `apps/<app>/manifest.json`，載入器移到 platform 的 registry，放寬欄位並加測試 | 中 | 已合併（#74） |
 | R5 | migration 執行器同時支援舊的平目錄與新的每 schema 編號（先做小實驗，確認既有三個 migration 不受影響） | 中，最需要先驗證 | 已合併（#75） |
-| R6 | app-host、compose 多服務骨架、edition-profile（大陸版與國際版）、按容器的端口表與 `ports:check` 對照 | 中 | 部分完成：edition-profile 與端口對照在 #76（不改任何容器）；app-host 骨架在 #77（R8）；compose 仍是五個容器，沒有擴展成多服務 |
+| R6 | app-host、compose 多服務骨架、edition-profile（大陸版與國際版）、按容器的端口表與 `ports:check` 對照 | 中 | 部分完成：edition-profile 與端口對照在 #76（不改任何容器）；app-host 骨架在 #77（R8）；compose 仍是五個服務，沒有擴展成多服務 |
 | R8 | app-host 骨架（原計劃沒有這一片，由 R6 分出） | — | 已合併（#77） |
 
 原計劃沒有 R7，GitHub 上也找不到 R7 的 issue。
