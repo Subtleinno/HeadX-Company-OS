@@ -12,7 +12,7 @@
 - 香港與大陸各裝一份，是兩間獨立公司，帳戶分開。主機是公司自己的電腦。
 - 安裝時選版本：國際版有完整的對外入口（夥伴、客戶、Cloudflare）；大陸版第一階段只做內網，通知以站內為主，選配企業微信與飛書。安裝將由 UI 精靈協助。
 
-## 現在到哪裡（2026-11-05）
+## 現在到哪裡（2026-11-06）
 
 已完成的是底座，不是一間已經自動運作的公司。
 
@@ -24,7 +24,7 @@
 
 還沒有：Need、MCP、發件箱、真正的部門 app、可用的 Boss portal 工作台、LAN、安裝精靈、ERPNext。app 自動化設計在分支 `docs/app-automation-design`，尚未合併，不是施工規格。
 
-**注意：** 下面的開發與運行說明描述的是 `main` 的現況。R1 至 R6 的搬遷已經合併；不要再把系統理解成整理前那個單一的 api 應用。
+**注意：** 下面的開發與運行說明描述的是 `main` 的現況。R1 至 R6 的搬遷施工已經合併；這不代表原搬遷設計範圍已全部落地，現況以 CODE-MAP 與 REPO-MAP 為準。不要再把系統理解成整理前那個單一的 api 應用。
 
 ## 文件入口
 
@@ -32,7 +32,7 @@
 | --- | --- |
 | `docs/INDEX.md` | 唯一入口與一個真相表 |
 | `AGENTS.md` | 給 AI agent 的開工規則與不變量 |
-| `docs/product/MASTER-PLAN.md` | 全盤計劃（source of truth）：架構、資料模型、93 張 issue 清單（含國際版）、里程碑 |
+| `docs/product/MASTER-PLAN.md` | 全盤計劃（source of truth）：架構、資料模型、規劃項目清單（含國際版；清單不等於已建立 issue）、里程碑 |
 | `docs/product/DECISIONS.md` | 決策日誌 |
 | `docs/product/apps/00-DESIGN-PLAN.md`（分支 `docs/app-automation-design`） | 未合併的 app 自動化設計。不是施工規格 |
 | `docs/architecture/CODE-MAP.md` | 目錄、模組、分層、邊界規則、搬遷切片 |
@@ -57,7 +57,7 @@ npm run ports:check
 docker compose up -d --build
 ```
 
-**首次啟動前必須在 `.env` 內的 `POSTGRES_PASSWORD`、`MINIO_ROOT_PASSWORD` 與 `LOGIN_FAILURE_HASH_KEY` 填入自己的值** —— 範本刻意留空，沒有可用的預設值；留空時 `docker compose` 會即時失敗，不會起一個弱密碼的服務。
+**首次啟動前必須在 `.env` 內的 `POSTGRES_PASSWORD`、`MINIO_ROOT_PASSWORD`、`LOGIN_FAILURE_HASH_KEY`、`INTERNAL_GATEWAY_TOKEN` 與 `COMPANY_OS_BACKUP_ROOT` 填入自己的值** —— 範本刻意留空，沒有可用的預設值；留空時 `docker compose` 會即時失敗，不會起一個弱密碼的服務。
 
 前端：<http://localhost:4210>；API：<http://localhost:4420/livez>。所有端口現在只綁 `127.0.0.1`，區網內其他機器連不到；讓同事連線的 LAN 設定屬於 S2-02，尚未完成。
 
