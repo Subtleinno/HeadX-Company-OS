@@ -14,6 +14,8 @@ Company OS 是 company starter：任何一間公司裝好 Docker 就能開始運
 | `AGENTS.md` | 給 AI agent 的開工規則與不變量 |
 | `docs/product/MASTER-PLAN.md` | 全盤計劃：架構、資料模型、權限、issue 清單、里程碑 |
 | `docs/product/DECISIONS.md` | 決策日誌（後者優先） |
+| `docs/product/BASE-UI-DESIGN.md` | Base 共用外殼與管理介面方向；不是完整施工規格 |
+| `docs/product/WORKSPACE-APP-SCOPE-DESIGN.md` | 公司、品牌 Workspace、三模式 app 及選擇器候選互動；產品定義與待核對方案分開 |
 | `docs/planning-loop.md` | 規劃與施工的分工：PM、Project、issue 與驗收 |
 | `docs/architecture/CODE-MAP.md` | 目錄、模組、分層、邊界規則、搬遷切片 |
 | `docs/architecture/REPO-MAP.md` | 現況對照、入口、容器與端口表 |
@@ -22,6 +24,20 @@ Company OS 是 company starter：任何一間公司裝好 Docker 就能開始運
 | `docs/backup-restore.md` | 備份與還原 |
 | `docs/app-db-access.md` | app 的資料庫帳號、權限矩陣、PUBLIC 收斂與配置次序 |
 | `docs/trusted-entry.md` | 可信 internal 入口、入口憑證、`session.entry` 與升級影響 |
+
+## Base／Workspace 的閱讀與施工閘門
+
+先讀 AGENTS.md、本入口、被指派的 issue，再讀 issue 指定的設計、相關 app 的 AGENTS.md／DESIGN.md 及實際接口與測試。延續 AGENTS.md 的必讀要求，不以本段省略任何必讀文件。
+
+涉及 Workspace 時，先讀 WORKSPACE-APP-SCOPE-DESIGN.md 的核心語意，再讀 BASE-UI-DESIGN.md 的共用外殼。品牌 Workspace 一個對應一個品牌；公司範圍不是公司 Workspace，也不是所有品牌集合。三模式定義工作入口與切換，不自動決定資料歸屬或授權。
+
+Workspace 專題澄清 Base 第七節「全公司／全部品牌」的早期含糊建議；不改變本入口所列 org_unit／org_unit_edge、app_grant、policy 等既有唯一來源。與總綱、決策、實際契約存在衝突時先列差異，在 issue 提問並停止相關實作，不自行選一套或另造模型。
+
+設計文件內的候選矩陣、待核對內容與未決事項不是施工授權。只按依賴已合併、範圍明確的被指派 issue 施工；文件只存在於未合併分支不等於依賴已完成。不因有 app／範圍選擇器便提前開發任何部門業務。
+
+施工 issue 必須提供可追溯的規格章節、依賴及合併條件、允許修改範圍、已核實接口與錯誤／狀態規則、驗收指令及證據要求、不做事項。缺少會影響本切片的決策時先澄清，不讓 agent 猜 API、角色、資料歸屬或預設品牌。未成熟想法先留設計文件，不當作已可施工需求。
+
+驗收須覆蓋正常、取消、失敗及負面案例；跨品牌切換另外核對目標一致、慢回應、未保存、深連結及權限失效。具體命令、測試與預期結果由各 issue 依實際 repo 指定；未執行就明示。文件提交、原型通過、程式測試及產品完成是不同狀態，不互相代替。
 
 ## 一個真相，一個方向
 
