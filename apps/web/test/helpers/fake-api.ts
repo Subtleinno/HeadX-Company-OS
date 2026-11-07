@@ -24,7 +24,24 @@ export type FakeResponse = {
 export type Handler = (request: RecordedRequest) => FakeResponse | Promise<FakeResponse>;
 
 export type FakeHandlers = Partial<
-  Record<'state' | 'setup' | 'login' | 'logout' | 'settings' | 'settingSave', Handler>
+  Record<
+    | 'state'
+    | 'setup'
+    | 'login'
+    | 'logout'
+    | 'settings'
+    | 'settingSave'
+    | 'orgUnits'
+    | 'orgUnitCreate'
+    | 'orgUnitPatch'
+    | 'orgUnitDelete'
+    | 'orgParentAdd'
+    | 'orgParentRemove'
+    | 'unitSettings'
+    | 'unitSettingSave'
+    | 'unitSettingRemove',
+    Handler
+  >
 >;
 
 export function jsonResponse(
@@ -84,6 +101,39 @@ function routeKey(path: string, method: string): keyof FakeHandlers | null {
 
   if (path.endsWith('/auth/logout')) {
     return 'logout';
+  }
+
+  // 組織（issue 120）。次序有意義：先配對更具體的路徑。
+  if (/\/org-units\/[^/]+\/settings\/[^/]+$/.test(path)) {
+    if (method === 'PUT') {
+      return 'unitSettingSave';
+    }
+
+    return method === 'DELETE' ? 'unitSettingRemove' : null;
+  }
+
+  if (/\/org-units\/[^/]+\/settings$/.test(path)) {
+    return method === 'GET' ? 'unitSettings' : null;
+  }
+
+  if (/\/org-units\/[^/]+\/parents\/[^/]+$/.test(path)) {
+    return method === 'DELETE' ? 'orgParentRemove' : null;
+  }
+
+  if (/\/org-units\/[^/]+\/parents$/.test(path)) {
+    return method === 'POST' ? 'orgParentAdd' : null;
+  }
+
+  if (/\/org-units\/[^/]+$/.test(path)) {
+    if (method === 'PATCH') {
+      return 'orgUnitPatch';
+    }
+
+    return method === 'DELETE' ? 'orgUnitDelete' : null;
+  }
+
+  if (path.endsWith('/org-units')) {
+    return method === 'GET' ? 'orgUnits' : method === 'POST' ? 'orgUnitCreate' : null;
   }
 
   // 逐 key 保存：`/api/settings/<key>`，只有 PUT。

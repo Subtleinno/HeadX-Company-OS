@@ -24,9 +24,14 @@ describe('字串表', () => {
     const withPlaceholders = Object.entries(messages).filter(([, value]) => /\{[a-zA-Z0-9_]+\}/.test(value));
 
     // 清單是「哪幾個字串有插值」的盤點；新增插值字串要同時更新這裡，
-    // 並在呼叫端把它填滿（管理區的未儲存數由 CompanySettingsScreen 測試釘住）。
+    // 並在呼叫端把它填滿：
+    //   admin.unsaved.dirtyCount → company-settings.test.tsx 斷言「未儲存：1 項」
+    //   org.parentCount          → organisation.test.tsx 斷言「2 個上級」
+    //   org.settings.sourceUnit  → organisation.test.tsx 斷言「來自「…」」
     expect(withPlaceholders.map(([key]) => key)).toEqual([
       'admin.unsaved.dirtyCount',
+      'org.parentCount',
+      'org.settings.sourceUnit',
       'login.tooManyAttempts',
     ]);
   });

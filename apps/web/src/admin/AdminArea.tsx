@@ -3,6 +3,7 @@ import { BaseShell, nextTheme, type ShellTheme, type PrototypeApp, type ShellNav
 import { t, type MessageKey } from '@company-os/i18n';
 import { submitLogout } from '../api';
 import { CompanySettingsScreen } from './CompanySettingsScreen';
+import { OrganisationScreen } from './OrganisationScreen';
 
 /**
  * Boss portal 管理區（issue 119 起）。
@@ -25,9 +26,10 @@ import { CompanySettingsScreen } from './CompanySettingsScreen';
 
 const PAGES: readonly { key: AdminPageKey; labelKey: MessageKey }[] = [
   { key: 'settings', labelKey: 'admin.page.settings' },
+  { key: 'organisation', labelKey: 'admin.page.organisation' },
 ];
 
-type AdminPageKey = 'settings';
+type AdminPageKey = 'settings' | 'organisation';
 
 const DEFAULT_PAGE: AdminPageKey = 'settings';
 
@@ -187,6 +189,7 @@ export function AdminArea({ user, onSignedOut }: AdminAreaProps) {
         }}
       >
         {page === 'settings' && <CompanySettingsScreen onDirtyCountChange={setDirtyCount} />}
+        {page === 'organisation' && <OrganisationScreen onDirtyCountChange={setDirtyCount} />}
         {signOutError !== null && (
           <p className="admin-notice admin-notice--failed" role="alert">
             {signOutError}

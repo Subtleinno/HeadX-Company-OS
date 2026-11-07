@@ -3,6 +3,7 @@ import { editionProfile, isEditionCode, type NotificationChannel } from '@compan
 import { t, type MessageKey } from '@company-os/i18n';
 import { Selector } from '@company-os/ui-kit';
 import { fetchSettings, saveSetting, type ApiFailure, type SettingView } from '../api';
+import { SETTING_CHOICES, settingValueLabel } from './setting-labels';
 
 /**
  * 公司設定頁（issue 119，Boss portal 管理區）。
@@ -56,10 +57,7 @@ const FIELDS: readonly FieldSpec[] = [
     labelKey: 'admin.field.edition',
     purposeKey: 'admin.purpose.edition',
     impactKey: 'admin.impact.edition',
-    choices: [
-      { value: 'intl', labelKey: 'admin.choice.edition.intl' },
-      { value: 'cn', labelKey: 'admin.choice.edition.cn' },
-    ],
+    choices: SETTING_CHOICES['edition'],
   },
   {
     key: 'install_code',
@@ -76,10 +74,7 @@ const FIELDS: readonly FieldSpec[] = [
     labelKey: 'admin.field.company_locale',
     purposeKey: 'admin.purpose.company_locale',
     impactKey: 'admin.impact.overridable',
-    choices: [
-      { value: 'zh-HK', labelKey: 'admin.choice.locale.zhHK' },
-      { value: 'zh-CN', labelKey: 'admin.choice.locale.zhCN' },
-    ],
+    choices: SETTING_CHOICES['company_locale'],
   },
   {
     key: 'acceptance_rule',
@@ -88,11 +83,7 @@ const FIELDS: readonly FieldSpec[] = [
     labelKey: 'admin.field.acceptance_rule',
     purposeKey: 'admin.purpose.acceptance_rule',
     impactKey: 'admin.impact.overridable',
-    choices: [
-      { value: 'owner', labelKey: 'admin.choice.acceptance.owner' },
-      { value: 'dept_head', labelKey: 'admin.choice.acceptance.deptHead' },
-      { value: 'on_submit', labelKey: 'admin.choice.acceptance.onSubmit' },
-    ],
+    choices: SETTING_CHOICES['acceptance_rule'],
   },
   {
     key: 'department_isolation',
@@ -150,24 +141,9 @@ function parseNumberInput(raw: string): unknown {
   return Number.isFinite(parsed) ? parsed : raw;
 }
 
-function describeValue(value: unknown): string {
-  if (value === null || value === undefined || value === '') {
-    return t('admin.value.off');
-  }
-
-  if (typeof value === 'boolean') {
-    return value ? t('admin.value.yes') : t('admin.value.no');
-  }
-
-  if (Array.isArray(value)) {
-    return value.length === 0 ? t('admin.value.off') : value.map(String).join('、');
-  }
-
-  if (typeof value === 'object') {
-    return JSON.stringify(value);
-  }
-
-  return String(value);
+/** 值怎樣講成人話由 setting-labels 決定，兩個畫面共用同一份。 */
+function describeValue(key: string, value: unknown): string {
+  return settingValueLabel(key, value);
 }
 
 function reasonsOf(failure: ApiFailure): string[] {
@@ -318,7 +294,7 @@ export function CompanySettingsScreen({ onDirtyCountChange }: CompanySettingsScr
           <h1 className="page__title">{t('admin.settings.title')}</h1>
         </div>
         <p className="admin-notice" role="alert">
-          {load.status === 401 ? t('admin.settings.signIn') : t('admin.settings.denied')}
+          {load.status === 401 ? t('admin.sessionExpired') : t('admin.settings.denied')}
         </p>
       </div>
     );
@@ -366,7 +342,7 @@ export function CompanySettingsScreen({ onDirtyCountChange }: CompanySettingsScr
 
       return (
         <div className="admin-row__readonly">
-          <span className="admin-row__value">{label === undefined ? describeValue(value) : t(label)}</span>
+          <span className="admin-row__value">{label === undefined ? describeValue(field.key, value) : t(label)}</span>
           <span className="admin-row__reason">{t('admin.immutable')}</span>
         </div>
       );
@@ -581,7 +557,7 @@ export function CompanySettingsScreen({ onDirtyCountChange }: CompanySettingsScr
                 </div>
                 <div className="admin-row__control">
                   <span className="admin-row__value">
-                    {t('admin.settings.currentValue')}：{describeValue(saved[key])}
+                    {t('admin.settings.currentValue')}：{describeValue(key, saved[key])}
                   </span>
                 </div>
                 <div className="admin-row__actions">
