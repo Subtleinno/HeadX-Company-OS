@@ -272,3 +272,98 @@ describe('我的 Apps：範圍與界線', () => {
     expect(card('sales').textContent).not.toContain('允許（憑授權）');
   });
 });
+
+/**
+ * issue #140 第 4 項：後端由 #141 起，未改初始密碼時 `GET /modules` 回
+ * 403 `{ error: 'password_change_required' }`（真實 body 見 `denyIfPasswordChangePending`）。
+ *
+ * 呢個 403 唔係「沒有權限」，所以唔可以再用 `myapps.denied` 轉述。
+ * 但亦唔可以將所有 403 都當成要改密碼 —— 判斷要認 `error` 代碼，唔認 status 一個數字，
+ * 亦唔認 message 入面有冇出現過相關字眼。
+ */
+describe('我的 Apps：403 password_change_required 要如實講（issue 140 第 4 項）', () => {
+  const GATE = () => jsonResponse(403, { error: 'password_change_required' });
+
+  function passwordNotice(): HTMLElement {
+    return document.querySelector('[data-myapps-state="password-change-required"]') as HTMLElement;
+  }
+
+  it('如實講要先改密碼、提供去 /account 嘅入口，唔再講「你沒有權限」', async () => {
+    openHome({
+      modules: GATE,
+      // 按下去要真係去到帳戶頁；/me 係那一頁唯一的資料來源。
+      me: () => jsonResponse(200, { user: { ...WAI, mustChangePassword: true } }),
+    });
+
+    await waitFor(() => {
+      expect(passwordNotice()).not.toBeNull();
+    });
+
+    const notice = passwordNotice();
+
+    expect(notice.textContent).toContain('你要先改密碼');
+    expect(notice.textContent).not.toContain('你沒有查看 app 清單的權限');
+
+    const link = notice.querySelector('[data-myapps-account-link]') as HTMLAnchorElement | null;
+
+    expect(link).not.toBeNull();
+    expect(link?.getAttribute('href')).toBe('#/account');
+    expect(link?.textContent).toContain('個人帳戶');
+
+    const user = userEvent.setup();
+    await user.click(link as HTMLAnchorElement);
+
+    await waitFor(() => {
+      expect(window.location.hash).toBe('#/account');
+    });
+    await waitFor(() => {
+      expect(document.querySelector('[data-account-name]')?.textContent).toBe('林慧');
+    });
+  });
+
+  it('其他 403（forbidden）維持「沒有權限」，唔會誤顯示需改密碼或 /account 入口', async () => {
+    openHome({ modules: () => jsonResponse(403, { error: 'forbidden' }) });
+
+    await waitFor(() => {
+      expect(document.body.textContent).toContain('你沒有查看 app 清單的權限');
+    });
+
+    expect(passwordNotice()).toBeNull();
+    expect(document.querySelector('[data-myapps-account-link]')).toBeNull();
+    expect(document.body.textContent).not.toContain('你要先改密碼');
+  });
+
+  it('只認 error 代碼：message 提到 password_change_required 都唔可以誤判', async () => {
+    openHome({
+      modules: () => jsonResponse(403, { error: 'forbidden', message: 'password_change_required' }),
+    });
+
+    await waitFor(() => {
+      expect(document.body.textContent).toContain('你沒有查看 app 清單的權限');
+    });
+
+    expect(passwordNotice()).toBeNull();
+    expect(document.querySelector('[data-myapps-account-link]')).toBeNull();
+  });
+
+  it('401 仍然係登入失效，唔會變成要改密碼', async () => {
+    openHome({ modules: () => jsonResponse(401, { error: 'not_signed_in' }) });
+
+    await waitFor(() => {
+      expect(document.body.textContent).toContain('登入已經失效');
+    });
+
+    expect(passwordNotice()).toBeNull();
+    expect(document.querySelector('[data-myapps-account-link]')).toBeNull();
+  });
+
+  it('合法成功案例：200 照舊列出 app，唔會出現需改密碼嘅提示或入口', async () => {
+    openHome();
+
+    await waitForCard('design');
+
+    expect(passwordNotice()).toBeNull();
+    expect(document.querySelector('[data-myapps-account-link]')).toBeNull();
+    expect(document.body.textContent).not.toContain('你要先改密碼');
+  });
+});

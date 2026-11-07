@@ -698,6 +698,19 @@
   font: var(--hx-font-footnote);
 }
 
+/* 403 password_change_required 的去路（issue 140 第 4 項）。 */
+.myapps__link {
+  display: inline-block;
+  margin-top: var(--hx-space-2);
+  color: var(--hx-text-primary);
+  text-underline-offset: 3px;
+}
+
+.myapps__link:focus-visible {
+  outline: 2px solid var(--hx-accent);
+  outline-offset: 2px;
+}
+
 .myapps__list {
   margin: var(--hx-space-4) 0 0;
   padding: 0;

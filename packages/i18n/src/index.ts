@@ -47,6 +47,10 @@ export const messages = {
   'myapps.failed': '讀不到 app 清單。',
   'myapps.denied': '你沒有查看 app 清單的權限。',
   'myapps.sessionExpired': '登入已經失效，請重新登入。',
+  // 403 password_change_required（issue 140 第 4 項）：不是權限不足，是未改初始密碼。
+  // 與 myapps.denied 分開，兩句不可以互換。
+  'myapps.passwordChange': '你要先改密碼，才可以查看 app 清單。這不是權限不足，改好密碼後再回來看。',
+  'myapps.passwordChange.link': '去個人帳戶改密碼',
   'myapps.empty': '現在沒有任何 app 可以顯示。',
   'myapps.kind.console': '管理台',
   'myapps.kind.department': '部門',

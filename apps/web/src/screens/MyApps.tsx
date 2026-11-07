@@ -21,17 +21,20 @@ import {
  * 3. **查不到就講查不到**：存取判斷本身失敗時，不當成「不允許」（會誤導），
  *    也不當成「允許」（會危險），而是明講查不到與原因。
  *
- * 另外兩件如實講的事：
+ * 另外三件如實講的事：
  *   - `available: false` 的 app 仍然列出（它是後端給的），但標明「未啟用」，
  *     而且**不可以入**。六個 manifest 現在全部未啟用，所以一個都入不到。
  *   - 真正跳轉未接駁：後端刻意不公開 manifest 的 `route`，app-host 亦未接線，
  *     所以「進入」是停用的，並寫明原因 —— 不做一個假裝會跳的鍵。
+ *   - 403 `password_change_required` 不是「沒有權限」，是未改初始密碼（issue 140 第 4 項）。
+ *     這種 403 要如實轉述並給出去 `/account` 的路；其他 403 維持原本的拒絕語意。
  */
 
 type LoadState =
   | { kind: 'loading' }
   | { kind: 'ready'; modules: PublicModule[] }
   | { kind: 'denied'; status: number }
+  | { kind: 'passwordChange' }
   | { kind: 'failed'; reasons: string[] };
 
 type AccessState =
@@ -74,6 +77,20 @@ function detailOf(failure: ApiFailure): string {
   }
 
   return failure.error ?? `HTTP ${failure.status}`;
+}
+
+/**
+ * 只認「403 + error 代碼」這個組合（issue 140 第 4 項）。
+ *
+ * 後端 `denyIfPasswordChangePending` 的真實 body 只有
+ * `{ error: 'password_change_required' }`，所以判斷的唯一依據是 `error`。
+ * 不可以只憑 403 就當成要改密碼（`forbidden`、`entry_*` 等 403 各有原因），
+ * 亦不可以用 `message`／`reasons` 入面的字眼猜 —— 那會把其他拒絕講成改密碼。
+ */
+function isPasswordChangeRequired(failure: ApiFailure): boolean {
+  return (
+    failure.kind === 'http' && failure.status === 403 && failure.error === 'password_change_required'
+  );
 }
 
 function kindLabel(kind: string): string {
@@ -125,6 +142,12 @@ export function MyApps() {
     }
 
     if (!result.ok) {
+      if (isPasswordChangeRequired(result.failure)) {
+        setList({ kind: 'passwordChange' });
+
+        return;
+      }
+
       if (result.failure.kind === 'http' && (result.failure.status === 401 || result.failure.status === 403)) {
         setList({ kind: 'denied', status: result.failure.status });
 
@@ -165,6 +188,15 @@ export function MyApps() {
         <p className="myapps__status" role="status" data-myapps-state="loading">
           {t('myapps.loading')}
         </p>
+      )}
+
+      {list.kind === 'passwordChange' && (
+        <div className="myapps__notice" role="alert" data-myapps-state="password-change-required">
+          <p>{t('myapps.passwordChange')}</p>
+          <a className="myapps__link" href="#/account" data-myapps-account-link>
+            {t('myapps.passwordChange.link')}
+          </a>
+        </div>
       )}
 
       {list.kind === 'denied' && (
