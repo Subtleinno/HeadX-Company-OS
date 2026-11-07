@@ -308,7 +308,7 @@ export function OrganisationScreen({ onDirtyCountChange }: OrganisationScreenPro
                 setReloadKey((key) => key + 1);
               }}
             >
-              {t('org.retry')}
+              {t('admin.retry')}
             </button>
           )}
         </div>
@@ -953,7 +953,7 @@ function OverridesEditor({
             ))}
           {load.kind === 'failed' && (
             <button type="button" className="button button--text admin-notice__action" onClick={onRetry}>
-              {t('org.retry')}
+              {t('admin.retry')}
             </button>
           )}
         </div>

@@ -484,3 +484,93 @@
     position: static;
   }
 }
+
+/* ── 員工與 agent（issue 121） ────────────────────────────────────────── */
+
+.admin-tabs {
+  display: flex;
+  gap: var(--hx-space-1);
+  margin-top: var(--hx-space-5);
+  border-bottom: 0.5px solid var(--hx-hairline);
+}
+
+.admin-tab {
+  padding: var(--hx-space-2) var(--hx-space-3);
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: none;
+  color: var(--hx-text-secondary);
+  font: var(--hx-font-subheadline);
+  cursor: pointer;
+}
+
+.admin-tab[aria-selected='true'] {
+  color: var(--hx-text-primary);
+  border-bottom-color: var(--hx-accent);
+}
+
+.admin-tab:focus-visible {
+  outline: 2px solid var(--hx-accent);
+  outline-offset: 2px;
+  border-radius: var(--hx-radius-sm);
+}
+
+.admin-group__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--hx-space-2);
+}
+
+.admin-group__actions {
+  display: flex;
+  align-items: baseline;
+  gap: var(--hx-space-3);
+}
+
+.admin-pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--hx-space-3);
+  margin-top: var(--hx-space-4);
+}
+
+/* 表單：一欄到底，標籤在上。管理區的表單都很短，不需要多欄排版。 */
+.admin-form {
+  max-width: 46ch;
+  margin-top: var(--hx-space-4);
+  padding: var(--hx-space-4);
+  border: 0.5px solid var(--hx-border-light);
+  border-radius: var(--hx-radius-md);
+  background: var(--hx-bg-secondary);
+}
+
+.admin-field {
+  display: block;
+  margin-top: var(--hx-space-3);
+  border: 0;
+  padding: 0;
+}
+
+.admin-field__label {
+  display: block;
+  margin-bottom: var(--hx-space-1);
+  color: var(--hx-text-secondary);
+  font: var(--hx-font-footnote);
+}
+
+.admin-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--hx-space-3);
+  margin-top: var(--hx-space-4);
+}
+
+@media (max-width: 900px) {
+  .admin-row--staff {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

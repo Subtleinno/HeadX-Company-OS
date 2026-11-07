@@ -320,7 +320,7 @@ export function CompanySettingsScreen({ onDirtyCountChange }: CompanySettingsScr
               setReloadKey((key) => key + 1);
             }}
           >
-            {t('admin.settings.retry')}
+            {t('admin.retry')}
           </button>
         </div>
       </div>

@@ -28,10 +28,17 @@ describe('字串表', () => {
     //   admin.unsaved.dirtyCount → company-settings.test.tsx 斷言「未儲存：1 項」
     //   org.parentCount          → organisation.test.tsx 斷言「2 個上級」
     //   org.settings.sourceUnit  → organisation.test.tsx 斷言「來自「…」」
+    //   staff.* / agent.*        → staff-agents.test.tsx 斷言實際數字與原因
     expect(withPlaceholders.map(([key]) => key)).toEqual([
       'admin.unsaved.dirtyCount',
       'org.parentCount',
       'org.settings.sourceUnit',
+      'staff.total',
+      'staff.state.disabledAt',
+      'staff.pager.info',
+      'agent.total',
+      'agent.grants.scopeNote',
+      'agent.access.denied',
       'login.tooManyAttempts',
     ]);
   });

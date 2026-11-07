@@ -39,7 +39,19 @@ export type FakeHandlers = Partial<
     | 'orgParentRemove'
     | 'unitSettings'
     | 'unitSettingSave'
-    | 'unitSettingRemove',
+    | 'unitSettingRemove'
+    | 'modules'
+    | 'staff'
+    | 'staffCreate'
+    | 'staffDisable'
+    | 'staffReset'
+    | 'agents'
+    | 'agentCreate'
+    | 'agentDisable'
+    | 'agentGrants'
+    | 'agentGrantCreate'
+    | 'agentGrantRevoke'
+    | 'agentAccess',
     Handler
   >
 >;
@@ -134,6 +146,47 @@ function routeKey(path: string, method: string): keyof FakeHandlers | null {
 
   if (path.endsWith('/org-units')) {
     return method === 'GET' ? 'orgUnits' : method === 'POST' ? 'orgUnitCreate' : null;
+  }
+
+  // ── 員工與 agent（issue 121）。次序同樣有意義：更具體的路徑先配對。
+  // 這幾條會有 `?limit=&offset=`，所以比對之前先切掉查詢字串；
+  // 否則 `endsWith('/staff')` 永遠配不上，測試會以「沒有預期的請求」爆掉。
+  const bare = path.split('?')[0] ?? path;
+
+  if (/\/agents\/[^/]+\/grants\/[^/]+\/revoke$/.test(bare)) {
+    return method === 'POST' ? 'agentGrantRevoke' : null;
+  }
+
+  if (/\/agents\/[^/]+\/grants$/.test(bare)) {
+    return method === 'GET' ? 'agentGrants' : method === 'POST' ? 'agentGrantCreate' : null;
+  }
+
+  if (/\/agents\/[^/]+\/access\/[^/]+$/.test(bare)) {
+    return method === 'GET' ? 'agentAccess' : null;
+  }
+
+  if (/\/agents\/[^/]+\/disable$/.test(bare)) {
+    return method === 'POST' ? 'agentDisable' : null;
+  }
+
+  if (bare.endsWith('/agents')) {
+    return method === 'GET' ? 'agents' : method === 'POST' ? 'agentCreate' : null;
+  }
+
+  if (/\/staff\/[^/]+\/reset-password$/.test(bare)) {
+    return method === 'POST' ? 'staffReset' : null;
+  }
+
+  if (/\/staff\/[^/]+\/disable$/.test(bare)) {
+    return method === 'POST' ? 'staffDisable' : null;
+  }
+
+  if (bare.endsWith('/staff')) {
+    return method === 'GET' ? 'staff' : method === 'POST' ? 'staffCreate' : null;
+  }
+
+  if (bare.endsWith('/modules')) {
+    return method === 'GET' ? 'modules' : null;
   }
 
   // 逐 key 保存：`/api/settings/<key>`，只有 PUT。

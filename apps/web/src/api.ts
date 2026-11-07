@@ -282,3 +282,179 @@ export function removeUnitSetting(id: string, key: string): Promise<ApiResult<nu
     { method: 'DELETE' },
   );
 }
+
+/* ── app 清單（員工與 agent 頁要用 appId 的可選值） ─────────────────── */
+
+/**
+ * `GET /modules` 是 appId 的唯一來源：授權路由用同一個 registry 驗證 appId，
+ * 前端另寫一份清單就一定有一天對不上。
+ */
+export type PublicModule = {
+  id: string;
+  title: string;
+  /** 與 `@company-os/contracts` 的 `ModuleKind` 一致：console 或 department。 */
+  kind: 'console' | 'department';
+  department: string | null;
+  order: number;
+  /** false ＝ 未接駁。授權可以建，但存取檢查會拒絕，畫面要照實講。 */
+  available: boolean;
+};
+
+export function fetchModules(): Promise<ApiResult<{ modules: PublicModule[] }>> {
+  return request<{ modules: PublicModule[] }>('/api/modules');
+}
+
+/* ── 員工（issue 121） ────────────────────────────────────────────── */
+
+export type StaffMember = {
+  id: string;
+  email: string;
+  displayName: string;
+  role: string;
+  mustChangePassword: boolean;
+  disabledAt: string | null;
+  createdAt: string;
+};
+
+export type StaffPage = { staff: StaffMember[]; total: number };
+
+export type PageInput = { limit?: number; offset?: number };
+
+function pageQuery(input: PageInput): string {
+  const parts: string[] = [];
+
+  if (input.limit !== undefined) {
+    parts.push(`limit=${String(input.limit)}`);
+  }
+
+  if (input.offset !== undefined) {
+    parts.push(`offset=${String(input.offset)}`);
+  }
+
+  return parts.length === 0 ? '' : `?${parts.join('&')}`;
+}
+
+export function fetchStaff(input: PageInput = {}): Promise<ApiResult<StaffPage>> {
+  return request<StaffPage>(`/api/staff${pageQuery(input)}`);
+}
+
+export function createStaff(input: {
+  displayName: string;
+  email: string;
+  initialPassword: string;
+}): Promise<ApiResult<{ staff: StaffMember }>> {
+  return request<{ staff: StaffMember }>('/api/staff', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+}
+
+export function disableStaff(id: string): Promise<ApiResult<{ staff: StaffMember }>> {
+  return request<{ staff: StaffMember }>(`/api/staff/${encodeURIComponent(id)}/disable`, {
+    method: 'POST',
+  });
+}
+
+/**
+ * 重設員工密碼。**一定要帶老闆自己的密碼**：後端真的驗，前端沒有任何旗標可以代替。
+ * 這兩個字串只留在呼叫端那一次請求裡，不寫入任何全域狀態或紀錄。
+ */
+export function resetStaffPassword(
+  id: string,
+  input: { ownerPassword: string; newTemporaryPassword: string },
+): Promise<ApiResult<{ staff: StaffMember }>> {
+  return request<{ staff: StaffMember }>(`/api/staff/${encodeURIComponent(id)}/reset-password`, {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+}
+
+/* ── agent 身份與授權（issue 121） ───────────────────────────────── */
+
+/** 授權範圍。`all` 要明寫；空集合不是「全部」，後端會拒絕。 */
+export type UnitScope = { kind: 'all' } | { kind: 'units' | 'subtree'; unitIds: string[] };
+
+export type AgentIdentity = {
+  id: string;
+  name: string;
+  createdAt: string;
+  disabledAt: string | null;
+};
+
+export type AgentPage = { agents: AgentIdentity[]; total: number };
+
+export type GrantView = {
+  id: string;
+  userId: string | null;
+  agentId: string | null;
+  appId: string;
+  role: string;
+  scope: UnitScope;
+  state: string;
+  version: number;
+  requestedBy: string | null;
+  approvedBy: string | null;
+  requestedAt: string;
+  approvedAt: string | null;
+  activatedAt: string | null;
+  revokedAt: string | null;
+  rejectionReason: string | null;
+  replacesId: string | null;
+};
+
+export type GrantPage = { grants: GrantView[]; total: number };
+
+export function fetchAgents(input: PageInput = {}): Promise<ApiResult<AgentPage>> {
+  return request<AgentPage>(`/api/agents${pageQuery(input)}`);
+}
+
+export function createAgent(input: { name: string }): Promise<ApiResult<{ agent: AgentIdentity }>> {
+  return request<{ agent: AgentIdentity }>('/api/agents', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+}
+
+export function disableAgent(id: string): Promise<ApiResult<{ agent: AgentIdentity }>> {
+  return request<{ agent: AgentIdentity }>(`/api/agents/${encodeURIComponent(id)}/disable`, {
+    method: 'POST',
+  });
+}
+
+export function fetchAgentGrants(id: string, input: PageInput = {}): Promise<ApiResult<GrantPage>> {
+  return request<GrantPage>(`/api/agents/${encodeURIComponent(id)}/grants${pageQuery(input)}`);
+}
+
+/** agent 的授權角色固定是 member —— 後端會拒絕 app_admin，這裡不提供選項。 */
+export function createAgentGrant(
+  id: string,
+  input: { appId: string; role: 'member'; scope: UnitScope },
+): Promise<ApiResult<{ grant: GrantView }>> {
+  return request<{ grant: GrantView }>(`/api/agents/${encodeURIComponent(id)}/grants`, {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+}
+
+/** 撤銷要帶查詢拿到的那個 `version`；版本不對回 409，不自動重送。 */
+export function revokeAgentGrant(
+  id: string,
+  grantId: string,
+  input: { version: number; reason?: string },
+): Promise<ApiResult<{ grant: GrantView }>> {
+  return request<{ grant: GrantView }>(
+    `/api/agents/${encodeURIComponent(id)}/grants/${encodeURIComponent(grantId)}/revoke`,
+    { method: 'POST', body: JSON.stringify(input) },
+  );
+}
+
+/** `via` 只有兩種：憑身份（owner）或憑授權（grant）。`reason` 是拒絕原因代碼。 */
+export type AccessDecision =
+  | { allowed: true; via: 'owner' | 'grant' }
+  | { allowed: false; reason: string };
+
+export function checkAgentAccess(id: string, appId: string): Promise<ApiResult<AccessDecision>> {
+  return request<AccessDecision>(
+    `/api/agents/${encodeURIComponent(id)}/access/${encodeURIComponent(appId)}`,
+  );
+}
