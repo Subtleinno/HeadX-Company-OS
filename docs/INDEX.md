@@ -20,6 +20,7 @@ Company OS 是 company starter：任何一間公司裝好 Docker 就能開始運
 | `docs/product/WORKSPACE-APP-SCOPE-DESIGN.md` | 公司／品牌語意、三模式候選互動與接入契約；第十一節列前置規劃交付與依賴分工 |
 | `docs/product/BASE-UI-HXDESIGN-ALIGNMENT.md` | Base UI 對照 HxDesign（`eb079b6`）的逐項實測表：來源檔、尺寸、差距、做法、刻意不照搬、未對齊項 |
 | `docs/planning-loop.md` | 規劃與施工的分工、Depends-on、範疇與並行保護 |
+| `docs/testing/DEMO-PUBLIC-TESTING.md` | Demo Public Stack：UI／UX 測試、Demo 帳戶與 Cloudflare Tunnel 的隔離規則 |
 | `docs/architecture/CODE-MAP.md` | 目錄、模組、分層、邊界規則、搬遷切片 |
 | `docs/architecture/REPO-MAP.md` | 現況對照、入口、容器與端口表 |
 | `docs/architecture/APP-DESIGN-TEMPLATE.md` | 每個 app 的設計範本 |
