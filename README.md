@@ -88,11 +88,11 @@ npm run deploy:revision
 ```text
 現行 commit：879f140acf8a1343759aaa4527b0abaa073feb9d
 
-容器                              服務              標記 commit   結果
-<專案>-api-1                      api               3f6b961778a3  落後
-<專案>-gateway-internal-1         gateway-internal  33ecf281f160  落後
-<專案>-apps-1                     apps              —             未知（沒有標記）
-<專案>-db-1                       db                —             不適用（不是由本 repo 建置）
+容器                          服務              標記 commit   結果
+<專案>-api-1                  api               3f6b961778a3  落後
+<專案>-gateway-internal-1     gateway-internal  33ecf281f160  落後
+<專案>-apps-1                 apps              —             未知（沒有標記）
+<專案>-db-1                   db                —             不適用（不是由本 repo 建置）
 
 相符 0、落後 2、未知 1、不適用 1
 重建並重啟：npm run deploy:build && docker compose up -d

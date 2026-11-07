@@ -6,6 +6,7 @@ import {
   REPO_BUILT_SERVICES,
   compareRevision,
   exitCodeFor,
+  normaliseLabel,
   parseRevision,
   renderReport,
   verdictOf,
@@ -51,6 +52,18 @@ describe('parseRevision', () => {
 
     expect(parsed.kind).toBe('unknown');
     expect(parsed).toMatchObject({ reason: '標記不是 commit SHA：v1.2.3' });
+  });
+});
+
+describe('normaliseLabel', () => {
+  it('沒有 label 的兩種寫法都統一成 null（報表才顯示得對）', () => {
+    for (const raw of [undefined, null, '', '   ', '<no value>']) {
+      expect(normaliseLabel(raw)).toBeNull();
+    }
+  });
+
+  it('真的有值就原樣保留，不會順手改成小寫或截短', () => {
+    expect(normaliseLabel(' 9AAD8B2A68DEF ')).toBe('9AAD8B2A68DEF');
   });
 });
 
@@ -152,6 +165,24 @@ describe('renderReport', () => {
 
   it('讀不到現行 commit 時，表頭要如實講，不是印一個空白', () => {
     expect(renderReport([], null)).toContain('讀不到現行 commit');
+  });
+
+  it('長容器名不會把後面的欄擠歪（兩個資料行的第二欄由同一格開始）', () => {
+    const longName = 'company-os-accept-gateway-internal-1';
+    const text = renderReport(
+      [
+        { container: longName, service: 'gateway-internal', label: SHA, verdict: { kind: 'match' } },
+        { container: 'demo-api-1', service: 'api', label: SHA, verdict: { kind: 'match' } },
+      ],
+      SHA,
+    );
+
+    const lines = text.split('\n');
+    const longRow = lines.find((line) => line.startsWith(longName))!;
+    const shortRow = lines.find((line) => line.startsWith('demo-api-1'))!;
+
+    // 兩行的標記 commit 是同一個字串；它落在同一格，代表前面的欄已經對齊。
+    expect(longRow.indexOf(SHA)).toBe(shortRow.indexOf(SHA));
   });
 });
 

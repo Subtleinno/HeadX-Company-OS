@@ -70,6 +70,23 @@ export function parseRevision(raw) {
 }
 
 /**
+ * 把 docker inspect 讀到的 label 正規化。
+ *
+ * 沒有 label 時，docker inspect 可能印 `<no value>`，也可能印空字串 —— 兩種都是
+ * 「沒有標記」。統一成 `null`，報表才會顯示 `—` 而不是一片空白（空白看起來像
+ * 讀取失敗，而不是「這個映像沒有標記」）。
+ */
+export function normaliseLabel(raw) {
+  if (raw === undefined || raw === null) {
+    return null;
+  }
+
+  const value = String(raw).trim();
+
+  return value === '' || value === '<no value>' ? null : value;
+}
+
+/**
  * 比對「映像標記」與「本機現行 commit」。
  *
  * 短 SHA 與完整 SHA 的前綴相同就算相符：有人可能只注入 7 位。
@@ -132,6 +149,42 @@ function verdictText(verdict) {
   return `不適用（${verdict.reason}）`;
 }
 
+/**
+ * 顯示寬度：CJK 字每個佔兩格，其餘一格。
+ *
+ * 用 `padEnd()` 直接對字數補位，中英夾雜的表格會歪 —— 而歪掉的表格最容易
+ * 令人看錯行，例如把上一行的 commit 看成下一個容器的。
+ */
+export function textWidth(text) {
+  let width = 0;
+
+  for (const char of String(text)) {
+    const code = char.codePointAt(0) ?? 0;
+    const wide =
+      (code >= 0x1100 && code <= 0x115f) ||
+      (code >= 0x2e80 && code <= 0xa4cf) ||
+      (code >= 0xac00 && code <= 0xd7a3) ||
+      (code >= 0xf900 && code <= 0xfaff) ||
+      (code >= 0xfe30 && code <= 0xfe6f) ||
+      (code >= 0xff00 && code <= 0xff60) ||
+      (code >= 0xffe0 && code <= 0xffe6);
+    width += wide ? 2 : 1;
+  }
+
+  return width;
+}
+
+/** 補到指定顯示寬度；寧願多補空格，不要少補（少補就會撞在一起）。 */
+function pad(text, width) {
+  const value = String(text);
+  const missing = width - textWidth(value);
+
+  return missing > 0 ? value + ' '.repeat(missing) : value;
+}
+
+/** 欄與欄之間至少留兩格，令長容器名與 40 位 SHA 都不會黏住下一個欄。 */
+const COLUMN_GAP = 2;
+
 /** 人看的報表。每一行都寫出實際讀到的 label，不摘要成一句「大致正常」。 */
 export function renderReport(rows, currentSha) {
   const lines = [];
@@ -147,16 +200,29 @@ export function renderReport(rows, currentSha) {
     return lines.join('\n');
   }
 
-  lines.push('');
-  lines.push(
-    `${'容器'.padEnd(34)}${'服務'.padEnd(18)}${'標記 commit'.padEnd(14)}結果`,
+  const table = rows.map((row) => [
+    row.container,
+    row.service,
+    row.label === undefined || row.label === null ? '—' : String(row.label),
+    verdictText(row.verdict),
+  ]);
+
+  const header = ['容器', '服務', '標記 commit', '結果'];
+  const widths = header.map((title, column) =>
+    Math.max(textWidth(title), ...table.map((cells) => textWidth(cells[column]))),
   );
 
-  for (const row of rows) {
-    const label = row.label === undefined || row.label === null ? '—' : String(row.label);
-    lines.push(
-      `${row.container.padEnd(34)}${row.service.padEnd(18)}${label.padEnd(14)}${verdictText(row.verdict)}`,
-    );
+  const renderRow = (cells) =>
+    cells
+      .map((cell, column) => (column === cells.length - 1 ? cell : pad(cell, widths[column] + COLUMN_GAP)))
+      .join('')
+      .trimEnd();
+
+  lines.push('');
+  lines.push(renderRow(header));
+
+  for (const cells of table) {
+    lines.push(renderRow(cells));
   }
 
   const count = (kind) => rows.filter((row) => row.verdict.kind === kind).length;
@@ -280,11 +346,12 @@ export async function main() {
   for (const name of names) {
     try {
       const { label, service } = await inspectContainer(name);
+      const normalised = normaliseLabel(label);
       rows.push({
         container: name,
         service,
-        label: label === '<no value>' ? null : label,
-        verdict: verdictOf({ currentSha, service, label }),
+        label: normalised,
+        verdict: verdictOf({ currentSha, service, label: normalised }),
       });
     } catch (error) {
       rows.push({
