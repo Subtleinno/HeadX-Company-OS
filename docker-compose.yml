@@ -46,6 +46,10 @@ services:
     build:
       context: .
       dockerfile: apps/platform/Dockerfile
+      args:
+        # 建置時的 commit（issue #143）。由 `npm run deploy:build` 注入；
+        # 沒有注入時 label 寫 unknown —— 不會假造一個看起來合理的 SHA。
+        GIT_REVISION: ${GIT_REVISION:-}
     restart: unless-stopped
     environment:
       PORT: "4420"
@@ -86,6 +90,9 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
+      args:
+        # 同 api：建置時的 commit（issue #143）。
+        GIT_REVISION: ${GIT_REVISION:-}
     restart: unless-stopped
     environment:
       # 入口憑證（issue #87）。nginx 模板用 envsubst 把它寫進 proxy_set_header；
@@ -104,6 +111,10 @@ services:
     build:
       context: .
       dockerfile: apps/app-host/Dockerfile
+      args:
+        # 同 api：建置時的 commit（issue #143）。apps 在 profile 之下，
+        # 平時不會被順手重建，所以它的 revision 最容易落後 —— 見 README。
+        GIT_REVISION: ${GIT_REVISION:-}
     restart: unless-stopped
     profiles: ["apps"]
     environment:

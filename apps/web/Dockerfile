@@ -23,6 +23,12 @@ FROM nginx:alpine
 # nginx.conf 是模板：映像啟動時由官方 entrypoint 用 envsubst 換掉 ${API_UPSTREAM}，
 # 結果寫到 /etc/nginx/conf.d/default.conf。要指向另一組 api 時只改環境變數。
 ENV API_UPSTREAM=api:4420
+
+# 建置時的 commit（issue #143）。值由 compose 的 build args 傳入，通常來自
+# `npm run deploy:build`；沒有傳入時是 unknown。寧願講未知，也不要寫一個
+# 看起來合理的假 SHA —— 一個假的 revision 比沒有 revision 更難查。
+ARG GIT_REVISION=unknown
+LABEL org.opencontainers.image.revision=$GIT_REVISION
 COPY apps/web/nginx.conf /etc/nginx/templates/default.conf.template
 
 # 啟動守門（issue #87）：憑證未設定或格式不對就不啟動。
