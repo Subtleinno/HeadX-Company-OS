@@ -10,6 +10,7 @@ import {
 import { t } from '@company-os/i18n';
 import { fetchAuthState, type PublicUser } from './api';
 import { navigate, useRoute } from './router';
+import { AdminArea } from './admin/AdminArea';
 import { HomeScreen } from './screens/HomeScreen';
 import { LoginScreen } from './screens/LoginScreen';
 import { SetupScreen } from './screens/SetupScreen';
@@ -62,7 +63,7 @@ export function App() {
       return;
     }
 
-    if (screen === 'home' && route === '/app') {
+    if (screen === 'home' && (route === '/app' || route === '/admin')) {
       return;
     }
 
@@ -104,6 +105,11 @@ export function App() {
     // `/app/*` 是原型外殼（issue 118 切片 C）。它標明是原型資料，不是正式 registry 的 app。
     if (route === '/app') {
       return <WorkspacePrototype />;
+    }
+
+    // `/admin/*` 是管理區（issue 119 起）。真資料、真 API，沒有原型標示。
+    if (route === '/admin') {
+      return <AdminArea user={effective.auth.user} onSignedOut={signedOut} />;
     }
 
     return <HomeScreen user={effective.auth.user} onSignedOut={signedOut} />;

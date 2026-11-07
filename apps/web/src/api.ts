@@ -26,6 +26,8 @@ export type ApiFailure =
       error: string | null;
       field: string | null;
       retryAfterSeconds: number | null;
+      /** 422 的逐條原因。設定頁要原樣講出伺服器拒絕的理由，不要自己改寫。 */
+      reasons: string[];
     };
 
 export type ApiResult<T> = { ok: true; data: T } | { ok: false; failure: ApiFailure };
@@ -80,6 +82,9 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<ApiResu
 
   if (!response.ok) {
     const record = asRecord(body);
+    const reasons = Array.isArray(record.reasons)
+      ? record.reasons.filter((item): item is string => typeof item === 'string')
+      : [];
 
     return {
       ok: false,
@@ -89,6 +94,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<ApiResu
         error: typeof record.error === 'string' ? record.error : null,
         field: typeof record.field === 'string' ? record.field : null,
         retryAfterSeconds: parseRetryAfter(response.headers.get('retry-after')),
+        reasons,
       },
     };
   }
@@ -129,5 +135,31 @@ export function submitLogout(): Promise<ApiResult<null>> {
   return request<null>('/api/auth/logout', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
+  });
+}
+
+/** 公司設定的其中一項。值是由 schema 驗證過的 JSON，前端不自己解讀成另一個事實。 */
+export type SettingView = {
+  key: string;
+  value: unknown;
+  updatedAt: string;
+  updatedBy: string | null;
+};
+
+export function fetchSettings(): Promise<ApiResult<{ settings: SettingView[] }>> {
+  return request<{ settings: SettingView[] }>('/api/settings');
+}
+
+/**
+ * 逐 key 保存（issue 119）。API 沒有整頁批次入口，所以前端也不假裝有：
+ * 一次只送一個 key，畫面按實際回應逐項標示成功或失敗。
+ */
+export function saveSetting(
+  key: string,
+  value: unknown,
+): Promise<ApiResult<{ setting: SettingView }>> {
+  return request<{ setting: SettingView }>(`/api/settings/${encodeURIComponent(key)}`, {
+    method: 'PUT',
+    body: JSON.stringify({ value }),
   });
 }

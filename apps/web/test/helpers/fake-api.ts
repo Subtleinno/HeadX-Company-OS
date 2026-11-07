@@ -23,7 +23,9 @@ export type FakeResponse = {
 
 export type Handler = (request: RecordedRequest) => FakeResponse | Promise<FakeResponse>;
 
-export type FakeHandlers = Partial<Record<'state' | 'setup' | 'login' | 'logout', Handler>>;
+export type FakeHandlers = Partial<
+  Record<'state' | 'setup' | 'login' | 'logout' | 'settings' | 'settingSave', Handler>
+>;
 
 export function jsonResponse(
   status: number,
@@ -67,7 +69,7 @@ function readHeader(headers: unknown, name: string): string | null {
   return null;
 }
 
-function routeKey(path: string): keyof FakeHandlers | null {
+function routeKey(path: string, method: string): keyof FakeHandlers | null {
   if (path.endsWith('/auth/state')) {
     return 'state';
   }
@@ -82,6 +84,15 @@ function routeKey(path: string): keyof FakeHandlers | null {
 
   if (path.endsWith('/auth/logout')) {
     return 'logout';
+  }
+
+  // 逐 key 保存：`/api/settings/<key>`，只有 PUT。
+  if (/\/settings\/[^/]+$/.test(path)) {
+    return method === 'PUT' ? 'settingSave' : null;
+  }
+
+  if (path.endsWith('/settings')) {
+    return method === 'GET' ? 'settings' : null;
   }
 
   return null;
@@ -117,7 +128,7 @@ export function installFakeApi(handlers: FakeHandlers): FakeApi {
 
       calls.push(recorded);
 
-      const key = routeKey(path);
+      const key = routeKey(path, method);
       if (key === null) {
         throw new Error(`測試沒有預期的請求：${method} ${path}`);
       }
@@ -133,7 +144,7 @@ export function installFakeApi(handlers: FakeHandlers): FakeApi {
 
   return {
     calls,
-    count: (key) => calls.filter((call) => routeKey(call.path) === key).length,
+    count: (key) => calls.filter((call) => routeKey(call.path, call.method) === key).length,
   };
 }
 

@@ -23,7 +23,12 @@ describe('字串表', () => {
   it('所有插值都用得到：每個 {name} 都在呼叫端有對應變數', () => {
     const withPlaceholders = Object.entries(messages).filter(([, value]) => /\{[a-zA-Z0-9_]+\}/.test(value));
 
-    expect(withPlaceholders.map(([key]) => key)).toEqual(['login.tooManyAttempts']);
+    // 清單是「哪幾個字串有插值」的盤點；新增插值字串要同時更新這裡，
+    // 並在呼叫端把它填滿（管理區的未儲存數由 CompanySettingsScreen 測試釘住）。
+    expect(withPlaceholders.map(([key]) => key)).toEqual([
+      'admin.unsaved.dirtyCount',
+      'login.tooManyAttempts',
+    ]);
   });
 });
 

@@ -58,6 +58,18 @@ export function HomeScreen({ user, onSignedOut }: HomeScreenProps) {
           </a>
           <span className="home__proto-note">{t('home.protoNote')}</span>
         </p>
+        {/*
+          管理區入口（issue 119）。只有老闆會見到：員工見到一條按下去會被 403 的連結
+          等於騙人。真正把首頁換成新外殼屬 B-02，這裡只放路徑。
+        */}
+        {user.role === 'owner' && (
+          <p className="home__proto">
+            <a className="home__admin-link" href="#/admin/settings">
+              {t('home.adminEntry')}
+            </a>
+            <span className="home__proto-note">{t('home.adminNote')}</span>
+          </p>
+        )}
         {error !== null && (
           <p className="home__error" aria-live="polite">
             {error}

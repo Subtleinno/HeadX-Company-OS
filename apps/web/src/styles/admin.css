@@ -1,0 +1,286 @@
+/**
+ * 管理區樣式（issue 119）。
+ *
+ * 只用 `var(--hx-*)`：色碼、間距、字級與圓角都來自 design-tokens，
+ * 與外殼同一套。這裡不重新發明一套「管理頁專用」的視覺語言 ——
+ * 管理頁是同一個產品的其中一頁，不是另一個產品。
+ */
+
+.admin-status {
+  margin: var(--hx-space-4) 0 0;
+  color: var(--hx-text-secondary);
+  font: var(--hx-font-subheadline);
+}
+
+.admin-notice {
+  max-width: 62ch;
+  margin: var(--hx-space-4) 0 0;
+  padding: var(--hx-space-3) var(--hx-space-4);
+  border: 0.5px solid var(--hx-border-light);
+  border-radius: var(--hx-radius-md);
+  background: var(--hx-bg-secondary);
+  font: var(--hx-font-subheadline);
+}
+
+.admin-notice--failed {
+  border-left: 2px solid var(--hx-danger);
+}
+
+.admin-notice__text {
+  margin: 0;
+  font-weight: 600;
+}
+
+.admin-notice__reason {
+  margin: var(--hx-space-1) 0 0;
+  color: var(--hx-text-secondary);
+  font: var(--hx-font-footnote);
+  overflow-wrap: anywhere;
+}
+
+.admin-notice__action {
+  margin-top: var(--hx-space-2);
+}
+
+.admin-dirty {
+  margin: var(--hx-space-4) 0 0;
+  color: var(--hx-text-secondary);
+  font: var(--hx-font-footnote);
+}
+
+/* ── 分組 ─────────────────────────────────────────────────────────────── */
+
+.admin-group {
+  margin-top: var(--hx-space-6);
+}
+
+.admin-group__title {
+  margin: 0 0 var(--hx-space-2);
+  color: var(--hx-text-secondary);
+  font: var(--hx-font-eyebrow);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.admin-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 0.5px solid var(--hx-hairline);
+}
+
+/* ── 一列 = 一個設定項 ─────────────────────────────────────────────────── */
+
+.admin-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 220px 170px;
+  gap: var(--hx-space-4);
+  align-items: start;
+  padding: var(--hx-space-4) 0;
+  border-bottom: 0.5px solid var(--hx-hairline);
+}
+
+.admin-row__text {
+  min-width: 0;
+}
+
+.admin-row__label {
+  margin: 0;
+  font: var(--hx-font-headline);
+}
+
+.admin-row__purpose {
+  margin: 2px 0 0;
+  color: var(--hx-text-secondary);
+  font: var(--hx-font-footnote);
+  overflow-wrap: anywhere;
+}
+
+.admin-row__impact {
+  margin: 2px 0 0;
+  color: var(--hx-text-tertiary, var(--hx-text-secondary));
+  font: var(--hx-font-caption);
+  overflow-wrap: anywhere;
+}
+
+.admin-row__control {
+  min-width: 0;
+  padding-top: 2px;
+}
+
+.admin-row__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--hx-space-1);
+  min-width: 0;
+}
+
+.admin-row__readonly {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.admin-row__value {
+  font: var(--hx-font-body);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.admin-row__reason {
+  margin: 0;
+  color: var(--hx-text-secondary);
+  font: var(--hx-font-caption);
+  overflow-wrap: anywhere;
+}
+
+.admin-row__muted {
+  color: var(--hx-text-secondary);
+  font: var(--hx-font-caption);
+}
+
+.admin-row__state {
+  color: var(--hx-text-secondary);
+  font: var(--hx-font-caption);
+  min-height: 16px;
+}
+
+.admin-row__failure {
+  width: 100%;
+}
+
+.admin-save {
+  min-height: var(--hx-size-control);
+  padding: 0 var(--hx-space-3);
+  font: var(--hx-font-subheadline);
+}
+
+.admin-number {
+  width: 100%;
+  min-height: var(--hx-size-control);
+  font: var(--hx-font-subheadline);
+}
+
+.admin-check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+  min-height: var(--hx-size-touch);
+  font: var(--hx-font-subheadline);
+  cursor: pointer;
+}
+
+.admin-check input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--hx-accent);
+  cursor: pointer;
+}
+
+.admin-channels {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hx-space-1);
+}
+
+.admin-channels__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--hx-space-3);
+}
+
+.admin-channels__code {
+  font: var(--hx-font-mono);
+  font-size: 13px;
+}
+
+/* ── 未儲存就離開的確認 ───────────────────────────────────────────────── */
+
+.admin-scrim {
+  position: fixed;
+  z-index: 400;
+  inset: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: calc(var(--hx-size-toolbar) + var(--hx-space-8)) var(--hx-space-4);
+  background: var(--hx-scrim);
+}
+
+.admin-dialog {
+  width: 340px;
+  max-width: 100%;
+  padding: var(--hx-space-2);
+  background: var(--hx-bg-primary);
+  border: 0.5px solid var(--hx-border-light);
+  border-radius: var(--hx-radius-md);
+  box-shadow: var(--hx-shadow-lg);
+}
+
+.admin-dialog:focus-visible {
+  outline: 2px solid var(--hx-accent);
+  outline-offset: 2px;
+}
+
+.admin-dialog__title {
+  margin: 0;
+  padding: var(--hx-space-1) 10px 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.admin-dialog__body {
+  margin: 0;
+  padding: var(--hx-space-1) 10px 0;
+  color: var(--hx-text-secondary);
+  font-size: 13px;
+  line-height: 19px;
+}
+
+.admin-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--hx-space-2);
+  margin-top: var(--hx-space-3);
+}
+
+/* 對話框只有兩個鍵，任何一個換行都會令人以為文字壞了。 */
+.admin-dialog__actions .button {
+  white-space: nowrap;
+}
+
+/* ── 首頁的管理區入口 ─────────────────────────────────────────────────── */
+
+.home__admin-link {
+  color: var(--hx-text-primary);
+  text-underline-offset: 3px;
+}
+
+.home__admin-link:focus-visible {
+  outline: 2px solid var(--hx-accent);
+  outline-offset: 2px;
+}
+
+/* ── 窄螢幕：一列變三層 ───────────────────────────────────────────────── */
+
+@media (max-width: 900px) {
+  .admin-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--hx-space-2);
+  }
+
+  .admin-row__actions {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--hx-space-2);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-scrim,
+  .admin-dialog {
+    transition: none;
+  }
+}
