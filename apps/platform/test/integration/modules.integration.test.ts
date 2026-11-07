@@ -55,12 +55,9 @@ describe('GET /modules', () => {
       loginHashKey: 'test-only-login-hash-key-0123456789abcdef',
       resolveEntry: () => 'internal',
     });
-    registerModules(app, {
-      registry: loadModules(appsDir),
-      pool: db.pool,
-      // 這一張測的是模組列表，不是入口：明確假定 internal（#87 的守衛另有專屬測試）。
-      resolveEntry: () => 'internal',
-    });
+    // 身份（入口與 session）由 registerAuth 的 requireUser 統一處理；
+    // 這一張測的是模組列表，入口明確假定 internal（#87 的守衛另有專屬測試）。
+    registerModules(app, { registry: loadModules(appsDir) });
 
     await app.ready();
   });

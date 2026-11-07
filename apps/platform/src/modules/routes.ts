@@ -1,8 +1,4 @@
-import type { FastifyInstance, FastifyRequest } from 'fastify';
-import type { TrustedEntry } from '@company-os/contracts';
-import type { Pool } from 'pg';
-import { getSignedInUser } from '../auth/current-user.js';
-import { entryOfRequest } from '../auth/trusted-entry.js';
+import type { FastifyInstance } from 'fastify';
 import type { ModuleKind, ModuleManifest, ModuleRegistry } from './registry/index.js';
 
 /**
@@ -14,6 +10,10 @@ import type { ModuleKind, ModuleManifest, ModuleRegistry } from './registry/inde
  * R4 之後 manifest 多了 route、exposure、sensitive，但這一支的回應刻意不變：
  * 對外欄位在這裡逐個列出才輸出（白名單，不是黑名單），所以將來 manifest 再加
  * 欄位也不會靜靜漏出去。route 與 exposure 怎樣影響授權，是之後 S1-07 的工作。
+ *
+ * 身份一律經 requireUser（issue 140）：入口驗證、session 查詢同
+ * 「未改初始密碼一律 403」都只有這一個來源。呢支路由以前自己查 session，
+ * 所以漏咗嗰道閘門；唔好再喺路由入面抄第二份判斷。
  */
 
 /** 對外公開的六個欄位。manifest 其他欄位一律不出現在回應裡。 */
@@ -40,28 +40,16 @@ export function toPublicModule(module: ModuleManifest): PublicModule {
 
 export type ModuleDeps = {
   registry: ModuleRegistry;
-  pool: Pool;
-  now?: () => Date;
-  /**
-   * 這次請求由哪個入口進來（issue #87）。預設讀入口守衛放進請求的值。
-   * 測試可以注入固定值；正式接線不傳。
-   */
-  resolveEntry?: (request: FastifyRequest) => TrustedEntry | null;
 };
 
 export function registerModules(app: FastifyInstance, deps: ModuleDeps): void {
-  const now = deps.now ?? ((): Date => new Date());
-  const resolveEntry =
-    deps.resolveEntry ?? ((request: FastifyRequest): TrustedEntry | null => entryOfRequest(request));
+  app.get('/modules', { preHandler: app.requireUser }, async (request) => {
+    const user = request.currentUser;
 
-  app.get('/modules', async (request, reply) => {
-    // 入口（issue #87）只可以由守衛放進請求的那一個值取：session 記住了
-    // 它是經由哪個入口發出的，入口不同就當成沒有登入。
-    const entry = resolveEntry(request);
-    const user = entry === null ? null : await getSignedInUser(deps.pool, request, now(), entry);
-
+    // requireUser 未登入時已經回 401 not_signed_in，唔會行到呢度。
+    // 保留呢個檢查係為咗 TypeScript 收窄，同埋萬一漏咗接線要即刻睇得見。
     if (user === null) {
-      return reply.code(401).send({ error: 'not_signed_in' });
+      throw new Error('GET /modules 缺少 requireUser：request.currentUser 是空的');
     }
 
     if (user.role === 'owner') {

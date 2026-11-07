@@ -256,7 +256,7 @@ async function main(): Promise<void> {
     resolveEntry: (request) => entryOfRequest(request as FastifyRequest),
   });
 
-  registerModules(app, { registry, pool });
+  registerModules(app, { registry });
 
   // 公司設定與政策規則：全部要老闆，寫入留審計。
   registerSettings(app, { pool });
