@@ -3,6 +3,7 @@ import { AppShell, EmptyState, ShellContent } from '@company-os/app-shell';
 import { t } from '@company-os/i18n';
 import { submitLogout, type PublicUser } from '../api';
 import { PROTOTYPE_ENTRY_HASH } from '../prototype/fixtures';
+import { MyApps } from './MyApps';
 
 type HomeScreenProps = {
   user: PublicUser;
@@ -47,6 +48,11 @@ export function HomeScreen({ user, onSignedOut }: HomeScreenProps) {
       <ShellContent>
         <h1 className="home__title">{t('home.title')}</h1>
         <EmptyState>{t('home.empty')}</EmptyState>
+        {/*
+          「我的 Apps」（issue 123）。清單與可用性都來自後端：manifest 是唯一來源，
+          可不可以入去由 /app-grants/access/:appId 講。這裡不抄 app 清單，也不自己算授權。
+        */}
+        <MyApps />
         {/*
           前端入口。新外殼（issue 118）現階段只存在於 `#/app/...`，首頁仍然是舊骨架，
           不給一條路就等於「交付了但到不了」。這裡只放一條連結，

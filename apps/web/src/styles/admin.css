@@ -665,3 +665,86 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* 我的 Apps（issue 123）。 */
+.myapps {
+  margin-top: var(--hx-space-6);
+}
+
+.myapps__title {
+  margin: 0;
+  font: var(--hx-font-title);
+}
+
+.myapps__lead,
+.myapps__note {
+  margin: var(--hx-space-1) 0 0;
+  color: var(--hx-text-secondary);
+  font: var(--hx-font-footnote);
+}
+
+.myapps__status {
+  margin: var(--hx-space-3) 0 0;
+  color: var(--hx-text-secondary);
+  font: var(--hx-font-subheadline);
+}
+
+.myapps__notice {
+  margin: var(--hx-space-3) 0 0;
+  padding: var(--hx-space-3);
+  border: 0.5px solid var(--hx-danger);
+  border-radius: var(--hx-radius-md);
+  color: var(--hx-danger-text);
+  font: var(--hx-font-footnote);
+}
+
+.myapps__list {
+  margin: var(--hx-space-4) 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--hx-space-3);
+}
+
+.myapps__card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--hx-space-3);
+  padding: var(--hx-space-4);
+  border: 0.5px solid var(--hx-border-light);
+  border-radius: var(--hx-radius-md);
+  background: var(--hx-bg-secondary);
+}
+
+.myapps__name {
+  margin: 0;
+  font: var(--hx-font-headline);
+}
+
+.myapps__meta,
+.myapps__access {
+  margin: var(--hx-space-1) 0 0;
+  color: var(--hx-text-secondary);
+  font: var(--hx-font-footnote);
+}
+
+.myapps__action {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--hx-space-1);
+  max-width: 24ch;
+  text-align: right;
+}
+
+@media (max-width: 900px) {
+  .myapps__card {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .myapps__action {
+    align-items: flex-start;
+    max-width: none;
+    text-align: left;
+  }
+}

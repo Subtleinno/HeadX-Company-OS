@@ -31,6 +31,9 @@ describe('字串表', () => {
     //   staff.* / agent.*        → staff-agents.test.tsx 斷言實際數字與原因
     //   grant.*                  → app-grants.test.tsx 斷言分頁、範圍、受益人與修改前後
     expect(withPlaceholders.map(([key]) => key)).toEqual([
+      'myapps.department',
+      'myapps.access.denied',
+      'myapps.access.unknown',
       'admin.unsaved.dirtyCount',
       'org.parentCount',
       'org.settings.sourceUnit',

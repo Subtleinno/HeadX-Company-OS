@@ -58,7 +58,8 @@ export type FakeHandlers = Partial<
     | 'appGrantActivate'
     | 'appGrantReject'
     | 'appGrantRevoke'
-    | 'appGrantPatch',
+    | 'appGrantPatch'
+    | 'appAccess',
     Handler
   >
 >;
@@ -207,6 +208,10 @@ function routeKey(path: string, method: string): keyof FakeHandlers | null {
 
   if (/\/app-grants\/[^/]+\/revoke$/.test(bare)) {
     return method === 'POST' ? 'appGrantRevoke' : null;
+  }
+
+  if (/\/app-grants\/access\/[^/]+$/.test(bare)) {
+    return method === 'GET' ? 'appAccess' : null;
   }
 
   if (/\/app-grants\/[^/]+$/.test(bare)) {

@@ -600,3 +600,11 @@ export function modifyAppGrant(
     { method: 'PATCH', body: JSON.stringify(body) },
   );
 }
+
+/**
+ * 人對某個 app 的存取判斷（issue 123）。與 agent 的檢查分開：agent 走
+ * `/agents/:id/access/:appId`，人的 session 結果不可以用來冒充 agent 權限。
+ */
+export function checkAppAccess(appId: string): Promise<ApiResult<AccessDecision>> {
+  return request<AccessDecision>(`/api/app-grants/access/${encodeURIComponent(appId)}`);
+}

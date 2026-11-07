@@ -37,6 +37,38 @@ export const messages = {
   'home.adminEntry': '管理區 · 公司設定',
   'home.adminNote': '改公司語系、驗收規則、部門隔離、逾期寬限與通知渠道。',
 
+  'myapps.title': '我的 Apps',
+  'myapps.lead':
+    'app 清單只有一個來源（後端 manifest）；可不可以入去由後端的授權判斷講。前端不自己算，也不自己補。',
+  'myapps.scopeNote':
+    '未能按品牌過濾：品牌身份契約未定，本頁不猜。現在顯示的是後端給你的全部 app。',
+  'myapps.loading': '正在讀取 app 清單…',
+  'myapps.failed': '讀不到 app 清單。',
+  'myapps.denied': '你沒有查看 app 清單的權限。',
+  'myapps.sessionExpired': '登入已經失效，請重新登入。',
+  'myapps.empty': '現在沒有任何 app 可以顯示。',
+  'myapps.kind.console': '管理台',
+  'myapps.kind.department': '部門',
+  'myapps.department': '{name} 部',
+  'myapps.available.yes': '已啟用',
+  'myapps.available.no': '未啟用',
+  'myapps.access.checking': '正在查存取…',
+  'myapps.access.allowedOwner': '允許（憑老闆身份）',
+  'myapps.access.allowedGrant': '允許（憑授權）',
+  'myapps.access.denied': '不允許：{reason}',
+  'myapps.access.unknown': '查不到這個 app 的存取判斷（{detail}）',
+  'myapps.access.reason.app_disabled': '這個 app 未啟用',
+  'myapps.access.reason.grant_missing': '你未有這個 app 的授權',
+  'myapps.access.reason.grant_scope_missing': '你的授權沒有覆蓋現在的組織範圍',
+  'myapps.access.reason.identity_disabled': '你的帳戶已停用',
+  'myapps.access.reason.role_not_permitted': '你的角色不可以進入這個 app',
+  'myapps.access.reason.entry_invalid': '判斷不到入口，一律拒絕',
+  'myapps.access.reason.entry_not_allowed': '這個入口不可以進入',
+  'myapps.access.reason.entry_disabled': '這個入口已停用',
+  'myapps.enter': '進入',
+  'myapps.entry.unavailable':
+    '未有前端入口：後端刻意不公開 manifest 的 route，app-host 亦未接線，所以這裡不提供跳轉。',
+
   // 共用外殼（#118）。名稱可以改，但這裡每一句都是畫面上見得到的文字，
   // 所以不可以在元件內另寫一份字面值。
   'shell.skipToContent': '跳去主要內容',
