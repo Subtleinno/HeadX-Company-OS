@@ -15,9 +15,23 @@ const tokensPath = resolve(dirname(fileURLToPath(import.meta.url)), '../src/toke
 
 function readTokens(): Map<string, string> {
   const css = readFileSync(tokensPath, 'utf8');
+
+  /*
+   * 只讀 `:root { … }` 那一段（淺色基準）。
+   *
+   * tokens.css 自 #118 起有第二個區塊 `:root[data-theme='dark']`。如果照舊掃全檔，
+   * 同名 token 會被深色值覆蓋，這一檔就會變成「用深色值去驗淺色期望」——
+   * 表面綠，實際上基準已經換了。深色的值由 dark-tokens.test.ts 獨立驗。
+   */
+  const light = /:root\s*\{([\s\S]*?)\n\}/u.exec(css);
+
+  if (light === null) {
+    throw new Error('tokens.css 找不到 :root 區塊');
+  }
+
   const tokens = new Map<string, string>();
 
-  for (const line of css.split(/\r?\n/)) {
+  for (const line of (light[1] as string).split(/\r?\n/)) {
     const match = /^\s*(--hx-[a-z0-9-]+)\s*:\s*(.+?);\s*$/.exec(line);
 
     if (match === null) {
@@ -102,10 +116,10 @@ describe('tokens.css 的值與規格一致', () => {
     '--hx-space-6': '24px',
     '--hx-space-7': '32px',
     '--hx-space-8': '40px',
-    '--hx-font-title': '700 28px/34px',
-    '--hx-font-headline': '600 17px/22px',
-    '--hx-font-body': '400 17px/22px',
-    '--hx-font-footnote': '400 13px/18px',
+    '--hx-font-title': '700 28px/34px var(--hx-font-family)',
+    '--hx-font-headline': '600 17px/22px var(--hx-font-family)',
+    '--hx-font-body': '400 17px/22px var(--hx-font-family)',
+    '--hx-font-footnote': '400 13px/18px var(--hx-font-family)',
     '--hx-motion-fast': '0.12s',
     '--hx-motion-base': '0.15s',
     '--hx-ease': 'cubic-bezier(0.2, 0, 0, 1)',
@@ -148,4 +162,62 @@ describe('文字對比度不低於 4.5:1', () => {
     expect(token('--hx-danger-text')).not.toBe(token('--hx-danger'));
     expect(luminance(token('--hx-danger-text'))).toBeLessThan(luminance(token('--hx-danger')));
   });
+});
+
+/*
+ * 2026-11-07：外殼視覺對齊 HxDesign（commit eb079b6）。下面每一個值都取自
+ * 運行中實例的 computed style，不是憑感覺調出來的；來源見
+ * docs/product/BASE-UI-HXDESIGN-ALIGNMENT.md。
+ */
+describe('外殼對齊 HxDesign 的幾何與表面', () => {
+  const aligned: Record<string, string> = {
+    '--hx-size-toolbar': '52px',
+    '--hx-size-subbar': '46px',
+    '--hx-size-bar-control': '38px',
+    '--hx-size-control': '36px',
+    '--hx-size-sidebar': '300px',
+    '--hx-size-page-max': '1080px',
+    '--hx-border-light': '#e8e8ed',
+    '--hx-fill-quaternary': 'rgba(0, 0, 0, 0.04)',
+    '--hx-fill-tertiary': 'rgba(0, 0, 0, 0.06)',
+    '--hx-accent-hover': '#1d1d1f',
+    '--hx-floating-bg': 'rgba(255, 255, 255, 0.82)',
+    '--hx-floating-blur': 'saturate(160%) blur(14px)',
+    '--hx-shadow-lg': '0 12px 40px rgba(0, 0, 0, 0.12)',
+  };
+
+  for (const [name, value] of Object.entries(aligned)) {
+    it(`${name} 是 ${value}`, () => {
+      expect(token(name)).toBe(value);
+    });
+  }
+
+  it('有等寬字體堆疊（頁面小標與編號要用）', () => {
+    expect(token('--hx-font-mono')).toContain('ui-monospace');
+  });
+
+  it('字級階梯有 15px 正文與 11px 小標（不是只有 17px 與 13px）', () => {
+    expect(token('--hx-font-subheadline')).toBe('400 15px/20px var(--hx-font-family)');
+    expect(token('--hx-font-eyebrow')).toBe('500 11px/16px var(--hx-font-family)');
+  });
+});
+
+describe('字級 token 一定要是有效的 font 簡寫', () => {
+  /*
+   * 2026-11-07：外殼對齊時用 computed style 發現，`font: 400 15px/20px` 少了
+   * 字體家族就是無效宣告，瀏覽器靜靜丟棄，元件沿用上一層的 17px。
+   * 表面上「有字」，實際字級錯了，而且截圖看上去只是「字有點大」。
+   * 所以每一個字級 token 都要自帶 family。
+   */
+  const typeTokens = [...tokens.keys()].filter((name) => /^--hx-font-(title|headline|body|callout|subheadline|footnote|caption|eyebrow)$/.test(name));
+
+  it('掃到 8 個字級 token（掃描失效時要紅）', () => {
+    expect(typeTokens).toHaveLength(8);
+  });
+
+  for (const name of typeTokens) {
+    it(`${name} 帶 var(--hx-font-family)，可以直接放進 font:`, () => {
+      expect(token(name)).toContain('var(--hx-font-family)');
+    });
+  }
 });

@@ -19,8 +19,12 @@ body {
   background: var(--hx-bg-primary);
   color: var(--hx-text-primary);
   font-family: var(--hx-font-family);
-  font-size: 17px;
-  line-height: 22px;
+  /* 跟 HxDesign 的 base：內文 15px/20px、負字距。17px 留給 --hx-font-body（段落）。 */
+  font-size: 15px;
+  line-height: 20px;
+  letter-spacing: -0.01em;
+  /* 少了這一句，深色底下的原生控件（捲軸、輸入框）會繼續用淺色。 */
+  color-scheme: light dark;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -236,6 +240,23 @@ input:focus-visible {
   margin: var(--hx-space-4) 0 0;
   color: var(--hx-danger-text);
   font: var(--hx-font-footnote) var(--hx-font-family);
+}
+
+/* 首頁那一條通往原型外殼的連結：次要、可略過，不要看起來像一個新功能。 */
+.home__proto {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--hx-space-2);
+  margin: var(--hx-space-6) 0 0;
+  color: var(--hx-text-secondary);
+  font: var(--hx-font-footnote) var(--hx-font-family);
+}
+
+.home__proto-link {
+  color: var(--hx-text-primary);
+  font-weight: 500;
+  text-underline-offset: 3px;
 }
 
 @media (max-width: 480px) {

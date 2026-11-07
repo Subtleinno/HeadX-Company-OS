@@ -8,6 +8,15 @@
  */
 
 export { AppShell, ShellContent } from './AppShell.js';
+export { BaseShell } from './BaseShell.js';
+export type { BaseShellProps } from './BaseShell.js';
+export { Icon } from './icons.js';
+export type { IconName } from './icons.js';
+export { applyTheme, nextTheme, SHELL_THEMES } from './theme.js';
+export type { ShellTheme } from './theme.js';
+export type { AppMode, BrandRef, PrototypeApp, ScopeTarget, ShellNavItem } from './workspace.js';
+export { buildShellHash, isScopeAllowed, parseShellHash, planAppSwitch, SHELL_PATH_ROOT } from './deep-link.js';
+export type { ParsedShellHash, SwitchPlan } from './deep-link.js';
 export { EmptyState, ScreenFrame, StatusScreen } from './ScreenFrame.js';
 export { ConnectionErrorScreen, LoadingScreen } from './StatusScreens.js';
 export { screenOf, useAuthGate } from './AuthGate.js';

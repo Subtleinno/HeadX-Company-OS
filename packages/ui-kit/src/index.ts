@@ -9,3 +9,5 @@
 
 export { Field } from './Field.js';
 export type { FieldProps } from './Field.js';
+export { Selector } from './Selector.js';
+export type { SelectorOption, SelectorProps } from './Selector.js';

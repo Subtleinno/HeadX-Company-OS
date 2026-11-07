@@ -1,0 +1,1022 @@
+/*
+ * Base UI 外殼的版面（issue 118）。
+ *
+ * 2026-11-07：視覺層對齊 HxDesign 的實際實作。幾何值（52 / 46 / 38 / 36 / 30 /
+ * 300 / 1080 / 32）取自運行中實例的 computed style，來源與版本見
+ * docs/product/BASE-UI-HXDESIGN-ALIGNMENT.md。
+ *
+ * 只可以用 var(--hx-*)：色碼集中在 packages/design-tokens/src/tokens.css，
+ * 這裡出現十六進位色碼會被 apps/web/test/base-shell-layout.test.ts 判紅。
+ *
+ * 三個與 HxDesign 不同的地方（刻意，不是未做），理由寫在對照文件：
+ *   1. 焦點環用 2px outline，不抄它的「白 2px + 黑 4px」雙色 box-shadow，
+ *      免得同一個產品有兩種焦點語言。
+ *   2. 沒有工作索引就不畫工作欄，即使 HxDesign 的 rail 目前是一條空欄。
+ *   3. app 選擇器是單一控制，不把名字與箭頭拆成兩個可點區。
+ */
+
+:root {
+  /* 表單控件、捲軸跟著主題走。少了這行，深色頁面會出現白色捲軸。 */
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+/* ── 外框 ───────────────────────────────────────────────────────────────── */
+
+.shell-frame {
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--hx-bg-primary);
+  color: var(--hx-text-primary);
+  font: var(--hx-font-subheadline);
+  font-family: var(--hx-font-family);
+  letter-spacing: var(--hx-tracking-tight);
+}
+
+/* 圖示：一個幾何、一個線寬。新圖示不可以自己帶另一種粗細。 */
+.ic {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* 跳過導覽：平常藏在畫面外，用鍵盤 Tab 入嚟就出現。 */
+.shell__skip {
+  position: absolute;
+  left: -9999px;
+  top: var(--hx-space-2);
+  z-index: 200;
+  padding: var(--hx-space-2) var(--hx-space-3);
+  border-radius: var(--hx-radius-sm);
+  background: var(--hx-accent);
+  color: var(--hx-accent-text);
+  text-decoration: none;
+}
+
+.shell__skip:focus {
+  left: var(--hx-space-2);
+}
+
+/* ── 第一行：全局頂欄 ──────────────────────────────────────────────────── */
+
+.shell-topbar {
+  position: relative;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+  flex: none;
+  /* grid 項目的 min-width 預設是 content。少了這行，頂欄會撐到比視窗更寬，
+     右邊的帳戶就被推出畫面（2026-11-07 在 360px + 長名稱實測到）。 */
+  min-width: 0;
+  height: var(--hx-size-toolbar);
+  padding: 0 var(--hx-space-4);
+  background: var(--hx-floating-bg);
+  /* 標準屬性一定要放最後：壓縮器保留最後一個，次序反了 Chrome 會算出 none。 */
+  -webkit-backdrop-filter: var(--hx-floating-blur);
+  backdrop-filter: var(--hx-floating-blur);
+}
+
+/* 真 0.5px 底線。`border-bottom: 0.5px` 會被向上取整成一個實體像素。 */
+.shell-topbar::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: var(--hx-hairline);
+  transform: scaleY(0.5);
+  transform-origin: bottom;
+  pointer-events: none;
+}
+
+.shell-topbar__start {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+  min-width: 0;
+  flex: 0 1 auto;
+}
+
+/* 每個位置都要肯收窄：唔收窄就會把後面的工具鍵推出畫面。 */
+.shell-slot {
+  min-width: 0;
+}
+
+.shell-topbar__menu {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.shell-topbar__tools {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-1);
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+/* app 主選單：黑只留給「目前這一個」，其餘一律灰字。 */
+.shell-tabs {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-1);
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.shell-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.shell-tab {
+  height: var(--hx-size-control);
+  padding: 0 14px;
+  border: 0;
+  border-radius: var(--hx-radius-sm);
+  background: transparent;
+  color: var(--hx-text-secondary);
+  font-family: var(--hx-font-family);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--hx-motion-base) var(--hx-ease), color var(--hx-motion-base) var(--hx-ease);
+}
+
+.shell-tab:hover {
+  background: var(--hx-fill-quaternary);
+  color: var(--hx-text-primary);
+}
+
+.shell-tab[aria-current='page'] {
+  background: var(--hx-accent);
+  color: var(--hx-accent-text);
+  font-weight: 600;
+}
+
+/* 圖示鍵：視覺 38px，熱區 44px（::before 外擴 3px）。 */
+.shell-iconbtn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: var(--hx-size-bar-control);
+  height: var(--hx-size-bar-control);
+  flex: none;
+  padding: 0;
+  border: 0;
+  border-radius: var(--hx-radius-sm);
+  background: transparent;
+  color: var(--hx-text-primary);
+  font-family: var(--hx-font-family);
+  cursor: pointer;
+  transition: background var(--hx-motion-base) var(--hx-ease), color var(--hx-motion-base) var(--hx-ease);
+}
+
+.shell-iconbtn::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: var(--hx-radius-md);
+}
+
+.shell-iconbtn:hover:not(:disabled) {
+  background: var(--hx-fill-quaternary);
+}
+
+.shell-iconbtn:active:not(:disabled) {
+  background: var(--hx-fill-tertiary);
+}
+
+/* 只有「開住嘅選單鍵」才顯示按下的底色。所有 aria-expanded 都上色，
+   會令畫面角落永遠有一塊灰。 */
+.shell-iconbtn[aria-haspopup='menu'][aria-expanded='true'] {
+  background: var(--hx-fill-tertiary);
+}
+
+.shell-iconbtn .ic {
+  width: 19px;
+  height: 19px;
+}
+
+.shell-iconbtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.shell-iconbtn--text {
+  width: auto;
+  padding: 0 10px;
+  color: var(--hx-text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.shell-iconbtn--text:hover:not(:disabled) {
+  color: var(--hx-text-primary);
+}
+
+/* 帳戶：24px 圓形頭像 + 13px 名字。名字太長會截字，不會推走其他鍵。 */
+.shell-account {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: var(--hx-size-bar-control);
+  min-width: 0;
+  padding: 0 var(--hx-space-2);
+  border-radius: var(--hx-radius-sm);
+  color: var(--hx-text-secondary);
+  font-size: 13px;
+}
+
+.shell-avatar {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--hx-text-primary);
+  color: var(--hx-bg-primary);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.shell-account__name {
+  min-width: 0;
+  max-width: 18ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/*
+ * 工作範圍是「上下文」，不是第二個主動作。HxDesign 整條頂欄只有一個粗體觸發
+ * （工作區名），所以這裡把範圍降一級：細一號、次要色。兩個粗體並排，主次就冇了。
+ */
+.shell-slot--scope .selector__button {
+  color: var(--hx-text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* 公司型：範圍是固定的，顯示文字而不是一個按下去沒反應的下拉。 */
+.shell-scope-static {
+  display: inline-flex;
+  align-items: center;
+  height: var(--hx-size-bar-control);
+  max-width: 18ch;
+  padding: 0 var(--hx-space-2);
+  color: var(--hx-text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── 第二行：頁面子選單 ────────────────────────────────────────────────── */
+
+.shell-subnav {
+  position: relative;
+  z-index: 99;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: none;
+  height: var(--hx-size-subbar);
+  padding: 0 var(--hx-space-4);
+  background: var(--hx-bg-primary);
+  border-bottom: 0.5px solid var(--hx-hairline);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.shell-subnav::-webkit-scrollbar {
+  display: none;
+}
+
+/* 沒有項目時不佔位、不畫一條空線。 */
+.shell-subnav:empty {
+  height: 0;
+  padding: 0;
+  border-bottom: 0;
+}
+
+.shell-subtab {
+  height: 30px;
+  padding: 0 11px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--hx-text-secondary);
+  font-family: var(--hx-font-family);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--hx-motion-base) var(--hx-ease), color var(--hx-motion-base) var(--hx-ease);
+}
+
+.shell-subtab:hover {
+  background: var(--hx-bg-secondary);
+  color: var(--hx-text-primary);
+}
+
+/* 子選單的選中永遠是灰底：黑只屬於第一行的主選單。 */
+.shell-subtab[aria-current='page'] {
+  background: var(--hx-bg-tertiary);
+  color: var(--hx-text-primary);
+  font-weight: 600;
+}
+
+/* ── 第三行：工作欄 ＋ 主內容 ──────────────────────────────────────────── */
+
+.shell-body {
+  display: grid;
+  grid-template-columns: var(--hx-size-sidebar) 1fr;
+  min-height: 0;
+}
+
+.shell-body[data-shell-has-rail='false'] {
+  grid-template-columns: 1fr;
+}
+
+.shell-rail {
+  position: relative;
+  min-height: 0;
+  padding: 16px 12px 18px;
+  background: var(--hx-bg-secondary);
+  overflow-y: auto;
+}
+
+.shell-rail::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--hx-hairline);
+  transform: scaleX(0.5);
+  transform-origin: right;
+  pointer-events: none;
+}
+
+.shell-rail__list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.shell-railitem {
+  display: block;
+  width: 100%;
+  min-height: var(--hx-size-control);
+  padding: 6px 10px;
+  border: 0;
+  border-radius: var(--hx-radius-sm);
+  background: transparent;
+  color: var(--hx-text-secondary);
+  font-family: var(--hx-font-family);
+  font-size: 14px;
+  letter-spacing: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--hx-motion-base) var(--hx-ease), color var(--hx-motion-base) var(--hx-ease);
+}
+
+.shell-railitem:hover {
+  background: var(--hx-fill-quaternary);
+  color: var(--hx-text-primary);
+}
+
+.shell-railitem[aria-current='page'] {
+  background: var(--hx-bg-tertiary);
+  color: var(--hx-text-primary);
+  font-weight: 600;
+}
+
+.shell-main {
+  min-width: 0;
+  min-height: 0;
+  padding: var(--hx-space-7);
+  background: var(--hx-bg-primary);
+  overflow: auto;
+  align-content: start;
+}
+
+.shell-main:focus-visible {
+  outline: 2px solid var(--hx-accent);
+  outline-offset: -2px;
+}
+
+/* ── 焦點環 ────────────────────────────────────────────────────────────── */
+
+.shell-iconbtn:focus-visible,
+.shell-tab:focus-visible,
+.shell-subtab:focus-visible,
+.shell-railitem:focus-visible,
+.selector__button:focus-visible,
+.selector__option:focus-visible,
+.shell-popover__item:focus-visible {
+  outline: 2px solid var(--hx-accent);
+  outline-offset: 2px;
+}
+
+/* ── 原型標示 ──────────────────────────────────────────────────────────── */
+
+/*
+ * 一句就夠，而且貼在頁面欄的右上角：佔去半個畫面的警告，本身就是最明顯的
+ * 「測試頁」特徵。放右邊是跟 HxDesign 第二行右端那種小字備註同一個語言 ——
+ * 它是一個印章，不是一段公告。
+ */
+.shell-proto {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--hx-space-2);
+  max-width: var(--hx-size-page-max);
+  margin: 0 0 var(--hx-space-5);
+  color: var(--hx-text-secondary);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.shell-proto__badge {
+  flex: none;
+  padding: 2px 5px;
+  border: 0.5px solid var(--hx-border-light);
+  border-radius: 5px;
+  color: var(--hx-text-secondary);
+  font: 500 10px/1 var(--hx-font-mono);
+  letter-spacing: 0.06em;
+}
+
+/* ── 主內容的狀態 ──────────────────────────────────────────────────────── */
+
+.shell-main__blocked {
+  max-width: 62ch;
+  margin-top: var(--hx-space-6);
+  padding: var(--hx-space-6);
+  border: 0.5px solid var(--hx-border-light);
+  border-radius: var(--hx-radius-lg);
+  background: var(--hx-bg-secondary);
+}
+
+.shell-main__blocked-title {
+  margin: 0 0 var(--hx-space-2);
+  font: var(--hx-font-headline);
+  font-family: var(--hx-font-family);
+}
+
+.shell-main__blocked-body {
+  margin: 0;
+  color: var(--hx-text-secondary);
+  font: var(--hx-font-subheadline);
+}
+
+/* ── 選擇器（packages/ui-kit 的 Selector） ─────────────────────────────── */
+
+.selector {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.selector__button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+  height: var(--hx-size-bar-control);
+  max-width: min(260px, 100%);
+  min-width: 0;
+  padding: 0 6px 0 10px;
+  border: 0;
+  border-radius: var(--hx-radius-sm);
+  background: transparent;
+  color: var(--hx-text-primary);
+  font-family: var(--hx-font-family);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: inherit;
+  cursor: pointer;
+  transition: background var(--hx-motion-base) var(--hx-ease), color var(--hx-motion-base) var(--hx-ease);
+}
+
+.selector__button:hover:not(:disabled) {
+  background: var(--hx-fill-quaternary);
+}
+
+.selector__button[data-empty='true'] {
+  color: var(--hx-text-secondary);
+}
+
+.selector__button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.selector__icon {
+  display: inline-flex;
+  flex: none;
+  color: var(--hx-text-secondary);
+}
+
+.selector__icon .ic {
+  width: 17px;
+  height: 17px;
+}
+
+.selector__value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.selector__chevron {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  color: var(--hx-text-secondary);
+}
+
+/* 浮層：距觸發 8px、圓角 12、0.5px 邊、大陰影。 */
+.selector__list {
+  position: absolute;
+  z-index: 300;
+  top: calc(100% + var(--hx-space-2));
+  left: 0;
+  min-width: 280px;
+  max-width: min(360px, 92vw);
+  max-height: 320px;
+  margin: 0;
+  padding: var(--hx-space-1);
+  list-style: none;
+  background: var(--hx-bg-primary);
+  border: 0.5px solid var(--hx-border-light);
+  border-radius: var(--hx-radius-md);
+  box-shadow: var(--hx-shadow-lg);
+  overflow-y: auto;
+}
+
+.selector__option {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: var(--hx-size-control);
+  padding: 6px 10px;
+  border-radius: var(--hx-radius-sm);
+  color: var(--hx-text-primary);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.selector__option:hover {
+  background: var(--hx-bg-secondary);
+}
+
+.selector__option[aria-selected='true'] {
+  font-weight: 600;
+}
+
+.selector__option[aria-disabled='true'] {
+  color: var(--hx-text-secondary);
+  cursor: not-allowed;
+}
+
+.selector__option-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.selector__option-description {
+  color: var(--hx-text-secondary);
+  font-size: 12px;
+}
+
+/* 勾永遠佔位，否則一選中清單就會左右跳。 */
+.selector__option-check {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  visibility: hidden;
+}
+
+.selector__option[aria-selected='true'] .selector__option-check {
+  visibility: visible;
+}
+
+/* ── 頁面框架（主內容的排版層級） ──────────────────────────────────────── */
+
+.page {
+  max-width: var(--hx-size-page-max);
+}
+
+.page__head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hx-space-1);
+}
+
+.page__eyebrow {
+  color: var(--hx-text-secondary);
+  font: var(--hx-font-eyebrow);
+  font-family: var(--hx-font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.page__title {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 34px;
+  letter-spacing: -0.02em;
+}
+
+.page__sub {
+  max-width: 62ch;
+  margin: 0;
+  color: var(--hx-text-secondary);
+  font: var(--hx-font-subheadline);
+  font-family: var(--hx-font-family);
+}
+
+.page__empty {
+  max-width: 62ch;
+  margin-top: var(--hx-space-8);
+  padding: var(--hx-space-6);
+  border: 0.5px solid var(--hx-border-light);
+  border-radius: var(--hx-radius-lg);
+  background: var(--hx-bg-secondary);
+}
+
+.page__empty-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.page__empty-body {
+  margin: var(--hx-space-2) 0 0;
+  color: var(--hx-text-secondary);
+  font-size: 13px;
+  line-height: 19px;
+}
+
+/* ── 浮層決策面板（第二步選範圍、未保存確認） ──────────────────────────── */
+
+/* 掛在 app 選擇器下方，像 HxDesign 的 workspace 選單：切換流程的一部分，
+   不是主內容裡的一張表單卡。左邊 62px = 16（頂欄內距）+ 38（開關）+ 8（gap）。 */
+.shell-popover {
+  /* 同一個位移值同時決定 left 同可用寬度：固定 left 加固定 300px，
+     到 360px 闊就會凸出右邊 2px（量過）。 */
+  --popover-left: calc(var(--hx-space-4) + var(--hx-size-bar-control) + var(--hx-space-2));
+
+  position: fixed;
+  z-index: 300;
+  top: calc(var(--hx-size-toolbar) + var(--hx-space-2));
+  left: var(--popover-left);
+  width: 300px;
+  max-width: calc(100vw - var(--popover-left) - var(--hx-space-4));
+  padding: var(--hx-space-1);
+  background: var(--hx-bg-primary);
+  border: 0.5px solid var(--hx-border-light);
+  border-radius: var(--hx-radius-md);
+  box-shadow: var(--hx-shadow-lg);
+}
+
+.shell-popover__label {
+  padding: 7px 10px 3px;
+  color: var(--hx-text-secondary);
+  font: 500 10px/14px var(--hx-font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.shell-popover__title {
+  margin: 0;
+  padding: var(--hx-space-1) 10px var(--hx-space-2);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.shell-popover__body {
+  margin: 0;
+  padding: 0 10px var(--hx-space-2);
+  color: var(--hx-text-secondary);
+  font-size: 13px;
+  line-height: 19px;
+}
+
+.shell-popover__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.shell-popover__item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  min-height: var(--hx-size-control);
+  padding: 6px 10px;
+  border: 0;
+  border-radius: var(--hx-radius-sm);
+  background: transparent;
+  color: var(--hx-text-primary);
+  font-family: var(--hx-font-family);
+  font-size: 14px;
+  letter-spacing: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.shell-popover__item:hover {
+  background: var(--hx-bg-secondary);
+}
+
+/* 同 app 選單同一套行內語言：圖示、標籤、右邊的剔。 */
+.shell-popover__icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  stroke: currentcolor;
+  stroke-width: 1.6;
+  fill: none;
+  opacity: 0.7;
+}
+
+.shell-popover__item-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shell-popover__check {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  stroke: currentcolor;
+  stroke-width: 1.8;
+  fill: none;
+  /* 未選中都留住格位，否則有剔／冇剔嗰行會跳。 */
+  visibility: hidden;
+}
+
+.shell-popover__item[aria-selected='true'] .shell-popover__check {
+  visibility: visible;
+}
+
+.shell-popover__item--muted {
+  color: var(--hx-text-secondary);
+}
+
+.shell-popover__sep {
+  height: 0.5px;
+  margin: var(--hx-space-1) var(--hx-space-2);
+  background: var(--hx-border-light);
+}
+
+/* ── 原型測試區（診斷控制，不是正常展示的一部分） ──────────────────────── */
+
+.proto-zone {
+  max-width: 62ch;
+  margin-top: var(--hx-space-8);
+  padding-top: var(--hx-space-5);
+  border-top: 0.5px solid var(--hx-hairline);
+}
+
+.proto-zone__label {
+  color: var(--hx-text-secondary);
+  font: 500 10px/14px var(--hx-font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.proto-field {
+  display: block;
+  margin-top: var(--hx-space-3);
+}
+
+.proto-field__label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.proto-field__input {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 72px;
+  padding: 9px 10px;
+  border: 0.5px solid var(--hx-border);
+  border-radius: 7px;
+  background: var(--hx-bg-primary);
+  color: var(--hx-text-primary);
+  font: var(--hx-font-subheadline);
+  font-family: var(--hx-font-family);
+  resize: vertical;
+}
+
+.proto-field__input:focus-visible {
+  outline: 2px solid var(--hx-accent);
+  outline-offset: -1px;
+}
+
+.proto-field__hint {
+  display: block;
+  margin-top: 6px;
+  color: var(--hx-text-secondary);
+  font: var(--hx-font-caption);
+  font-family: var(--hx-font-family);
+}
+
+/* ── 讀取狀態（原型測試區裡面的一行）──────────────────────────────────── */
+
+.proto-log {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+  min-height: 20px;
+  margin-top: var(--hx-space-3);
+  color: var(--hx-text-secondary);
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.proto-log[data-proto-status='error'] .proto-log__text {
+  color: var(--hx-danger);
+}
+
+.proto-log__text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.proto-log__key {
+  flex: none;
+  color: var(--hx-text-secondary);
+  font: 500 10px/14px var(--hx-font-mono);
+  letter-spacing: 0.06em;
+}
+
+/* ── 非法網址 ──────────────────────────────────────────────────────────── */
+
+.proto-invalid {
+  min-height: 100dvh;
+  padding: var(--hx-space-7);
+  background: var(--hx-bg-primary);
+  color: var(--hx-text-primary);
+  font: var(--hx-font-subheadline);
+  font-family: var(--hx-font-family);
+}
+
+.proto-invalid__head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hx-space-1);
+  max-width: 62ch;
+}
+
+.proto-invalid__title {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 34px;
+  letter-spacing: -0.02em;
+}
+
+.proto-invalid__link {
+  display: inline-flex;
+  align-items: center;
+  height: var(--hx-size-control);
+  margin-top: var(--hx-space-4);
+  color: var(--hx-text-primary);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* ── 窄螢幕與可及性 ────────────────────────────────────────────────────── */
+
+@media (max-width: 1180px) {
+  /* 名字在這個寬度以下比頭像更佔位，收起它：頭像仍然識別得到，仍然開到選單。 */
+  .shell-account__name {
+    display: none;
+  }
+}
+
+@media (max-width: 900px) {
+  /* 窄螢幕時左段要肯讓位，否則工具區被擠出畫面。 */
+  .shell-topbar__start {
+    flex: 1 1 auto;
+  }
+
+  .shell-main {
+    padding: var(--hx-space-5) var(--hx-space-4) var(--hx-space-7);
+  }
+
+  .shell-topbar {
+    padding: 0 var(--hx-space-2);
+    gap: var(--hx-space-1);
+  }
+
+  .shell-subnav {
+    padding: 0 var(--hx-space-2);
+  }
+}
+
+@media (max-width: 560px) {
+  /* 觸控優先：38px 的鍵在這個寬度太細。 */
+  .shell-iconbtn {
+    width: var(--hx-size-touch);
+    height: var(--hx-size-touch);
+  }
+
+  .shell-topbar {
+    height: 54px;
+  }
+
+  .selector__button {
+    max-width: 34vw;
+    padding: 0 4px 0 8px;
+    font-size: 14px;
+  }
+
+  .selector__icon,
+  .shell-iconbtn--text {
+    display: none;
+  }
+
+  .shell-scope-static {
+    max-width: 10ch;
+    padding: 0 var(--hx-space-1);
+    font-size: 13px;
+  }
+
+  .page__title,
+  .proto-invalid__title {
+    font-size: 22px;
+    line-height: 28px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shell-tab,
+  .shell-iconbtn,
+  .shell-subtab,
+  .shell-railitem,
+  .selector__button {
+    transition: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .shell-topbar {
+    background: var(--hx-bg-primary);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}

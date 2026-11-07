@@ -1,6 +1,11 @@
 /*
  * 設計 token。整個 apps/web 只有這個檔案可以出現色碼；
  * 其他 CSS 一律用 var(--hx-*)，由 apps/web/test/gates.test.ts 把關。
+ *
+ * 2026-11-07：外殼改以 HxDesign 的實際實作對齊（見
+ * docs/product/BASE-UI-HXDESIGN-ALIGNMENT.md，參考 commit eb079b6）。
+ * 新增的 token 一律「一個名、兩個值」：淺色與深色同名同數量，
+ * 少一個名，用那個名的元件在深色下就會靜靜跌返淺色值。
  */
 :root {
   /* 色彩 */
@@ -10,9 +15,16 @@
   --hx-text-primary: #1d1d1f;
   --hx-text-secondary: #68686c;
   --hx-accent: #000000;
+  --hx-accent-hover: #1d1d1f;
   --hx-accent-text: #ffffff;
   --hx-border: #d2d2d7;
+  /* 浮層與空狀態卡的邊：比 border 輕，0.5px 用 */
+  --hx-border-light: #e8e8ed;
   --hx-hairline: rgba(0, 0, 0, 0.12);
+  /* 圖示鍵的 hover／active 底色。比 bg-tertiary 輕一級，
+     因為頂欄上一排 38px 的鍵用 bg-tertiary 會變成四個灰塊。 */
+  --hx-fill-quaternary: rgba(0, 0, 0, 0.04);
+  --hx-fill-tertiary: rgba(0, 0, 0, 0.06);
   /* 只可以做邊框與填色：在白底上對比 3.5:1，不夠當文字。 */
   --hx-danger: #ff3b30;
   /* 錯誤文字專用：白底 5.4:1，過 4.5:1。 */
@@ -21,6 +33,16 @@
   --hx-success: #34c759;
   /* 只可以做品牌標誌那一個 8×8 方塊。 */
   --hx-brand-green: #b8f36b;
+
+  /* 浮層（頂欄是畫面唯一會浮起來的表面） */
+  --hx-floating-bg: rgba(255, 255, 255, 0.82);
+  --hx-floating-blur: saturate(160%) blur(14px);
+  --hx-scrim: rgba(0, 0, 0, 0.32);
+
+  /* 陰影：只有浮層、抽屜與選單用，內容層不用 */
+  --hx-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.06);
+  --hx-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --hx-shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.12);
 
   /* 圓角 */
   --hx-radius-sm: 8px;
@@ -31,8 +53,13 @@
   /* 尺寸 */
   --hx-size-control: 36px;
   --hx-size-touch: 44px;
+  /* 頂欄上的圖示鍵與選擇器：視覺 38px，熱區 44px（見 base-shell.css） */
+  --hx-size-bar-control: 38px;
   --hx-size-toolbar: 52px;
+  --hx-size-subbar: 46px;
   --hx-size-sidebar: 300px;
+  /* 內容欄上限。頁面與「原型」印章要同一個右邊界，所以只可以在這裡出現一次。 */
+  --hx-size-page-max: 1080px;
 
   /* 間距 */
   --hx-space-1: 4px;
@@ -44,15 +71,66 @@
   --hx-space-7: 32px;
   --hx-space-8: 40px;
 
-  /* 字型：只用系統字體，不下載任何字體檔。 */
+  /* 字型：只用系統字體，不下載任何字體檔。
+   *
+   * 每個字級 token 都帶 `var(--hx-font-family)`。沒有 family 的 `font:` 簡寫
+   * 是無效宣告，瀏覽器會靜靜丟棄，然後元件就沿用上一層的 17px —— 表面有字、
+   * 實際字級錯。2026-11-07 用 computed style 揭出來的。 */
   --hx-font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
-  --hx-font-title: 700 28px/34px;
-  --hx-font-headline: 600 17px/22px;
-  --hx-font-body: 400 17px/22px;
-  --hx-font-footnote: 400 13px/18px;
+  --hx-font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+  --hx-font-title: 700 28px/34px var(--hx-font-family);
+  --hx-font-headline: 600 17px/22px var(--hx-font-family);
+  --hx-font-body: 400 17px/22px var(--hx-font-family);
+  --hx-font-callout: 400 16px/21px var(--hx-font-family);
+  --hx-font-subheadline: 400 15px/20px var(--hx-font-family);
+  --hx-font-footnote: 400 13px/18px var(--hx-font-family);
+  --hx-font-caption: 400 12px/16px var(--hx-font-family);
+  /* 頁面小標：等寬、全大寫、字距放開。--hx-font-mono 由元件另外指定。 */
+  --hx-font-eyebrow: 500 11px/16px var(--hx-font-family);
+  --hx-tracking-tight: -0.01em;
 
   /* 動效 */
   --hx-motion-fast: 0.12s;
   --hx-motion-base: 0.15s;
   --hx-ease: cubic-bezier(0.2, 0, 0, 1);
+}
+
+/*
+ * 深色模式（決策 C49）。
+ *
+ * 刻意只在這裡覆寫「顏色」，不重寫間距、圓角、字級或動效 —— 深色是另一組色值，
+ * 不是另一套頁面。所以下面的 token 名一律與上面的淺色區塊相同：少一個名，
+ * 用那個名的元件在深色下就會靜靜跌返淺色值，而那種壞法在截圖上很難看出來。
+ *
+ * accent 在深色反轉成近白：黑色按鈕放近黑畫布上等於隱形，對比度會掉到不可用。
+ * 品牌綠色 #B8F36B 兩邊相同，它只作點綴，不隨主題重新配色。
+ */
+:root[data-theme='dark'] {
+  --hx-bg-primary: #000000;
+  --hx-bg-secondary: #1c1c1e;
+  --hx-bg-tertiary: #2c2c2e;
+  --hx-text-primary: #f5f5f7;
+  --hx-text-secondary: #a1a1a6;
+  --hx-accent: #ffffff;
+  --hx-accent-hover: #e5e5ea;
+  --hx-accent-text: #000000;
+  --hx-border: #38383a;
+  --hx-border-light: #2c2c2e;
+  --hx-hairline: rgba(255, 255, 255, 0.16);
+  --hx-fill-quaternary: rgba(255, 255, 255, 0.04);
+  --hx-fill-tertiary: rgba(255, 255, 255, 0.08);
+  --hx-danger: #ff453a;
+  --hx-danger-text: #ff7a70;
+  --hx-warning: #ffa726;
+  --hx-success: #30d158;
+  --hx-brand-green: #b8f36b;
+
+  --hx-floating-bg: rgba(28, 28, 30, 0.82);
+  --hx-floating-blur: saturate(160%) blur(14px);
+  --hx-scrim: rgba(0, 0, 0, 0.5);
+
+  /* 深色的陰影要更深才看得出層級：白底上的 12% 黑，放黑底上等於沒有。 */
+  --hx-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.5);
+  --hx-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
+  --hx-shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.6);
 }

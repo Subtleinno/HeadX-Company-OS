@@ -13,6 +13,7 @@ import { navigate, useRoute } from './router';
 import { HomeScreen } from './screens/HomeScreen';
 import { LoginScreen } from './screens/LoginScreen';
 import { SetupScreen } from './screens/SetupScreen';
+import { WorkspacePrototype } from './prototype/WorkspacePrototype';
 
 /**
  * 外殼的第一層：開機問一次 API，由答案決定畫面。
@@ -55,8 +56,13 @@ export function App() {
 
   // 網址只是畫面的鏡子：畫面定了就把 hash 對齊，重新載入仍然停在同一個地方。
   // 比對原始 hash 而不是解析後的 route，空 hash 也要補成 #/。
+  // `/app/*` 例外：那一頁的深連結由該頁自己擁有（決策 C48），這裡不可以蓋掉它。
   useEffect(() => {
     if (screen !== 'setup' && screen !== 'login' && screen !== 'home') {
+      return;
+    }
+
+    if (screen === 'home' && route === '/app') {
       return;
     }
 
@@ -95,6 +101,11 @@ export function App() {
   }
 
   if (screen === 'home' && effective.auth.user !== undefined) {
+    // `/app/*` 是原型外殼（issue 118 切片 C）。它標明是原型資料，不是正式 registry 的 app。
+    if (route === '/app') {
+      return <WorkspacePrototype />;
+    }
+
     return <HomeScreen user={effective.auth.user} onSignedOut={signedOut} />;
   }
 

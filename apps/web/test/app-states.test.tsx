@@ -108,4 +108,19 @@ describe('啟動時的五個狀態', () => {
     expect(container.querySelector('canvas')).toBeNull();
     expect(container.querySelector('svg')).toBeNull();
   });
+
+  it('首頁有一條通往新外殼原型的連結，並講明是示範', async () => {
+    installFakeApi({
+      state: () => jsonResponse(200, { setupRequired: false, signedIn: true, user: BOSS }),
+    });
+
+    render(<App />);
+
+    await screen.findByRole('heading', { name: '今日' });
+
+    const entry = screen.getByRole('link', { name: 'Base UI 原型外殼' });
+
+    expect(entry.getAttribute('href')).toBe('#/app/a/company');
+    expect(screen.getByText('示範 app 與工作範圍切換，未接駁業務內容。')).toBeTruthy();
+  });
 });
