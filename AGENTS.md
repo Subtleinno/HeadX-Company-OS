@@ -57,7 +57,7 @@ company-os 是一間公司的整套軟件，全部放在這個 repo，全部跑�
 12. app 不讀別的 app 的資料表。跨 app 只經 platform 介面或摘要介面。
 13. 敏感 app 的授權要老闆批准。授權、改權限、改設定一律寫審計。
 14. 每個 app 的 manifest 必須宣告 `exposure`。internal 的 app 只接受 internal 入口的 session；partner 的 app 接受 internal 與 partner；customer 的 app 只接受 customer，且與後台 app 不共用容器、session 或 cookie。（對外入口只在國際版啟用；大陸版只有 internal。）
-15. 國際版的對外入口只有 cloudflared 指向 gateway-partner 與 gateway-customer。任何 app 容器、gateway-internal、資料庫與 MinIO 的端口都不得對互聯網發佈；除 gateway-internal 外都不得對 LAN 發佈。大陸版沒有任何對外入口。
+15. 國際版的對外入口只有 cloudflared 指向 gateway-partner 與 gateway-customer。任何 app 容器、gateway-internal、資料庫與 MinIO 的端口都不得對互聯網發佈；除 gateway-internal 外都不得對 LAN 發佈。大陸版沒有任何對外入口。唯一例外是 Demo Public Stack（C52）：它是一個獨立隔離環境，可以用 gateway-internal 映像，只由 cloudflared 經獨立 Demo 子網域指向該 Demo 入口，不發佈任何主機端口，並且不得指向正式資料庫、正式 storage、正式 API 或正式老闆／員工帳戶。契約見 `docs/deployment/demo-public-stack.md`。
 16. 模組與 package 只經 `index.ts` 或 `exports` 對外；app 之間不互相 import；分層方向為 web → api → domain → db；`npm run lint:boundaries` 必須通過。
 17. 版本差異只寫在 `packages/edition-profile`。app 內不寫「如果是大陸版」之類的判斷。
 
