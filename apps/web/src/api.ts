@@ -10,6 +10,15 @@ export type PublicUser = {
   email: string;
   displayName: string;
   role: 'owner' | 'staff';
+  /**
+   * 首次登入未改密碼（issue 124）。
+   *
+   * 後端 `toPublicUser` 一定有回這一個欄位。這裡標成可選，是因為
+   * `PublicUser` 同時是登入、setup、`/me` 三條路的回應型別，
+   * 而舊測試夾具只寫了四個欄位。畫面一律用「明確等於 true 才算要改」，
+   * 所以缺席不會被當成 false 還是 true —— 它只會被當成「不知道」。
+   */
+  mustChangePassword?: boolean;
 };
 
 export type AuthState = {
@@ -154,8 +163,38 @@ export function submitLogout(): Promise<ApiResult<null>> {
   });
 }
 
-/** 公司設定的其中一項。值是由 schema 驗證過的 JSON，前端不自己解讀成另一個事實。 */
-export type SettingView = {
+/**
+ * 自己的公開資料（issue 124）。
+ *
+ * 帳戶頁只用這一個作資料來源：`/auth/state` 是外殼的開機判斷（它未登入時
+ * 也回 200），而這一頁要分得出「未登入」與「讀取失敗」。`/me` 在首次強制
+ * 改密碼期間仍然讀得到（後端標了 `allowPendingPasswordChange`）。
+ */
+export function fetchMe(): Promise<ApiResult<{ user: PublicUser }>> {
+  return request<{ user: PublicUser }>('/api/me');
+}
+
+/**
+ * 改自己的密碼（issue 124）。
+ *
+ * 只送兩個欄位：後端對未知欄位回 422，前端連一個多餘的鍵都不加。
+ * 成功時後端會換一個新 session cookie，回傳的 `user.mustChangePassword` 已變成 false
+ * —— 畫面用回應更新，不自己假設。
+ */
+export function submitChangePassword(input: {
+  currentPassword: string;
+  newPassword: string;
+}): Promise<ApiResult<{ user: PublicUser }>> {
+  return request<{ user: PublicUser }>('/api/auth/change-password', {
+    method: 'POST',
+    body: JSON.stringify({
+      currentPassword: input.currentPassword,
+      newPassword: input.newPassword,
+    }),
+  });
+}
+
+/** 公司設定的其中一項。值是由 schema 驗證過的 JSON，前端不自己解讀成另一個事實。 */export type SettingView = {
   key: string;
   value: unknown;
   updatedAt: string;

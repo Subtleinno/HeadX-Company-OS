@@ -29,6 +29,8 @@ export type FakeHandlers = Partial<
     | 'setup'
     | 'login'
     | 'logout'
+    | 'me'
+    | 'changePassword'
     | 'settings'
     | 'settingSave'
     | 'orgUnits'
@@ -121,6 +123,15 @@ function routeKey(path: string, method: string): keyof FakeHandlers | null {
 
   if (path.endsWith('/auth/logout')) {
     return 'logout';
+  }
+
+  // 個人帳戶（issue 124）。`/me` 與改密碼都是 auth 之下更具體的路徑。
+  if (path.endsWith('/auth/change-password')) {
+    return 'changePassword';
+  }
+
+  if (path.endsWith('/me')) {
+    return 'me';
   }
 
   // 組織（issue 120）。次序有意義：先配對更具體的路徑。

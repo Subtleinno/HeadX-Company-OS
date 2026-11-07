@@ -285,3 +285,104 @@ input:focus-visible {
     animation: none;
   }
 }
+
+/* 個人帳戶與安全（issue 124）。顏色一律用 tokens，沒有第二份色碼。 */
+.account__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--hx-space-2);
+}
+
+.account__title {
+  margin: 0;
+  flex: 1 1 100%;
+  font: var(--hx-font-title);
+}
+
+.account__lead,
+.account__note,
+.account__status {
+  margin: var(--hx-space-1) 0 0;
+  color: var(--hx-text-secondary);
+  font: var(--hx-font-footnote);
+}
+
+.account__gate {
+  margin: var(--hx-space-4) 0 0;
+  padding: var(--hx-space-3);
+  border: 0.5px solid var(--hx-warning);
+  border-radius: var(--hx-radius-md);
+  font: var(--hx-font-subheadline);
+}
+
+.account__notice {
+  margin: var(--hx-space-4) 0 0;
+  padding: var(--hx-space-3);
+  border: 0.5px solid var(--hx-danger);
+  border-radius: var(--hx-radius-md);
+  color: var(--hx-danger-text);
+  font: var(--hx-font-footnote);
+}
+
+.account__notice > p {
+  margin: 0 0 var(--hx-space-2);
+}
+
+.account__group {
+  margin: var(--hx-space-6) 0 0;
+  padding-top: var(--hx-space-4);
+  border-top: 0.5px solid var(--hx-border-light);
+}
+
+.account__group-title {
+  margin: 0;
+  font: var(--hx-font-headline);
+}
+
+.account__fields {
+  display: grid;
+  grid-template-columns: minmax(9rem, auto) minmax(0, 1fr);
+  gap: var(--hx-space-2) var(--hx-space-4);
+  margin: 0;
+  font: var(--hx-font-callout);
+}
+
+.account__fields dt {
+  color: var(--hx-text-secondary);
+  font: var(--hx-font-subheadline);
+}
+
+.account__fields dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.account__form {
+  display: grid;
+  gap: var(--hx-space-3);
+  margin: var(--hx-space-3) 0 0;
+  max-width: 24rem;
+}
+
+.account__done {
+  margin: var(--hx-space-3) 0 0;
+  font: var(--hx-font-subheadline);
+}
+
+.account__error {
+  margin: var(--hx-space-3) 0 0;
+  color: var(--hx-danger-text);
+  font: var(--hx-font-footnote);
+}
+
+@media (max-width: 480px) {
+  .account__fields {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--hx-space-1);
+  }
+
+  .account__fields dd {
+    margin-bottom: var(--hx-space-2);
+  }
+}

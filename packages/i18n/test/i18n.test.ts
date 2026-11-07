@@ -34,6 +34,7 @@ describe('字串表', () => {
       'myapps.department',
       'myapps.access.denied',
       'myapps.access.unknown',
+      'account.throttle',
       'admin.unsaved.dirtyCount',
       'org.parentCount',
       'org.settings.sourceUnit',

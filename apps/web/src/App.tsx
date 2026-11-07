@@ -11,6 +11,7 @@ import { t } from '@company-os/i18n';
 import { fetchAuthState, type PublicUser } from './api';
 import { navigate, useRoute } from './router';
 import { AdminArea } from './admin/AdminArea';
+import { AccountScreen } from './screens/AccountScreen';
 import { HomeScreen } from './screens/HomeScreen';
 import { LoginScreen } from './screens/LoginScreen';
 import { SetupScreen } from './screens/SetupScreen';
@@ -55,15 +56,37 @@ export function App() {
   const effective: AuthLoad<PublicUser> = override === null ? state : { kind: 'ready', auth: override };
   const screen = screenOf(effective);
 
+  /**
+   * 已登入但未改過初始密碼（issue 124）。
+   *
+   * 後端在這個狀態下除了 `/me` 與 `/auth/change-password` 之外一律 403
+   * `password_change_required`，所以放他入首頁等於讓他看見一堆「沒有權限」
+   * —— 那是假的。明確等於 true 才算，缺席不當成 true。
+   */
+  const mustChangePassword =
+    effective.kind === 'ready' && effective.auth.user?.mustChangePassword === true;
+
   // 網址只是畫面的鏡子：畫面定了就把 hash 對齊，重新載入仍然停在同一個地方。
   // 比對原始 hash 而不是解析後的 route，空 hash 也要補成 #/。
-  // `/app/*` 例外：那一頁的深連結由該頁自己擁有（決策 C48），這裡不可以蓋掉它。
+  // `/app`、`/admin`、`/account` 例外：那幾頁的深連結由該頁自己擁有（決策 C48），
+  // 這裡不可以蓋掉它。
   useEffect(() => {
     if (screen !== 'setup' && screen !== 'login' && screen !== 'home') {
       return;
     }
 
-    if (screen === 'home' && (route === '/app' || route === '/admin')) {
+    if (mustChangePassword) {
+      if (route !== '/account') {
+        navigate('/account');
+      }
+
+      return;
+    }
+
+    if (
+      screen === 'home' &&
+      (route === '/app' || route === '/admin' || route === '/account')
+    ) {
       return;
     }
 
@@ -72,7 +95,7 @@ export function App() {
     if (window.location.hash !== `#${target}`) {
       navigate(target);
     }
-  }, [screen, route]);
+  }, [screen, route, mustChangePassword]);
 
   function signedIn(user: PublicUser): void {
     setNotice(null);
@@ -89,6 +112,11 @@ export function App() {
     setOverride({ setupRequired: false, signedIn: false });
   }
 
+  /** 改密碼成功之後，後端回的新狀態要蓋過最初那一份（`mustChangePassword` 已變 false）。 */
+  function userChanged(user: PublicUser): void {
+    setOverride({ setupRequired: false, signedIn: true, user });
+  }
+
   if (screen === 'loading') {
     return <LoadingScreen />;
   }
@@ -102,6 +130,20 @@ export function App() {
   }
 
   if (screen === 'home' && effective.auth.user !== undefined) {
+    // 未改初始密碼：先引導去改（issue 124）。不做一個「假裝可用」的首頁。
+    if (mustChangePassword || route === '/account') {
+      return (
+        <AccountScreen
+          user={effective.auth.user}
+          onSignedOut={signedOut}
+          onUserChanged={userChanged}
+          onBack={() => {
+            navigate('/');
+          }}
+        />
+      );
+    }
+
     // `/app/*` 是原型外殼（issue 118 切片 C）。它標明是原型資料，不是正式 registry 的 app。
     if (route === '/app') {
       return <WorkspacePrototype />;

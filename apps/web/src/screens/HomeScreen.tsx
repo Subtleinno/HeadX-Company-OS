@@ -65,6 +65,16 @@ export function HomeScreen({ user, onSignedOut }: HomeScreenProps) {
           <span className="home__proto-note">{t('home.protoNote')}</span>
         </p>
         {/*
+          個人帳戶（issue 124）。每一個已登入的人都應該到得了自己那一頁：
+          只有老闆見得到的入口，對員工就等於「交付了但到不了」。
+        */}
+        <p className="home__proto">
+          <a className="home__account-link" href="#/account">
+            {t('account.title')}
+          </a>
+          <span className="home__proto-note">{t('home.accountNote')}</span>
+        </p>
+        {/*
           管理區入口（issue 119）。只有老闆會見到：員工見到一條按下去會被 403 的連結
           等於騙人。真正把首頁換成新外殼屬 B-02，這裡只放路徑。
         */}
