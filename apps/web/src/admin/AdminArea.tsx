@@ -4,6 +4,7 @@ import { t, type MessageKey } from '@company-os/i18n';
 import { submitLogout } from '../api';
 import { CompanySettingsScreen } from './CompanySettingsScreen';
 import { OrganisationScreen } from './OrganisationScreen';
+import { AppGrantsScreen } from './AppGrantsScreen';
 import { StaffAgentsScreen } from './StaffAgentsScreen';
 
 /**
@@ -29,9 +30,10 @@ const PAGES: readonly { key: AdminPageKey; labelKey: MessageKey }[] = [
   { key: 'settings', labelKey: 'admin.page.settings' },
   { key: 'organisation', labelKey: 'admin.page.organisation' },
   { key: 'staff', labelKey: 'admin.page.staffAgents' },
+  { key: 'grants', labelKey: 'admin.page.grants' },
 ];
 
-type AdminPageKey = 'settings' | 'organisation' | 'staff';
+type AdminPageKey = 'settings' | 'organisation' | 'staff' | 'grants';
 
 const DEFAULT_PAGE: AdminPageKey = 'settings';
 
@@ -48,7 +50,12 @@ function adminHash(page: AdminPageKey): string {
 }
 
 export type AdminAreaProps = {
-  user: { displayName: string };
+  /**
+   * 管理區需要知道「我是誰、我是不是老闆」：
+   * 授權頁要判斷建立／修改是否可以提供（讀組織架構是 `requireOwner`），
+   * 以及在自己那一列寫「（你自己）」。角色只影響**顯示**，准駁仍然由後端決定。
+   */
+  user: { id: string; displayName: string; role: 'owner' | 'staff' };
   onSignedOut: () => void;
 };
 
@@ -193,6 +200,7 @@ export function AdminArea({ user, onSignedOut }: AdminAreaProps) {
         {page === 'settings' && <CompanySettingsScreen onDirtyCountChange={setDirtyCount} />}
         {page === 'organisation' && <OrganisationScreen onDirtyCountChange={setDirtyCount} />}
         {page === 'staff' && <StaffAgentsScreen onDirtyCountChange={setDirtyCount} />}
+        {page === 'grants' && <AppGrantsScreen user={user} onDirtyCountChange={setDirtyCount} />}
         {signOutError !== null && (
           <p className="admin-notice admin-notice--failed" role="alert">
             {signOutError}

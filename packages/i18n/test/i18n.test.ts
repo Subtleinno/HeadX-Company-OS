@@ -29,6 +29,7 @@ describe('字串表', () => {
     //   org.parentCount          → organisation.test.tsx 斷言「2 個上級」
     //   org.settings.sourceUnit  → organisation.test.tsx 斷言「來自「…」」
     //   staff.* / agent.*        → staff-agents.test.tsx 斷言實際數字與原因
+    //   grant.*                  → app-grants.test.tsx 斷言分頁、範圍、受益人與修改前後
     expect(withPlaceholders.map(([key]) => key)).toEqual([
       'admin.unsaved.dirtyCount',
       'org.parentCount',
@@ -39,6 +40,14 @@ describe('字串表', () => {
       'agent.total',
       'agent.grants.scopeNote',
       'agent.access.denied',
+      'grant.pager.info',
+      'grant.scope.note',
+      'grant.supersede',
+      'grant.rejectionReason',
+      'grant.beneficiary.you',
+      'grant.beneficiary.unknown',
+      'grant.modify.current',
+      'grant.modify.target',
       'login.tooManyAttempts',
     ]);
   });

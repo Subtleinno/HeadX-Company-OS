@@ -51,7 +51,14 @@ export type FakeHandlers = Partial<
     | 'agentGrants'
     | 'agentGrantCreate'
     | 'agentGrantRevoke'
-    | 'agentAccess',
+    | 'agentAccess'
+    | 'appGrants'
+    | 'appGrantCreate'
+    | 'appGrantApprove'
+    | 'appGrantActivate'
+    | 'appGrantReject'
+    | 'appGrantRevoke'
+    | 'appGrantPatch',
     Handler
   >
 >;
@@ -183,6 +190,31 @@ function routeKey(path: string, method: string): keyof FakeHandlers | null {
 
   if (bare.endsWith('/staff')) {
     return method === 'GET' ? 'staff' : method === 'POST' ? 'staffCreate' : null;
+  }
+
+  // ── App 授權（issue 122）。同樣先配對更具體的路徑。
+  if (/\/app-grants\/[^/]+\/approve$/.test(bare)) {
+    return method === 'POST' ? 'appGrantApprove' : null;
+  }
+
+  if (/\/app-grants\/[^/]+\/activate$/.test(bare)) {
+    return method === 'POST' ? 'appGrantActivate' : null;
+  }
+
+  if (/\/app-grants\/[^/]+\/reject$/.test(bare)) {
+    return method === 'POST' ? 'appGrantReject' : null;
+  }
+
+  if (/\/app-grants\/[^/]+\/revoke$/.test(bare)) {
+    return method === 'POST' ? 'appGrantRevoke' : null;
+  }
+
+  if (/\/app-grants\/[^/]+$/.test(bare)) {
+    return method === 'PATCH' ? 'appGrantPatch' : null;
+  }
+
+  if (bare.endsWith('/app-grants')) {
+    return method === 'GET' ? 'appGrants' : method === 'POST' ? 'appGrantCreate' : null;
   }
 
   if (bare.endsWith('/modules')) {

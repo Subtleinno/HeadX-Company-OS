@@ -34,6 +34,12 @@ export type ApiFailure =
        * `cycle` 這類錯誤碼，而真正那句中文理由就被丟掉。
        */
       reasons: string[];
+      /**
+       * 後端的一句人話。403／409 的授權錯誤用 `{ error, message }` 這種寫法
+       * （不是 `reasons`），這一句是伺服器自己講的理由，例如
+       * 「boss 是敏感 app，只有老闆可以批准」。畫面原樣顯示，不改寫。
+       */
+      message: string | null;
     };
 
 export type ApiResult<T> = { ok: true; data: T } | { ok: false; failure: ApiFailure };
@@ -104,6 +110,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<ApiResu
         field: typeof record.field === 'string' ? record.field : null,
         retryAfterSeconds: parseRetryAfter(response.headers.get('retry-after')),
         reasons,
+        message: typeof record.message === 'string' && record.message !== '' ? record.message : null,
       },
     };
   }
@@ -456,5 +463,140 @@ export type AccessDecision =
 export function checkAgentAccess(id: string, appId: string): Promise<ApiResult<AccessDecision>> {
   return request<AccessDecision>(
     `/api/agents/${encodeURIComponent(id)}/access/${encodeURIComponent(appId)}`,
+  );
+}
+
+// ---------------------------------------------------------------------------
+// App 授權（issue 122）
+// ---------------------------------------------------------------------------
+
+export type GrantRole = 'member' | 'app_admin';
+
+export type GrantState = 'requested' | 'approved' | 'active' | 'rejected' | 'revoked';
+
+export type AppGrantQuery = {
+  appId?: string;
+  userId?: string;
+  state?: GrantState | null;
+  role?: GrantRole | null;
+  limit?: number;
+  offset?: number;
+};
+
+/**
+ * `/app-grants` 的分頁形狀是 `page: { limit, offset, total }`；
+ * `/agents/:id/grants` 只回一個 `total`。兩個形狀都照原樣收，
+ * 不在前端補一個假的 `page` —— 那會令其中一邊的總數永遠算錯。
+ */
+export type AppGrantPage = {
+  grants: GrantView[];
+  page: { limit: number; offset: number; total: number };
+};
+
+export function fetchAppGrants(query: AppGrantQuery = {}): Promise<ApiResult<AppGrantPage>> {
+  const params = new URLSearchParams();
+
+  params.set('limit', String(query.limit ?? 20));
+  params.set('offset', String(query.offset ?? 0));
+
+  if (query.appId !== undefined) {
+    params.set('appId', query.appId);
+  }
+
+  if (query.userId !== undefined) {
+    params.set('userId', query.userId);
+  }
+
+  if (query.state !== undefined && query.state !== null) {
+    params.set('state', query.state);
+  }
+
+  if (query.role !== undefined && query.role !== null) {
+    params.set('role', query.role);
+  }
+
+  return request<AppGrantPage>(`/api/app-grants?${params.toString()}`);
+}
+
+/** 後端只收四個欄位；同意圖不明的欄位會被 422 拒絕。 */
+export function requestAppGrant(input: {
+  userId: string;
+  appId: string;
+  role: GrantRole;
+  scope: UnitScope;
+}): Promise<ApiResult<{ grant: GrantView; created: boolean }>> {
+  return request<{ grant: GrantView; created: boolean }>('/api/app-grants', {
+    method: 'POST',
+    body: JSON.stringify({
+      userId: input.userId,
+      appId: input.appId,
+      role: input.role,
+      scope: input.scope,
+    }),
+  });
+}
+
+export function approveAppGrant(
+  id: string,
+  version: number,
+): Promise<ApiResult<{ grant: GrantView; activated?: boolean }>> {
+  return request<{ grant: GrantView; activated?: boolean }>(
+    `/api/app-grants/${encodeURIComponent(id)}/approve`,
+    { method: 'POST', body: JSON.stringify({ version }) },
+  );
+}
+
+export function activateAppGrant(id: string, version: number): Promise<ApiResult<{ grant: GrantView }>> {
+  return request<{ grant: GrantView }>(`/api/app-grants/${encodeURIComponent(id)}/activate`, {
+    method: 'POST',
+    body: JSON.stringify({ version }),
+  });
+}
+
+/** 拒絕的理由是必填（後端 422），所以這裡的型別也要求它。 */
+export function rejectAppGrant(
+  id: string,
+  input: { version: number; reason: string },
+): Promise<ApiResult<{ grant: GrantView }>> {
+  return request<{ grant: GrantView }>(`/api/app-grants/${encodeURIComponent(id)}/reject`, {
+    method: 'POST',
+    body: JSON.stringify({ version: input.version, reason: input.reason }),
+  });
+}
+
+/** 撤銷的原因可選；沒有填就不送這個欄位（不是送空字串）。 */
+export function revokeAppGrant(
+  id: string,
+  input: { version: number; reason?: string },
+): Promise<ApiResult<{ grant: GrantView }>> {
+  return request<{ grant: GrantView }>(`/api/app-grants/${encodeURIComponent(id)}/revoke`, {
+    method: 'POST',
+    body: JSON.stringify(
+      input.reason === undefined ? { version: input.version } : { version: input.version, reason: input.reason },
+    ),
+  });
+}
+
+/**
+ * 修改是開新版本：縮範圍回 200（`requiresApproval: false`，即時生效），
+ * 擴範圍／升角色回 201（`requiresApproval: true`，要人批）。兩者都不原地改舊列。
+ */
+export function modifyAppGrant(
+  id: string,
+  input: { version: number; role?: GrantRole; scope?: UnitScope },
+): Promise<ApiResult<{ grant: GrantView; replacedId: string; requiresApproval: boolean }>> {
+  const body: { version: number; role?: GrantRole; scope?: UnitScope } = { version: input.version };
+
+  if (input.role !== undefined) {
+    body.role = input.role;
+  }
+
+  if (input.scope !== undefined) {
+    body.scope = input.scope;
+  }
+
+  return request<{ grant: GrantView; replacedId: string; requiresApproval: boolean }>(
+    `/api/app-grants/${encodeURIComponent(id)}`,
+    { method: 'PATCH', body: JSON.stringify(body) },
   );
 }
