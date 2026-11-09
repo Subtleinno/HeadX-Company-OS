@@ -19,6 +19,9 @@ Company OS 是 company starter：任何一間公司裝好 Docker 就能開始運
 | `docs/product/BASE-UI-DESIGN.md` | 共用外殼、底座管理 UX、Agent-first、設定、模板及語系；不是完整施工規格 |
 | `docs/product/WORKSPACE-APP-SCOPE-DESIGN.md` | 公司／品牌語意、三模式候選互動與接入契約；第十一節列前置規劃交付與依賴分工 |
 | `docs/product/BASE-UI-HXDESIGN-ALIGNMENT.md` | Base UI 對照 HxDesign（`eb079b6`）的逐項實測表：來源檔、尺寸、差距、做法、刻意不照搬、未對齊項 |
+| `docs/product/FRAME-UIUX-HANDOFF.md` | 共用外殼（Frame）UI/UX 定稿交付 v1.3：外殼行為規格（Logo 貼名稱、據點機器入口喺頁尾左下）、公司型 app 正名 Boss Portal（據點管理歸屬佢，無「底座管理」獨立入口）、後端端點接回指引、Logo 管理撤回待重設計、待裁決定與既有規則衝突；給 development manager AI 拆施工 issue 用。設計定稿，未施工 |
+| `docs/design/FRAME-DESIGN-INDEX.md` | 九張 Frame 設計稿索引：Ardot 檔 `745493588675335`、每頁 node ID、`docs/design/frame/*.png` 快照、對應規格章節、施工狀態，同埋可貼去另一個 WorkBuddy session 嘅開工卡。Ardot 圖層係原始真相，PNG 係快照 |
+| `docs/product/PERPLEXITY-MANAGER-PROMPT.md` | 畀 Perplexity（PM）用嘅完整 prompt：只開 GitHub issues 唔寫 code；必讀次序、UIUX 大圖、既有 issue 盤點避免撞車、E-00 總綱／F-01 裁決／F-02～F-07／D-01 序列、`Depends-on` 與 `cat:` 規則、loop 協定、本機 Docker 驗收 |
 | `docs/planning-loop.md` | 規劃與施工的分工、Depends-on、範疇與並行保護 |
 | `docs/testing/DEMO-PUBLIC-TESTING.md` | Demo Public Stack：UI／UX 測試、Demo 帳戶與 Cloudflare Tunnel 的隔離規則 |
 | `docs/deployment/demo-public-stack.md` | Demo Public Stack 部署契約：隔離條件、啟動、更新、清除、健康檢查與安全邊界（決策 C52） |

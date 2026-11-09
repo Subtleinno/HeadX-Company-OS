@@ -63,6 +63,48 @@ docker compose up -d --build
 
 `npm run ports:check` 會檢查 `.env` 內的端口能否綁定，再探測有沒有人正在回應（容器發佈的端口「綁得上」但其實已被佔用，所以兩樣都要查）；有衝突或無法確認會列出原因，並以 exit 1 結束。在 Windows 上它會用 `netstat`／`tasklist` 指出佔用的是哪個程序（例如「佔用者 com.docker.backend.exe（PID 3552），可能是其他 compose 專案」）；查不到誰佔用會明說「無法識別佔用者」，一樣 exit 1，不會把查不到當成沒問題。它現在讀 `packages/edition-profile` 的版本設定：版本由 `EDITION` 決定（預設 `intl`，另一個是 `cn`），未知的值會即時報錯，不會默默當成國際版。
 
+## 更新到最新 main
+
+`docker compose up -d` **不會**重建映像 —— 它只會重建「設定有變」的容器。只要 Dockerfile 與 build context 沒變，Docker 就會沿用本機舊映像，於是 stack 可以在無人察覺的情況下繼續跑舊 code。2026-11-07 就發生過一次：`api`、`gateway-internal`、`apps` 三個映像同時落後於 main，`GET /modules` 的「必須先改初始密碼」閘門因此完全沒有上線，而畫面上甚麼都看不出來。
+
+所以每次更新都要**先建置、後啟動**：
+
+```powershell
+git pull
+npm ci
+npm run deploy:build
+docker compose up -d
+docker compose --profile apps up -d apps
+npm run deploy:revision
+```
+
+- `npm run deploy:build`：讀 `git rev-parse HEAD`，把這個 SHA 經 build arg `GIT_REVISION` 傳給三個 Dockerfile，重建 `api`、`gateway-internal`、`apps`。讀不到 commit 時它會**拒絕建置**：一個查不到出處的映像不應該上線。
+- `docker compose up -d`：重建有變的容器。**這一步不會重建映像**，所以次序不可以倒轉。
+- `apps` 在 `profile: ["apps"]` 之下：`docker compose up -d` 既不啟動它、也不重建它，所以要另外執行 `docker compose --profile apps up -d apps`。這是最容易漏的一步。
+- `npm run deploy:revision`：逐個容器講出「映像標記的 commit」與「本機現行 commit」，標示 `相符`／`落後`／`未知`／`不適用（外部映像）`。退出碼：`0` 全部相符、`1` 有落後、`2` 有未知、`3` 前置條件失敗（沒有 git 或 docker）。
+
+落後時的實際輸出：
+
+```text
+現行 commit：879f140acf8a1343759aaa4527b0abaa073feb9d
+
+容器                          服務              標記 commit   結果
+<專案>-api-1                  api               3f6b961778a3  落後
+<專案>-gateway-internal-1     gateway-internal  33ecf281f160  落後
+<專案>-apps-1                 apps              —             未知（沒有標記）
+<專案>-db-1                   db                —             不適用（不是由本 repo 建置）
+
+相符 0、落後 2、未知 1、不適用 1
+重建並重啟：npm run deploy:build && docker compose up -d
+apps 在 profile 之下，要另外：docker compose --profile apps up -d apps
+```
+
+（`<專案>` 是 compose 專案名，預設 `company-os`；實際輸出會印真實容器名。）
+
+甚麼時候**不用**重建映像：只改 `.env` 內的值（端口、密碼、`COOKIE_SECURE`）時，`docker compose up -d` 就夠。改到任何 Dockerfile、`package.json`／`package-lock.json`、`apps/`、`packages/`、`db/migrations`、`profiles/` 就一定要重建 —— 那些都是 COPY 進映像的東西。
+
+`npm run ports:check` 在 stack 運行時一定會報「有程式正在回應」並以 exit 1 結束：那不是端口衝突，是它分不清「己方 stack」與「別人佔用」。更新流程不需要跑它；只有改端口時，在 `docker compose down` 之後才跑。要令它認得己方 stack 屬另一張 issue，不在這裡順手改。
+
 ## 端口（現況）
 
 | 服務 | `.env` 變數 | 預設 |

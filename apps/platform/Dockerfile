@@ -43,6 +43,12 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
+# 建置時的 commit（issue #143）。值由 compose 的 build args 傳入，通常來自
+# `npm run deploy:build`；沒有傳入時是 unknown。寧願講未知，也不要寫一個
+# 看起來合理的假 SHA —— 一個假的 revision 比沒有 revision 更難查。
+ARG GIT_REVISION=unknown
+LABEL org.opencontainers.image.revision=$GIT_REVISION
+
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/apps/platform/package.json ./apps/platform/package.json
 COPY --from=build /app/apps/platform/dist ./apps/platform/dist
