@@ -32,7 +32,7 @@ describe('深連結與重整', () => {
     render(<WorkspacePrototype />);
 
     expect(screen.getByRole('heading', { name: /App B/ })).toBeTruthy();
-    expect(document.querySelector('[data-scope-kind="brand"]')?.textContent).toContain('品牌甲');
+    expect(document.querySelector('[data-frame-slot="scope"]')?.textContent).toContain('品牌甲');
     expect(screen.getByText('品牌總覽')).toBeTruthy();
   });
 
@@ -41,7 +41,7 @@ describe('深連結與重整', () => {
 
     render(<WorkspacePrototype />);
 
-    const main = document.querySelector('[data-shell-main]');
+    const main = document.querySelector('[data-frame-main]');
 
     expect(main?.textContent).toContain('請選擇品牌');
     expect(screen.getByText('這個 app 要先選品牌，才開始工作。')).toBeTruthy();
@@ -105,7 +105,7 @@ describe('切 app：第二步與取消', () => {
 
     render(<WorkspacePrototype />);
 
-    await user.click(screen.getByRole('button', { name: '選擇 app' }));
+    await user.click(screen.getByRole('button', { name: '選擇 App' }));
     await user.click(screen.getByRole('option', { name: 'App B' }));
 
     const dialog = screen.getByRole('dialog', { name: '選擇品牌' });
@@ -120,7 +120,7 @@ describe('切 app：第二步與取消', () => {
 
     render(<WorkspacePrototype />);
 
-    await user.click(screen.getByRole('button', { name: '選擇 app' }));
+    await user.click(screen.getByRole('button', { name: '選擇 App' }));
     await user.click(screen.getByRole('option', { name: 'App B' }));
     await user.click(screen.getByRole('button', { name: '返回' }));
 
@@ -135,7 +135,7 @@ describe('切 app：第二步與取消', () => {
 
     render(<WorkspacePrototype />);
 
-    await user.click(screen.getByRole('button', { name: '選擇 app' }));
+    await user.click(screen.getByRole('button', { name: '選擇 App' }));
     await user.click(screen.getByRole('option', { name: 'App B' }));
 
     const dialog = screen.getByRole('dialog', { name: '選擇品牌' });
@@ -152,7 +152,7 @@ describe('切 app：第二步與取消', () => {
 
     render(<WorkspacePrototype />);
 
-    await user.click(screen.getByRole('button', { name: '選擇 app' }));
+    await user.click(screen.getByRole('button', { name: '選擇 App' }));
     await user.click(screen.getByRole('option', { name: 'App B' }));
 
     const dialog = screen.getByRole('dialog', { name: '選擇品牌' });
@@ -171,13 +171,13 @@ describe('切 app：第二步與取消', () => {
 
     render(<WorkspacePrototype />);
 
-    await user.click(screen.getByRole('button', { name: '選擇 app' }));
+    await user.click(screen.getByRole('button', { name: '選擇 App' }));
     await user.click(screen.getByRole('option', { name: 'App C' }));
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /App C/ })).toBeTruthy();
     });
-    expect(document.querySelector('[data-scope-kind="brand"]')?.textContent).toContain('品牌甲');
+    expect(document.querySelector('[data-frame-slot="scope"]')?.textContent).toContain('品牌甲');
   });
 });
 
@@ -191,7 +191,7 @@ describe('未保存', () => {
     const note = screen.getByLabelText('原型備註') as HTMLTextAreaElement;
 
     await user.type(note, '未保存的內容');
-    await user.click(screen.getByRole('button', { name: '選擇 app' }));
+    await user.click(screen.getByRole('button', { name: '選擇 App' }));
     await user.click(screen.getByRole('option', { name: 'App C' }));
 
     expect(screen.getByText(/尚有未保存的輸入/)).toBeTruthy();
@@ -209,7 +209,7 @@ describe('未保存', () => {
     render(<WorkspacePrototype />);
 
     await user.type(screen.getByLabelText('原型備註'), '內容');
-    await user.click(screen.getByRole('button', { name: '選擇 app' }));
+    await user.click(screen.getByRole('button', { name: '選擇 App' }));
     await user.click(screen.getByRole('option', { name: 'App C' }));
     await user.click(screen.getByRole('button', { name: '放棄並切換' }));
 
@@ -239,7 +239,7 @@ describe('慢回應與失敗', () => {
     render(<WorkspacePrototype loadLabel={loadLabel} />);
 
     // 切去品牌乙（第二個請求即刻回來）
-    await user.click(screen.getByRole('button', { name: '工作範圍' }));
+    await user.click(screen.getByRole('button', { name: '選擇品牌' }));
     await user.click(screen.getByRole('option', { name: /品牌乙/ }));
 
     await waitFor(() => {
@@ -309,7 +309,7 @@ describe('導覽的 key 要對得上頁面', () => {
 
     expect(tab.getAttribute('aria-current')).toBe('page');
     expect(screen.getByText('品牌總覽')).toBeTruthy();
-    expect(document.querySelector('[data-shell-rail]')).not.toBeNull();
+    expect(document.querySelector('[data-frame-rail]')).not.toBeNull();
   });
 
   it('按第二行或工作欄的項目，同樣留在這一頁', async () => {
@@ -319,7 +319,7 @@ describe('導覽的 key 要對得上頁面', () => {
     render(<WorkspacePrototype />);
 
     await user.click(screen.getByText('品牌總覽'));
-    expect(document.querySelector('[data-shell-rail]')).not.toBeNull();
+    expect(document.querySelector('[data-frame-rail]')).not.toBeNull();
 
     await user.click(screen.getByText('品牌工作'));
     expect(screen.getByText('品牌總覽')).toBeTruthy();

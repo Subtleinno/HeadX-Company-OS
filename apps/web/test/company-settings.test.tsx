@@ -94,9 +94,10 @@ describe('讀取公司設定', () => {
     await waitForRows();
 
     expect(screen.getByText('以下每一項都是整間公司的設定，不是某一個品牌。')).toBeTruthy();
-    // 公司型外殼顯示固定範圍文字，不會出現一個假的品牌下拉。
+    // 公司型外殼顯示固定範圍純文字「公司範圍」，不會出現一個假的品牌下拉。
     expect(screen.queryByRole('button', { name: '工作範圍' })).toBeNull();
-    expect(screen.getByText('公司')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: '選擇品牌' })).toBeNull();
+    expect(screen.getByText('公司範圍')).toBeTruthy();
   });
 
   it('安裝時決定的兩項唯讀，沒有儲存鍵，並講明原因', async () => {

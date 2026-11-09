@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
-import { AppShell, ShellContent } from '@company-os/app-shell';
+import { FrameShell } from '@company-os/app-shell';
 import { t } from '@company-os/i18n';
 import { Field } from '@company-os/ui-kit';
 import {
@@ -9,6 +9,9 @@ import {
   type ApiFailure,
   type PublicUser,
 } from '../api';
+import { FORMAL_APPS, MAIN_NAV_ROUTE, mainNavItems, type MainNavKey } from '../frame/nav';
+import { useFrameChrome } from '../frame/useFrameChrome';
+import { navigate } from '../router';
 
 /**
  * 個人帳戶與安全（issue 124）。
@@ -127,6 +130,7 @@ function changeFailureMessage(failure: ApiFailure): string {
 }
 
 export function AccountScreen({ user, onSignedOut, onUserChanged, onBack }: AccountScreenProps) {
+  const chrome = useFrameChrome();
   const [load, setLoad] = useState<LoadState>({ kind: 'loading' });
   const [submit, setSubmit] = useState<SubmitState>({ kind: 'idle' });
   const [current, setCurrent] = useState('');
@@ -287,17 +291,43 @@ export function AccountScreen({ user, onSignedOut, onUserChanged, onBack }: Acco
   const gate = shown !== null && shown.mustChangePassword === true;
 
   return (
-    <AppShell
+    <FrameShell
+      apps={FORMAL_APPS}
+      currentAppId=""
+      onSelectApp={() => undefined}
+      moduleTabs={mainNavItems(user.role === 'owner')}
+      currentModuleTabKey="account"
+      onSelectModuleTab={(key) => {
+        // 主選單係真導覽，但切走之前照舊經 confirmLeave() 保護未提交的密碼輸入。
+        if (key === 'account' || !confirmLeave()) {
+          return;
+        }
+
+        const route = MAIN_NAV_ROUTE[key as MainNavKey];
+
+        if (route !== undefined) {
+          navigate(route);
+        }
+      }}
+      theme={chrome.theme}
+      onToggleTheme={chrome.onToggleTheme}
       /**
        * 頂欄的名字：`/me` 答過就以它為準；未答之前先用外殼帶入的身份（那只是
        * 「這次 session 以為你是誰」）；一旦 `/me` 講未登入或入口不可信就留空
        * —— 一邊說「你未登入」一邊在頂欄寫你的名字，是同一個畫面上兩個矛盾的事實。
+       * 空白／缺值由外殼如實顯示「名稱未提供」，唔用頭像或首字 fallback。
        */
-      displayName={shown?.displayName ?? (load.kind === 'loading' ? user.displayName : '')}
-      signingOut={signingOut}
+      account={{
+        displayName: shown?.displayName ?? (load.kind === 'loading' ? user.displayName : ''),
+        signingOut,
+      }}
       onSignOut={() => void handleSignOut()}
+      sidebarOpen={chrome.sidebarOpen}
+      onToggleSidebar={chrome.onToggleSidebar}
+      modulePages={[]}
+      currentPageKey={null}
+      onSelectPage={() => undefined}
     >
-      <ShellContent>
         <header className="account__header">
           <h1 className="account__title">{t('account.title')}</h1>
           <p className="account__lead">{t('account.lead')}</p>
@@ -449,7 +479,6 @@ export function AccountScreen({ user, onSignedOut, onUserChanged, onBack }: Acco
             </section>
           </>
         )}
-      </ShellContent>
-    </AppShell>
+    </FrameShell>
   );
 }

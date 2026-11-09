@@ -81,26 +81,22 @@ describe('色碼只在 tokens.css', () => {
   });
 });
 
-describe('品牌綠色只給品牌標誌', () => {
-  it('整個 apps/web/src 只出現一次 var(--hx-brand-green)', () => {
-    // 數「出現次數」而不是「有幾個檔案」：同一個檔多寫一次也要紅。
+describe('品牌綠色退役（議題 158）', () => {
+  it('整個 apps/web/src 內 var(--hx-brand-green) 出現次數為 0', () => {
+    // 停用品牌綠色之後唔可以再有任何使用處；數「出現次數」而不是「有幾個檔案」。
     const occurrences = sources.flatMap((file) => {
       const matches = read(file).match(/var\(--hx-brand-green\)/g) ?? [];
 
       return matches.map(() => relative(repoRoot, file));
     });
 
-    expect(occurrences).toHaveLength(1);
+    expect(occurrences).toHaveLength(0);
   });
 
-  it('那一次在 .brand__mark 規則內，而且是 8×8 方塊', () => {
+  it('app.css 內 .brand__mark 規則已移除', () => {
     const css = webSource('styles/app.css');
-    const rule = /\.brand__mark\s*\{([^}]*)\}/.exec(css);
 
-    expect(rule).not.toBeNull();
-    expect(rule?.[1]).toContain('var(--hx-brand-green)');
-    expect(rule?.[1]).toMatch(/width:\s*8px/);
-    expect(rule?.[1]).toMatch(/height:\s*8px/);
+    expect(/\.brand__mark\s*\{([^}]*)\}/.exec(css)).toBeNull();
   });
 });
 

@@ -90,7 +90,9 @@ describe('啟動時的五個狀態', () => {
       ),
     ).toBeTruthy();
     expect(screen.getByText('陳老闆')).toBeTruthy();
-    expect(screen.getByText('Company OS')).toBeTruthy();
+    // 公司名如實顯示未提供（GET /me 無公司名、SettingKey 無公司名 key）；
+    // Frame 外殼頁尾由共用外殼以 frame.company.nameMissing 顯示，唔用示意值。
+    expect(screen.getByText('公司名稱未提供')).toBeTruthy();
     expect(screen.getByRole('button', { name: '登出' })).toBeTruthy();
     await expectHash('/');
   });
@@ -106,7 +108,10 @@ describe('啟動時的五個狀態', () => {
 
     expect(container.querySelector('table')).toBeNull();
     expect(container.querySelector('canvas')).toBeNull();
-    expect(container.querySelector('svg')).toBeNull();
+    // 外殼頂欄嘅圖示係合法 svg；呢條釘住「內容區沒有假數據圖表」。
+    expect(container.querySelector('[data-frame-main] table')).toBeNull();
+    expect(container.querySelector('[data-frame-main] canvas')).toBeNull();
+    expect(container.querySelector('[data-frame-main] svg')).toBeNull();
   });
 
   it('首頁有一條通往新外殼原型的連結，並講明是示範', async () => {

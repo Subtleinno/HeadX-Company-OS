@@ -84,7 +84,7 @@ describe('#147 A：原型第二步選品牌要經 commit()', () => {
     render(<WorkspacePrototype />);
 
     await user.type(screen.getByLabelText('原型備註'), '未保存的內容');
-    await user.click(screen.getByRole('button', { name: '選擇 app' }));
+    await user.click(screen.getByRole('button', { name: '選擇 App' }));
     await user.click(screen.getByRole('option', { name: 'App B' }));
 
     const step = screen.getByRole('dialog', { name: '選擇品牌' });
@@ -103,7 +103,7 @@ describe('#147 A：原型第二步選品牌要經 commit()', () => {
     render(<WorkspacePrototype />);
 
     await user.type(screen.getByLabelText('原型備註'), '要留住');
-    await user.click(screen.getByRole('button', { name: '選擇 app' }));
+    await user.click(screen.getByRole('button', { name: '選擇 App' }));
     await user.click(screen.getByRole('option', { name: 'App B' }));
 
     const step = screen.getByRole('dialog', { name: '選擇品牌' });
@@ -122,7 +122,7 @@ describe('#147 A：原型第二步選品牌要經 commit()', () => {
     render(<WorkspacePrototype />);
 
     await user.type(screen.getByLabelText('原型備註'), '可以丟');
-    await user.click(screen.getByRole('button', { name: '選擇 app' }));
+    await user.click(screen.getByRole('button', { name: '選擇 App' }));
     await user.click(screen.getByRole('option', { name: 'App B' }));
 
     const step = screen.getByRole('dialog', { name: '選擇品牌' });
@@ -143,7 +143,7 @@ describe('#147 A：原型第二步選品牌要經 commit()', () => {
     render(<WorkspacePrototype />);
 
     await user.type(screen.getByLabelText('原型備註'), '鍵盤輸入');
-    await user.click(screen.getByRole('button', { name: '選擇 app' }));
+    await user.click(screen.getByRole('button', { name: '選擇 App' }));
     await user.click(screen.getByRole('option', { name: 'App B' }));
 
     const step = screen.getByRole('dialog', { name: '選擇品牌' });
@@ -190,7 +190,7 @@ describe('#147 B：管理區未儲存對話框', () => {
     const user = userEvent.setup();
     await openDirtyDialog(user);
 
-    const shell = document.querySelector('.shell-frame');
+    const shell = document.querySelector('.frame-shell');
 
     expect(shell).not.toBeNull();
     // inert 要包住成個外殼（含頂欄、左欄、內容區），唔係只遮內容區。

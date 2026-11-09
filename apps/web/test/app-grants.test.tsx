@@ -142,9 +142,12 @@ function escapeRegExp(value: string): string {
 async function pick(label: string, option: string | RegExp): Promise<void> {
   const user = userEvent.setup();
   const name = typeof option === 'string' ? new RegExp(`^${escapeRegExp(option)}`) : option;
+  // Frame 外殼頂欄亦有 App selector（選擇 App），同頁面內嘅 selector 撞名；
+  // 頁面內嘅選擇器一律喺主要內容區定位，行為不變。
+  const main = document.querySelector('[data-frame-main]') as HTMLElement;
 
-  await user.click(screen.getByRole('button', { name: label }));
-  await user.click(screen.getByRole('option', { name }));
+  await user.click(within(main).getByRole('button', { name: label }));
+  await user.click(within(main).getByRole('option', { name }));
 }
 
 function grantRow(id: string): HTMLElement {

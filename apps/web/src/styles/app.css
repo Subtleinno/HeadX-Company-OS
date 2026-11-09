@@ -173,56 +173,8 @@ input:focus-visible {
   background: var(--hx-bg-secondary);
 }
 
-/* 首頁骨架：頂欄 + 內容，沒有任何假卡片。 */
-.shell {
-  min-height: 100vh;
-  background: var(--hx-bg-primary);
-}
-
-.toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--hx-space-4);
-  height: var(--hx-size-toolbar);
-  padding: 0 var(--hx-space-6);
-  border-bottom: 1px solid var(--hx-hairline);
-}
-
-.toolbar__brand {
-  display: flex;
-  align-items: center;
-  gap: var(--hx-space-2);
-  font: var(--hx-font-headline) var(--hx-font-family);
-}
-
-.brand__mark {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  background: var(--hx-brand-green);
-}
-
-.toolbar__account {
-  display: flex;
-  align-items: center;
-  gap: var(--hx-space-2);
-  min-width: 0;
-}
-
-.toolbar__name {
-  overflow: hidden;
-  color: var(--hx-text-secondary);
-  font: var(--hx-font-footnote) var(--hx-font-family);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.home {
-  max-width: 720px;
-  padding: var(--hx-space-8) var(--hx-space-6);
-}
-
+/* 首頁內容樣式。外殼已由 FrameShell 同 frame.css 提供，
+   舊 .shell / .toolbar 與品牌標誌方塊規則已移除（議題 158）。 */
 .home__title {
   margin: 0 0 var(--hx-space-4);
   font: var(--hx-font-title) var(--hx-font-family);
@@ -266,14 +218,6 @@ input:focus-visible {
 
   .card {
     padding: var(--hx-space-6);
-  }
-
-  .toolbar {
-    padding: 0 var(--hx-space-4);
-  }
-
-  .home {
-    padding: var(--hx-space-6) var(--hx-space-4);
   }
 }
 
