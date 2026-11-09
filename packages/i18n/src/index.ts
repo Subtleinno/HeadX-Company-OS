@@ -748,6 +748,20 @@ export const messages = {
   'files.endOfList': '已到最後，沒有更多檔案。',
 
   'files.checksum.note': '校驗碼是檔案內容的 SHA-256 值，用來核對檔案完整性。',
+
+  // ── 授權單筆詳情文案鍵（issue 168）─────────────────────────────────
+  // 只新增鍵，不改、不刪、不重命名上面任何既有鍵或文字。繁體中文（香港）、
+  // 零 emoji、零插值、唔推斷「已生效／已批准」、唔放示例 id／日期／假資料、
+  // 唔用錯誤碼或欄位名作主文字。文案待老闆事後審閱。
+  // 重用既有鍵（grant.title／grant.column.*／grant.state.*／grant.time.*／
+  // grant.rejectionReason／grant.supersede／grant.beneficiary.idsOnly／
+  // common.retry／status.loading／error.network／error.unexpected）由下游直接重用，
+  // 本張唔重複新增。
+  'grant.detail.title': '授權詳情',
+  'grant.detail.back': '返回授權列表',
+  'grant.detail.notFound': '找不到這筆授權。',
+  'grant.detail.loadFailed': '讀不到這筆授權，請重試。',
+  'grant.detail.noValue': '未有',
 } as const;
 
 export type MessageKey = keyof typeof messages;

@@ -222,8 +222,11 @@ const FROZEN_ALL_SHA256 = 'f198408e30ea7d992af3375af859dc30e5bb1ca26b829efffa730
  * 「既有鍵被改」，令 npm test 假紅（同 #155 frame-messages.test.ts 嘅情況一樣）。
  * 凍結值 f198408e… 唔變、守衛嘅 522 個既有鍵唔變，唔係放寬門檻；
  * #163 嘅完整鍵清單另由 files-messages.test.ts「冇清單以外嘅 files.* 鍵」守衛。
+ *
+ * issue 168 新增 5 個 grant.detail.* 鍵，同樣唔屬 #161 要守嘅既有鍵，
+ * 加落同一排除清單；凍結值同守衛範圍唔變，唔係放寬門檻。
  */
-const LATER_KEY_PREFIXES = ['files.'];
+const LATER_KEY_PREFIXES = ['files.', 'grant.detail.'];
 
 function hashExcluding(msgs: Record<string, string>, excluded: ReadonlySet<string>): string {
   const entries = Object.entries(msgs)

@@ -162,9 +162,20 @@ const INTERPOLATED: Record<string, Record<string, string | number>> = {
  */
 const FROZEN_ALL_SHA256 = 'da869a7ec7a8b682a6c712c5cf087adb72d0268906304c5e773dbe1c8a851885';
 
+/**
+ * 同步改寫（issue 168）：issue 168 新增 5 個 grant.detail.* 鍵，唔屬 #163
+ * 要守嘅既有鍵；唔排除嘅話「合法新增鍵」會被誤當成「既有鍵被改」，令
+ * npm test 假紅（同 #155／#161 嘅情況一樣）。凍結值 da869a7e… 唔變、
+ * 守衛嘅 596 個既有鍵唔變，唔係放寬門檻；issue 168 嘅完整鍵清單另由
+ * grant-detail-messages.test.ts「冇清單以外嘅 grant.detail.* 鍵」守衛。
+ */
+const LATER_KEY_PREFIXES = ['grant.detail.'];
+
 function hashExcluding(msgs: Record<string, string>, excluded: ReadonlySet<string>): string {
   const entries = Object.entries(msgs)
-    .filter(([key]) => !excluded.has(key))
+    .filter(
+      ([key]) => !excluded.has(key) && !LATER_KEY_PREFIXES.some((prefix) => key.startsWith(prefix)),
+    )
     .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
   return createHash('sha256').update(JSON.stringify(entries)).digest('hex');
 }
