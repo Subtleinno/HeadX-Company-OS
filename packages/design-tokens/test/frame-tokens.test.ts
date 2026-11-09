@@ -10,6 +10,10 @@ import { describe, expect, it } from 'vitest';
  * 深色區塊喺本輪 light-only 降級下維持原狀。每一個新名都要同時喺
  * tokens.css 定義、並由 src/index.ts 嘅 tokenVar 引用，否則 CSS 會靜默失效。
  *
+ * issue 159 退役舊綠色：淺色同深色兩區塊嘅 --hx-brand-green 定義同
+ * src/index.ts 嘅 brandGreen 一併移除；凍結快照同步剔除呢一個名，
+ * 其餘凍結值一個字都唔改。
+ *
  * 深色對等測試同深色 WCAG 屬 DEFERRED (dark UI)，唔喺本檔斷言。
  */
 
@@ -42,7 +46,7 @@ function tokensOf(selector: string): Map<string, string> {
 const light = tokensOf(':root');
 const dark = tokensOf(":root[data-theme='dark']");
 
-/** 合併前（#156 merge SHA 22005ac）既有淺色 token 嘅凍結快照，一個字都唔可以改。 */
+/** 合併前（#156 merge SHA 22005ac）既有淺色 token 嘅凍結快照；除咗 issue 159 退役嘅 --hx-brand-green 之外，一個字都唔可以改。 */
 const frozenLight: Record<string, string> = {
   '--hx-bg-primary': '#ffffff',
   '--hx-bg-secondary': '#f5f5f7',
@@ -61,7 +65,6 @@ const frozenLight: Record<string, string> = {
   '--hx-danger-text': '#d70015',
   '--hx-warning': '#ff9500',
   '--hx-success': '#34c759',
-  '--hx-brand-green': '#b8f36b',
   '--hx-floating-bg': 'rgba(255, 255, 255, 0.82)',
   '--hx-floating-blur': 'saturate(160%) blur(14px)',
   '--hx-scrim': 'rgba(0, 0, 0, 0.32)',
@@ -103,7 +106,7 @@ const frozenLight: Record<string, string> = {
   '--hx-ease': 'cubic-bezier(0.2, 0, 0, 1)',
 };
 
-/** 合併前深色區塊嘅凍結快照：本輪唔加、唔刪、唔改任何深色 token。 */
+/** 合併前深色區塊嘅凍結快照：除咗 issue 159 退役嘅 --hx-brand-green 之外，本輪唔加、唔改任何深色 token。 */
 const frozenDark: Record<string, string> = {
   '--hx-bg-primary': '#000000',
   '--hx-bg-secondary': '#1c1c1e',
@@ -122,7 +125,6 @@ const frozenDark: Record<string, string> = {
   '--hx-danger-text': '#ff7a70',
   '--hx-warning': '#ffa726',
   '--hx-success': '#30d158',
-  '--hx-brand-green': '#b8f36b',
   '--hx-floating-bg': 'rgba(28, 28, 30, 0.82)',
   '--hx-floating-blur': 'saturate(160%) blur(14px)',
   '--hx-scrim': 'rgba(0, 0, 0, 0.5)',
@@ -216,13 +218,14 @@ describe('既有 token 零改動（現有畫面任何像素唔變）', () => {
     expect(missing).toEqual([]);
   });
 
-  it('深色區塊維持原狀（本輪 light-only，唔加唔刪唔改）', () => {
+  it('深色區塊其餘 token 維持原狀（退役綠色除外）', () => {
     expect(Object.fromEntries(dark)).toEqual(frozenDark);
   });
 
-  it('--hx-brand-green 仍然存在（#158／#159 先至移除同退役）', () => {
-    expect(light.get('--hx-brand-green')).toBe('#b8f36b');
-    expect(dark.get('--hx-brand-green')).toBe('#b8f36b');
+  it('--hx-brand-green 已退役：淺色同深色都唔再定義，index.ts 亦唔再導出 brandGreen', () => {
+    expect(light.has('--hx-brand-green')).toBe(false);
+    expect(dark.has('--hx-brand-green')).toBe(false);
+    expect(indexSource).not.toMatch(/^\s*brandGreen\s*:/mu);
   });
 });
 

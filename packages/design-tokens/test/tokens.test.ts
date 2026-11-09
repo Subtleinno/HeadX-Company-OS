@@ -99,7 +99,6 @@ describe('tokens.css 的值與規格一致', () => {
     '--hx-danger': '#ff3b30',
     '--hx-warning': '#ff9500',
     '--hx-success': '#34c759',
-    '--hx-brand-green': '#b8f36b',
     '--hx-radius-sm': '8px',
     '--hx-radius-md': '12px',
     '--hx-radius-lg': '16px',
@@ -130,6 +129,10 @@ describe('tokens.css 的值與規格一致', () => {
       expect(token(name)).toBe(value);
     });
   }
+
+  it('--hx-brand-green 已退役，淺色區塊唔再定義呢個 token', () => {
+    expect(tokens.has('--hx-brand-green')).toBe(false);
+  });
 
   it('字體堆疊一字不差，而且不下載字體', () => {
     expect(token('--hx-font-family')).toBe(
