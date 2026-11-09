@@ -2,12 +2,14 @@
 
 | 項目 | 內容 |
 |---|---|
-| 版本 | v1.2（2026-11-09 命名裁決） |
+| 版本 | v1.3（2026-11-09 設計稿與 PM prompt 落 GitHub） |
 | 日期 | 2026-11-09 |
-| 狀態 | **Frame 設計定稿；公司型 app 正名 Boss Portal；Logo 管理撤回待重設計；未施工** |
+| 狀態 | **Frame 設計定稿；公司型 app 正名 Boss Portal；Logo 管理撤回待重設計；設計稿與 PM prompt 已入 repo；未施工** |
 | 讀者 | Development manager AI（Perplexity）及接手嘅開發團隊 |
-| 設計稿 | `company-os App UI v2`，Ardot fileId `745493588675335`（可編輯圖層，9 頁 1440×900） |
-| 相關底稿 | `.workbuddy/design/00-backend-functions.md`、`01-scope-model.md`、`02-multi-machine-access.md`（本機設計底稿，gitignored，唔入 repo） |
+| 設計稿 | `company-os App UI v2`，Ardot fileId `745493588675335`（可編輯圖層，9 頁 1440×900）；網址 https://ardot.tencent.com/file/745493588675335 |
+| 設計稿快照 | `docs/design/FRAME-DESIGN-INDEX.md`＋`docs/design/frame/*.png`（9 張，已入 repo；WorkBuddy 開工卡喺索引入面） |
+| PM prompt | `docs/product/PERPLEXITY-MANAGER-PROMPT.md`（畀 Perplexity 開 GitHub issues 用） |
+| 相關底稿 | `.workbuddy/design/00-backend-functions.md`、`01-scope-model.md`、`02-multi-machine-access.md`（本機設計底稿，gitignored，**GitHub 讀唔到**；PM 改用本文件第 3.2／3.3 節加 repo 內實際 `routes.ts`） |
 | 交付順序 | **Frame → GitHub → Boss Portal → Design app**；本文件只完成 Frame。頁 06–09 係 Boss Portal 嘅據點管理概念畫面，完整業務頁未開始（第 1.6 節／Q9） |
 
 > **一句摘要**：呢份係一套持久共用外殼（Frame）嘅 UI/UX 規格，唔係任何部門 app 嘅業務頁；所有畫面都係可編輯原型，內容係明確示意值，**未接任何 API、未改一行 backend／db／platform／apps/web**。
@@ -15,6 +17,8 @@
 > **v1.1 改咗乜**：老闆三點修正 —— (1) 公司／品牌 Logo 唔再放頂欄最左獨立組，改為貼住各自名稱；(2) Logo 管理四頁全部撤回，之後先深度重設計；(3) 據點機器入口由右上個人帳戶搬去頁尾左側本機公司身份位。第 1.4、2.7、2.8、3.4、3.5、4、5 節係受影響章節。
 
 > **v1.2 改咗乜**：老闆補充命名裁決 —— *「it actually not the 底座管理, it is the Boss portal」*。一直被稱作「底座管理」嘅公司型 app 正名為 **Boss Portal**；畫布刪走同「老闆台 Boss Portal」重複嘅第七個入口，頁 06–09 歸屬 Boss Portal，頂欄／麵包屑／下拉全部統一。詳見第 1.6 節；連帶影響見 1.5、1.3、2.2、2.3、2.7、2.8、3.2、3.5、3.7、4、5、6.1、6.3、6.4。
+
+> **v1.3 改咗乜**：補足 loop engineering 需要嘅兩件交付 —— (1) 九張設計圖匯出並入 repo，連 `docs/design/FRAME-DESIGN-INDEX.md`（Ardot 檔、node ID、WorkBuddy 開工卡）；(2) 新增 `docs/product/PERPLEXITY-MANAGER-PROMPT.md`，畀 Perplexity 做 PM 開 GitHub issues。第 0、1.7、3.5、6.2、6.3、6.4 節係受影響章節；**設計同後端一行未郁**。
 
 ---
 
@@ -31,6 +35,8 @@
 5. 本文件**唔係施工授權**（`docs/INDEX.md`「產品與現有實作分開」）。每頁仍要一張獨立 issue、一個分支、一個 PR、一組會先 fail 嘅測試。
 6. **第 1.4 節嘅撤回範圍唔可以當規格**：Logo 管理未定稿，唔好由嗰度拆施工 issue。
 7. **第 1.6 節嘅命名裁決要貫徹**：「底座管理」唔係一個 app，唔好喺施工時重建第七個入口；據點管理屬 Boss Portal。頁 06–09 係概念畫面，未答 Q9 之前唔好當成已批規格。
+8. **設計圖喺 `docs/design/`**：九張 PNG 係快照，Ardot `745493588675335` 先係可編輯真相；兩者不一致以 Ardot 為準。`docs/design/FRAME-DESIGN-INDEX.md` 有 WorkBuddy 開工卡，每張施工 issue 要貼。
+9. **`.workbuddy/design/*` 係本機 gitignored 底稿**：GitHub 上冇，PM 同 Worker 都唔會讀到。端點對照一律用本文件第 3.2／3.3 節，再核對 repo 內實際 `apps/platform/src/**/routes.ts`，唔好自己編。
 
 ---
 
@@ -116,6 +122,16 @@ v1.2 處理：
 - 品牌型頁 01–05 頂欄仍然「Design」，唔受影響。
 
 **連帶影響（要如實講，唔好當已完成）**：文件以往寫「Boss portal 未開始」，但頁 06–09 其實已經係 Boss Portal 嘅據點管理概念畫面。兩者唔矛盾嘅講法係 —— 呢四頁係 **Frame 階段用嚟示範公司型外殼、nav 切換同權限閘門嘅概念畫面**，未接 API、未定稿、未經裁決；Boss Portal 嘅**完整業務頁（今日、批准收件匣、部門摘要）仍然未開始**。呢個分別要由老闆喺 Q9 拍板，未答之前唔好將頁 06–09 當成已批規格，亦唔好改 `manifest.json` 嘅 `available: false`。
+
+### 1.7 v1.3 交付：設計稿落 GitHub ＋ PM prompt
+
+之前 GitHub 上只有本文件同 `docs/INDEX.md`，**九張設計稿本身只喺 Ardot 雲端**；另一個 WorkBuddy session 冇法由 repo 攞到圖，loop 會斷。v1.3 補足：
+
+- `docs/design/frame/frame-01`～`frame-09`（9 張 PNG，1440／1024／768，合共約 0.35 MB）。
+- `docs/design/FRAME-DESIGN-INDEX.md`：Ardot 檔網址、每頁 node ID、匯出檔名、對應本文件章節、施工狀態、邊界提示，同埋**一段可以成段貼去另一個 WorkBuddy session 嘅開工卡**。
+- `docs/product/PERPLEXITY-MANAGER-PROMPT.md`：PM 只開 issues 唔寫 code；盤點既有 #118–#129／#143／#145／#147／#148 避免撞車；`Depends-on` 鏈、`cat:` 範疇、`status:building`、裁決閘門、loop 協定、本機 Docker 驗收。
+
+**原始真相仍然係 Ardot 可編輯圖層**；PNG 係快照。WorkBuddy 改完設計要重新匯出，唔好兩邊各自改。呢兩份交付純屬文件同圖檔，**唔係施工授權**，後端／`apps/web`／db／platform／`AGENTS.md` 依然一行未郁。
 
 ---
 
@@ -337,6 +353,8 @@ Frame 而家只保留「名稱旁顯示」，管理已撤回；但**兩個層次
 | F-09 | Boss Portal **完整業務頁** | 另行規劃；頁 06–09 概念畫面要一併決定係保留、重畫定作廢（Q9） | Frame 全部完成 |
 | F-10 | Design app（第一個部門 app） | 另行規劃 | Boss Portal |
 
+> **F-02 要再拆一次**：上表 F-02「允許改」欄包埋 `packages/design-tokens`／`packages/ui-kit`，但 `AGENTS.md` 第 9 條要求改 `packages/*` 必須有獨立 issue，`docs/planning-loop.md` 亦規定 `cat:packages` 全場獨佔。施工時要拆成 `cat:packages`（tokens／共用元件先行）同 `cat:web`（Frame component）兩張，後者 `Depends-on` 前者。PM prompt 第 6 節已按此拆好。
+
 > F-08 保留編號只係方便對照舊版；**佢唔係一張可以開工嘅 issue**。日後重設計要另開新 issue，唔好重用呢格。
 
 ### 3.6 每張施工 issue 必備（`docs/INDEX.md`「規劃交付與開工條件」）
@@ -403,12 +421,16 @@ Frame 而家只保留「名稱旁顯示」，管理已撤回；但**兩個層次
 
 ### 6.2 施工前必讀
 
-`AGENTS.md` → `docs/INDEX.md` → `docs/product/BASE-UI-DESIGN.md` → `docs/product/WORKSPACE-APP-SCOPE-DESIGN.md` → `docs/product/DECISIONS.md`（C41–C51）→ `docs/product/MASTER-PLAN.md` §3.4／§236 → `docs/architecture/CODE-MAP.md` → `.workbuddy/design/00-backend-functions.md`（本機底稿，端點逐條對照）。
+`AGENTS.md` → `docs/INDEX.md` → `docs/planning-loop.md` → `docs/product/BASE-UI-DESIGN.md` → `docs/product/WORKSPACE-APP-SCOPE-DESIGN.md` → `docs/product/DECISIONS.md`（C41–C51）→ `docs/product/MASTER-PLAN.md` §3.4／§236 → `docs/architecture/CODE-MAP.md` → `docs/design/FRAME-DESIGN-INDEX.md`（設計圖＋Ardot 檔）。
+
+端點逐條對照用本文件第 3.2／3.3 節核對 repo 內實際 `apps/platform/src/**/routes.ts`。`.workbuddy/design/00-backend-functions.md` 係本機 gitignored 底稿，**GitHub 上唔存在**，PM／其他 session 唔會讀到，唔好列做遠端必讀。
 
 ### 6.3 交付狀態
 
 - 已完成：Frame UI/UX 設計定稿（9 頁可編輯圖層，已通過兩輪版面同視覺驗證）。
-- 已完成：本文件已入 repo 並經 GitHub PR 管理（v1.1／v1.2 修訂同一分支／PR）。
+- 已完成：本文件已入 repo 並經 GitHub PR 管理（v1.1／v1.2／v1.3 修訂同一分支／PR）。
+- 已完成：九張設計稿匯出並入 repo（`docs/design/frame/*.png`）＋設計索引＋WorkBuddy 開工卡。
+- 已完成：`docs/product/PERPLEXITY-MANAGER-PROMPT.md`（PM 只開 issue、唔寫 code；含既有 issue 盤點、loop 協定、本機 Docker 驗收）。
 - 撤回：Logo 管理四頁，待深度重設計；F-08 停工。
 - 未完成：Boss Portal **完整業務頁**設計（未開始）；頁 06–09 只係歸屬佢嘅概念畫面（Q9）。
 - 未完成：Design app 設計同工程（未開始）。
@@ -422,3 +444,4 @@ Frame 而家只保留「名稱旁顯示」，管理已撤回；但**兩個層次
 | v1.0 | 2026-11-09 | Frame 13 頁定稿；含頂欄左側身份標誌組、Logo CRUD 四頁、右上個人帳戶跨機入口；交畀 Perplexity 嘅初版文件 |
 | v1.1 | 2026-11-09 | 老闆三點修正：Logo 改貼名稱、Logo 管理撤回、據點機器入口改頁尾左下；畫布回復 9 頁；D11–D14、1.4、2.7、2.8、3.4、3.5、Q4／Q8、第 5 節同步修訂 |
 | v1.2 | 2026-11-09 | 命名裁決：公司型 app「底座管理」正名 **Boss Portal**；刪走下拉重複嘅第七個入口、頁 06–09 頂欄／麵包屑統一；新增 1.6、D15、Q9，並改寫 1.5／6.3 釐清「Boss Portal 完整業務頁未開始」 |
+| v1.3 | 2026-11-09 | 補足 loop 交付：9 張設計 PNG＋`docs/design/FRAME-DESIGN-INDEX.md`（Ardot 檔／node ID／WorkBuddy 開工卡）、`docs/product/PERPLEXITY-MANAGER-PROMPT.md`；新增 1.7、修 3.5 F-02 拆分、6.2 移除 gitignored 底稿嘅遠端必讀、6.3 交付狀態 |
