@@ -1,7 +1,10 @@
 import { useState } from 'react';
-import { AppShell, EmptyState, ShellContent } from '@company-os/app-shell';
+import { EmptyState, FrameShell } from '@company-os/app-shell';
 import { t } from '@company-os/i18n';
 import { submitLogout, type PublicUser } from '../api';
+import { FORMAL_APPS, MAIN_NAV_ROUTE, mainNavItems, type MainNavKey } from '../frame/nav';
+import { useFrameChrome } from '../frame/useFrameChrome';
+import { navigate } from '../router';
 import { PROTOTYPE_ENTRY_HASH } from '../prototype/fixtures';
 import { MyApps } from './MyApps';
 
@@ -11,14 +14,22 @@ type HomeScreenProps = {
 };
 
 /**
- * 登入後的首頁骨架。
+ * 登入後的首頁（議題 158 換 Frame 外殼）。
  *
- * 只有頂欄與一句誠實的空狀態：待批准、Needs、各部門狀況都還沒有資料來源，
- * 所以不放卡片、不放數字、不放圖表。頂欄與內容區的結構已搬去 app-shell（#73 R3）。
+ * 主選單三個標籤全部係真導覽（今日、帳戶；老闆另有管理區），由 moduleTabs
+ * 交畀呼叫端 navigate，唔放按落無反應嘅鍵。「我的 Apps」保留做首頁區塊，
+ * 原型入口連結不變；舊首頁三條 footer 連結入面嘅「帳戶」同「管理區」已經
+ * 交由主選單進入，喺度刪走，唔再並列兩套入口。
+ *
+ * 公司名同頭像如實顯示未提供：GET /me 無頭像、SettingKey 無公司名 key，
+ * 所以唔傳 companyName、唔傳 companyMark，頂欄只顯示 displayName；
+ * 外殼自己畫嘅首字頭像同公司字標由 frame.css 隱藏，唔用首字 fallback。
+ * 正式 App selector 傳空清單（誠實空狀態），唔連 GET /modules。
  */
 export function HomeScreen({ user, onSignedOut }: HomeScreenProps) {
   const [signingOut, setSigningOut] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const chrome = useFrameChrome();
 
   async function handleSignOut(): Promise<void> {
     if (signingOut) {
@@ -40,58 +51,51 @@ export function HomeScreen({ user, onSignedOut }: HomeScreenProps) {
   }
 
   return (
-    <AppShell
-      displayName={user.displayName}
-      signingOut={signingOut}
+    <FrameShell
+      apps={FORMAL_APPS}
+      currentAppId=""
+      onSelectApp={() => undefined}
+      moduleTabs={mainNavItems(user.role === 'owner')}
+      currentModuleTabKey="today"
+      onSelectModuleTab={(key) => {
+        const route = MAIN_NAV_ROUTE[key as MainNavKey];
+
+        if (route !== undefined) {
+          navigate(route);
+        }
+      }}
+      theme={chrome.theme}
+      onToggleTheme={chrome.onToggleTheme}
+      account={{ displayName: user.displayName, signingOut }}
       onSignOut={() => void handleSignOut()}
+      sidebarOpen={chrome.sidebarOpen}
+      onToggleSidebar={chrome.onToggleSidebar}
+      modulePages={[]}
+      currentPageKey={null}
+      onSelectPage={() => undefined}
+      pageTitle={t('home.title')}
     >
-      <ShellContent>
-        <h1 className="home__title">{t('home.title')}</h1>
-        <EmptyState>{t('home.empty')}</EmptyState>
-        {/*
-          「我的 Apps」（issue 123）。清單與可用性都來自後端：manifest 是唯一來源，
-          可不可以入去由 /app-grants/access/:appId 講。這裡不抄 app 清單，也不自己算授權。
-        */}
-        <MyApps />
-        {/*
-          前端入口。新外殼（issue 118）現階段只存在於 `#/app/...`，首頁仍然是舊骨架，
-          不給一條路就等於「交付了但到不了」。這裡只放一條連結，
-          沒有搬首頁、沒有加卡片，也不算把原型當成產品。
-        */}
-        <p className="home__proto">
-          <a className="home__proto-link" href={PROTOTYPE_ENTRY_HASH}>
-            {t('home.protoEntry')}
-          </a>
-          <span className="home__proto-note">{t('home.protoNote')}</span>
+      <EmptyState>{t('home.empty')}</EmptyState>
+      {/*
+        「我的 Apps」（issue 123）。清單與可用性都來自後端：manifest 是唯一來源，
+        可不可以入去由 /app-grants/access/:appId 講。這裡不抄 app 清單，也不自己算授權。
+      */}
+      <MyApps />
+      {/*
+        前端入口。新外殼（issue 118）現階段只存在於 `#/app/...`，這裡只放一條連結，
+        沒有搬首頁、沒有加卡片，也不算把原型當成產品。
+      */}
+      <p className="home__proto">
+        <a className="home__proto-link" href={PROTOTYPE_ENTRY_HASH}>
+          {t('home.protoEntry')}
+        </a>
+        <span className="home__proto-note">{t('home.protoNote')}</span>
+      </p>
+      {error !== null && (
+        <p className="home__error" aria-live="polite">
+          {error}
         </p>
-        {/*
-          個人帳戶（issue 124）。每一個已登入的人都應該到得了自己那一頁：
-          只有老闆見得到的入口，對員工就等於「交付了但到不了」。
-        */}
-        <p className="home__proto">
-          <a className="home__account-link" href="#/account">
-            {t('account.title')}
-          </a>
-          <span className="home__proto-note">{t('home.accountNote')}</span>
-        </p>
-        {/*
-          管理區入口（issue 119）。只有老闆會見到：員工見到一條按下去會被 403 的連結
-          等於騙人。真正把首頁換成新外殼屬 B-02，這裡只放路徑。
-        */}
-        {user.role === 'owner' && (
-          <p className="home__proto">
-            <a className="home__admin-link" href="#/admin/settings">
-              {t('home.adminEntry')}
-            </a>
-            <span className="home__proto-note">{t('home.adminNote')}</span>
-          </p>
-        )}
-        {error !== null && (
-          <p className="home__error" aria-live="polite">
-            {error}
-          </p>
-        )}
-      </ShellContent>
-    </AppShell>
+      )}
+    </FrameShell>
   );
 }

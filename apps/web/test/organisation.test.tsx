@@ -190,8 +190,9 @@ describe('讀取組織圖', () => {
     const detail = document.querySelector('.org__detail') as HTMLElement;
     expect(within(detail).getByText('一般單位')).toBeTruthy();
     // 選中它之後，全局範圍仍然是公司（不是「某某品牌」）。
-    const scope = document.querySelector('[data-shell-slot="scope"]') as HTMLElement;
-    expect(scope.getAttribute('data-scope-kind')).toBe('company');
+    // Frame 外殼嘅範圍位係純文字公司範圍，唔係失效品牌下拉。
+    const scope = document.querySelector('[data-frame-slot="scope"]') as HTMLElement;
+    expect(scope.querySelector('[data-frame-scope="company"]')).not.toBeNull();
   });
 
   it('組織圖真的是空的時候講真話，不是空白畫面', async () => {
@@ -241,19 +242,24 @@ describe('選中單位與全局上下文', () => {
 
     await waitForTree();
 
-    const scopeBefore = document.querySelector('[data-shell-slot="scope"]')?.getAttribute('data-scope-kind');
+    const scopeBefore = document
+      .querySelector('[data-frame-scope="company"]')
+      ?.getAttribute('data-frame-scope');
 
     await userEvent.click(treeButton('moonic'));
 
     expect(unitIdHeading().textContent).toBe('moonic');
     expect(treeButton('moonic').getAttribute('aria-current')).toBe('true');
 
-    // 全局工作範圍沒有被暗改。
-    expect(document.querySelector('[data-shell-slot="scope"]')?.getAttribute('data-scope-kind')).toBe(
-      scopeBefore,
-    );
-    expect(document.querySelector('[data-shell-slot="scope"]')?.getAttribute('data-scope-kind')).toBe('company');
+    // 全局工作範圍沒有被暗改：範圍位仍然係純文字公司範圍。
+    expect(
+      document.querySelector('[data-frame-scope="company"]')?.getAttribute('data-frame-scope'),
+    ).toBe(scopeBefore);
+    expect(
+      document.querySelector('[data-frame-scope="company"]')?.getAttribute('data-frame-scope'),
+    ).toBe('company');
     expect(screen.queryByRole('button', { name: '工作範圍' })).toBeNull();
+    expect(screen.queryByRole('button', { name: '選擇品牌' })).toBeNull();
   });
 
   it('快速換單位時，舊的設定回應不會覆蓋新目標', async () => {

@@ -1,17 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
 import { t } from '@company-os/i18n';
 import {
-  BaseShell,
+  FrameShell,
   buildShellHash,
   Icon,
   isScopeAllowed,
-  nextTheme,
   parseShellHash,
   planAppSwitch,
   type AppMode,
   type ScopeTarget,
-  type ShellTheme,
 } from '@company-os/app-shell';
+import { useFrameChrome } from '../frame/useFrameChrome';
 import {
   findPage,
   PROTOTYPE_APPS,
@@ -128,8 +127,7 @@ export function WorkspacePrototype({ loadLabel = defaultLoadLabel }: { loadLabel
   const [page, setPage] = useState<string | null>(initial.kind === 'app' ? initial.page : null);
   const [invalidHash, setInvalidHash] = useState(initial.kind === 'invalid');
 
-  const [theme, setTheme] = useState<ShellTheme>('light');
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const chrome = useFrameChrome();
 
   const [pendingAppId, setPendingAppId] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<null | (() => void)>(null);
@@ -321,29 +319,44 @@ export function WorkspacePrototype({ loadLabel = defaultLoadLabel }: { loadLabel
     );
   }
 
+  // 原型 fixtures 映射到 Frame 外殼嘅三層導覽：
+  // 第一層 moduleTabs = app 主選單、第二層 modulePages = 頁面子選單、
+  // 左欄 sidebarGroups = 工作欄。三層嘅 key 都係頁面 key，同舊外殼一致。
+  // 正式畫面嘅 FORMAL_APPS 空清單同呢份原型 fixtures 完全分開，唔互相影響。
+  const frameApps = PROTOTYPE_APPS.map((item) => ({ key: item.id, label: item.title }));
+  const moduleTabs = app?.menu ?? [];
+  const modulePages = currentPage?.subMenu ?? [];
+  const railItems = currentPage?.rail ?? [];
+  const sidebarGroups = railItems.length > 0 ? [{ items: railItems }] : [];
+  const showBrandSelector = app !== null && app.mode !== 'company';
+
   return (
-    <BaseShell
-      apps={PROTOTYPE_APPS}
+    <FrameShell
+      apps={frameApps}
       currentAppId={appId}
-      scope={scope}
-      brands={PROTOTYPE_BRANDS}
-      theme={theme}
-      sidebarOpen={sidebarOpen}
-      account={{ displayName: t('proto.account'), signingOut: false }}
-      subMenuItems={currentPage?.subMenu ?? []}
-      railItems={currentPage?.rail ?? []}
-      currentPageKey={page}
-      prototype
       onSelectApp={selectApp}
+      scope={scope}
+      brands={showBrandSelector ? PROTOTYPE_BRANDS : undefined}
       onSelectScope={selectScope}
-      onSelectPage={selectPage}
-      onToggleSidebar={() => {
-        setSidebarOpen((open) => !open);
-      }}
-      onToggleTheme={() => {
-        setTheme((current) => nextTheme(current));
-      }}
+      moduleTabs={moduleTabs}
+      currentModuleTabKey={page}
+      onSelectModuleTab={selectPage}
+      theme={chrome.theme}
+      onToggleTheme={chrome.onToggleTheme}
+      account={{ displayName: t('proto.account'), signingOut: false }}
       onSignOut={() => undefined}
+      sidebarOpen={chrome.sidebarOpen}
+      onToggleSidebar={chrome.onToggleSidebar}
+      modulePages={modulePages}
+      currentPageKey={page}
+      onSelectPage={selectPage}
+      sidebarGroups={sidebarGroups}
+      prototype
+      blocked={
+        needsBrand
+          ? { title: t('shell.scope.selectBrand'), description: t('shell.scope.required') }
+          : undefined
+      }
     >
       <div className="page">
         <div className="page__head">
@@ -524,6 +537,6 @@ export function WorkspacePrototype({ loadLabel = defaultLoadLabel }: { loadLabel
           </button>
         </div>
       )}
-    </BaseShell>
+    </FrameShell>
   );
 }

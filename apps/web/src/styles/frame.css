@@ -1,0 +1,1057 @@
+/*
+ * Frame 共用外殼版面（F-02，議題 158）。
+ *
+ * 所有顏色、字級、間距一律經 var(--hx-*) 取；本檔唔出現任何十六進位色碼、
+ * 亦唔直接寫 rgb 或 rgba 函式，由 gates.test.ts 與 frame-layout.test.ts 讀檔把關。
+ * 幾何：側欄 248 / 200 / 180px、全域頂欄 72px、第二層 60px、頁尾 44px，
+ * 全部用 154 新增嘅 frame 同 chrome token，唔寫死色。
+ * 360px 只用換行同可見嘅橫向捲動處理，唔裁剪溢出內容，
+ * 亦唔收起捲軸去掩飾破版。
+ *
+ * 除咗 frame-* 外殼規則，本檔亦承接原本放喺 base-shell.css 嘅共用元件樣式
+ * （ui-kit 選擇器、頁面排版、原型第二步與未保存確認浮層、圖示），
+ * 因為 base-shell.css 已隨舊外殼移除，而呢啲元件仍然由畫面使用。
+ */
+
+/* 外框：四列（頂欄 / 第二層 / 內容 / 頁尾），內容列食剩餘高度。 */
+.frame-shell {
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--hx-chrome-surface);
+  color: var(--hx-frame-ink);
+  font: var(--hx-frame-font-ui);
+  letter-spacing: var(--hx-tracking-tight);
+}
+
+/* 跳過導覽：平時移出畫面，鍵盤 Tab 入嚟先出現。 */
+.frame-skip {
+  position: absolute;
+  left: -9999px;
+  top: var(--hx-space-2);
+  z-index: 200;
+  padding: var(--hx-space-2) var(--hx-space-3);
+  border-radius: var(--hx-radius-sm);
+  background: var(--hx-frame-accent-soft);
+  color: var(--hx-chrome-ink);
+  text-decoration: none;
+}
+
+.frame-skip:focus {
+  left: var(--hx-space-2);
+}
+
+/* 第一層：全域頂欄。 */
+.frame-topbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: var(--hx-space-3);
+  min-width: 0;
+  height: var(--hx-chrome-bar-primary-height);
+  padding: 0 var(--hx-frame-space-content);
+  background: var(--hx-chrome-surface);
+  border-bottom: 1px solid var(--hx-chrome-border);
+}
+
+/* 每個位置都要肯收窄，否則右邊工具鍵會被推出畫面。 */
+.frame-slot {
+  min-width: 0;
+}
+
+.frame-slot--app,
+.frame-slot--scope {
+  flex: 0 1 auto;
+}
+
+.frame-iconbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--hx-space-2);
+  min-width: var(--hx-frame-size-touch);
+  height: var(--hx-frame-size-touch);
+  flex: none;
+  padding: 0 var(--hx-space-2);
+  border: 0;
+  border-radius: var(--hx-radius-sm);
+  background: transparent;
+  color: var(--hx-chrome-ink);
+  font: var(--hx-frame-font-small);
+  cursor: pointer;
+}
+
+.frame-iconbtn:hover:not(:disabled) {
+  background: var(--hx-chrome-selected);
+}
+
+.frame-iconbtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.frame-iconbtn--text {
+  min-width: auto;
+}
+
+.frame-scope-static {
+  display: inline-flex;
+  align-items: center;
+  height: var(--hx-frame-size-touch);
+  padding: 0 var(--hx-space-2);
+  color: var(--hx-chrome-secondary);
+  font: var(--hx-frame-font-small-lg);
+  white-space: nowrap;
+}
+
+/* 第一層主選單：選中係黑 pill，其餘灰字。 */
+.frame-modules {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-1);
+  min-width: 0;
+  flex: 0 1 auto;
+  overflow-x: auto;
+}
+
+.frame-tab {
+  height: var(--hx-frame-size-touch);
+  flex: none;
+  padding: 0 var(--hx-space-4);
+  border: 0;
+  border-radius: var(--hx-radius-sm);
+  background: transparent;
+  color: var(--hx-chrome-secondary);
+  font: var(--hx-frame-font-small-lg);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.frame-tab:hover {
+  background: var(--hx-chrome-selected);
+  color: var(--hx-chrome-ink);
+}
+
+.frame-tab[aria-current='page'] {
+  background: var(--hx-chrome-ink);
+  color: var(--hx-chrome-white);
+  font-weight: 600;
+}
+
+.frame-spacer {
+  flex: 1 1 auto;
+}
+
+.frame-tools {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-1);
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.frame-tool {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+  height: var(--hx-frame-size-touch);
+  flex: none;
+  padding: 0 var(--hx-space-2);
+  border: 0;
+  border-radius: var(--hx-radius-sm);
+  background: transparent;
+  color: var(--hx-chrome-secondary);
+  font: var(--hx-frame-font-small);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.frame-tool:hover {
+  background: var(--hx-chrome-selected);
+  color: var(--hx-chrome-ink);
+}
+
+.frame-account {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+  min-width: 0;
+  height: var(--hx-frame-size-touch);
+  padding: 0 var(--hx-space-2);
+  border-radius: var(--hx-radius-sm);
+  color: var(--hx-chrome-secondary);
+}
+
+/*
+ * 帳戶與公司名契約（議題 158）。
+ *
+ * FrameShell（文案張交付嘅共用外殼，本張唔改 packages）會寫死輸出兩個
+ * 佔位節點：頂欄嘅首字頭像 frame-avatar，以及公司標誌字標 frame-mark／
+ * frame-mark__initial（公司名首字 fallback）。但實際 GET /me 無頭像欄位、
+ * SettingKey 無公司名 key，本輪「如實顯示未提供」：帳戶名只用 displayName，
+ * 公司名用 frame.company.nameMissing 顯示「公司名稱未提供」，唔用首字 fallback、
+ * 唔顯示示意值、唔喺前端自建第二份真相。
+ *
+ * 外殼元件保留喺 packages、本張只擁有 CSS，所以喺呢度以 display: none 令
+ * 嗰兩個佔位節點完全唔顯示（頂欄帳戶位只顯示名稱與登出）。DOM 節點嘅
+ * 徹底移除屬退役共用外殼嘅範圍；呢三條隱藏規則由 frame-layout.test.ts
+ * 讀檔把關，一移除就紅。
+ */
+.frame-avatar,
+.frame-mark,
+.frame-mark__initial {
+  display: none;
+}
+
+.frame-account__name {
+  min-width: 0;
+  max-width: 18ch;
+  white-space: nowrap;
+  overflow: clip;
+  text-overflow: ellipsis;
+}
+
+/* 第二層：模組頁面導覽。 */
+.frame-subbar {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-1);
+  min-width: 0;
+  height: var(--hx-chrome-bar-secondary-height);
+  padding: 0 var(--hx-frame-space-content);
+  background: var(--hx-chrome-surface);
+  border-bottom: 1px solid var(--hx-chrome-border);
+  overflow-x: auto;
+}
+
+/* 無頁面導覽時唔佔位、唔畫一條空線。 */
+.frame-subbar:empty {
+  display: none;
+}
+
+.frame-subtab {
+  position: relative;
+  height: var(--hx-frame-size-touch);
+  flex: none;
+  padding: 0 var(--hx-space-4);
+  border: 0;
+  border-radius: var(--hx-radius-sm);
+  background: transparent;
+  color: var(--hx-chrome-secondary);
+  font: var(--hx-frame-font-small-lg);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.frame-subtab:hover {
+  background: var(--hx-chrome-selected);
+  color: var(--hx-chrome-ink);
+}
+
+/* 第二層選中：灰 pill 加黑左指示條。 */
+.frame-subtab[aria-current='page'] {
+  background: var(--hx-chrome-selected);
+  color: var(--hx-chrome-ink);
+  font-weight: 600;
+}
+
+.frame-subtab[aria-current='page']::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--hx-chrome-ink);
+}
+
+/* 第三層：左側子頁導覽 ＋ 主內容。 */
+.frame-body {
+  display: grid;
+  grid-template-columns: var(--hx-frame-sidebar-width) minmax(0, 1fr);
+  min-height: 0;
+}
+
+.frame-body[data-frame-has-sidebar='false'] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.frame-sidebar {
+  min-width: 0;
+  padding: var(--hx-space-5) var(--hx-space-3);
+  background: var(--hx-frame-surface);
+  border-right: 1px solid var(--hx-chrome-border);
+  overflow-y: auto;
+}
+
+.frame-sidebar__group + .frame-sidebar__group {
+  margin-top: var(--hx-space-5);
+}
+
+.frame-sidebar__group-title {
+  margin: 0 0 var(--hx-space-2);
+  color: var(--hx-frame-secondary);
+  font: var(--hx-frame-font-small);
+}
+
+.frame-sidebar__list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.frame-sidebar__item {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-height: var(--hx-frame-size-touch);
+  padding: var(--hx-space-2) var(--hx-space-3);
+  border: 0;
+  border-radius: var(--hx-radius-sm);
+  background: transparent;
+  color: var(--hx-frame-secondary);
+  font: var(--hx-frame-font-small-lg);
+  text-align: left;
+  cursor: pointer;
+}
+
+.frame-sidebar__item:hover {
+  background: var(--hx-chrome-selected);
+  color: var(--hx-chrome-ink);
+}
+
+.frame-sidebar__item[aria-current='page'] {
+  background: var(--hx-chrome-selected);
+  color: var(--hx-chrome-ink);
+  font-weight: 600;
+}
+
+.frame-sidebar__item[aria-current='page']::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--hx-chrome-ink);
+}
+
+.frame-content {
+  min-width: 0;
+  padding: var(--hx-frame-space-content);
+  background: var(--hx-chrome-white);
+  overflow-wrap: anywhere;
+  align-content: start;
+}
+
+.frame-breadcrumb {
+  margin-bottom: var(--hx-space-4);
+}
+
+.frame-breadcrumb__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--hx-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--hx-frame-secondary);
+  font: var(--hx-frame-font-small);
+}
+
+.frame-content__head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hx-space-2);
+  margin-bottom: var(--hx-space-6);
+}
+
+.frame-content__head:empty {
+  display: none;
+}
+
+.frame-content__title {
+  margin: 0;
+  color: var(--hx-frame-ink);
+  font: var(--hx-frame-font-title);
+}
+
+.frame-content__subtitle {
+  margin: 0;
+  color: var(--hx-frame-secondary);
+  font: var(--hx-frame-font-subtitle);
+}
+
+.frame-content__action {
+  margin-top: var(--hx-space-3);
+}
+
+.frame-proto {
+  margin: 0 0 var(--hx-space-4);
+}
+
+.frame-proto__badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border: 1px solid var(--hx-frame-border);
+  border-radius: 5px;
+  color: var(--hx-frame-secondary);
+  font: var(--hx-frame-font-small);
+}
+
+/* 誠實狀態：未接內容、讀取失敗、需要選範圍一律由呢個區塊講真話。 */
+.frame-content__blocked {
+  max-width: 62ch;
+  padding: var(--hx-space-6);
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-lg);
+  background: var(--hx-frame-surface);
+}
+
+.frame-content__blocked-title {
+  margin: 0 0 var(--hx-space-2);
+  color: var(--hx-frame-ink);
+  font: var(--hx-frame-font-card);
+}
+
+.frame-content__blocked-body {
+  margin: 0;
+  color: var(--hx-frame-secondary);
+  font: var(--hx-frame-font-body);
+}
+
+/* 頁尾：本機公司身份位永遠喺度，唔傳據點入口就唔畫。 */
+.frame-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--hx-space-3);
+  min-width: 0;
+  height: var(--hx-size-touch);
+  padding: 0 var(--hx-frame-space-content);
+  background: var(--hx-chrome-surface);
+  border-top: 1px solid var(--hx-chrome-border);
+  color: var(--hx-chrome-secondary);
+  font: var(--hx-frame-font-small);
+}
+
+.frame-footer__identity {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+  min-width: 0;
+}
+
+.frame-footer__label,
+.frame-footer__region {
+  color: var(--hx-chrome-muted);
+}
+
+.frame-footer__company {
+  color: var(--hx-chrome-ink);
+}
+
+.frame-footer__sites {
+  display: flex;
+  align-items: center;
+}
+
+.frame-footer__headoffice {
+  flex: none;
+  white-space: nowrap;
+}
+
+/* 共用圖示（app-shell 的 Icon、ui-kit 的 Selector 都用）。 */
+.ic {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ui-kit 選擇器：App selector 與 Brand selector 共用。 */
+.selector {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.selector__button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+  height: var(--hx-frame-size-touch);
+  max-width: min(260px, 100%);
+  min-width: 0;
+  padding: 0 6px 0 10px;
+  border: 0;
+  border-radius: var(--hx-radius-sm);
+  background: transparent;
+  color: var(--hx-chrome-ink);
+  font: var(--hx-frame-font-ui);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.selector__button:hover:not(:disabled) {
+  background: var(--hx-chrome-selected);
+}
+
+.selector__button[data-empty='true'] {
+  color: var(--hx-chrome-secondary);
+}
+
+.selector__button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.selector__icon {
+  display: inline-flex;
+  flex: none;
+  color: var(--hx-chrome-secondary);
+}
+
+.selector__icon .ic {
+  width: 17px;
+  height: 17px;
+}
+
+.selector__value {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: clip;
+  text-overflow: ellipsis;
+}
+
+.selector__chevron {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  color: var(--hx-chrome-secondary);
+}
+
+.selector__list {
+  position: absolute;
+  z-index: 300;
+  top: calc(100% + var(--hx-space-2));
+  left: 0;
+  min-width: 280px;
+  max-width: min(360px, 92vw);
+  max-height: 320px;
+  margin: 0;
+  padding: var(--hx-space-1);
+  list-style: none;
+  background: var(--hx-chrome-white);
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-md);
+  box-shadow: var(--hx-shadow-lg);
+  overflow-y: auto;
+}
+
+.selector__option {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: var(--hx-frame-size-touch);
+  padding: 6px 10px;
+  border-radius: var(--hx-radius-sm);
+  color: var(--hx-chrome-ink);
+  font: var(--hx-frame-font-small-lg);
+  cursor: pointer;
+}
+
+.selector__option:hover {
+  background: var(--hx-chrome-selected);
+}
+
+.selector__option[aria-selected='true'] {
+  font-weight: 600;
+}
+
+.selector__option[aria-disabled='true'] {
+  color: var(--hx-chrome-muted);
+  cursor: not-allowed;
+}
+
+.selector__option-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: clip;
+  text-overflow: ellipsis;
+}
+
+.selector__option-description {
+  color: var(--hx-chrome-secondary);
+  font: var(--hx-frame-font-small);
+}
+
+.selector__option-check {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  visibility: hidden;
+}
+
+.selector__option[aria-selected='true'] .selector__option-check {
+  visibility: visible;
+}
+
+/* 頁面框架（原型與既有管理頁共用嘅排版層級）。 */
+.page {
+  max-width: var(--hx-size-page-max);
+}
+
+.page__head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hx-space-1);
+}
+
+.page__eyebrow {
+  color: var(--hx-frame-secondary);
+  font: var(--hx-font-eyebrow);
+  font-family: var(--hx-font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.page__title {
+  margin: 0;
+  color: var(--hx-frame-ink);
+  font: var(--hx-frame-font-title);
+}
+
+.page__sub {
+  max-width: 62ch;
+  margin: 0;
+  color: var(--hx-frame-secondary);
+  font: var(--hx-frame-font-body);
+}
+
+.page__empty {
+  max-width: 62ch;
+  margin-top: var(--hx-space-8);
+  padding: var(--hx-space-6);
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-lg);
+  background: var(--hx-frame-surface);
+}
+
+.page__empty-title {
+  margin: 0;
+  font: var(--hx-frame-font-card);
+}
+
+.page__empty-body {
+  margin: var(--hx-space-2) 0 0;
+  color: var(--hx-frame-secondary);
+  font: var(--hx-frame-font-body);
+}
+
+/* 第二步選範圍、未保存確認用嘅決策浮層。 */
+.shell-popover {
+  position: fixed;
+  z-index: 300;
+  top: calc(var(--hx-chrome-bar-primary-height) + var(--hx-space-2));
+  left: calc(var(--hx-frame-space-content) + var(--hx-frame-size-touch) + var(--hx-space-2));
+  width: 300px;
+  max-width: calc(100vw - var(--hx-frame-space-content) - var(--hx-frame-size-touch) - var(--hx-space-4));
+  padding: var(--hx-space-1);
+  background: var(--hx-chrome-white);
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-md);
+  box-shadow: var(--hx-shadow-lg);
+}
+
+.shell-popover__label {
+  padding: 7px 10px 3px;
+  color: var(--hx-frame-secondary);
+  font: 500 10px/14px var(--hx-font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.shell-popover__title {
+  margin: 0;
+  padding: var(--hx-space-1) 10px var(--hx-space-2);
+  font: var(--hx-frame-font-small-lg);
+  font-weight: 600;
+}
+
+.shell-popover__body {
+  margin: 0;
+  padding: 0 10px var(--hx-space-2);
+  color: var(--hx-frame-secondary);
+  font: var(--hx-frame-font-body);
+}
+
+.shell-popover__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.shell-popover__item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  min-height: var(--hx-frame-size-touch);
+  padding: 6px 10px;
+  border: 0;
+  border-radius: var(--hx-radius-sm);
+  background: transparent;
+  color: var(--hx-chrome-ink);
+  font: var(--hx-frame-font-small-lg);
+  text-align: left;
+  cursor: pointer;
+}
+
+.shell-popover__item:hover {
+  background: var(--hx-chrome-selected);
+}
+
+.shell-popover__icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  fill: none;
+  opacity: 0.7;
+}
+
+.shell-popover__item-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: clip;
+  text-overflow: ellipsis;
+}
+
+.shell-popover__check {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  fill: none;
+  visibility: hidden;
+}
+
+.shell-popover__item[aria-selected='true'] .shell-popover__check {
+  visibility: visible;
+}
+
+.shell-popover__item--muted {
+  color: var(--hx-chrome-secondary);
+}
+
+.shell-popover__sep {
+  height: 1px;
+  margin: var(--hx-space-1) var(--hx-space-2);
+  background: var(--hx-frame-border);
+}
+
+/* 原型重試鍵同管理區對話框沿用嘅文字鍵。 */
+.shell-iconbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--hx-frame-size-touch);
+  padding: 0 var(--hx-space-3);
+  border: 0;
+  border-radius: var(--hx-radius-sm);
+  background: transparent;
+  color: var(--hx-chrome-ink);
+  font: var(--hx-frame-font-small);
+  cursor: pointer;
+}
+
+.shell-iconbtn:hover:not(:disabled) {
+  background: var(--hx-chrome-selected);
+}
+
+.shell-iconbtn--text {
+  color: var(--hx-chrome-secondary);
+}
+
+/* 原型測試區（診斷控制，唔係正常展示內容）。 */
+.proto-zone {
+  max-width: 62ch;
+  margin-top: var(--hx-space-8);
+  padding-top: var(--hx-space-5);
+  border-top: 1px solid var(--hx-hairline);
+}
+
+.proto-zone__label {
+  color: var(--hx-frame-secondary);
+  font: 500 10px/14px var(--hx-font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.proto-field {
+  display: block;
+  margin-top: var(--hx-space-3);
+}
+
+.proto-field__label {
+  display: block;
+  margin-bottom: 6px;
+  font: var(--hx-frame-font-small-lg);
+  font-weight: 500;
+}
+
+.proto-field__input {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 72px;
+  padding: 9px 10px;
+  border: 1px solid var(--hx-frame-border);
+  border-radius: 7px;
+  background: var(--hx-chrome-white);
+  color: var(--hx-chrome-ink);
+  font: var(--hx-frame-font-body);
+  font-family: var(--hx-font-family);
+  resize: vertical;
+}
+
+.proto-field__input:focus-visible {
+  outline: 2px solid var(--hx-accent);
+  outline-offset: -1px;
+}
+
+.proto-field__hint {
+  display: block;
+  margin-top: 6px;
+  color: var(--hx-frame-secondary);
+  font: var(--hx-frame-font-small);
+}
+
+.proto-log {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+  min-height: 20px;
+  margin-top: var(--hx-space-3);
+  color: var(--hx-frame-secondary);
+  font: var(--hx-frame-font-small-lg);
+}
+
+.proto-log[data-proto-status='error'] .proto-log__text {
+  color: var(--hx-danger);
+}
+
+.proto-log__text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.proto-log__key {
+  flex: none;
+  color: var(--hx-frame-secondary);
+  font: 500 10px/14px var(--hx-font-mono);
+  letter-spacing: 0.06em;
+}
+
+/* 非法網址：如實講，唔靜靜跌去首頁。 */
+.proto-invalid {
+  min-height: 100dvh;
+  padding: var(--hx-space-7);
+  background: var(--hx-chrome-white);
+  color: var(--hx-frame-ink);
+  font: var(--hx-frame-font-ui);
+}
+
+.proto-invalid__head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hx-space-1);
+  max-width: 62ch;
+}
+
+.proto-invalid__title {
+  margin: 0;
+  font: var(--hx-frame-font-card);
+}
+
+.proto-invalid__link {
+  display: inline-flex;
+  align-items: center;
+  height: var(--hx-frame-size-touch);
+  margin-top: var(--hx-space-4);
+  color: var(--hx-chrome-ink);
+  font: var(--hx-frame-font-small-lg);
+  font-weight: 500;
+}
+
+/* 焦點環：每個互動元素同一個語言。 */
+.frame-skip:focus-visible,
+.frame-iconbtn:focus-visible,
+.frame-tab:focus-visible,
+.frame-subtab:focus-visible,
+.frame-sidebar__item:focus-visible,
+.frame-tool:focus-visible,
+.selector__button:focus-visible,
+.selector__option:focus-visible,
+.shell-popover__item:focus-visible,
+.shell-iconbtn:focus-visible {
+  outline: 2px solid var(--hx-accent);
+  outline-offset: 2px;
+}
+
+/* 1024：側欄 200px、內容 padding 收窄、收起工具標籤。 */
+@media (max-width: 1180px) {
+  .frame-body {
+    grid-template-columns: var(--hx-frame-sidebar-width-1024) minmax(0, 1fr);
+  }
+
+  .frame-content,
+  .frame-subbar,
+  .frame-footer {
+    padding-left: var(--hx-frame-space-content-compact);
+    padding-right: var(--hx-frame-space-content-compact);
+  }
+
+  .frame-tool__label {
+    display: none;
+  }
+}
+
+/* 768：側欄 180px、padding 再收窄、收起帳戶名。 */
+@media (max-width: 900px) {
+  .frame-body {
+    grid-template-columns: var(--hx-frame-sidebar-width-768) minmax(0, 1fr);
+  }
+
+  .frame-content,
+  .frame-subbar,
+  .frame-footer {
+    padding-left: var(--hx-space-4);
+    padding-right: var(--hx-space-4);
+  }
+
+  .frame-account__name {
+    display: none;
+  }
+}
+
+/* 360px 基本不破版：頂欄換行、主選單可見橫向捲動、側欄轉橫向條。
+   唔收起捲軸、唔裁剪溢出內容、唔隱藏導覽。 */
+@media (max-width: 560px) {
+  .frame-topbar {
+    flex-wrap: wrap;
+    height: auto;
+    min-height: var(--hx-chrome-bar-primary-height);
+    padding: var(--hx-space-2) var(--hx-space-3);
+    gap: var(--hx-space-2);
+  }
+
+  .frame-modules {
+    order: 10;
+    flex: 1 1 100%;
+    overflow-x: auto;
+  }
+
+  .frame-spacer {
+    display: none;
+  }
+
+  .frame-tools {
+    margin-left: auto;
+  }
+
+  .frame-account__name,
+  .frame-tool__label,
+  .frame-footer__headoffice {
+    display: none;
+  }
+
+  .frame-scope-static {
+    max-width: 12ch;
+    overflow: clip;
+    text-overflow: ellipsis;
+  }
+
+  .frame-body {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+  }
+
+  .frame-body[data-frame-has-sidebar='false'] {
+    grid-template-rows: 1fr;
+  }
+
+  .frame-sidebar {
+    border-right: 0;
+    border-bottom: 1px solid var(--hx-chrome-border);
+    padding: var(--hx-space-2) var(--hx-space-3);
+  }
+
+  .frame-sidebar__list {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .frame-content {
+    padding: var(--hx-space-4);
+  }
+
+  .frame-content__title,
+  .page__title {
+    font: var(--hx-frame-font-card);
+  }
+
+  .frame-subbar,
+  .frame-footer {
+    padding-left: var(--hx-space-3);
+    padding-right: var(--hx-space-3);
+  }
+
+  .selector__button {
+    max-width: 40vw;
+  }
+
+  .shell-popover {
+    left: var(--hx-space-3);
+    max-width: calc(100vw - var(--hx-space-6));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .frame-tab,
+  .frame-subtab,
+  .frame-iconbtn,
+  .frame-sidebar__item,
+  .frame-tool,
+  .selector__button,
+  .shell-popover__item {
+    transition: none;
+    animation: none;
+  }
+}

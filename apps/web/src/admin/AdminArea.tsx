@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from 'react';
-import { BaseShell, nextTheme, type ShellTheme, type PrototypeApp, type ShellNavItem } from '@company-os/app-shell';
+import { FrameShell } from '@company-os/app-shell';
 import { t, type MessageKey } from '@company-os/i18n';
 import { submitLogout } from '../api';
+import { FORMAL_APPS, MAIN_NAV_ROUTE, mainNavItems, type MainNavKey } from '../frame/nav';
+import { useFrameChrome } from '../frame/useFrameChrome';
+import { navigate } from '../router';
 import { CompanySettingsScreen } from './CompanySettingsScreen';
 import { OrganisationScreen } from './OrganisationScreen';
 import { AppGrantsScreen } from './AppGrantsScreen';
@@ -10,7 +13,7 @@ import { StaffAgentsScreen } from './StaffAgentsScreen';
 /**
  * Boss portal 管理區（issue 119 起）。
  *
- * 外殼用 B-01 的 `BaseShell`，不另建一套：管理區只是同一個外殼的內容，
+ * 外殼用共用嘅 `FrameShell`，不另建一套：管理區只是同一個外殼的內容，
  * 若另畫一個頂欄，兩邊遲早會長得不一樣。
  *
  * 這裡刻意做三件事：
@@ -108,9 +111,8 @@ export type AdminAreaProps = {
 };
 
 export function AdminArea({ user, onSignedOut }: AdminAreaProps) {
+  const chrome = useFrameChrome();
   const [page, setPage] = useState<AdminPageKey>(() => parseAdminPage(window.location.hash));
-  const [theme, setTheme] = useState<ShellTheme>('light');
-  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [dirtyCount, setDirtyCount] = useState(0);
   const [signingOut, setSigningOut] = useState(false);
   const [signOutError, setSignOutError] = useState<string | null>(null);
@@ -216,15 +218,6 @@ export function AdminArea({ user, onSignedOut }: AdminAreaProps) {
     };
   }, [page, openPendingLeave]);
 
-  const adminApp: PrototypeApp = {
-    id: 'admin',
-    title: t('admin.area'),
-    mode: 'company',
-    menu: PAGES.map((item) => ({ key: item.key, label: t(item.labelKey) })),
-  };
-
-  const subMenuItems: readonly ShellNavItem[] = [];
-
   function navigateTo(next: AdminPageKey): void {
     if (next === page) {
       return;
@@ -240,42 +233,44 @@ export function AdminArea({ user, onSignedOut }: AdminAreaProps) {
     <>
       {/* 對話框開著時，外殼同頁面內容一律 inert：不可聚焦，讀屏亦唔會游走出去。 */}
       <div className="admin-shell" inert={pendingLeave !== null ? true : undefined}>
-        <BaseShell
-          apps={[adminApp]}
-          currentAppId={adminApp.id}
-          scope={{ kind: 'company' }}
-          brands={[]}
-          theme={theme}
-          sidebarOpen={sidebarOpen}
-          account={{ displayName: user.displayName, signingOut }}
-          subMenuItems={subMenuItems}
-          railItems={[]}
-          currentPageKey={page}
-          onSelectApp={() => {
-            // 目前只有一個 app；切到別的 app 不是這一張的範圍，按下去不做事也不假裝切換。
-          }}
-          onSelectScope={(scope) => {
-            if (scope.kind !== 'company') {
+        <FrameShell
+          apps={FORMAL_APPS}
+          currentAppId=""
+          onSelectApp={() => undefined}
+          moduleTabs={mainNavItems(true)}
+          currentModuleTabKey="admin"
+          onSelectModuleTab={(key) => {
+            // 主選單係真導覽，但切走之前照舊經 requestLeave() 保護未儲存的修改。
+            if (key === 'admin') {
               return;
             }
+
+            const route = MAIN_NAV_ROUTE[key as MainNavKey];
+
+            if (route !== undefined) {
+              requestLeave(() => {
+                navigate(route);
+              });
+            }
           }}
+          theme={chrome.theme}
+          onToggleTheme={chrome.onToggleTheme}
+          account={{ displayName: user.displayName, signingOut }}
+          onSignOut={() => {
+            requestLeave(() => {
+              void handleSignOut();
+            });
+          }}
+          sidebarOpen={chrome.sidebarOpen}
+          onToggleSidebar={chrome.onToggleSidebar}
+          modulePages={PAGES.map((item) => ({ key: item.key, label: t(item.labelKey) }))}
+          currentPageKey={page}
           onSelectPage={(key) => {
             const next = PAGES.find((item) => item.key === key);
 
             if (next !== undefined) {
               navigateTo(next.key);
             }
-          }}
-          onToggleSidebar={() => {
-            setSidebarOpen((open) => !open);
-          }}
-          onToggleTheme={() => {
-            setTheme((current) => nextTheme(current));
-          }}
-          onSignOut={() => {
-            requestLeave(() => {
-              void handleSignOut();
-            });
           }}
         >
           {page === 'settings' && <CompanySettingsScreen onDirtyCountChange={setDirtyCount} />}
@@ -287,7 +282,7 @@ export function AdminArea({ user, onSignedOut }: AdminAreaProps) {
               {signOutError}
             </p>
           )}
-        </BaseShell>
+        </FrameShell>
       </div>
 
       {pendingLeave !== null && (

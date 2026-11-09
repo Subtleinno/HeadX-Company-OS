@@ -523,7 +523,7 @@ describe('個人帳戶：首次強制改密碼要先引導', () => {
     expect(api.count('modules')).toBe(0);
   });
 
-  it('首頁有一條去帳戶頁的連結：員工都到得了自己那一頁', async () => {
+  it('首頁主選單有「帳戶」真導覽：員工都到得了自己那一頁', async () => {
     installFakeApi({
       state: () => jsonResponse(200, { setupRequired: false, signedIn: true, user: WAI }),
       me: () => ME(),
@@ -536,11 +536,13 @@ describe('個人帳戶：首次強制改密碼要先引導', () => {
     // 首頁（不是帳戶頁）：等首頁的標題，不是等 data-account-name。
     await screen.findByRole('heading', { name: '今日' });
 
-    const link = document.querySelector('.home__account-link') as HTMLAnchorElement | null;
+    // 舊首頁 footer 嘅帳戶連結已移除，改由 Frame 主選單嘅真導覽進入。
+    const accountNav = screen.getByRole('button', { name: '帳戶' });
 
-    expect(link).not.toBeNull();
-    expect(link?.getAttribute('href')).toBe('#/account');
-    expect(document.body.textContent).toContain('你自己的公開資料、改密碼與登出。');
+    expect(accountNav).toBeTruthy();
+    await userEvent.setup().click(accountNav);
+
+    expect(window.location.hash).toBe('#/account');
   });
 
   it('已自行設定密碼的人可以由首頁去帳戶頁，見到同一個身份', async () => {
