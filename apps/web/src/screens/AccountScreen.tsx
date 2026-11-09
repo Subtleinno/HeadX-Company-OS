@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
-import { FrameShell } from '@company-os/app-shell';
 import { t } from '@company-os/i18n';
 import { Field } from '@company-os/ui-kit';
+import { FrameApps } from '../frame/FrameApps';
 import {
   fetchMe,
   submitChangePassword,
@@ -9,7 +9,7 @@ import {
   type ApiFailure,
   type PublicUser,
 } from '../api';
-import { FORMAL_APPS, MAIN_NAV_ROUTE, mainNavItems, type MainNavKey } from '../frame/nav';
+import { MAIN_NAV_ROUTE, mainNavItems, type MainNavKey } from '../frame/nav';
 import { useFrameChrome } from '../frame/useFrameChrome';
 import { navigate } from '../router';
 
@@ -291,10 +291,10 @@ export function AccountScreen({ user, onSignedOut, onUserChanged, onBack }: Acco
   const gate = shown !== null && shown.mustChangePassword === true;
 
   return (
-    <FrameShell
-      apps={FORMAL_APPS}
-      currentAppId=""
-      onSelectApp={() => undefined}
+    <FrameApps
+      /* 首次強制改密碼期間後端一律 403，唔去問 /modules，亦唔顯示成「沒有權限」。 */
+      load={user.mustChangePassword !== true}
+      includeAccess={false}
       moduleTabs={mainNavItems(user.role === 'owner')}
       currentModuleTabKey="account"
       onSelectModuleTab={(key) => {
@@ -479,6 +479,6 @@ export function AccountScreen({ user, onSignedOut, onUserChanged, onBack }: Acco
             </section>
           </>
         )}
-    </FrameShell>
+    </FrameApps>
   );
 }

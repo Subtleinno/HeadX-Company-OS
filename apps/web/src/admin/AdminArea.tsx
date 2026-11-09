@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from 'react';
-import { FrameShell } from '@company-os/app-shell';
 import { t, type MessageKey } from '@company-os/i18n';
 import { submitLogout } from '../api';
-import { FORMAL_APPS, MAIN_NAV_ROUTE, mainNavItems, type MainNavKey } from '../frame/nav';
+import { FrameApps } from '../frame/FrameApps';
+import { MAIN_NAV_ROUTE, mainNavItems, type MainNavKey } from '../frame/nav';
 import { useFrameChrome } from '../frame/useFrameChrome';
 import { navigate } from '../router';
 import { CompanySettingsScreen } from './CompanySettingsScreen';
@@ -233,10 +233,8 @@ export function AdminArea({ user, onSignedOut }: AdminAreaProps) {
     <>
       {/* 對話框開著時，外殼同頁面內容一律 inert：不可聚焦，讀屏亦唔會游走出去。 */}
       <div className="admin-shell" inert={pendingLeave !== null ? true : undefined}>
-        <FrameShell
-          apps={FORMAL_APPS}
-          currentAppId=""
-          onSelectApp={() => undefined}
+        <FrameApps
+          includeAccess={false}
           moduleTabs={mainNavItems(true)}
           currentModuleTabKey="admin"
           onSelectModuleTab={(key) => {
@@ -282,7 +280,7 @@ export function AdminArea({ user, onSignedOut }: AdminAreaProps) {
               {signOutError}
             </p>
           )}
-        </FrameShell>
+        </FrameApps>
       </div>
 
       {pendingLeave !== null && (
