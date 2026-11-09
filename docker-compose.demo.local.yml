@@ -1,0 +1,31 @@
+# 本機除錯用的 Demo override（issue #145）。公開 Demo **不用**這份檔。
+#
+# 用途：在沒有 Cloudflare Tunnel 的情況下，用瀏覽器直接開 127.0.0.1 檢查 Demo stack。
+# 它只把端口綁在本機 loopback，端口號與正式 stack 完全不同（正式是 4210／4420／
+# 25432／29000／29001／4431）。
+#
+# 用法：
+#   docker compose -f docker-compose.demo.yml -f docker-compose.demo.local.yml \
+#     --env-file .env.demo up -d
+#   # .env.demo 要設 DEMO_COOKIE_SECURE=false，否則瀏覽器不會存 cookie
+#
+# 驗證（不起容器）：
+#   npm run demo:check -- --local
+
+services:
+  db:
+    ports:
+      - "127.0.0.1:${DEMO_DB_PORT:-26532}:5432"
+
+  storage:
+    ports:
+      - "127.0.0.1:${DEMO_MINIO_API_PORT:-29200}:9000"
+      - "127.0.0.1:${DEMO_MINIO_CONSOLE_PORT:-29201}:9001"
+
+  api:
+    ports:
+      - "127.0.0.1:${DEMO_API_PORT:-4620}:4420"
+
+  gateway-internal:
+    ports:
+      - "127.0.0.1:${DEMO_GATEWAY_INTERNAL_PORT:-4610}:80"

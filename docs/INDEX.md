@@ -24,6 +24,7 @@ Company OS 是 company starter：任何一間公司裝好 Docker 就能開始運
 | `docs/product/PERPLEXITY-MANAGER-PROMPT.md` | 畀 Perplexity（PM）用嘅完整 prompt：只開 GitHub issues 唔寫 code；必讀次序、UIUX 大圖、既有 issue 盤點避免撞車、E-00 總綱／F-01 裁決／F-02～F-07／D-01 序列、`Depends-on` 與 `cat:` 規則、loop 協定、本機 Docker 驗收 |
 | `docs/planning-loop.md` | 規劃與施工的分工、Depends-on、範疇與並行保護 |
 | `docs/testing/DEMO-PUBLIC-TESTING.md` | Demo Public Stack：UI／UX 測試、Demo 帳戶與 Cloudflare Tunnel 的隔離規則 |
+| `docs/deployment/demo-public-stack.md` | Demo Public Stack 部署契約：隔離條件、啟動、更新、清除、健康檢查與安全邊界（決策 C52） |
 | `docs/architecture/CODE-MAP.md` | 目錄、模組、分層、邊界規則、搬遷切片 |
 | `docs/architecture/REPO-MAP.md` | 現況對照、入口、容器與端口表 |
 | `docs/architecture/APP-DESIGN-TEMPLATE.md` | 每個 app 的設計範本 |

@@ -1,0 +1,127 @@
+# Demo Public Stack（issue #145／決策 C52）
+#
+# 這是一份**獨立的** compose 檔，不是疊在 docker-compose.yml 上的 override。
+# 理由：公開環境寧願重複幾十行，也不要繼承正式 stack 的任何東西。日後正式 stack
+# 新增端口、volume 或環境變數，不會靜靜出現在 Demo；反過來，刪掉這份檔也不會
+# 動到正式 stack 一根汗毛。
+#
+# 三條硬規則（測試 scripts/demo-stack.test.ts 與 npm run demo:check 會擋）：
+#   1. 不發佈任何主機端口。對外只有 cloudflared，主機上不開任何洞。
+#   2. project name 寫死在檔內（company-os-demo），所以就算有人漏了 -p，
+#      容器與 volume 仍然落在 Demo 專案，不會接到正式 stack。
+#   3. 資料庫名、storage bucket、volume 全部用 Demo 專屬名稱。
+#
+# 啟動：
+#   cp .env.demo.example .env.demo      # 填入密碼與 tunnel token（不進 git）
+#   docker compose -f docker-compose.demo.yml --env-file .env.demo up -d
+# 只驗證設定，不起容器：
+#   npm run demo:check
+#
+# 本機除錯（綁 127.0.0.1 的 Demo 端口）另加 docker-compose.demo.local.yml，
+# 公開 Demo 永不用它。見 docs/deployment/demo-public-stack.md。
+
+name: company-os-demo
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DEMO_POSTGRES_USER:?請先複製 .env.demo.example 為 .env.demo}
+      POSTGRES_PASSWORD: ${DEMO_POSTGRES_PASSWORD:?請先複製 .env.demo.example 為 .env.demo}
+      POSTGRES_DB: ${DEMO_POSTGRES_DB:?請先複製 .env.demo.example 為 .env.demo}
+    # 刻意沒有 ports：Demo 資料庫只活在 compose 網絡內。
+    volumes:
+      # named volume（不是 bind mount）。正式 stack 的 MinIO 用 bind mount，因為
+      # 那些檔是唯一無法重新生成的資料；Demo 的資料是拋棄式的，用 named volume
+      # 反而更安全：down -v 清得乾淨，也不可能指到正式資料夾。
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  storage:
+    build: ./docker/minio
+    # 刻意用 Demo 自己的 image tag，不與正式 stack 共用同一個 tag：
+    # 否則 `demo build` 會改寫正式 stack 正在使用的那個 tag，隔離就破了一個洞。
+    image: company-os-demo-minio:RELEASE.2025-10-15T17-29-55Z
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${DEMO_MINIO_ROOT_USER:?請先複製 .env.demo.example 為 .env.demo}
+      MINIO_ROOT_PASSWORD: ${DEMO_MINIO_ROOT_PASSWORD:?請先複製 .env.demo.example 為 .env.demo}
+    volumes:
+      - storage_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+
+  # 同一個 api 映像，但只連 Demo 的 db 與 storage。這三個位址都是 compose 服務名，
+  # 不是主機名或外部 URL —— 這也是「不會接到正式資料」的實際保證。
+  api:
+    build:
+      context: .
+      dockerfile: apps/platform/Dockerfile
+    restart: unless-stopped
+    environment:
+      PORT: "4420"
+      PGHOST: db
+      PGPORT: "5432"
+      PGUSER: ${DEMO_POSTGRES_USER:?請先複製 .env.demo.example 為 .env.demo}
+      PGPASSWORD: ${DEMO_POSTGRES_PASSWORD:?請先複製 .env.demo.example 為 .env.demo}
+      PGDATABASE: ${DEMO_POSTGRES_DB:?請先複製 .env.demo.example 為 .env.demo}
+      MINIO_ENDPOINT: http://storage:9000
+      MINIO_ROOT_USER: ${DEMO_MINIO_ROOT_USER:?請先複製 .env.demo.example 為 .env.demo}
+      MINIO_ROOT_PASSWORD: ${DEMO_MINIO_ROOT_PASSWORD:?請先複製 .env.demo.example 為 .env.demo}
+      MINIO_BUCKET: ${DEMO_MINIO_BUCKET:-company-os-demo}
+      MAX_UPLOAD_BYTES: ${DEMO_MAX_UPLOAD_BYTES:-209715200}
+      # 公開 Demo 走 HTTPS 隧道，所以預設 true。用本機 override 以 http 除錯時
+      # 必須改成 false，否則瀏覽器不會存 session cookie，登入會「看似失敗」。
+      COOKIE_SECURE: ${DEMO_COOKIE_SECURE:-true}
+      LOGIN_FAILURE_HASH_KEY: ${DEMO_LOGIN_FAILURE_HASH_KEY:?請先複製 .env.demo.example 為 .env.demo}
+      # 與正式 stack 同一套入口憑證設計，但用 Demo 自己的值：正式 token 洩漏
+      # 不會令人接到 Demo，Demo token 洩漏也不會令人接到正式。
+      INTERNAL_GATEWAY_TOKEN: ${DEMO_INTERNAL_GATEWAY_TOKEN:-}
+    depends_on:
+      db:
+        condition: service_healthy
+      storage:
+        condition: service_healthy
+
+  # Demo gateway：同一個 gateway-internal 映像（決策 C52 明確允許），
+  # 但只屬於 Demo project、只連 Demo api，而且不發佈端口。
+  gateway-internal:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    restart: unless-stopped
+    environment:
+      INTERNAL_GATEWAY_TOKEN: ${DEMO_INTERNAL_GATEWAY_TOKEN:-}
+    depends_on:
+      api:
+        condition: service_healthy
+
+  # 唯一對外的出口。ingress 規則寫在 Cloudflare（遠端管理），只可以是
+  # http://gateway-internal:80；這裡刻意不寫 --url，令路由不可能由本檔決定。
+  cloudflared:
+    image: cloudflare/cloudflared:2026.10.0
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      # 空值時 cloudflared 自己會大聲失敗（token 格式錯），不會靜靜連去別的 tunnel。
+      TUNNEL_TOKEN: ${DEMO_CLOUDFLARE_TUNNEL_TOKEN:-}
+    depends_on:
+      gateway-internal:
+        condition: service_healthy
+
+volumes:
+  # 實際名稱由 project name 加上字首：company-os-demo_db_data、
+  # company-os-demo_storage_data。與正式 stack 的 company-os_db_data 不同。
+  db_data:
+  storage_data:

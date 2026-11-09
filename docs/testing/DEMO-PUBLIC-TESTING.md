@@ -2,7 +2,8 @@
 
 狀態：已確認的測試方法  
 日期：2026-11-07  
-適用範圍：Company OS 所有 UI／UX 測試、外部 AI 瀏覽器測試、Demo 帳戶測試
+適用範圍：Company OS 所有 UI／UX 測試、外部 AI 瀏覽器測試、Demo 帳戶測試  
+部署契約：`docs/deployment/demo-public-stack.md`（決策 C52）。本文件講「怎樣測」，那份講「怎樣起一個隔離的環境」。
 
 ## 目的
 
