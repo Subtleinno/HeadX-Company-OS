@@ -16,11 +16,11 @@ Company OS 是 company starter：任何一間公司裝好 Docker 就能開始運
 | `AGENTS.md` | 給 AI agent 的開工規則與不變量 |
 | `docs/product/MASTER-PLAN.md` | 全盤計劃；第 3.4 節為公司／品牌模式，第 14.1、14.2 節為 Base 及後續 H 系列，第 15.1 節為本輪焦點；歷史快照不當今日狀態 |
 | `docs/product/DECISIONS.md` | 決策日誌，後者優先；C41–C45 記錄 Workspace、三模式及整合邊界 |
-| `docs/product/BASE-UI-DESIGN.md` | 共用外殼、底座管理 UX、Agent-first、設定、模板及語系；不是完整施工規格 |
+| `docs/product/BASE-UI-DESIGN.md` | 共用外殼、底座管理 UX、Agent-first、設定、模板及語系；不是完整施工規格。**2026-11-09 起舊外殼規格已被 Frame v1.3／`FRAME-UIUX-HANDOFF.md` v1.4 取代，唔留兩套（C61）** |
 | `docs/product/WORKSPACE-APP-SCOPE-DESIGN.md` | 公司／品牌語意、三模式候選互動與接入契約；第十一節列前置規劃交付與依賴分工 |
-| `docs/product/BASE-UI-HXDESIGN-ALIGNMENT.md` | Base UI 對照 HxDesign（`eb079b6`）的逐項實測表：來源檔、尺寸、差距、做法、刻意不照搬、未對齊項 |
-| `docs/product/FRAME-UIUX-HANDOFF.md` | 共用外殼（Frame）UI/UX 定稿交付 v1.3：外殼行為規格（Logo 貼名稱、據點機器入口喺頁尾左下）、公司型 app 正名 Boss Portal（據點管理歸屬佢，無「底座管理」獨立入口）、後端端點接回指引、Logo 管理撤回待重設計、待裁決定與既有規則衝突；給 development manager AI 拆施工 issue 用。設計定稿，未施工 |
-| `docs/design/FRAME-DESIGN-INDEX.md` | 九張 Frame 設計稿索引：Ardot 檔 `745493588675335`、每頁 node ID、`docs/design/frame/*.png` 快照、對應規格章節、施工狀態，同埋可貼去另一個 WorkBuddy session 嘅開工卡。Ardot 圖層係原始真相，PNG 係快照 |
+| `docs/product/BASE-UI-HXDESIGN-ALIGNMENT.md` | Base UI 對照 HxDesign（`eb079b6`）的逐項實測表：來源檔、尺寸、差距、做法、刻意不照搬、未對齊項。**#153 #148 A：HxDesign 只作歷史參考，本檔保留但唔係 UI 基準（C61）** |
+| `docs/product/FRAME-UIUX-HANDOFF.md` | 共用外殼（Frame）UI/UX 定稿交付 **v1.4**：外殼行為規格（Logo 貼名稱、據點機器入口喺頁尾左下）、公司型 app 正名 Boss Portal（據點管理歸屬佢，無「底座管理」獨立入口）、後端端點接回指引、Logo 管理撤回待重設計、**#153 主色 A 與 Q1–Q9 已裁決定及既有規則衝突對照**（決策落地 `DECISIONS.md` C53–C61）、F-02 驗收硬閘門；給 development manager AI 拆施工 issue 用。設計定稿，未施工 |
+| `docs/design/FRAME-DESIGN-INDEX.md` | 九張 Frame 設計稿索引（v1.4）：Ardot 檔 `745493588675335`、每頁 node ID、`docs/design/frame/*.png` 快照、對應規格章節、施工狀態，同埋可貼去另一個 WorkBuddy session 嘅開工卡。Ardot 圖層係原始真相，PNG 係快照 |
 | `docs/product/PERPLEXITY-MANAGER-PROMPT.md` | 畀 Perplexity（PM）用嘅完整 prompt：只開 GitHub issues 唔寫 code；必讀次序、UIUX 大圖、既有 issue 盤點避免撞車、E-00 總綱／F-01 裁決／F-02～F-07／D-01 序列、`Depends-on` 與 `cat:` 規則、loop 協定、本機 Docker 驗收 |
 | `docs/planning-loop.md` | 規劃與施工的分工、Depends-on、範疇與並行保護 |
 | `docs/testing/DEMO-PUBLIC-TESTING.md` | Demo Public Stack：UI／UX 測試、Demo 帳戶與 Cloudflare Tunnel 的隔離規則 |
@@ -40,6 +40,8 @@ Company OS 是 company starter：任何一間公司裝好 Docker 就能開始運
 ### 文件責任與閱讀次序
 
 涉及 Base／Workspace 時，先讀 MASTER-PLAN 的相關範圍及依賴，再讀 DECISIONS 的適用決策，然後讀 Workspace 核心語意及 Base 共用外殼，最後讀 issue 指定的具體契約與測試。候選互動矩陣只在 Workspace 專題維護，不在各 app 另寫一套；Base 交付目錄與次序以總綱為準。
+
+2026-11-09 #153 裁決後：共用外殼以 `FRAME-UIUX-HANDOFF.md` v1.4 為唯一 UI 真相，`BASE-UI-DESIGN.md` 嘅舊外殼規格已被取代，唔留兩套；HxDesign（含 `BASE-UI-HXDESIGN-ALIGNMENT.md`）只作歷史參考（#148 A）。主色同 Q1–Q9 已裁，落地見 `DECISIONS.md` C53–C61。呢段只補充 UI 真相嘅歸屬，**唔改動下面 Demo Public Stack／部署契約嘅任何條目**。
 總綱管理整體計劃與依賴；決策日誌保存理由與修訂關係；Base 定義共用管理 UX；Workspace 專題定義工作上下文、候選互動及前置規劃。這是責任分工，不授權任何文件繞過 AGENTS 不變量或本入口唯一來源。
 已批准的新決策定義目標，不代表 runtime 已跟上。與舊主文、實際契約有差異時，由規劃辨別待實作缺口或規格衝突，明列方案及修訂；施工者不得自行揀一份、改權限或另造模型。
 
