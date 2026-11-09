@@ -247,6 +247,32 @@ export function WorkspacePrototype({ loadLabel = defaultLoadLabel }: { loadLabel
     });
   }
 
+  /**
+   * 第二步選品牌（issue 147 P0-1）。
+   *
+   * 之前呢一步直接叫 `applySwitch()`，`setNote('')` 會靜靜丟走未保存輸入；
+   * 而切 app／切頁都經 `commit()`。同一個動作兩條路兩個答案，其中一個係錯。
+   * 而家統一經 `commit()`：有未保存就先問，揀「放棄」先至清空同切換。
+   * 目標 app 同品牌喺 closure 入面留住，確認對話框收起之後仍然切去原本揀嗰個。
+   */
+  function chooseBrandFromStep(brandId: string): void {
+    if (pendingAppId === null) {
+      return;
+    }
+
+    const targetAppId = pendingAppId;
+
+    commit(() => {
+      setPendingAppId(null);
+      applySwitch(targetAppId, { kind: 'brand', brandId });
+    });
+  }
+
+  /** 「留低」只收起確認；第二步仍然開住，app、品牌、頁面、備註全部唔變。 */
+  function cancelConfirm(): void {
+    setConfirm(null);
+  }
+
   function selectScope(nextScope: ScopeTarget): void {
     if (app === null) {
       return;
@@ -280,11 +306,6 @@ export function WorkspacePrototype({ loadLabel = defaultLoadLabel }: { loadLabel
 
     popoverRef.current?.focus();
   }, [pendingAppId, confirm]);
-
-  function closePopover(): void {
-    setPendingAppId(null);
-    setConfirm(null);
-  }
 
   if (invalidHash) {
     return (
@@ -380,7 +401,7 @@ export function WorkspacePrototype({ loadLabel = defaultLoadLabel }: { loadLabel
         </div>
       </div>
 
-      {pendingAppId !== null && (
+      {confirm === null && pendingAppId !== null && (
         <div
           className="shell-popover"
           role="dialog"
@@ -417,8 +438,7 @@ export function WorkspacePrototype({ loadLabel = defaultLoadLabel }: { loadLabel
                   tabIndex={0}
                   className="shell-popover__item"
                   onClick={() => {
-                    setPendingAppId(null);
-                    applySwitch(pendingAppId, { kind: 'brand', brandId: brand.id });
+                    chooseBrandFromStep(brand.id);
                   }}
                   onKeyDown={(event) => {
                     if (event.key !== 'Enter' && event.key !== ' ') {
@@ -426,8 +446,7 @@ export function WorkspacePrototype({ loadLabel = defaultLoadLabel }: { loadLabel
                     }
 
                     event.preventDefault();
-                    setPendingAppId(null);
-                    applySwitch(pendingAppId, { kind: 'brand', brandId: brand.id });
+                    chooseBrandFromStep(brand.id);
                   }}
                 >
                   <Icon name="cube" className="ic shell-popover__icon" />
@@ -473,7 +492,7 @@ export function WorkspacePrototype({ loadLabel = defaultLoadLabel }: { loadLabel
           onKeyDown={(event) => {
             if (event.key === 'Escape') {
               event.preventDefault();
-              closePopover();
+              cancelConfirm();
             }
           }}
         >
@@ -498,7 +517,7 @@ export function WorkspacePrototype({ loadLabel = defaultLoadLabel }: { loadLabel
             type="button"
             className="shell-popover__item shell-popover__item--muted"
             onClick={() => {
-              setConfirm(null);
+              cancelConfirm();
             }}
           >
             {t('proto.cancel')}

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { BaseShell, nextTheme, type ShellTheme, type PrototypeApp, type ShellNavItem } from '@company-os/app-shell';
 import { t, type MessageKey } from '@company-os/i18n';
 import { submitLogout } from '../api';
@@ -37,6 +37,54 @@ type AdminPageKey = 'settings' | 'organisation' | 'staff' | 'grants';
 
 const DEFAULT_PAGE: AdminPageKey = 'settings';
 
+/**
+ * 對話框嘅 focus trap（issue 147 P0-2）。
+ *
+ * `aria-modal="true"` 只係講咗，唔會自己困住焦點；Tab 要喺呢度明確循環。
+ * 由第一個倒退、由最後一個向前、或者焦點根本唔喺對話框入面，都要拉返入嚟。
+ * 其餘情況交返畀瀏覽器原本嘅順序，唔好自己重排 DOM 順序。
+ */
+function trapFocus(event: KeyboardEvent<HTMLDivElement>, dialog: HTMLDivElement | null): void {
+  if (event.key !== 'Tab') {
+    return;
+  }
+
+  if (dialog === null) {
+    event.preventDefault();
+    return;
+  }
+
+  const focusable = Array.from(
+    dialog.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    ),
+  );
+
+  if (focusable.length === 0) {
+    event.preventDefault();
+    dialog.focus();
+    return;
+  }
+
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  const active = document.activeElement;
+
+  if (event.shiftKey) {
+    if (active === first || active === dialog || !dialog.contains(active)) {
+      event.preventDefault();
+      last?.focus();
+    }
+
+    return;
+  }
+
+  if (active === last || active === dialog || !dialog.contains(active)) {
+    event.preventDefault();
+    first?.focus();
+  }
+}
+
 function parseAdminPage(hash: string): AdminPageKey {
   const value = hash.replace(/^#/, '');
   const rest = value.startsWith('/admin/') ? value.slice('/admin/'.length) : '';
@@ -69,6 +117,10 @@ export function AdminArea({ user, onSignedOut }: AdminAreaProps) {
   /** 有未儲存修改時，被攔下來的動作；用戶選擇放棄才會執行。 */
   const [pendingLeave, setPendingLeave] = useState<{ run: () => void } | null>(null);
   const dirtyRef = useRef(0);
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  /** 開對話框之前嘅焦點，關閉之後要還原（切頁鍵、登出鍵或網址攔截前）。 */
+  const triggerRef = useRef<HTMLElement | null>(null);
+  const wasOpenRef = useRef(false);
 
   useEffect(() => {
     dirtyRef.current = dirtyCount;
@@ -101,15 +153,42 @@ export function AdminArea({ user, onSignedOut }: AdminAreaProps) {
     }
   }, [page]);
 
-  const requestLeave = useCallback((run: () => void) => {
-    if (dirtyRef.current > 0) {
-      setPendingLeave({ run });
+  const openPendingLeave = useCallback((run: () => void): void => {
+    triggerRef.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    setPendingLeave({ run });
+  }, []);
 
-      return;
+  const requestLeave = useCallback(
+    (run: () => void) => {
+      if (dirtyRef.current > 0) {
+        openPendingLeave(run);
+
+        return;
+      }
+
+      run();
+    },
+    [openPendingLeave],
+  );
+
+  // 打開時焦點入對話框；關閉時還原到觸發元件。兩件事都由同一個狀態切換驅動，
+  // 唔靠每個按鈕各自記住要 focus 返邊度。
+  useEffect(() => {
+    if (pendingLeave !== null) {
+      dialogRef.current?.focus();
+    }
+  }, [pendingLeave]);
+
+  useEffect(() => {
+    const isOpen = pendingLeave !== null;
+
+    if (wasOpenRef.current && !isOpen) {
+      triggerRef.current?.focus();
     }
 
-    run();
-  }, []);
+    wasOpenRef.current = isOpen;
+  }, [pendingLeave]);
 
   // 直接在網址欄改 hash 也要攔：先還原網址，再問要不要放棄。
   useEffect(() => {
@@ -127,7 +206,7 @@ export function AdminArea({ user, onSignedOut }: AdminAreaProps) {
       }
 
       window.history.replaceState(null, '', adminHash(page));
-      setPendingLeave({ run: () => setPage(requested) });
+      openPendingLeave(() => setPage(requested));
     };
 
     window.addEventListener('hashchange', onHashChange);
@@ -135,7 +214,7 @@ export function AdminArea({ user, onSignedOut }: AdminAreaProps) {
     return () => {
       window.removeEventListener('hashchange', onHashChange);
     };
-  }, [page]);
+  }, [page, openPendingLeave]);
 
   const adminApp: PrototypeApp = {
     id: 'admin',
@@ -159,54 +238,57 @@ export function AdminArea({ user, onSignedOut }: AdminAreaProps) {
 
   return (
     <>
-      <BaseShell
-        apps={[adminApp]}
-        currentAppId={adminApp.id}
-        scope={{ kind: 'company' }}
-        brands={[]}
-        theme={theme}
-        sidebarOpen={sidebarOpen}
-        account={{ displayName: user.displayName, signingOut }}
-        subMenuItems={subMenuItems}
-        railItems={[]}
-        currentPageKey={page}
-        onSelectApp={() => {
-          // 目前只有一個 app；切到別的 app 不是這一張的範圍，按下去不做事也不假裝切換。
-        }}
-        onSelectScope={(scope) => {
-          if (scope.kind !== 'company') {
-            return;
-          }
-        }}
-        onSelectPage={(key) => {
-          const next = PAGES.find((item) => item.key === key);
+      {/* 對話框開著時，外殼同頁面內容一律 inert：不可聚焦，讀屏亦唔會游走出去。 */}
+      <div className="admin-shell" inert={pendingLeave !== null ? true : undefined}>
+        <BaseShell
+          apps={[adminApp]}
+          currentAppId={adminApp.id}
+          scope={{ kind: 'company' }}
+          brands={[]}
+          theme={theme}
+          sidebarOpen={sidebarOpen}
+          account={{ displayName: user.displayName, signingOut }}
+          subMenuItems={subMenuItems}
+          railItems={[]}
+          currentPageKey={page}
+          onSelectApp={() => {
+            // 目前只有一個 app；切到別的 app 不是這一張的範圍，按下去不做事也不假裝切換。
+          }}
+          onSelectScope={(scope) => {
+            if (scope.kind !== 'company') {
+              return;
+            }
+          }}
+          onSelectPage={(key) => {
+            const next = PAGES.find((item) => item.key === key);
 
-          if (next !== undefined) {
-            navigateTo(next.key);
-          }
-        }}
-        onToggleSidebar={() => {
-          setSidebarOpen((open) => !open);
-        }}
-        onToggleTheme={() => {
-          setTheme((current) => nextTheme(current));
-        }}
-        onSignOut={() => {
-          requestLeave(() => {
-            void handleSignOut();
-          });
-        }}
-      >
-        {page === 'settings' && <CompanySettingsScreen onDirtyCountChange={setDirtyCount} />}
-        {page === 'organisation' && <OrganisationScreen onDirtyCountChange={setDirtyCount} />}
-        {page === 'staff' && <StaffAgentsScreen onDirtyCountChange={setDirtyCount} />}
-        {page === 'grants' && <AppGrantsScreen user={user} onDirtyCountChange={setDirtyCount} />}
-        {signOutError !== null && (
-          <p className="admin-notice admin-notice--failed" role="alert">
-            {signOutError}
-          </p>
-        )}
-      </BaseShell>
+            if (next !== undefined) {
+              navigateTo(next.key);
+            }
+          }}
+          onToggleSidebar={() => {
+            setSidebarOpen((open) => !open);
+          }}
+          onToggleTheme={() => {
+            setTheme((current) => nextTheme(current));
+          }}
+          onSignOut={() => {
+            requestLeave(() => {
+              void handleSignOut();
+            });
+          }}
+        >
+          {page === 'settings' && <CompanySettingsScreen onDirtyCountChange={setDirtyCount} />}
+          {page === 'organisation' && <OrganisationScreen onDirtyCountChange={setDirtyCount} />}
+          {page === 'staff' && <StaffAgentsScreen onDirtyCountChange={setDirtyCount} />}
+          {page === 'grants' && <AppGrantsScreen user={user} onDirtyCountChange={setDirtyCount} />}
+          {signOutError !== null && (
+            <p className="admin-notice admin-notice--failed" role="alert">
+              {signOutError}
+            </p>
+          )}
+        </BaseShell>
+      </div>
 
       {pendingLeave !== null && (
         <div className="admin-scrim">
@@ -215,11 +297,14 @@ export function AdminArea({ user, onSignedOut }: AdminAreaProps) {
             role="dialog"
             aria-modal="true"
             aria-labelledby="admin-unsaved-title"
+            aria-describedby="admin-unsaved-body admin-unsaved-count"
             tabIndex={-1}
             ref={(node) => {
-              node?.focus();
+              dialogRef.current = node;
             }}
             onKeyDown={(event) => {
+              trapFocus(event, dialogRef.current);
+
               if (event.key === 'Escape') {
                 setPendingLeave(null);
               }
@@ -229,8 +314,10 @@ export function AdminArea({ user, onSignedOut }: AdminAreaProps) {
             <h2 className="admin-dialog__title" id="admin-unsaved-title">
               {t('admin.unsaved.title')}
             </h2>
-            <p className="admin-dialog__body">{t('admin.unsaved.body')}</p>
-            <p className="admin-dialog__body">
+            <p className="admin-dialog__body" id="admin-unsaved-body">
+              {t('admin.unsaved.body')}
+            </p>
+            <p className="admin-dialog__body" id="admin-unsaved-count">
               {t('admin.unsaved.dirtyCount', { count: dirtyCount })}
             </p>
             <div className="admin-dialog__actions">
