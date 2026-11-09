@@ -696,6 +696,58 @@ export const messages = {
   'policy.error.notFound': '這條規則已不存在，請重新載入。',
 
   'policy.noVersion': '儲存後會重新讀取最新資料，以伺服器目前的內容為準。',
+
+  // ── 檔案頁文案鍵（issue #163）─────────────────────────────────────
+  // 只新增鍵，不改、不刪、不重命名上面任何既有鍵或文字。繁體中文（香港）、
+  // 零 emoji；上傳中唔顯示進度百分比、刪除確認如實講明軟刪除同內容仍保留、
+  // 校驗碼只講 SHA-256 核對完整性。文案待老闆事後審閱。
+  // 可重用鍵（status.loading／admin.retry／common.retry／admin.cancel／
+  // admin.sessionExpired／error.network／error.unexpected）由下游直接重用，
+  // 本張唔重複新增。
+  'files.menu.label': '檔案',
+  'files.title': '檔案',
+  'files.lead.staff': '這裡只會顯示你自己上傳的檔案。',
+  'files.lead.owner': '這裡會顯示全公司所有未刪除的檔案，但畫面不會顯示上傳者是誰。',
+
+  'files.column.name': '檔名',
+  'files.column.type': '類型',
+  'files.column.size': '大小',
+  'files.column.uploadedAt': '上傳時間',
+  'files.column.checksum': '校驗碼（SHA-256）',
+
+  'files.size.bytes': '{count} 位元組',
+  'files.size.kb': '{count} KB',
+  'files.size.mb': '{count} MB',
+  'files.size.gb': '{count} GB',
+
+  'files.upload.select': '選擇檔案',
+  'files.upload.action': '上傳',
+  'files.upload.uploading': '上傳中…',
+  'files.upload.success': '檔案已上傳。',
+  'files.upload.error.invalidType': '無法辨識這個檔案的類型，請確認後再試。',
+  'files.upload.error.invalidName': '檔名無效，請用 1 至 255 個字元。',
+  'files.upload.error.checksum': '檔案內容與提供的校驗碼不符，請重新上傳。',
+  'files.upload.error.tooLarge': '檔案超過伺服器允許的上限，請選一個較小的檔案再試。',
+
+  'files.download.action': '下載',
+  'files.download.note': '部分類型會直接在瀏覽器開啟，其餘會下載，實際由伺服器決定。',
+
+  'files.delete.action': '刪除',
+  'files.delete.deleting': '刪除中…',
+  'files.delete.confirm.title': '刪除檔案',
+  'files.delete.confirm.body':
+    '這是軟刪除：檔案會從列表消失，但檔案內容仍保留在儲存空間，不會被清除。',
+  'files.delete.confirm.action': '確認刪除',
+  'files.delete.success': '檔案已從列表移除。',
+  'files.delete.notFound': '找不到這個檔案，可能已刪除，或不是你上傳的。',
+
+  'files.empty.staff': '你還沒有上傳任何檔案；這是真的沒有資料，不是畫面出錯。',
+  'files.empty.owner': '公司還沒有任何檔案；這是真的沒有資料，不是畫面出錯。',
+  'files.loadFailed': '讀不到檔案清單，請重試。',
+  'files.loadMore': '載入更多',
+  'files.endOfList': '已到最後，沒有更多檔案。',
+
+  'files.checksum.note': '校驗碼是檔案內容的 SHA-256 值，用來核對檔案完整性。',
 } as const;
 
 export type MessageKey = keyof typeof messages;

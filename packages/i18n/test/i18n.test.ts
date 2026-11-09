@@ -59,6 +59,10 @@ describe('字串表', () => {
       'policy.condition.lte',
       'policy.condition.gte',
       'policy.condition.in',
+      'files.size.bytes',
+      'files.size.kb',
+      'files.size.mb',
+      'files.size.gb',
     ]);
   });
 });
