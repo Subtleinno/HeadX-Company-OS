@@ -1,0 +1,105 @@
+import { createHash } from 'node:crypto';
+import { describe, expect, it } from 'vitest';
+import { messages, t } from '../src/index.js';
+
+/**
+ * #155 F-02I：Frame 文案鍵嘅驗收測試。
+ *
+ * 只驗證「新增 frame.* 鍵」同「既有鍵零改動」，唔改、唔刪、唔重命名任何
+ * 既有鍵或文字。鍵值逐字來自本張施工規格：繁體中文（香港）、零 emoji、
+ * 零插值（避免影響既有 i18n.test.ts 嘅插值清單斷言）。
+ *
+ * 文案來源降級：Ardot variable/text layer 喺本 session 讀唔到，文字以
+ * docs/design/frame/*.png 快照可見文字同 FRAME-UIUX-HANDOFF.md 第 2.2–2.4
+ * 節為準自撰，標「文案待老闆事後審閱」，唔阻塞施工。
+ */
+
+/** 本張交付嘅完整 frame.* 鍵值清單（唯一真相，要同 index.ts diff 逐項一致）。 */
+const FRAME_MESSAGES: Record<string, string> = {
+  'frame.topbar.sidebarToggle': '顯示或收起側欄',
+  'frame.topbar.appSelector': '選擇 App',
+  'frame.topbar.brandSelector': '選擇品牌',
+  'frame.topbar.search': '搜尋',
+  'frame.topbar.commandPalette': '開啟命令面板',
+  'frame.topbar.language': '語系',
+  'frame.topbar.notifications': '通知',
+  'frame.topbar.help': '說明',
+  'frame.topbar.account': '帳戶選單',
+  'frame.topbar.more': '更多操作',
+  'frame.topbar.pageSearch': '搜尋此頁',
+  'frame.scope.company': '公司範圍',
+  'frame.landmark.topbar': '全域頂欄',
+  'frame.landmark.subbar': '模組分頁',
+  'frame.landmark.sidebar': '子頁導覽',
+  'frame.landmark.breadcrumb': '麵包屑',
+  'frame.landmark.content': '主要內容',
+  'frame.landmark.footer': '頁尾',
+  'frame.empty.title': '呢頁仲未接內容',
+  'frame.empty.body': '而家只畫外殼；呢頁會喺 Design app 階段接入真實模組內容。',
+  'frame.footer.localCompany': '本機公司',
+  'frame.footer.sitesEntry': '據點與機器',
+  'frame.footer.headOffice': '總部主機',
+  'frame.prototype.badge': '原型示意',
+  'frame.menu.today': '今日',
+  'frame.menu.account': '帳戶',
+  'frame.menu.admin': '管理區',
+  'frame.account.nameMissing': '名稱未提供',
+  'frame.company.nameMissing': '公司名稱未提供',
+  'frame.state.loading': '載入中…',
+  'frame.state.readFailed': '讀取失敗，請重試。',
+  'frame.state.permissionDenied': '你沒有查看呢頁嘅權限。',
+  'frame.state.notProvided': '未提供',
+};
+
+/**
+ * origin/main（9da2a90）版字串表，過濾 frame. 之後全部條目嘅 SHA-256 凍結快照。
+ * 只要任何一個既有鍵嘅鍵名或文字被改動，呢個雜湊就會變，測試即紅。
+ */
+const FROZEN_NON_FRAME_SHA256 =
+  'a48ab323779908ef848905616ca7c45cafb194482ba7a77aa9a5ef82838c47fd';
+
+function hashNonFrame(msgs: Record<string, string>): string {
+  const entries = Object.entries(msgs)
+    .filter(([key]) => !key.startsWith('frame.'))
+    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+  return createHash('sha256').update(JSON.stringify(entries)).digest('hex');
+}
+
+describe('#155 Frame 文案鍵（frame.*）', () => {
+  it('全部 frame.* 鍵都存在，而且逐字正確（逐鍵斷言，刪一個只紅一個）', () => {
+    for (const [key, expected] of Object.entries(FRAME_MESSAGES)) {
+      expect((messages as Record<string, string>)[key], key).toBe(expected);
+      expect(t(key as never), key).toBe(expected);
+    }
+  });
+
+  it('交付鍵名全部以 frame. 開頭', () => {
+    for (const key of Object.keys(FRAME_MESSAGES)) {
+      expect(key.startsWith('frame.'), key).toBe(true);
+    }
+  });
+
+  it('冇清單以外嘅 frame.* 鍵', () => {
+    const extra = Object.keys(messages).filter(
+      (key) => key.startsWith('frame.') && !(key in FRAME_MESSAGES),
+    );
+    expect(extra).toEqual([]);
+  });
+
+  it('新增文案零 emoji', () => {
+    const emoji = /[\p{Extended_Pictographic}\uFE0F\u200D\u{1F3FB}-\u{1F3FF}\u{1F1E6}-\u{1F1FF}]/u;
+    for (const [key, value] of Object.entries(FRAME_MESSAGES)) {
+      expect(emoji.test(value), key).toBe(false);
+    }
+  });
+
+  it('新增文案零插值（唔出現任何 { }）', () => {
+    for (const [key, value] of Object.entries(FRAME_MESSAGES)) {
+      expect(/[{}]/.test(value), key).toBe(false);
+    }
+  });
+
+  it('既有鍵零改動：非 frame. 條目 SHA-256 同 origin/main 凍結值一致', () => {
+    expect(hashNonFrame(messages as Record<string, string>)).toBe(FROZEN_NON_FRAME_SHA256);
+  });
+});
