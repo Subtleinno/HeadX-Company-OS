@@ -12,6 +12,10 @@ export type RecordedRequest = {
   method: string;
   contentType: string | null;
   body: string | null;
+  /** 未經轉換嘅原始 body：上傳測試要證明 fetch 收到嘅係同一個 `File`，唔係字串。 */
+  rawBody: unknown;
+  /** 全部請求標頭（key 已轉小寫）：用嚟證明有 `x-file-name`、冇 `x-content-sha256`。 */
+  headers: Record<string, string>;
 };
 
 export type FakeResponse = {
@@ -65,7 +69,10 @@ export type FakeHandlers = Partial<
     | 'policyRules'
     | 'policyRuleCreate'
     | 'policyRulePatch'
-    | 'policyRuleDelete',
+    | 'policyRuleDelete'
+    | 'filesList'
+    | 'filesUpload'
+    | 'filesDelete',
     Handler
   >
 >;
@@ -110,6 +117,33 @@ function readHeader(headers: unknown, name: string): string | null {
   }
 
   return null;
+}
+
+/** 把請求標頭收成小寫 key 嘅物件；測試可以逐個 header 斷言，唔使只靠 content-type。 */
+function readAllHeaders(headers: unknown): Record<string, string> {
+  const result: Record<string, string> = {};
+
+  if (headers === undefined || headers === null) {
+    return result;
+  }
+
+  if (Array.isArray(headers)) {
+    for (const entry of headers) {
+      if (Array.isArray(entry)) {
+        result[String(entry[0]).toLowerCase()] = String(entry[1]);
+      }
+    }
+
+    return result;
+  }
+
+  if (typeof headers === 'object') {
+    for (const [key, value] of Object.entries(headers as Record<string, unknown>)) {
+      result[key.toLowerCase()] = String(value);
+    }
+  }
+
+  return result;
 }
 
 function routeKey(path: string, method: string): keyof FakeHandlers | null {
@@ -250,6 +284,16 @@ function routeKey(path: string, method: string): keyof FakeHandlers | null {
     return method === 'GET' ? 'policyRules' : method === 'POST' ? 'policyRuleCreate' : null;
   }
 
+  // ── 檔案層（issue 164）。`/api/files/:id` 先於 `/api/files`；
+  // 下載係 `<a href>` 開新分頁，唔經 fetch，所以呢度只需要 DELETE。
+  if (/\/files\/[^/]+$/.test(bare)) {
+    return method === 'DELETE' ? 'filesDelete' : null;
+  }
+
+  if (bare.endsWith('/files')) {
+    return method === 'GET' ? 'filesList' : method === 'POST' ? 'filesUpload' : null;
+  }
+
   // 逐 key 保存：`/api/settings/<key>`，只有 PUT。
   if (/\/settings\/[^/]+$/.test(path)) {
     return method === 'PUT' ? 'settingSave' : null;
@@ -288,6 +332,8 @@ export function installFakeApi(handlers: FakeHandlers): FakeApi {
         method,
         contentType: readHeader(init?.headers, 'content-type'),
         body,
+        rawBody: init?.body,
+        headers: readAllHeaders(init?.headers),
       };
 
       calls.push(recorded);
