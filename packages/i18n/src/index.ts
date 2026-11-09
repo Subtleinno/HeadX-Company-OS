@@ -605,6 +605,97 @@ export const messages = {
   'frame.state.readFailed': '讀取失敗，請重試。',
   'frame.state.permissionDenied': '你沒有查看呢頁嘅權限。',
   'frame.state.notProvided': '未提供',
+
+  // ── 政策規則頁文案鍵（issue #161）────────────────────────────────
+  // 只新增鍵，不改、不刪、不重命名上面任何既有鍵或文字。繁體中文（香港）、
+  // 零 emoji；儲存成功只講「已儲存」，唔講「已生效」。文案待老闆事後審閱。
+  // 可重用鍵（admin.save／admin.saving／admin.retry／admin.cancel／
+  // admin.value.yes/no／admin.sessionExpired／admin.unsaved.*／error.network）
+  // 由下游直接重用，本張唔重複新增；422 reasons 由畫面原樣顯示，唔需新鍵。
+  'admin.page.policy': '政策規則',
+  'policy.title': '政策規則',
+  'policy.lead': '規則決定哪些動作可以放行、哪些動作需要批准。沒有任何規則命中時，所有動作一律需要批准。',
+
+  'policy.column.domain': '類別',
+  'policy.column.condition': '條件',
+  'policy.column.action': '動作',
+  'policy.column.priority': '優先次序',
+  'policy.column.state': '狀態',
+  'policy.column.scope': '適用範圍',
+  'policy.column.note': '備註',
+  'policy.column.updatedAt': '更新時間',
+  'policy.state.enabled': '啟用',
+  'policy.state.disabled': '停用',
+
+  'policy.action.allow': '放行',
+  'policy.action.require_approval': '需要批准',
+
+  'policy.scope.company': '整間公司',
+  'policy.scope.unit': '指定單位：{name}',
+  'policy.scope.unitNameUnknown': '指定單位（{id}）：單位名稱未能讀取，所以這裡只顯示單位 id。',
+  'policy.scope.unitOption': '指定單位',
+
+  'policy.condition.eq': '{field} 等於 {value}',
+  'policy.condition.lte': '{field} 不高於 {currency} {amount}',
+  'policy.condition.gte': '{field} 不低於 {currency} {amount}',
+  'policy.condition.in': '{field} 屬於其中之一：{values}',
+
+  'policy.empty': '目前沒有任何規則。沒有規則時，所有動作一律需要批准。這是真的沒有資料，不是畫面出錯。',
+
+  'policy.loading': '正在讀取政策規則…',
+  'policy.loadFailed': '讀不到政策規則。',
+  'policy.denied': '只有老闆可以管理政策規則。',
+
+  'policy.form.createTitle': '新增政策規則',
+  'policy.form.editTitle': '編輯政策規則',
+  'policy.form.domain': '類別',
+  'policy.form.domainHint': '類別要用小寫英文字母開頭，之後只可以用小寫英文字母、數字或底線。',
+  'policy.form.condition': '條件',
+  'policy.form.action': '動作',
+  'policy.form.priority': '優先次序',
+  'policy.form.priorityHint': '優先次序要填整數；不填會用 100。',
+  'policy.form.enabled': '啟用',
+  'policy.form.note': '備註',
+  'policy.form.noteHint': '備註最多 500 字。',
+  'policy.form.scope': '適用範圍',
+  'policy.form.unitSelect': '選擇單位',
+  'policy.form.clause': '條件子句',
+  'policy.form.clauseField': '要比對的項目',
+  'policy.form.clauseOperator': '比較方式',
+  'policy.form.clauseValue': '要比對的值',
+  'policy.form.clauseCurrency': '貨幣',
+  'policy.form.clauseCurrencyHint': '金額比較一定要填貨幣。',
+  'policy.form.clauseListHint': '「屬於其中之一」要逐項輸入清單值。',
+  'policy.form.valueType': '值的類型',
+  'policy.form.valueType.text': '文字',
+  'policy.form.valueType.number': '數字',
+  'policy.form.valueType.boolean': '是／否',
+  'policy.form.clauseAdd': '新增子句',
+  'policy.form.clauseRemove': '移除子句',
+  'policy.form.clauseRequired': '條件至少要有一個子句。',
+  'policy.operator.eq': '等於',
+  'policy.operator.lte': '不高於',
+  'policy.operator.gte': '不低於',
+  'policy.operator.in': '屬於其中之一',
+
+  'policy.action.create': '新增規則',
+  'policy.action.edit': '編輯',
+  'policy.action.disable': '停用',
+  'policy.action.enable': '啟用',
+  'policy.action.delete': '刪除',
+  'policy.delete.title': '刪除規則',
+  'policy.delete.body': '這是軟刪除：規則會從列表消失，但資料列會保留。',
+  'policy.delete.confirm': '確認刪除',
+  'policy.success.created': '已建立規則。',
+  'policy.success.saved': '已儲存',
+  'policy.success.disabled': '已停用',
+  'policy.success.enabled': '已啟用',
+  'policy.success.deleted': '已刪除',
+  'policy.failed': '操作失敗，請稍後再試。',
+
+  'policy.error.notFound': '這條規則已不存在，請重新載入。',
+
+  'policy.noVersion': '儲存後會重新讀取最新資料，以伺服器目前的內容為準。',
 } as const;
 
 export type MessageKey = keyof typeof messages;
