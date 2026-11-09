@@ -53,6 +53,12 @@ describe('字串表', () => {
       'grant.modify.current',
       'grant.modify.target',
       'login.tooManyAttempts',
+      'policy.scope.unit',
+      'policy.scope.unitNameUnknown',
+      'policy.condition.eq',
+      'policy.condition.lte',
+      'policy.condition.gte',
+      'policy.condition.in',
     ]);
   });
 });
