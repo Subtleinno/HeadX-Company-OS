@@ -54,13 +54,27 @@ const FRAME_MESSAGES: Record<string, string> = {
 /**
  * origin/main（9da2a90）版字串表，過濾 frame. 之後全部條目嘅 SHA-256 凍結快照。
  * 只要任何一個既有鍵嘅鍵名或文字被改動，呢個雜湊就會變，測試即紅。
+ *
+ * 同步改寫（#161）：#161 起嘅 cat:packages 施工張會新增非 frame. 前綴嘅鍵
+ * （policy.* 同管理區頁籤 admin.page.policy）。呢啲鍵唔屬 #155 要守嘅既有鍵，
+ * 唔排除嘅話「合法新增鍵」會被誤當成「既有鍵被改」，令 npm test 假紅。
+ * 下面只係把呢啲後續鍵明確排除，凍結值 a48ab… 唔變、守衛嘅 489 個既有鍵
+ * 唔變，唔係放寬門檻；後續施工張新增鍵要同步加落呢兩個清單。
  */
 const FROZEN_NON_FRAME_SHA256 =
   'a48ab323779908ef848905616ca7c45cafb194482ba7a77aa9a5ef82838c47fd';
 
+const LATER_KEY_PREFIXES = ['policy.'];
+const LATER_EXACT_KEYS = ['admin.page.policy'];
+
 function hashNonFrame(msgs: Record<string, string>): string {
   const entries = Object.entries(msgs)
-    .filter(([key]) => !key.startsWith('frame.'))
+    .filter(
+      ([key]) =>
+        !key.startsWith('frame.') &&
+        !LATER_KEY_PREFIXES.some((prefix) => key.startsWith(prefix)) &&
+        !LATER_EXACT_KEYS.includes(key),
+    )
     .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
   return createHash('sha256').update(JSON.stringify(entries)).digest('hex');
 }

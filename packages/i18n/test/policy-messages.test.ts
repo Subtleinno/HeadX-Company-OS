@@ -242,13 +242,17 @@ describe('#161 政策規則頁文案鍵（policy.*／admin.page.policy）', () =
   it('全部鍵都存在，而且逐字正確（逐鍵斷言，刪一個只紅一個）', () => {
     for (const [key, expected] of Object.entries(POLICY_MESSAGES)) {
       expect((messages as Record<string, string>)[key], key).toBe(expected);
-      expect(t(key as never), key).toBe(expected);
+      // 帶 {變數} 嘅鍵唔可以唔帶變數叫 t()（t() 一律跑插值，會拋錯）；
+      // 佢哋嘅插值由下面「帶 {變數} 嘅鍵用實例變數驗證插值」斷言。
+      if (!(key in INTERPOLATED)) {
+        expect(t(key as never), key).toBe(expected);
+      }
     }
   });
 
-  it('每個鍵 t() 都解析成非空字串', () => {
+  it('每個鍵 t() 都解析成非空字串（帶變數鍵用實例變數）', () => {
     for (const key of Object.keys(POLICY_MESSAGES)) {
-      expect(t(key as never).length, key).toBeGreaterThan(0);
+      expect(t(key as never, INTERPOLATED[key] ?? {}).length, key).toBeGreaterThan(0);
     }
   });
 
