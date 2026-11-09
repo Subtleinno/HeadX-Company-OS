@@ -727,3 +727,69 @@ export function patchPolicyRule(
 export function deletePolicyRule(id: string): Promise<ApiResult<null>> {
   return request<null>(`/api/policy-rules/${encodeURIComponent(id)}`, { method: 'DELETE' });
 }
+
+// ---------------------------------------------------------------------------
+// 檔案層（issue 164）
+// ---------------------------------------------------------------------------
+
+/**
+ * `GET /files` 回傳嘅公開欄位，照後端 `toPublicFile()` 嘅形狀：
+ * 只有六個欄位，**沒有上傳者**，前端唔補、唔猜。
+ */
+export type PublicFile = {
+  id: string;
+  originalName: string;
+  contentType: string;
+  sizeBytes: number;
+  sha256: string;
+  createdAt: string;
+};
+
+/** `nextCursor` 係不透明字串或 null；前端唔解讀內容，只原样帶去下一次請求。 */
+export type FilePage = { files: PublicFile[]; nextCursor: string | null };
+
+export function fetchFiles(input: {
+  limit: number;
+  cursor?: string;
+}): Promise<ApiResult<FilePage>> {
+  const params = new URLSearchParams();
+  params.set('limit', String(input.limit));
+
+  if (input.cursor !== undefined) {
+    params.set('cursor', input.cursor);
+  }
+
+  return request<FilePage>(`/api/files?${params.toString()}`);
+}
+
+/**
+ * 上傳：body 直接用 `File`，唔 `JSON.stringify`、唔轉 base64、唔送
+ * `X-Content-SHA256`，畫面亦唔宣稱已校驗。
+ *
+ * `request()` 對有 body 嘅請求會預設加 `content-type: application/json`；
+ * 呢度用 `init.headers` 嘅 `content-type` 覆寫（key 會被轉小寫），
+ * 同時帶 URL 編碼嘅 `x-file-name`。原始 `File` 由 fetch 直接送出，
+ * `request()` 唔會改寫 body，所以唔使重寫成個請求層。
+ */
+export function uploadFile(file: File): Promise<ApiResult<PublicFile>> {
+  const contentType = file.type === '' ? 'application/octet-stream' : file.type;
+
+  return request<PublicFile>('/api/files', {
+    method: 'POST',
+    body: file,
+    headers: {
+      'content-type': contentType,
+      'x-file-name': encodeURIComponent(file.name),
+    },
+  });
+}
+
+/** 軟刪除，成功回 204；其餘一律 404，前端唔區分原因。 */
+export function deleteFile(id: string): Promise<ApiResult<null>> {
+  return request<null>(`/api/files/${encodeURIComponent(id)}`, { method: 'DELETE' });
+}
+
+/** 下載網址：inline 定 attachment 由伺服器 `Content-Disposition` 決定，前端唔猜。 */
+export function fileDownloadUrl(id: string): string {
+  return `/api/files/${encodeURIComponent(id)}`;
+}

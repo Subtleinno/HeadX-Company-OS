@@ -1,0 +1,102 @@
+/**
+ * 檔案頁樣式（issue 164）。
+ *
+ * 只用既有 `var(--hx-*)` token 同 `var(--hx-frame-*)`／`var(--hx-chrome-*)`
+ * 外殼 token，唔新增色碼、唔新增外殼元件。長檔名同校驗碼靠換行／截字
+ * 處理，唔收起溢出內容；表格過闊時用 `overflow-x: auto` 橫向捲動，
+ * 保留全部欄位。
+ */
+
+.files-upload {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--hx-space-4);
+  margin: var(--hx-space-4) 0;
+}
+
+.files-upload .admin-field {
+  flex: 1 1 20rem;
+  min-width: 0;
+}
+
+.files-table-wrap {
+  margin-top: var(--hx-space-4);
+  overflow-x: auto;
+}
+
+.files-table {
+  width: 100%;
+  border-collapse: collapse;
+  font: var(--hx-font-subheadline);
+}
+
+.files-table th,
+.files-table td {
+  padding: var(--hx-space-2) var(--hx-space-3);
+  border-bottom: 0.5px solid var(--hx-hairline);
+  text-align: left;
+  vertical-align: top;
+}
+
+.files-table th {
+  color: var(--hx-text-secondary);
+  font: var(--hx-font-footnote);
+  white-space: nowrap;
+}
+
+.files-cell {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.files-cell--name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--hx-space-2);
+}
+
+.files-name {
+  flex: 1 1 12rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.files-cell--checksum {
+  max-width: 22ch;
+  color: var(--hx-text-secondary);
+  font: var(--hx-font-footnote);
+}
+
+.files-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--hx-space-1);
+  flex: 0 0 auto;
+}
+
+.files-note,
+.files-end {
+  max-width: 72ch;
+  margin: var(--hx-space-3) 0 0;
+  color: var(--hx-text-secondary);
+  font: var(--hx-font-footnote);
+  overflow-wrap: anywhere;
+}
+
+.files-pagination {
+  margin-top: var(--hx-space-4);
+}
+
+@media (max-width: 900px) {
+  .files-cell--name {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .files-name {
+    flex-basis: auto;
+  }
+}

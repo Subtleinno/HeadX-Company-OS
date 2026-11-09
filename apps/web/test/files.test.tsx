@@ -109,7 +109,7 @@ function uploadCalls(api: { calls: RecordedRequest[] }): RecordedRequest[] {
 /** 選一個檔再撳「上傳」。 */
 async function selectAndUpload(selected: File): Promise<void> {
   await userEvent.upload(screen.getByLabelText(t('files.upload.select')), selected);
-  await userEvent.click(screen.getByRole('button', { name: t('files.upload.action'), exact: true }));
+  await userEvent.click(screen.getByRole('button', { name: t('files.upload.action') }));
 }
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -200,9 +200,7 @@ describe('檔案頁：路由、主選單同外殼', () => {
     });
     render(<App />);
 
-    await userEvent.click(
-      await screen.findByRole('button', { name: t('files.menu.label'), exact: true }),
-    );
+    await userEvent.click(await screen.findByRole('button', { name: t('files.menu.label') }));
     await waitForPage();
     expect(window.location.hash).toBe('#/files');
   });
