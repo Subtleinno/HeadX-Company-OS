@@ -67,3 +67,17 @@
 ### 2026-11-07 增補：Demo Public Stack（issue #145）
 
 - C52 Demo Public Stack 是獨立隔離環境，不是第四個入口（修訂 C26、AGENTS.md 第 15 條的唯一例外）：為 UI／UX 測試而設的公開 Demo，必須使用獨立的 compose project（`company-os-demo`）、獨立 Postgres 資料庫、獨立 storage volume 與 bucket、獨立環境變數檔、獨立 Demo 帳戶。它可以用 `gateway-internal` 映像，只由 cloudflared 經獨立 Demo 子網域指向該 Demo 入口，並且**不發佈任何主機端口**；不得指向正式資料庫、正式 storage、正式 API、正式老闆或員工帳戶。正式 stack 的三層入口與「端口不得對互聯網發佈」規則完全不變，本條不授權把正式 `gateway-internal` 放上公網。理由：測試要在真實瀏覽器發生，但正式資料不可以因此暴露；與其讓人自行解讀，不如把隔離條件寫成可檢查的契約。契約、部署、更新、清除與驗收見 `docs/deployment/demo-public-stack.md`；隔離由 `npm run demo:check` 與 `scripts/demo-stack.test.ts` 強制。未決：Demo 子網域、Access／WAF／Turnstile、資料保留期、是否長期運行、第一批啟用的 app。
+
+### 2026-11-09 增補：#153 裁決落地（issue #156）
+
+來源：https://github.com/Subtleinno/company-os/issues/153（老闆裁決留言）。以下條目只記錄決定同落地次序，不代表程式、色票或 UI 已經實作；本張純文件，唔改任何程式碼。日期一律 2026-11-09。
+
+- C53 主色 A：以 Frame v1.3 為準，Chrome（頂欄、側欄、浮層）黑灰白；`#0057FF` 只喺內容區主要按鈕同空狀態圖示；停用 `#B8F36B`，包括現有品牌標誌方塊，唔再寫「綠色只作點綴」。原因：舊 `AGENTS.md` 色彩條目同 #147「設計方向（鎖死）」同設計稿兩套並存。取代：`AGENTS.md` 介面風格色彩條目、#147 嘅黑 accent 寫法、`BASE-UI-DESIGN.md` 第 3 節、`FRAME-UIUX-HANDOFF.md` 第 5 節「主色」衝突列。落地次序：#156 先改文件，#154（F-02P）先可寫入新色票，#158（F-02）移除使用處並更新 gates，#159 退役 `--hx-brand-green` token（淺色同深色兩區塊）；本張唔改程式。來源：#153 主色 A。
+- C54 Q1 A：總部主機 = 登記／批准／入口中心（trust hub），唔係即時跨機查詢或合併報表。原因：後者要改 C01／C24／`MASTER-PLAN.md` §236 並過法律同安全評估，唔可以用 UI 捷徑做。取代：無（維持 C01、C24、§236）；唔開跨機 endpoint issue，日後要即時查閱另開決策輪次。來源：#153 Q1 A。
+- C55 Q2 C：Frame 階段據點與機器只有 owner 可見，非 owner 顯示**具體原因**嘅 permission denied（頁 08）。原因：現有後端冇「管理級」grant 等級，UI 唔可以自己猜權限。取代：無；唔新增 grant 等級，「管理級」留到 Boss Portal 階段另開 `cat:platform` issue 定義。來源：#153 Q2 C。
+- C56 Q3 A：總部批准 ≠ 該機授權；入口只開新分頁，由該機自己驗身份同授權。原因：安全底線，總部目錄唔代表跨機身份。取代：無（補充 C01／C24）。來源：#153 Q3 A。
+- C57 Q4 A（現階段按 B 執行）：Logo 管理另開深度重設計輪次，排喺 Boss Portal／Design app 之後，第一題先裁資料來源。原因：v1.0 四頁 Logo CRUD 已撤回，資料模型（A／B／C 三方案）未定。取代：無；F-08 繼續停工、只保留字標 fallback，唔落實任何上傳／CRUD、唔喺前端自建第二份真相；3.4 三方案只係輸入，唔喺本條拍板。來源：#153 Q4 A。落地位置：`FRAME-UIUX-HANDOFF.md` 第 1.4、3.4 節。
+- C58 Q5 B（補充 C47）：沿用現有 owner 端點，`GET /org-units` 維持 `requireOwner`，唔為 UI 放寬；員工 Brand selector 暫不做。原因：品牌穩定身份 ↔ org_unit 對應（C43）同安全唯讀範圍契約（C47）未定。取代：無（補充 C47）；Frame v1 先落地公司型路徑，未接之前如實顯示阻塞／空狀態，唔用假資料。來源：#153 Q5 B。
+- C59 Q6 C（補充 C45／C46）：暫不宣告模式，只列 manifest 六個 app；頁 02「公司型・敏感」改由現有 `kind`＋`sensitive` 直接呈現，唔加 `mode` 欄位、唔喺前端自建模式真相。原因：manifest 現時只接受既有欄位，三模式宣告嘅唯一來源未定。取代：無；三模式正式契約同合法範圍解析留到 Q5 嗰輪一併定。來源：#153 Q6 C。落地位置：`FRAME-UIUX-HANDOFF.md` 頁 02 描述、#160 範圍第 5 點。
+- C60 Q7 A／Q8 A／Q9 A（附邊界）：(Q7) Frame v1 只做到 768，360px 另開設計＋施工輪次排喺 F-02 之後，唔阻塞 Frame 開工；F-02 唔准用 `overflow: hidden` 或收起捲軸遮問題，驗收要留 360px 唔破版嘅基本證據。(Q8) 公司 Logo 欄位渲染兩次（App selector 嘅 app 名＋頁尾本機公司名），係同一個欄位渲染兩次，唔係兩份資料真相。(Q9) 頁 06–09 定稿為 Boss Portal 第一批據點管理畫面嘅**視覺／互動規格**，但 (1) 唔係施工授權；(2) `manifest.json` 嘅 `available: false` 維持不變（C50），直到 Q1／Q3 跨機契約同 Q2 權限等級落地；(3) 完整業務頁（今日／批准收件匣／部門摘要）仍然未開始，F-09 照排 Frame 全部完成之後。原因：避免把概念畫面當成已批規格。取代：無；`FRAME-UIUX-HANDOFF.md` 第 1.6／2.9／2.7／6.3 節同 `FRAME-DESIGN-INDEX.md` 按此改。來源：#153 Q7 A、Q8 A、Q9 A。
+- C61 既有 issue 處理（#118 A／#147 A／#148 A）：#118 併入 F-02（#158），由老闆自己 close，PM 唔好 close；搬過去要保留 #118 增補嘅硬閘門（原型雙向切換走查、`requireOwner` 唔放寬、負面測試、白／深色、窄螢幕、鍵盤證據、未執行指令如實寫），唔留兩套外殼規格。#147 A／B 兩個 P0 獨立繼續、唔等 Frame，C 項搬入 F-02；#147「設計方向（鎖死）」跟主色 A 同 #148 A。#148 A 取消：唔再參考 HxDesign 做 UI 基準，Frame v1.3（Ardot `745493588675335` ＋ `docs/design/frame/*.png`）係唯一 UI 真相，HxDesign 只作歷史參考；由老闆自己 close，PM 唔好 close。原因：唔留兩套 UI 標準。取代：`BASE-UI-DESIGN.md` 第 2 節舊外殼參考、`BASE-UI-HXDESIGN-ALIGNMENT.md` 嘅基準地位（檔保留）、`docs/INDEX.md` 文件地圖。來源：#153 既有 issue 段。

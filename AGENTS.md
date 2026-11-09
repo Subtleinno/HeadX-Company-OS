@@ -39,7 +39,7 @@ company-os 是一間公司的整套軟件，全部放在這個 repo，全部跑�
 - 部署：Docker Compose。目標機器是長期開機的 Windows（Docker Desktop），即公司自己的電腦。所有維運腳本用 Node 寫，不依賴 bash。.ps1 檔必須是 UTF-8 with BOM；.cmd 檔不得含中文。
 - 端口：按容器宣告，由 edition-profile 決定，`.env` 可覆寫；容器內一律 8080；主機端口預設只綁 127.0.0.1，唯一例外是 gateway-internal，它綁管理者選定的 LAN 位址並配合防火牆限制公司子網。不可使用未指定位址的發佈設定。新增或更改端口，必須同時更新 edition-profile、compose 與 .env.example，並讓 `npm run ports:check` 通過。端口表見 `docs/architecture/REPO-MAP.md`。
 - 語言：介面、commit、PR、程式註解一律繁體中文（香港）；程式識別字用英文。大陸版預設簡體中文介面。
-- 介面風格：Apple HIG。白底黑字、accent 黑色 #000、系統字體堆疊、綠色 #B8F36B 只當點綴、平鋪內容用細線分隔、浮層可用柔和陰影、不用 emoji、不用紫色漸層。
+- 介面風格：Apple HIG。白底黑字、chrome（頂欄、側欄、浮層）黑灰白、`#0057FF` 只用於內容區主要按鈕與空狀態圖示、`#B8F36B` 已停用（包括現有品牌標誌方塊），不再把綠色寫成點綴色；系統字體堆疊、平鋪內容用細線分隔、浮層可用柔和陰影、不用 emoji、不用紫色漸層。（#153 主色 A，2026-11-09）
 
 ## 不變量（違反即退回，即使測試通過）
 
