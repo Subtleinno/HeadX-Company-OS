@@ -10,6 +10,8 @@
 export { AppShell, ShellContent } from './AppShell.js';
 export { BaseShell } from './BaseShell.js';
 export type { BaseShellProps } from './BaseShell.js';
+export { FrameShell } from './FrameShell.js';
+export type { FrameApp, FrameBlocked, FrameShellProps, FrameSidebarGroup } from './FrameShell.js';
 export { Icon } from './icons.js';
 export type { IconName } from './icons.js';
 export { applyTheme, nextTheme, SHELL_THEMES } from './theme.js';

@@ -472,7 +472,7 @@ describe('文案同視覺底線', () => {
 
     const text = document.body.textContent ?? '';
 
-    expect(text).not.toMatch(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE0F}]/u);
+    expect(text).not.toMatch(/\p{Extended_Pictographic}/u);
   });
 
   it('class 名稱統一用 frame- 前綴，唔寫 inline style', () => {
