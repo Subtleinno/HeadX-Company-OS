@@ -42,6 +42,73 @@
   margin-top: var(--hx-space-2);
 }
 
+/* ── 授權單筆詳情（issue 166）─────────────────────────────────────
+   頁內唯讀詳情區，唔新增路由、唔新增 modal。只重用既有 var(--hx-*) token。 */
+.grant-detail {
+  margin-top: var(--hx-space-6);
+  padding: var(--hx-space-4);
+  border: 0.5px solid var(--hx-border-light);
+  border-radius: var(--hx-radius-md);
+  background: var(--hx-bg-secondary);
+}
+
+.grant-detail__head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--hx-space-3);
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.grant-detail__title {
+  margin: 0;
+  font: var(--hx-font-headline);
+}
+
+.grant-detail__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--hx-space-2);
+}
+
+.grant-detail__fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16ch, 1fr));
+  gap: var(--hx-space-2) var(--hx-space-4);
+  margin: var(--hx-space-4) 0 0;
+}
+
+.grant-detail__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hx-space-1);
+  min-width: 0;
+}
+
+.grant-detail__field dt {
+  color: var(--hx-text-secondary);
+  font: var(--hx-font-caption);
+}
+
+.grant-detail__field dd {
+  margin: 0;
+  font: var(--hx-font-body);
+  overflow-wrap: anywhere;
+}
+
+.grant-detail__line {
+  margin: var(--hx-space-2) 0 0;
+  font: var(--hx-font-footnote);
+  overflow-wrap: anywhere;
+}
+
+.grant-detail__link {
+  display: inline-block;
+  margin-top: var(--hx-space-2);
+  color: var(--hx-accent);
+  font: var(--hx-font-footnote);
+}
+
 .admin-dirty {
   margin: var(--hx-space-4) 0 0;
   color: var(--hx-text-secondary);
