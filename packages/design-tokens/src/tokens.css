@@ -93,6 +93,51 @@
   --hx-motion-fast: 0.12s;
   --hx-motion-base: 0.15s;
   --hx-ease: cubic-bezier(0.2, 0, 0, 1);
+
+  /*
+   * Frame／Chrome Tokens（issue #154，F-02P）。只新增、唔改既有名同值。
+   * 色碼唯一來源仍然係本檔；apps/web 一律用 var(--hx-*)。
+   *
+   * Frame Tokens 八個值照 #154 範圍第 4 節表格；Chrome Tokens 六個值
+   * 交接文件冇列，由 repo 內 Ardot 匯出嘅 docs/design/frame/*.png
+   * 逐像素取樣得出，同交接文件第 2.10 節 Frame Tokens 同一組色票；
+   * chrome-selected 另由第 2.3 節明訂。唔係自行調色。
+   *
+   * 本輪 light-only：深色區塊維持原狀，唔喺深色選擇器底下加新名，
+   * 深色對等值同深色 WCAG 留下一輪（DEFERRED (dark UI)）。
+   */
+  --hx-frame-accent: #0057ff;
+  --hx-frame-accent-fg: #0057ff;
+  --hx-frame-accent-soft: #eaf0ff;
+  --hx-frame-ink: #191919;
+  --hx-frame-secondary: #6e6e6e;
+  --hx-frame-muted: #a3a3a3;
+  --hx-frame-border: #e1e4e8;
+  --hx-frame-surface: #f5f6fa;
+  --hx-chrome-selected: #f0f1f3;
+  --hx-chrome-ink: #191919;
+  --hx-chrome-secondary: #6e6e6e;
+  --hx-chrome-muted: #a3a3a3;
+  --hx-chrome-surface: #ffffff;
+  --hx-chrome-border: #e1e4e8;
+  --hx-chrome-white: #ffffff;
+
+  /* 與主題無關嘅幾何同字級：淺色深色共用一份，唔喺深色區塊重寫。 */
+  --hx-frame-sidebar-width: 248px;
+  --hx-frame-sidebar-width-1024: 200px;
+  --hx-frame-sidebar-width-768: 180px;
+  --hx-chrome-bar-primary-height: 72px;
+  --hx-chrome-bar-secondary-height: 60px;
+  --hx-frame-font-ui: 400 15px/20px var(--hx-font-family);
+  --hx-frame-font-small: 400 13px/18px var(--hx-font-family);
+  --hx-frame-font-small-lg: 400 14px/20px var(--hx-font-family);
+  --hx-frame-font-title: 700 40px/48px var(--hx-font-family);
+  --hx-frame-font-subtitle: 400 17px/26px var(--hx-font-family);
+  --hx-frame-font-card: 600 22px/30px var(--hx-font-family);
+  --hx-frame-font-body: 400 16px/26px var(--hx-font-family);
+  --hx-frame-size-touch: 40px;
+  --hx-frame-space-content: 56px;
+  --hx-frame-space-content-compact: 48px;
 }
 
 /*
