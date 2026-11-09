@@ -1,20 +1,14 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
 import { t, type MessageKey } from '@company-os/i18n';
-import {
-  checkAppAccess,
-  fetchModules,
-  type AccessDecision,
-  type ApiFailure,
-  type PublicModule,
-} from '../api';
+import { useSharedAppList } from '../frame/FrameApps';
 
 /**
- * 我的 Apps（issue 123）。
+ * 我的 Apps（issue 123；F-03／issue 160 改為共用讀取）。
  *
  * 三條界線，寫在程式裡：
  *
- * 1. **app 清單只有一個來源**：`GET /modules`。前端不抄一份 app 清單，
- *    也不因為 manifest 存在就當它可用。
+ * 1. **app 清單只有一個來源**：`GET /modules`。讀取已經搬去
+ *    `frame/useAppList.ts`，由 `FrameApps` 一次過做，selector 同呢一頁
+ *    共用同一份結果；呢一頁唔可以自己再讀、唔可以存副本。
  * 2. **可不可以入去由後端講**：每個 app 問一次 `GET /app-grants/access/:appId`，
  *    前端只轉述 `{allowed, via}` 或 `{allowed:false, reason}`。前端不自己算授權，
  *    也不因為「我有某個 role」就放行。
@@ -30,19 +24,6 @@ import {
  *     這種 403 要如實轉述並給出去 `/account` 的路；其他 403 維持原本的拒絕語意。
  */
 
-type LoadState =
-  | { kind: 'loading' }
-  | { kind: 'ready'; modules: PublicModule[] }
-  | { kind: 'denied'; status: number }
-  | { kind: 'passwordChange' }
-  | { kind: 'failed'; reasons: string[] };
-
-type AccessState =
-  | { kind: 'checking' }
-  | { kind: 'allowed'; via: 'owner' | 'grant' }
-  | { kind: 'denied'; reason: string }
-  | { kind: 'unknown'; detail: string };
-
 /** 後端原因代碼的人話。沒有對應的就只顯示代碼本身，不自己編一句。 */
 const REASON_KEYS: Record<string, MessageKey> = {
   app_disabled: 'myapps.access.reason.app_disabled',
@@ -55,126 +36,12 @@ const REASON_KEYS: Record<string, MessageKey> = {
   entry_disabled: 'myapps.access.reason.entry_disabled',
 };
 
-function reasonsOf(failure: ApiFailure, fallback: string): string[] {
-  if (failure.kind === 'network') {
-    return [t('error.network')];
-  }
-
-  if (failure.reasons.length > 0) {
-    return failure.reasons;
-  }
-
-  if (failure.message !== null) {
-    return [failure.message];
-  }
-
-  return [failure.error === null ? fallback : `${fallback}（${failure.error}）`];
-}
-
-function detailOf(failure: ApiFailure): string {
-  if (failure.kind === 'network') {
-    return t('error.network');
-  }
-
-  return failure.error ?? `HTTP ${failure.status}`;
-}
-
-/**
- * 只認「403 + error 代碼」這個組合（issue 140 第 4 項）。
- *
- * 後端 `denyIfPasswordChangePending` 的真實 body 只有
- * `{ error: 'password_change_required' }`，所以判斷的唯一依據是 `error`。
- * 不可以只憑 403 就當成要改密碼（`forbidden`、`entry_*` 等 403 各有原因），
- * 亦不可以用 `message`／`reasons` 入面的字眼猜 —— 那會把其他拒絕講成改密碼。
- */
-function isPasswordChangeRequired(failure: ApiFailure): boolean {
-  return (
-    failure.kind === 'http' && failure.status === 403 && failure.error === 'password_change_required'
-  );
-}
-
 function kindLabel(kind: string): string {
   return kind === 'console' ? t('myapps.kind.console') : t('myapps.kind.department');
 }
 
-/** 一次過問每個 app 的存取，但保留「查不到」與「不允許」的分別。 */
-async function decide(modules: readonly PublicModule[]): Promise<Record<string, AccessState>> {
-  const results = await Promise.all(
-    modules.map(async (module): Promise<[string, AccessState]> => {
-      const result = await checkAppAccess(module.id);
-
-      if (result.ok) {
-        const decision: AccessDecision = result.data;
-
-        return [
-          module.id,
-          decision.allowed
-            ? { kind: 'allowed', via: decision.via }
-            : { kind: 'denied', reason: decision.reason },
-        ];
-      }
-
-      return [module.id, { kind: 'unknown', detail: detailOf(result.failure) }];
-    }),
-  );
-
-  return Object.fromEntries(results);
-}
-
 export function MyApps() {
-  const [list, setList] = useState<LoadState>({ kind: 'loading' });
-  const [access, setAccess] = useState<Record<string, AccessState>>({});
-
-  /** 舊回應不可以覆蓋新一輪：每重讀一次就換一個號碼。 */
-  const seq = useRef(0);
-
-  const load = useCallback(async (): Promise<void> => {
-    const mine = seq.current + 1;
-    seq.current = mine;
-
-    setList({ kind: 'loading' });
-    setAccess({});
-
-    const result = await fetchModules();
-
-    if (mine !== seq.current) {
-      return;
-    }
-
-    if (!result.ok) {
-      if (isPasswordChangeRequired(result.failure)) {
-        setList({ kind: 'passwordChange' });
-
-        return;
-      }
-
-      if (result.failure.kind === 'http' && (result.failure.status === 401 || result.failure.status === 403)) {
-        setList({ kind: 'denied', status: result.failure.status });
-
-        return;
-      }
-
-      setList({ kind: 'failed', reasons: reasonsOf(result.failure, t('myapps.failed')) });
-
-      return;
-    }
-
-    const modules = result.data.modules;
-    setList({ kind: 'ready', modules });
-    setAccess(Object.fromEntries(modules.map((module) => [module.id, { kind: 'checking' as const }])));
-
-    const decided = await decide(modules);
-
-    if (mine !== seq.current) {
-      return;
-    }
-
-    setAccess(decided);
-  }, []);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
+  const { list, access, reload } = useSharedAppList();
 
   return (
     <section className="myapps" data-myapps aria-label={t('myapps.title')}>
@@ -215,9 +82,7 @@ export function MyApps() {
             type="button"
             className="button button--text"
             data-myapps-retry
-            onClick={() => {
-              void load();
-            }}
+            onClick={reload}
           >
             {t('admin.retry')}
           </button>

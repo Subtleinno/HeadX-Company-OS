@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { EmptyState, FrameShell } from '@company-os/app-shell';
+import { EmptyState } from '@company-os/app-shell';
 import { t } from '@company-os/i18n';
 import { submitLogout, type PublicUser } from '../api';
-import { FORMAL_APPS, MAIN_NAV_ROUTE, mainNavItems, type MainNavKey } from '../frame/nav';
+import { FrameApps } from '../frame/FrameApps';
+import { MAIN_NAV_ROUTE, mainNavItems, type MainNavKey } from '../frame/nav';
 import { useFrameChrome } from '../frame/useFrameChrome';
 import { navigate } from '../router';
 import { PROTOTYPE_ENTRY_HASH } from '../prototype/fixtures';
@@ -24,7 +25,8 @@ type HomeScreenProps = {
  * 公司名同頭像如實顯示未提供：GET /me 無頭像、SettingKey 無公司名 key，
  * 所以唔傳 companyName、唔傳 companyMark，頂欄只顯示 displayName；
  * 外殼自己畫嘅首字頭像同公司字標由 frame.css 隱藏，唔用首字 fallback。
- * 正式 App selector 傳空清單（誠實空狀態），唔連 GET /modules。
+ * 正式 App selector 由共用包裝元件 FrameApps 從 GET /modules 取得真資料，
+ * 與「我的 Apps」共用同一份結果，成頁只讀一次。
  */
 export function HomeScreen({ user, onSignedOut }: HomeScreenProps) {
   const [signingOut, setSigningOut] = useState(false);
@@ -51,10 +53,7 @@ export function HomeScreen({ user, onSignedOut }: HomeScreenProps) {
   }
 
   return (
-    <FrameShell
-      apps={FORMAL_APPS}
-      currentAppId=""
-      onSelectApp={() => undefined}
+    <FrameApps
       moduleTabs={mainNavItems(user.role === 'owner')}
       currentModuleTabKey="today"
       onSelectModuleTab={(key) => {
@@ -96,6 +95,6 @@ export function HomeScreen({ user, onSignedOut }: HomeScreenProps) {
           {error}
         </p>
       )}
-    </FrameShell>
+    </FrameApps>
   );
 }
