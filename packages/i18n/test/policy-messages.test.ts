@@ -216,9 +216,20 @@ const INTERPOLATED: Record<string, Record<string, string>> = {
  */
 const FROZEN_ALL_SHA256 = 'f198408e30ea7d992af3375af859dc30e5bb1ca26b829efffa7302cdd3693209';
 
+/**
+ * 同步改寫（#163）：#163 起嘅 cat:packages 施工張會新增 files.* 前綴嘅鍵，
+ * 呢啲鍵唔屬 #161 要守嘅既有鍵；唔排除嘅話「合法新增鍵」會被誤當成
+ * 「既有鍵被改」，令 npm test 假紅（同 #155 frame-messages.test.ts 嘅情況一樣）。
+ * 凍結值 f198408e… 唔變、守衛嘅 522 個既有鍵唔變，唔係放寬門檻；
+ * #163 嘅完整鍵清單另由 files-messages.test.ts「冇清單以外嘅 files.* 鍵」守衛。
+ */
+const LATER_KEY_PREFIXES = ['files.'];
+
 function hashExcluding(msgs: Record<string, string>, excluded: ReadonlySet<string>): string {
   const entries = Object.entries(msgs)
-    .filter(([key]) => !excluded.has(key))
+    .filter(
+      ([key]) => !excluded.has(key) && !LATER_KEY_PREFIXES.some((prefix) => key.startsWith(prefix)),
+    )
     .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
   return createHash('sha256').update(JSON.stringify(entries)).digest('hex');
 }

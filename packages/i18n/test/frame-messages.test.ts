@@ -64,7 +64,8 @@ const FRAME_MESSAGES: Record<string, string> = {
 const FROZEN_NON_FRAME_SHA256 =
   'a48ab323779908ef848905616ca7c45cafb194482ba7a77aa9a5ef82838c47fd';
 
-const LATER_KEY_PREFIXES = ['policy.'];
+// #163 新增 files.* 前綴；同 #161 嘅 policy.* 一樣，唔屬 #155 要守嘅既有鍵。
+const LATER_KEY_PREFIXES = ['policy.', 'files.'];
 const LATER_EXACT_KEYS = ['admin.page.policy'];
 
 function hashNonFrame(msgs: Record<string, string>): string {
