@@ -9,6 +9,7 @@ import { CompanySettingsScreen } from './CompanySettingsScreen';
 import { OrganisationScreen } from './OrganisationScreen';
 import { AppGrantsScreen } from './AppGrantsScreen';
 import { StaffAgentsScreen } from './StaffAgentsScreen';
+import { PolicyRulesScreen } from './PolicyRulesScreen';
 
 /**
  * Boss portal 管理區（issue 119 起）。
@@ -34,9 +35,10 @@ const PAGES: readonly { key: AdminPageKey; labelKey: MessageKey }[] = [
   { key: 'organisation', labelKey: 'admin.page.organisation' },
   { key: 'staff', labelKey: 'admin.page.staffAgents' },
   { key: 'grants', labelKey: 'admin.page.grants' },
+  { key: 'policy', labelKey: 'admin.page.policy' },
 ];
 
-type AdminPageKey = 'settings' | 'organisation' | 'staff' | 'grants';
+type AdminPageKey = 'settings' | 'organisation' | 'staff' | 'grants' | 'policy';
 
 const DEFAULT_PAGE: AdminPageKey = 'settings';
 
@@ -275,6 +277,7 @@ export function AdminArea({ user, onSignedOut }: AdminAreaProps) {
           {page === 'organisation' && <OrganisationScreen onDirtyCountChange={setDirtyCount} />}
           {page === 'staff' && <StaffAgentsScreen onDirtyCountChange={setDirtyCount} />}
           {page === 'grants' && <AppGrantsScreen user={user} onDirtyCountChange={setDirtyCount} />}
+          {page === 'policy' && <PolicyRulesScreen onDirtyCountChange={setDirtyCount} />}
           {signOutError !== null && (
             <p className="admin-notice admin-notice--failed" role="alert">
               {signOutError}

@@ -61,7 +61,11 @@ export type FakeHandlers = Partial<
     | 'appGrantReject'
     | 'appGrantRevoke'
     | 'appGrantPatch'
-    | 'appAccess',
+    | 'appAccess'
+    | 'policyRules'
+    | 'policyRuleCreate'
+    | 'policyRulePatch'
+    | 'policyRuleDelete',
     Handler
   >
 >;
@@ -235,6 +239,15 @@ function routeKey(path: string, method: string): keyof FakeHandlers | null {
 
   if (bare.endsWith('/modules')) {
     return method === 'GET' ? 'modules' : null;
+  }
+
+  // ── 政策規則（issue 162）。次序有意義：/policy-rules/:id 先於 /policy-rules。
+  if (/\/policy-rules\/[^/]+$/.test(bare)) {
+    return method === 'PATCH' ? 'policyRulePatch' : method === 'DELETE' ? 'policyRuleDelete' : null;
+  }
+
+  if (bare.endsWith('/policy-rules')) {
+    return method === 'GET' ? 'policyRules' : method === 'POST' ? 'policyRuleCreate' : null;
   }
 
   // 逐 key 保存：`/api/settings/<key>`，只有 PUT。

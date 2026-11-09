@@ -647,3 +647,83 @@ export function modifyAppGrant(
 export function checkAppAccess(appId: string): Promise<ApiResult<AccessDecision>> {
   return request<AccessDecision>(`/api/app-grants/access/${encodeURIComponent(appId)}`);
 }
+
+// ---------------------------------------------------------------------------
+// 政策規則（issue 162）
+// ---------------------------------------------------------------------------
+
+/**
+ * 條件子句嘅形狀照 `apps/platform/src/settings/policy.ts`：子句只可以有
+ * field／op／value／currency，op 只得 eq／lte／gte／in，金額比較一定要帶貨幣。
+ */
+export type PolicyOperator = 'eq' | 'lte' | 'gte' | 'in';
+
+export type PolicyClause = {
+  field: string;
+  op: PolicyOperator;
+  value: string | number | boolean | (string | number | boolean)[];
+  currency?: string;
+};
+
+export type PolicyCondition = { all: PolicyClause[] };
+
+export type PolicyAction = 'allow' | 'require_approval';
+
+/** `GET /policy-rules` 回傳嘅一條規則（後端 `toRuleView` 嘅形狀）。 */
+export type PolicyRule = {
+  id: string;
+  domain: string;
+  condition: PolicyCondition;
+  action: PolicyAction;
+  priority: number;
+  enabled: boolean;
+  note: string | null;
+  orgUnitId: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+/**
+ * POST 只可以帶呢七個欄位：後端 `parseRuleInput` 對未知欄位回 422，
+ * 所以前端連一個多餘嘅鍵都唔加，亦唔帶 id／createdAt 呢類只讀欄位。
+ */
+export type PolicyRuleInput = {
+  domain: string;
+  condition: PolicyCondition;
+  action: PolicyAction;
+  priority: number;
+  enabled: boolean;
+  note: string | null;
+  orgUnitId: string | null;
+};
+
+/** PATCH 係部分更新，只送有改動嘅欄位。 */
+export type PolicyRulePatch = Partial<PolicyRuleInput>;
+
+export function fetchPolicyRules(): Promise<ApiResult<{ rules: PolicyRule[] }>> {
+  return request<{ rules: PolicyRule[] }>('/api/policy-rules');
+}
+
+export function createPolicyRule(
+  input: PolicyRuleInput,
+): Promise<ApiResult<{ rule: PolicyRule }>> {
+  return request<{ rule: PolicyRule }>('/api/policy-rules', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+}
+
+export function patchPolicyRule(
+  id: string,
+  patch: PolicyRulePatch,
+): Promise<ApiResult<{ rule: PolicyRule }>> {
+  return request<{ rule: PolicyRule }>(`/api/policy-rules/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    body: JSON.stringify(patch),
+  });
+}
+
+/** 軟刪除，後端回 204（無 body）。 */
+export function deletePolicyRule(id: string): Promise<ApiResult<null>> {
+  return request<null>(`/api/policy-rules/${encodeURIComponent(id)}`, { method: 'DELETE' });
+}

@@ -761,3 +761,125 @@
     text-align: left;
   }
 }
+
+/* ── 政策規則（issue 162）：八欄列表 ＋ 結構化表單 ───────────────────── */
+
+.policy-toolbar {
+  margin-top: var(--hx-space-5);
+}
+
+/* 主要動作唔橫跨成條內容區；沿用既有 .button--primary 嘅色彩，唔新增色碼。 */
+.policy-toolbar .button--primary {
+  width: auto;
+  min-width: 180px;
+}
+
+.policy-table-wrap {
+  margin-top: var(--hx-space-5);
+  /* 八欄喺窄螢幕靠橫向捲動睇，唔用 overflow:hidden 遮擋內容。 */
+  overflow-x: auto;
+}
+
+.policy-table {
+  width: 100%;
+  /* 窄螢幕由外層橫向捲動，唔好壓到每個字都拆行。 */
+  min-width: 900px;
+  border-collapse: collapse;
+  border-top: 0.5px solid var(--hx-hairline);
+  font: var(--hx-font-footnote);
+}
+
+.policy-table th {
+  padding: var(--hx-space-2) var(--hx-space-2);
+  border-bottom: 0.5px solid var(--hx-hairline);
+  color: var(--hx-text-secondary);
+  font: var(--hx-font-caption);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.policy-table td {
+  padding: var(--hx-space-3) var(--hx-space-2);
+  border-bottom: 0.5px solid var(--hx-hairline);
+  vertical-align: top;
+}
+
+.policy-cell {
+  min-width: 0;
+  color: var(--hx-text-primary);
+  font: var(--hx-font-footnote);
+  /* break-word 唔會好似 anywhere 咁將「啟用」「payment」拆成兩行。 */
+  overflow-wrap: break-word;
+}
+
+/* 短欄保持一行，唔好被長文字欄擠到得返一兩個字咁闊。 */
+.policy-table td:nth-child(1),
+.policy-table td:nth-child(3),
+.policy-table td:nth-child(4),
+.policy-table td:nth-child(5),
+.policy-table td:nth-child(8) {
+  white-space: nowrap;
+}
+
+.policy-cell--condition {
+  min-width: 220px;
+  max-width: 34ch;
+  color: var(--hx-text-secondary);
+}
+
+.policy-actions {
+  white-space: nowrap;
+}
+
+.policy-actions .button {
+  margin-right: var(--hx-space-2);
+}
+
+.policy-form {
+  max-width: 62ch;
+}
+
+/* 表單入面嘅輸入、提示各自成行：唔好同輸入欄疊喺同一行。 */
+.policy-form .input {
+  display: block;
+  width: 100%;
+}
+
+.policy-form .admin-hint {
+  display: block;
+}
+
+.policy-form__title {
+  margin: 0;
+  font: var(--hx-font-headline);
+}
+
+.policy-clauses {
+  margin-top: var(--hx-space-4);
+  padding: var(--hx-space-3);
+  border: 0.5px solid var(--hx-border-light);
+  border-radius: var(--hx-radius-md);
+}
+
+.policy-clause {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--hx-space-2) var(--hx-space-3);
+  align-items: end;
+  padding: var(--hx-space-3) 0;
+  border-bottom: 0.5px solid var(--hx-hairline);
+}
+
+.policy-clause .admin-field {
+  margin-top: 0;
+}
+
+.policy-form .admin-check {
+  margin-top: var(--hx-space-3);
+}
+
+@media (max-width: 768px) {
+  .policy-clause {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
