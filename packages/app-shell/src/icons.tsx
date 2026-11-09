@@ -21,7 +21,10 @@ export type IconName =
   | 'cube'
   | 'sparkle'
   | 'sun'
-  | 'moon';
+  | 'moon'
+  | 'search'
+  | 'bell'
+  | 'help';
 
 const SHAPES: Record<IconName, ReactElement> = {
   menu: <path d="M4 7h16M4 12h16M4 17h16" />,
@@ -49,6 +52,25 @@ const SHAPES: Record<IconName, ReactElement> = {
     </>
   ),
   moon: <path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z" />,
+  search: (
+    <>
+      <circle cx="10.5" cy="10.5" r="6.5" />
+      <path d="m15.5 15.5 4.5 4.5" />
+    </>
+  ),
+  bell: (
+    <>
+      <path d="M18 9a6 6 0 0 0-12 0c0 6-2.5 6-2.5 8h17c0-2-2.5-2-2.5-8Z" />
+      <path d="M10 20.5h4" />
+    </>
+  ),
+  help: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9.5 9.2a2.6 2.6 0 1 1 3.6 2.4c-.9.4-1.1 1-1.1 1.9" />
+      <path d="M12 17.2h.01" />
+    </>
+  ),
 };
 
 export function Icon({ name, className = 'ic' }: { name: IconName; className?: string }) {
