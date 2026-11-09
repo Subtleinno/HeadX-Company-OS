@@ -7,9 +7,6 @@
  * 刻意不 import platform-kit 或任何 app：登入狀態由 `useAuthGate` 的呼叫端注入。
  */
 
-export { AppShell, ShellContent } from './AppShell.js';
-export { BaseShell } from './BaseShell.js';
-export type { BaseShellProps } from './BaseShell.js';
 export { FrameShell } from './FrameShell.js';
 export type { FrameApp, FrameBlocked, FrameShellProps, FrameSidebarGroup } from './FrameShell.js';
 export { Icon } from './icons.js';

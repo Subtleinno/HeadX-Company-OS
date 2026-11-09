@@ -31,7 +31,6 @@ export const tokens = {
   dangerText: tokenVar('danger-text'),
   warning: tokenVar('warning'),
   success: tokenVar('success'),
-  brandGreen: tokenVar('brand-green'),
   radiusSm: tokenVar('radius-sm'),
   radiusMd: tokenVar('radius-md'),
   radiusLg: tokenVar('radius-lg'),

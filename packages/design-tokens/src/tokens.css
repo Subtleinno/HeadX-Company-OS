@@ -31,8 +31,6 @@
   --hx-danger-text: #d70015;
   --hx-warning: #ff9500;
   --hx-success: #34c759;
-  /* 只可以做品牌標誌那一個 8×8 方塊。 */
-  --hx-brand-green: #b8f36b;
 
   /* 浮層（頂欄是畫面唯一會浮起來的表面） */
   --hx-floating-bg: rgba(255, 255, 255, 0.82);
@@ -148,7 +146,6 @@
  * 用那個名的元件在深色下就會靜靜跌返淺色值，而那種壞法在截圖上很難看出來。
  *
  * accent 在深色反轉成近白：黑色按鈕放近黑畫布上等於隱形，對比度會掉到不可用。
- * 品牌綠色 #B8F36B 兩邊相同，它只作點綴，不隨主題重新配色。
  */
 :root[data-theme='dark'] {
   --hx-bg-primary: #000000;
@@ -168,7 +165,6 @@
   --hx-danger-text: #ff7a70;
   --hx-warning: #ffa726;
   --hx-success: #30d158;
-  --hx-brand-green: #b8f36b;
 
   --hx-floating-bg: rgba(28, 28, 30, 0.82);
   --hx-floating-blur: saturate(160%) blur(14px);

@@ -124,8 +124,9 @@ describe('深色文字對比度不低於 4.5:1', () => {
   }
 });
 
-describe('品牌綠色不隨主題改變', () => {
-  it('深色的 --hx-brand-green 與淺色相同（只作點綴，不重新配色）', () => {
-    expect(darkToken('--hx-brand-green')).toBe(light.get('--hx-brand-green'));
+describe('退役綠色 token（issue 159）', () => {
+  it('深色同淺色都唔再定義 --hx-brand-green', () => {
+    expect(dark.has('--hx-brand-green')).toBe(false);
+    expect(light.has('--hx-brand-green')).toBe(false);
   });
 });
