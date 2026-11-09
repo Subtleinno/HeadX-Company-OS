@@ -15,6 +15,7 @@ import { AccountScreen } from './screens/AccountScreen';
 import { HomeScreen } from './screens/HomeScreen';
 import { LoginScreen } from './screens/LoginScreen';
 import { SetupScreen } from './screens/SetupScreen';
+import { FilesScreen } from './screens/FilesScreen';
 import { WorkspacePrototype } from './prototype/WorkspacePrototype';
 
 /**
@@ -85,7 +86,7 @@ export function App() {
 
     if (
       screen === 'home' &&
-      (route === '/app' || route === '/admin' || route === '/account')
+      (route === '/app' || route === '/admin' || route === '/account' || route === '/files')
     ) {
       return;
     }
@@ -152,6 +153,11 @@ export function App() {
     // `/admin/*` 是管理區（issue 119 起）。真資料、真 API，沒有原型標示。
     if (route === '/admin') {
       return <AdminArea user={effective.auth.user} onSignedOut={signedOut} />;
+    }
+
+    // `/files` 是檔案頁（issue 164）。只接已完成的檔案端點，不改後端。
+    if (route === '/files') {
+      return <FilesScreen user={effective.auth.user} onSignedOut={signedOut} />;
     }
 
     return <HomeScreen user={effective.auth.user} onSignedOut={signedOut} />;
