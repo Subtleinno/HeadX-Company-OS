@@ -557,6 +557,14 @@ export function fetchAppGrants(query: AppGrantQuery = {}): Promise<ApiResult<App
   return request<AppGrantPage>(`/api/app-grants?${params.toString()}`);
 }
 
+/**
+ * 單筆詳情（issue 166）。一律重新由後端讀，唔用列表快照冒充最新詳情。
+ * 後端對非法 UUID、不存在或 canSee 唔允許一律回 404，前端唔區分原因。
+ */
+export function fetchAppGrant(id: string): Promise<ApiResult<{ grant: GrantView }>> {
+  return request<{ grant: GrantView }>(`/api/app-grants/${encodeURIComponent(id)}`);
+}
+
 /** 後端只收四個欄位；同意圖不明的欄位會被 422 拒絕。 */
 export function requestAppGrant(input: {
   userId: string;

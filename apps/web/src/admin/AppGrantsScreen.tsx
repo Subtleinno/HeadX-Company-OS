@@ -25,6 +25,7 @@ import {
   type StaffMember,
   type UnitScope,
 } from '../api';
+import { GrantDetail } from './GrantDetail';
 
 /**
  * App 授權（issue 122，Boss portal 管理區）。
@@ -303,6 +304,8 @@ export function AppGrantsScreen({ user, onDirtyCountChange }: AppGrantsScreenPro
 
   const [dialog, setDialog] = useState<Dialog | null>(null);
   const [pendingView, setPendingView] = useState<View | null>(null);
+  /** 頁內詳情區：null ＝ 顯示列表。詳情同列表並存，切換唔重設篩選同分頁。 */
+  const [detailId, setDetailId] = useState<string | null>(null);
 
   /** 舊回應不可以覆蓋新目標：每換一次查詢就換一個號碼，號碼不對就丟掉。 */
   const listSeq = useRef(0);
@@ -830,12 +833,24 @@ export function AppGrantsScreen({ user, onDirtyCountChange }: AppGrantsScreenPro
         </div>
       )}
 
+      {detailId !== null && (
+        <GrantDetail
+          grantId={detailId}
+          onBack={() => {
+            setDetailId(null);
+          }}
+        />
+      )}
+
       <GrantList
         list={list}
         offset={offset}
         beneficiaryLabel={beneficiaryLabel}
         appTitle={appTitle}
         busy={busy}
+        onDetail={(grant) => {
+          setDetailId(grant.id);
+        }}
         onApprove={(grant) => {
           void runApprove(grant);
         }}
@@ -1110,6 +1125,7 @@ type GrantListProps = {
   appTitle: (id: string) => string;
   busy: string | null;
   canModify: boolean;
+  onDetail: (grant: GrantView) => void;
   onApprove: (grant: GrantView) => void;
   onActivate: (grant: GrantView) => void;
   onReject: (grant: GrantView) => void;
@@ -1209,6 +1225,16 @@ function GrantList(props: GrantListProps) {
             </div>
 
             <div className="admin-row__control">
+              <button
+                type="button"
+                className="button button--text"
+                data-grant-detail-open={grant.id}
+                onClick={() => {
+                  props.onDetail(grant);
+                }}
+              >
+                {t('grant.detail.title')}
+              </button>
               {grant.state === 'requested' && (
                 <button
                   type="button"
