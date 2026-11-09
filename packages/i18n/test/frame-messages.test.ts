@@ -87,9 +87,20 @@ describe('#155 Frame 文案鍵（frame.*）', () => {
   });
 
   it('新增文案零 emoji', () => {
-    const emoji = /[\p{Extended_Pictographic}\uFE0F\u200D\u{1F3FB}-\u{1F3FF}\u{1F1E6}-\u{1F1FF}]/u;
+    // 逐個獨立正則，唔好將 ZWJ／VS16 放落字元類別，否則會觸發
+    // eslint no-misleading-character-class。\p{Extended_Pictographic}
+    // 已覆蓋旗幟區域指示符同膚色修飾符。
+    const emojiPatterns: RegExp[] = [
+      /\p{Extended_Pictographic}/u,
+      /\p{Emoji_Presentation}/u,
+      /\uFE0F/u,
+      /\u200D/u,
+    ];
     for (const [key, value] of Object.entries(FRAME_MESSAGES)) {
-      expect(emoji.test(value), key).toBe(false);
+      expect(
+        emojiPatterns.some((pattern) => pattern.test(value)),
+        key,
+      ).toBe(false);
     }
   });
 
