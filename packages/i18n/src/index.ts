@@ -560,6 +560,51 @@ export const messages = {
   'setup.error.emailInvalid': '請輸入有效的電郵。',
   'setup.error.passwordTooShort': '密碼至少需要 12 個字元。',
   'setup.error.passwordMismatch': '兩次輸入的密碼不一致。',
+
+  // ── Frame 文案鍵（issue #155）─────────────────────────────────────
+  // 只新增鍵，不改、不刪、不重命名上面任何既有鍵或文字。繁體中文（香港）、
+  // 零 emoji、零插值；文案待老闆事後審閱。
+  'frame.topbar.sidebarToggle': '顯示或收起側欄',
+  'frame.topbar.appSelector': '選擇 App',
+  'frame.topbar.brandSelector': '選擇品牌',
+  'frame.topbar.search': '搜尋',
+  'frame.topbar.commandPalette': '開啟命令面板',
+  'frame.topbar.language': '語系',
+  'frame.topbar.notifications': '通知',
+  'frame.topbar.help': '說明',
+  'frame.topbar.account': '帳戶選單',
+  'frame.topbar.more': '更多操作',
+  'frame.topbar.pageSearch': '搜尋此頁',
+
+  'frame.scope.company': '公司範圍',
+
+  'frame.landmark.topbar': '全域頂欄',
+  'frame.landmark.subbar': '模組分頁',
+  'frame.landmark.sidebar': '子頁導覽',
+  'frame.landmark.breadcrumb': '麵包屑',
+  'frame.landmark.content': '主要內容',
+  'frame.landmark.footer': '頁尾',
+
+  'frame.empty.title': '呢頁仲未接內容',
+  'frame.empty.body': '而家只畫外殼；呢頁會喺 Design app 階段接入真實模組內容。',
+
+  'frame.footer.localCompany': '本機公司',
+  'frame.footer.sitesEntry': '據點與機器',
+  'frame.footer.headOffice': '總部主機',
+
+  'frame.prototype.badge': '原型示意',
+
+  'frame.menu.today': '今日',
+  'frame.menu.account': '帳戶',
+  'frame.menu.admin': '管理區',
+
+  'frame.account.nameMissing': '名稱未提供',
+  'frame.company.nameMissing': '公司名稱未提供',
+
+  'frame.state.loading': '載入中…',
+  'frame.state.readFailed': '讀取失敗，請重試。',
+  'frame.state.permissionDenied': '你沒有查看呢頁嘅權限。',
+  'frame.state.notProvided': '未提供',
 } as const;
 
 export type MessageKey = keyof typeof messages;
