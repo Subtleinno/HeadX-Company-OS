@@ -12,17 +12,13 @@
 - 香港與大陸各裝一份，是兩間獨立公司，帳戶分開。主機是公司自己的電腦。
 - 安裝時選版本：國際版有完整的對外入口（夥伴、客戶、Cloudflare）；大陸版第一階段只做內網，通知以站內為主，選配企業微信與飛書。安裝將由 UI 精靈協助。
 
-## 現在到哪裡（2026-11-06）
+## 現在到哪裡（2026-11-11）
 
-已完成的是底座，不是一間已經自動運作的公司。
+**今日現況一律讀 [`docs/product/HANDOFF.md`](docs/product/HANDOFF.md)**：裡面有跑起來的指令、本機帳號、現有畫面清單、下一步隊列，同實測踩過的坑。這一節只留一句總結，免得同 HANDOFF 出現兩份講法。
 
-已合併：登入與 session、檔案層、審計、備份程式、scrypt、邊界檢查、`apps/platform`、共用介面 package、app manifest、多串 migration、`packages/edition-profile`、`gateway-internal`、`app-host` 空殼、CI、公司設定、組織單位、權限引擎、app 授權、員工與 agent 身份、背景工作隊列。
+底座已完成：登入與 session、檔案層、審計、備份程式、權限引擎、app 授權、背景隊列、`apps/platform`、`gateway-internal`、`app-host`、CI。介面這一輪新增：Frame 外殼的四層導覽、Boss Portal 的據點目錄與新增據點、Design app 的品牌清單。老闆今日可以在本機 Docker 直接看到這些畫面。
 
-老闆目前能看到的仍然是：建立老闆帳戶、登入、一個誠實的空「今日」頁。
-
-進行中或等待：#64 跨碟備份（等第二粒實體碟；本機現時只有一粒，見 issue 的核查留言）。已完成：#86 密碼管理、#88 app 資料庫帳號、#87 可信入口（見 `docs/trusted-entry.md`）、#45 端口佔用者、#68 HxDesign 只讀研究（報告在 issue）、#70 版本範圍（見總綱第 2.1 節）。
-
-還沒有：Need、MCP、發件箱、真正的部門 app、可用的 Boss portal 工作台、LAN、安裝精靈、ERPNext。app 自動化設計在分支 `docs/app-automation-design`，尚未合併，不是施工規格。
+還沒有：Need 的開立與驗收（MCP 未做）、發件箱、其餘四個部門 app、生產部署、安裝精靈、ERPNext。
 
 **注意：** 下面的開發與運行說明描述的是 `main` 的現況。R1 至 R6 的搬遷施工已經合併；這不代表原搬遷設計範圍已全部落地，現況以 CODE-MAP 與 REPO-MAP 為準。不要再把系統理解成整理前那個單一的 api 應用。
 

@@ -13,6 +13,7 @@ Company OS 是 company starter：任何一間公司裝好 Docker 就能開始運
 | 檔案 | 內容 |
 |---|---|
 | `README.md` | 安裝、端口、現況 |
+| `docs/product/HANDOFF.md` | **今日現況與交接**：程式碼在哪、怎樣跑、現有畫面、下一步隊列、實測踩過的坑。新 session 或新 agent 由這一頁開始 |
 | `AGENTS.md` | 給 AI agent 的開工規則與不變量 |
 | `docs/product/MASTER-PLAN.md` | 全盤計劃；第 3.4 節為公司／品牌模式，第 14.1、14.2 節為 Base 及後續 H 系列，第 15.1 節為本輪焦點；歷史快照不當今日狀態 |
 | `docs/product/DECISIONS.md` | 決策日誌，後者優先；C41–C45 記錄 Workspace、三模式及整合邊界 |
