@@ -113,3 +113,22 @@
 - C78 **不買 GitHub Pro**，因此分支保護開不到（GitHub 對 private repo 回 403）。補償方式不是加審批，而是三件事：(1) 一個 PR 一件事；(2) PR 前 CI 六個檢查必綠；(3) CI 紅燈由 AI 自己修，唔交返老闆。老闆原話：「if it show error, please AI agent (you) to fix」。呢條取代 `ci.yml` 註解裡「分支保護只需要求 ci-ok」的假設 —— 機器擋唔到，靠人不靠閘，但這個「人」係 AI 自己。
 - C79 **MCP、生產部署、備份演練一律暫緩**（老闆 2026-11-11：未到時候、進度未夠）。本機 Docker Compose 就係驗收環境，老闆可以即時自己看。呢三項不是取消，是排在頁面成形之後；備份演練仍然是上生產前必須做的一次實測（見 `HANDOFF.md` 第 8 節）。
 - C80 **工作模式：老闆逐頁設計 UI，AI 逐頁實作。** 老闆會講清楚每個功能想怎樣運作，AI 負責令它成真；GitHub issue 就是隊列，一頁一張，做完關掉。回報規則：講「在哪個畫面看得到」，唔講技術細節 —— 老闆不是工程師，看不到的改動等於沒做。這條同時解釋為什麼本輪之後的優先次序是「先做齊頁面，再逐個做深功能」。
+
+### 2026-11-11 增補：單一 worktree、範圍與可達性兩個軸、設計底稿入庫
+
+來源：老闆 2026-11-11「Can we have only one main worktree and the folder have to call HeadX-company-os」「it have different Workspace level, some can be public (able to public with cloudflare tunnel), some cannot, only able to use VPN to access. Some workspace is in Company level, some is in Brand level… Do you agree? or actually if we can have Workspace setting option to select for security option will be better?」
+
+- C81 **只有一個 worktree，資料夾名 = repo 名 `HeadX-Company-OS`**（修正 C77 最後一句）。之前本機有兩個 worktree：`Dev/Dev/Github/company-os` 掛 `main`，`WorkBuddy/Worktrees/company-os/main-13a6ab60` 係施工位。問題不只是名一樣，而是**施工位那個長期缺 `config/`、`docker/`、`tools/`、`tsconfig.base.json`**，兩邊「邊個才係真」講不清。已把施工位獨有的三樣（`.env`、`.data`、設計底稿）搬去主目錄，然後刪走施工位、把主目錄改名。現在 `git worktree list` 只回一行。舊 repo `Subtleinno/company-os` 歸檔狀態已覆核（`isArchived: true`，只讀）。
+- C82 **範圍（Scope）與可達性（Reachability）係兩個軸，唔可以合成一個「workspace 安全等級」開關。** 老闆問是否用 workspace 設定揀安全選項 —— 方向對（要有一個地方睇得到、揀得到），但**唔可以係一個 per-workspace 開關**，理由係三件具體事實：
+  1. **兩個軸答唔同問題。** Scope 答「我喺邊個上下文工作、寫入落邊」。Reachability 答「呢個請求由邊道門入嚟」。合併之後，同一個控件會同時改寫入目標同網絡曝露，而兩者失敗後果完全不同。
+  2. **公司層資料跟唔到品牌 workspace。** 財務、人事、Boss Portal 屬公司層，唔屬任何品牌。若「公開」係品牌 workspace 的屬性，就會出現「品牌 A 設成公開，員工喺品牌 A 頁面按入財務，財務忽然公開咗」—— 冇人做過這個決定，但資料已經出咗去。
+  3. **曝露係部署形狀，唔係數值。** 「公開」在技術上等於一條 hostname ＋ 一個 gateway ＋ 一個 cookie domain。改它要重新部署、要換 tunnel ingress，唔可能即時生效；做成 checkbox 只會令人以為撳完就生效。
+  **正確次序係三層，而且只能向下收窄，永遠不能向上放寬：**
+  | 層 | 內容 | 誰決定 | 現況 |
+  |---|---|---|---|
+  | 1 硬上限 | app manifest `exposure`（internal／partner／customer） | 寫喺 repo，改要 PR | **已實作**，`packages/policy` 有 `ENTRY_MATRIX`，`entry_not_allowed` 有真 HTTP 測試 |
+  | 2 部署形狀 | 一個安裝開幾道門、Cloudflare tunnel 指去邊個 gateway | 部署時決定（infra） | 只有 `gateway-internal` 一道門；partner／customer 未開 |
+  | 3 顯示與意圖 | 你而家喺邊道門、呢個 app 准唔准由呢道門入 | UI 誠實呈現 | 權限不足已有全螢幕說明；未做「對外存取」頁 |
+  一句：**manifest 講「最多可以去到邊」，部署講「今次開幾道門」，UI 只講「你而家喺邊」。** 任何一層都唔可以由 UI 直接提高上限。
+- C83 **設計底稿收入 repo。** `SCOPE-MODEL.md`（範圍模型：公司／品牌、三種 app 模式、Context 管寫 vs Lens 管讀）、`MULTI-MACHINE-ACCESS.md`（跨機入口：總部係登記／批准／入口中心，唔係資料隧道）、`BACKEND-FUNCTIONS-MAP.md`（端點對照）原本只存在 `.workbuddy/design/`，而該目錄**在 `.gitignore` 裡面**，所以 repo、GitHub、任何新 session 都看不到。老闆講「i think it is a good design, let's get them back」—— 呢個係真正風險：設計存在但無人讀得到，等於唔存在。已收入 `docs/product/`，各自加一段來源與時效說明；`loop-engineering-worker-v1.1.md` 屬過期授權書，收入 `docs/design/archive/`，並在檔頭寫明「唔可以再用」。
+- C84 **「對外存取」頁排在頁面隊列之後，形態已定。** Boss Portal → 設定 → 對外存取，只做三件事：(1) 顯示目前生效的門（例：「內部網絡」）；(2) 三個具名 profile 供選擇（`僅內網` / `內網＋VPN` / `內網＋指定 app 可經 tunnel`）；(3) 改動一律標「需重新部署才生效」，並列出「即使公開，以下仍然只限內網」，該清單由 `exposure: internal` 的 manifest 自動生成，**不由人手勾**。呢頁在 `exposure` 落地之前唔開工 —— 開一個撳完唔會生效的掣，比唔開更差。

@@ -15,24 +15,21 @@ Needs 能看、能認領，但**還不能在介面上開立**。其餘四個部�
 | 項目 | 位置 |
 |---|---|
 | 唯一 repo | `github.com/Subtleinno/HeadX-Company-OS` |
-| 主要工作目錄（`main` 喺呢個） | `/Users/riderhin/Dev/Dev/Github/company-os` |
-| AI 施工 worktree（分支喺呢個） | `/Users/riderhin/WorkBuddy/Worktrees/company-os/main-13a6ab60` |
+| **唯一工作目錄** | `/Users/riderhin/Dev/Dev/Github/HeadX-Company-OS` |
 | 舊 repo | `Subtleinno/company-os` **已歸檔（唯讀）**，local remote 名為 `archive`，只用來讀歷史 |
 | 預設分支 | `main` |
 | 工作分支 | `task/<issue 號>-<短英文名>` |
 
-**上面兩個資料夾係同一個 repo 的兩個 worktree，共用同一份 `.git`，唔係兩份程式碼。**
-`git worktree list` 一眼看清：`Dev/Dev/Github/company-os` 掛 `main`（只拉取與查看），
-`Worktrees/company-os/main-13a6ab60` 係施工位。兩邊資料夾名都仍然叫 `company-os`（歷史遺留），
-但內容就是 HeadX，舊 repo 唔會再有新 commit。**開始做任何事之前，先 `git worktree list` 確認自己在哪一個。**
+**只有一個 worktree、一個資料夾，名字就是 repo 名。** `git worktree list` 應該只回一行。
+以前有兩個 worktree（一個掛 `main`、一個施工），其中一個長期缺 `config/`、`docker/`、`tools/`，
+兩個資料夾又都叫 `company-os`，結果「邊個才係真」講不清。2026-11-11 已合併成一個（C81）。
 
-工作區（`/Users/riderhin/WorkBuddy/2026-11-10-11-37-04`）本身已經沒有程式碼副本；
-舊的文件夾、舊 clone 與調研檔已於 2026-11-11 清理，內容全部在 repo 內。
+工作區（`/Users/riderhin/WorkBuddy/2026-11-10-11-37-04`）本身沒有程式碼副本。
 
 ## 2. 五分鐘跑起來
 
 ```bash
-cd /Users/riderhin/WorkBuddy/Worktrees/company-os/main-13a6ab60
+cd /Users/riderhin/Dev/Dev/Github/HeadX-Company-OS
 set -a && . ./.env && set +a
 docker compose -p company-os-needs up -d --build
 ```
@@ -86,10 +83,13 @@ docker compose -p company-os-needs build gateway-internal api && \
 |---|---|
 | 外殼版面、四層導覽、據點目錄規則 | `docs/product/FRAME-UIUX-HANDOFF.md`（v1.4 已按落地版本改） |
 | 介面長成什麼樣（唯一真相） | `docs/design/frame/frame-0*.png` |
-| 為什麼這樣決定 | `docs/product/DECISIONS.md`（後者優先，現到 C80） |
+| **公司層／品牌層、三種 app 模式、Context 管寫 vs Lens 管讀** | `docs/product/SCOPE-MODEL.md` |
+| **對外公開 vs 只准內網／VPN、跨機入口** | `docs/product/MULTI-MACHINE-ACCESS.md`、`docs/trusted-entry.md` |
+| 為什麼這樣決定 | `docs/product/DECISIONS.md`（後者優先，現到 C84） |
 | 全盤計劃 | `docs/product/MASTER-PLAN.md` |
 | 目錄、分層、邊界 | `docs/architecture/CODE-MAP.md` |
 | 端口、容器 | `docs/architecture/REPO-MAP.md` |
+| 邊啲後端功能仲未有畫面 | `docs/product/BACKEND-FUNCTIONS-MAP.md` |
 | 備份與還原 | `docs/backup-restore.md` |
 | 上位構思（歷史，不是施工規格） | `docs/concept/` |
 
