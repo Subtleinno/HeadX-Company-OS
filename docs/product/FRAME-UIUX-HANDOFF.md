@@ -461,7 +461,7 @@ Frame 而家只保留「名稱旁顯示」，管理已撤回；但**兩個層次
 
 ### 6.2 施工前必讀
 
-`AGENTS.md` → `docs/INDEX.md` → `docs/planning-loop.md` → `docs/product/BASE-UI-DESIGN.md` → `docs/product/WORKSPACE-APP-SCOPE-DESIGN.md` → `docs/product/DECISIONS.md`（C41–C51）→ `docs/product/MASTER-PLAN.md` §3.4／§236 → `docs/architecture/CODE-MAP.md` → `docs/design/FRAME-DESIGN-INDEX.md`（設計圖＋Ardot 檔）。
+`AGENTS.md` → `docs/CONCEPT.md`（設計真相）→ `docs/INDEX.md`（文件入口）→ 本文件 → `docs/product/SCOPE-MODEL.md` → `docs/product/DECISIONS.md`（C41–C85）→ `docs/architecture/CODE-MAP.md` → `docs/design/FRAME-DESIGN-INDEX.md`（設計圖＋Ardot 檔）。
 
 端點逐條對照用本文件第 3.2／3.3 節核對 repo 內實際 `apps/platform/src/**/routes.ts`。`.workbuddy/design/00-backend-functions.md` 係本機 gitignored 底稿，**GitHub 上唔存在**，PM／其他 session 唔會讀到，唔好列做遠端必讀。
 

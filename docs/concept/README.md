@@ -1,101 +1,45 @@
-# HeadX Company OS
+# 概念附錄
 
-一套自己擁有、裝在自己公司機器上的作業系統。AI agent 在裡面做大部分工作，人只補 agent 做不到的部分，老闆只落策略、看全貌。
+**主真相是 [`docs/CONCEPT.md`](../CONCEPT.md)。先讀那份。**
 
-**這份 README 是給人看的。技術細節在 `docs/`。**
+這裡是它的延伸與來源：把某個題目寫到底，用「查得到理由」的粒度寫，不是給人一次讀完。
 
----
+## 這裡有什麼
 
-## 現在做到哪
-
-| 階段 | 內容 | 狀態 |
+| 檔案 | 內容 | 幾時讀 |
 |---|---|---|
-| 0 | 介面設計（與 Billy 一起做） | ← **現在** |
-| 1 | 地基：程式庫圍欄、CI、備份演練 | 未開始 |
-| 2 | 平台殼 ＋ Boss Portal ＋ Marketing Design | 未開始 |
-| 3 | Sales（客戶＋報價＋授權 Needs） | 未開始 |
-| 4 | 其餘部門 app | 未開始 |
+| `01-company-os-concept.md` | 上位構思的完整版（v0.8）：七原則、十二物件、角色、Needs 兩型、框架六條不變量 | 想追某個原則為甚麼這樣定 |
+| `09-app-forge.md` | 平台自己生出缺少的 app：五步、App Kit、spec 編譯不重生、五道機器防護、孤兒偵測 | 做 App Forge，或想知「加一個部門」的成本 |
+| `10-build-charter.md` | 開發憲章：紅／黃／綠領土、六個配方、六級驗證階梯、config ⊂ overlay ⊂ core | **agent 開工前必讀** |
 
-**為甚麼介面先做**：Billy 判斷這套系統好不好的唯一標準是畫面。所以先把畫面定下來，再寫後面的東西；否則資料結構會反過來限制畫面。
+## `future/`：未來部門 app 的構思
 
----
+做到那個 app 才讀。現在一行都未寫。
 
-## 這套系統在解決甚麼
-
-四個現況問題（`docs/00-master-plan.md` 第 1 節）：
-
-1. 公司知識散在 WhatsApp、Excel、各人腦裡 → 用一次就沒了
-2. 同一件事每次做法不同 → 品質靠運氣
-3. AI 沒有公司上下文 → 產出「漂亮但不像我們」
-4. AI 做不到時靜靜給你半成品 → 你不知道缺甚麼，也不知道誰來補
-
-第四條是原點，也是整套設計最值錢的地方：**做不到就開一張工單（Needs）**，指名叫誰做，做完 agent 吸收、標籤、入庫、回填。
-
----
-
-## 三個核心想法
-
-**一、agent 是執行者，人是判斷者。** 不是「有 AI 的 ERP」，是「有畫面的 agent 平台」。
-
-**二、做不到就開工單。** 不是錯誤訊息，不是靜靜降級，是一張有原因、有期限、指名誰做的卡。
-
-**三、策略你寫，agent 只負責揀與跟。** 你不寫，它就沒有方向。
-
----
-
-## 三層結構
-
-```
-Boss Portal（全公司總覽：專案、Needs、排程）   ← 只讀，不插手
-        ↑
-部門 app（Marketing、Sales、Operations、Finance、HR…）  ← 各自擁有自己的資料與成品
-        ↑
-平台殼（切換 app、身份權限、註冊表、事件日誌）
-        ↑
-Postgres（狀態）＋ MinIO（檔案與成品）
-```
-
-**一條關鍵邊界：成品留在出身的 app，不回流中央。** 中央一旦有可寫的副本，就會出現兩個真相。
-
----
-
-## 文件在哪
-
-| 檔 | 內容 | 誰讀 |
-|---|---|---|
-| `docs/00-master-plan.md` | 全盤計劃（無術語） | **Billy** |
-| `docs/11-delivery-plan.md` | 怎做：範圍、UI 時序、issue 迴路 | Billy ＋ agent |
-| `docs/01-company-os-concept.md` | 上位真相文件：原則、邊界、十二個物件 | 要查「為甚麼這樣定」時 |
-| `docs/02`–`09` | 各 app 的構思、app 圖書館、組織層級、Forge | 開到那個 app 才讀 |
-| `docs/10-build-charter.md` | 開發憲章：三色領土、配方、驗證 | **agent 必讀** |
-| `AGENTS.md` | agent 的入口（短） | **agent 必讀** |
-
-**改文件的規矩：任何改動先改 `docs/01`，再改下面。**
-
----
-
-## 開發是怎樣跑的
-
-一條 issue 一圈：
-
-```
-讀 issue → 開分支 → 實作 → 驗證 → 截圖 → PR → 機器檢查 → Billy 只看三樣 → 合併 → 自動上 staging
-```
-
-Billy 只看三樣：**截圖、碰了哪些檔案、驗證跑到哪一級。** 其餘不看。
-
-沒有截圖的改動不合併。
-
----
-
-## 名詞對照（省得每次問）
-
-| 名詞 | 意思 |
+| 檔案 | 內容 |
 |---|---|
-| **Project** | 一件工作。同事一句話開始，agent 建立 |
-| **Create** | 成品存放與編輯的地方，留在各自的 app 內 |
-| **Needs** | agent 做不到時開的工單 |
-| **Strategy Doc** | 你手寫的策略文件，agent 自己揀對的那份跟住做 |
-| **Department app** | 一個部門一個工作台 |
-| **App Registry** | 有幾個 app、各自交出甚麼狀態給 Portal |
-| **Forge** | 書館沒有的 app，系統幫你生出來（v1.1 才做） |
+| `future/02-sales-app-concept.md` | Sales：facet split、ERPNext 分權、投影／鏡像／命令三態、Needs Email |
+| `future/03-operations-app-concept.md` | 營運：計量維度、Consumption、三條業務 |
+| `future/04-finance-app-concept.md` | 財務：會計例外變 Needs、Bank Feed 三路、Closing Run |
+| `future/05-hr-app-concept.md` | 人事：計薪 MPF、法定規則版本化、Work Pattern |
+| `future/06-app-library.md` | App 圖書館三層、CRM 分家、各 app 歸屬 |
+| `future/07-group-tenant-site.md` | Group／Tenant／Site 三層、Hub 只存投影、多法域 |
+| `future/08-scenario-coverage.md` | 附錄 A：十二變化軸、八間公司壓力測試（結論已入 `01`） |
+| `future/11-delivery-plan.md` | 2026-11-10 的交付計劃。**已被 `HANDOFF.md` 的頁面隊列取代** |
+| `future/strategy-doc-questions.md` | 交給 Perplexity 的問題：策略文件長什麼樣（未做） |
+
+## `archive/`：已被吸收的底稿
+
+第一輪調研與 changelog。結論已入 `01` 與 `10`，原文只留作證據。
+
+| 檔案 | 內容 |
+|---|---|
+| `archive/prior-art-v1.md` | 第一輪競品調研（結論已入 `01` §12） |
+| `archive/forge-prior-art.md` | App Forge 四組調研 |
+| `archive/charter-prior-art.md` | 開發治理三組調研 |
+| `archive/changelog-01.md` | `01` 的 v0.2–v0.6 改動記錄 |
+
+## 規矩
+
+- 這批文件的版本號會落後於 `CONCEPT.md`。**兩者衝突，以 `CONCEPT.md` 為準。**
+- 不要把這裡的東西當成施工授權。施工只認 GitHub issue。

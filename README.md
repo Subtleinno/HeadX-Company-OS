@@ -26,14 +26,15 @@
 
 | 文件 | 內容 |
 | --- | --- |
-| `docs/INDEX.md` | 唯一入口與一個真相表 |
+| `docs/CONCEPT.md` | **設計真相**：這套東西是什麼。有新想法先改這裡 |
+| `docs/INDEX.md` | 唯一入口、文件地圖與「一個真相，一個方向」表 |
+| `docs/product/HANDOFF.md` | 今日現況、怎樣跑起來、下一頁隊列 |
 | `AGENTS.md` | 給 AI agent 的開工規則與不變量 |
-| `docs/product/MASTER-PLAN.md` | 全盤計劃（source of truth）：架構、資料模型、規劃項目清單（含國際版；清單不等於已建立 issue）、里程碑 |
-| `docs/product/DECISIONS.md` | 決策日誌 |
-| `docs/product/apps/00-DESIGN-PLAN.md`（分支 `docs/app-automation-design`） | 未合併的 app 自動化設計。不是施工規格 |
-| `docs/architecture/CODE-MAP.md` | 目錄、模組、分層、邊界規則、搬遷切片 |
-| `docs/architecture/REPO-MAP.md` | 現況對照、入口、容器與端口表 |
+| `docs/product/DECISIONS.md` | 決策日誌（C1–C85，後者優先） |
+| `docs/architecture/CODE-MAP.md` | 目錄、模組、分層、邊界規則 |
+| `docs/architecture/REPO-MAP.md` | 入口、容器與端口表 |
 | `docs/backup-restore.md` | 備份與還原 |
+| `docs/archive/` | 已取代的舊計劃，只為查歷史 |
 
 以下是開發與運行說明（現況）。
 

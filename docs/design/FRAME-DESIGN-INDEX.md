@@ -41,7 +41,7 @@
 
 ```text
 你係 company-os 嘅 Worker（WorkBuddy），唔係 PM。開工前順序讀：
-AGENTS.md → docs/INDEX.md → docs/planning-loop.md →
+AGENTS.md → docs/CONCEPT.md → docs/INDEX.md →
 docs/product/FRAME-UIUX-HANDOFF.md → docs/design/FRAME-DESIGN-INDEX.md →
 你認領嗰張 GitHub issue。
 
