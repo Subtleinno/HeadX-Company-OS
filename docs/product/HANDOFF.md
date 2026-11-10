@@ -15,13 +15,19 @@ Needs 能看、能認領，但**還不能在介面上開立**。其餘四個部�
 | 項目 | 位置 |
 |---|---|
 | 唯一 repo | `github.com/Subtleinno/HeadX-Company-OS` |
-| 本機工作目錄 | `/Users/riderhin/WorkBuddy/Worktrees/company-os/main-13a6ab60` |
+| 主要工作目錄（`main` 喺呢個） | `/Users/riderhin/Dev/Dev/Github/company-os` |
+| AI 施工 worktree（分支喺呢個） | `/Users/riderhin/WorkBuddy/Worktrees/company-os/main-13a6ab60` |
 | 舊 repo | `Subtleinno/company-os` **已歸檔（唯讀）**，local remote 名為 `archive`，只用來讀歷史 |
 | 預設分支 | `main` |
 | 工作分支 | `task/<issue 號>-<短英文名>` |
 
-一句話：**資料夾名仍然叫 `company-os`，但裡面就是 HeadX；舊 repo 唔會再有新 commit。**
-工作區外面任何叫 `company-os/` 或 `HeadX-Company-OS/` 的資料夾都唔係這份程式碼，唔好開錯。
+**上面兩個資料夾係同一個 repo 的兩個 worktree，共用同一份 `.git`，唔係兩份程式碼。**
+`git worktree list` 一眼看清：`Dev/Dev/Github/company-os` 掛 `main`（只拉取與查看），
+`Worktrees/company-os/main-13a6ab60` 係施工位。兩邊資料夾名都仍然叫 `company-os`（歷史遺留），
+但內容就是 HeadX，舊 repo 唔會再有新 commit。**開始做任何事之前，先 `git worktree list` 確認自己在哪一個。**
+
+工作區（`/Users/riderhin/WorkBuddy/2026-11-10-11-37-04`）本身已經沒有程式碼副本；
+舊的文件夾、舊 clone 與調研檔已於 2026-11-11 清理，內容全部在 repo 內。
 
 ## 2. 五分鐘跑起來
 
