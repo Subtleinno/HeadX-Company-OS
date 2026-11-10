@@ -1,4 +1,4 @@
-# Company OS
+# HeadX Company OS
 
 給任何一間公司的 AI 原生公司軟件（company starter）：一部機器一間公司，全部自架在 Docker，裝完是空的，由老闆建立帳戶後再設定公司。
 
