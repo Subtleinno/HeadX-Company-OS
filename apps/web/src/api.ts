@@ -344,6 +344,8 @@ export type PublicModule = {
   order: number;
   /** false ＝ 未接駁。授權可以建，但存取檢查會拒絕，畫面要照實講。 */
   available: boolean;
+  /** 這個 app 的入口路徑（`/boss`、`/design`）；外殼用它決定撳完去邊。 */
+  route: string;
 };
 
 export function fetchModules(): Promise<ApiResult<{ modules: PublicModule[] }>> {
@@ -877,4 +879,77 @@ export function claimNeed(id: string): Promise<ApiResult<{ item: NeedItem }>> {
   return request<{ item: NeedItem }>(`/api/needs/${encodeURIComponent(id)}/claim`, {
     method: 'POST',
   });
+}
+
+/* ------------------------------------------------------------------ *
+ * 品牌同據點（Frame 品牌 selector、Boss Portal 據點目錄）
+ * ------------------------------------------------------------------ */
+
+export type BrandItem = {
+  id: string;
+  code: string;
+  name: string;
+};
+
+export type SiteItem = {
+  id: string;
+  code: string;
+  name: string;
+  companyLabel: string | null;
+  city: string | null;
+  isLocal: boolean;
+  status: 'pending' | 'registered' | 'revoked';
+  /** 只係頭尾幾位（`8F:2A…C1`）；未交換過就係 null。 */
+  fingerprint: string | null;
+  /** 對方機器網址；冇填就唔顯示「開新分頁」。 */
+  entryUrl: string | null;
+  lastCredentialAt: string | null;
+  hasPendingInvite: boolean;
+};
+
+export type NewSiteInput = {
+  code: string;
+  name: string;
+  companyLabel: string;
+  city: string;
+};
+
+export function fetchBrands(): Promise<ApiResult<{ items: BrandItem[] }>> {
+  return request<{ items: BrandItem[] }>('/api/brands');
+}
+
+export function createBrand(input: { code: string; name: string }): Promise<ApiResult<{ item: BrandItem }>> {
+  return request<{ item: BrandItem }>('/api/brands', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+}
+
+export function fetchSites(): Promise<ApiResult<{ items: SiteItem[] }>> {
+  return request<{ items: SiteItem[] }>('/api/sites');
+}
+
+export function createSite(
+  input: NewSiteInput,
+): Promise<ApiResult<{ item: SiteItem; invite: { token: string; expiresAt: string } }>> {
+  return request<{ item: SiteItem; invite: { token: string; expiresAt: string } }>('/api/sites', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+}
+
+export function approveSite(id: string): Promise<ApiResult<{ item: SiteItem }>> {
+  return request<{ item: SiteItem }>(`/api/sites/${encodeURIComponent(id)}/approve`, {
+    method: 'POST',
+  });
+}
+
+export type CompanyIdentity = {
+  siteCode: string;
+  name: string | null;
+  city: string | null;
+};
+
+export function fetchCompanyIdentity(): Promise<ApiResult<CompanyIdentity>> {
+  return request<CompanyIdentity>('/api/company');
 }

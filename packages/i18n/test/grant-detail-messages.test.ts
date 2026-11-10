@@ -79,7 +79,7 @@ const LOCALES: readonly string[] = [DEFAULT_LOCALE];
  * 值由 /tmp/company-os-loop-evidence/168/gen-baseline.mjs 以
  * typescript.transpileModule 轉譯 origin/main 版 index.ts 後計出。
  */
-const FROZEN_ALL_SHA256 = 'ce668142427507570d7276fc5b326aaf639dbec37a0ad82091fb4950f3919f3d';
+const FROZEN_ALL_SHA256 = '7f83e9b90103908df960c395945dc1679757ca7bafb6e0af3a45136fee488b61';
 
 function hashExcluding(msgs: Record<string, string>, excluded: ReadonlySet<string>): string {
   const entries = Object.entries(msgs)

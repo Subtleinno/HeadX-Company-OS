@@ -37,7 +37,7 @@ async function tempRoot(): Promise<string> {
 function manifest(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   const base: Record<string, unknown> = {
     id: 'design',
-    title: '設計／內容／網站',
+    title: 'Design',
     kind: 'department',
     department: 'design',
     order: 10,
@@ -85,10 +85,17 @@ describe('模組註冊：六個初始 manifest', () => {
     expect(registry.listModules().map((item) => item.order)).toEqual([0, 10, 20, 30, 40, 50]);
   });
 
-  it('六個都是 available: false，未建立的部門軟件不會假裝可用', () => {
+  it('只有已經有真畫面的兩個 app 是 available，其餘四個唔會假裝可用', () => {
     const registry = loadModules(repoApps);
+    const available = registry
+      .listModules()
+      .filter((item) => item.available)
+      .map((item) => item.id);
 
-    expect(registry.listModules().every((item) => item.available === false)).toBe(true);
+    // 2026-11-10：Boss Portal 同 Design 兩個 app 已經有真畫面（`/boss`、`/design`），
+    // 所以 manifest 由 false 改為 true。其餘四個仍然係空殼，維持 false ——
+    // available 係「有冇畫面接得住」，唔係「想唔想開」。
+    expect(available).toEqual(['boss', 'design']);
   });
 
   it('boss 是唯一的 console，department 是 null', () => {
@@ -107,7 +114,7 @@ describe('模組註冊：六個初始 manifest', () => {
         available: item.available,
       })),
     ).toEqual([
-      { id: 'boss', title: '老闆台', kind: 'console', department: null, order: 0, available: false },
+      { id: 'boss', title: 'Boss Portal', kind: 'console', department: null, order: 0, available: true },
     ]);
   });
 
@@ -241,7 +248,7 @@ describe('模組註冊：驗證規則（每條一個失敗案例）', () => {
     await writeModule(
       root,
       'boss',
-      manifest({ id: 'boss', title: '老闆台', kind: 'console', department: 'boss', order: 0 }),
+      manifest({ id: 'boss', title: 'Boss Portal', kind: 'console', department: 'boss', order: 0 }),
     );
 
     expect(await errorFrom(root)).toContain('department');
@@ -266,7 +273,7 @@ describe('模組註冊：驗證規則（每條一個失敗案例）', () => {
     await writeModule(
       root,
       'boss',
-      manifest({ id: 'boss', title: '老闆台', kind: 'console', department: null, order: 0 }),
+      manifest({ id: 'boss', title: 'Boss Portal', kind: 'console', department: null, order: 0 }),
     );
     await writeModule(
       root,

@@ -29,7 +29,7 @@ const TEST_LOGIN_HASH_KEY = randomBytes(32).toString('hex');
 const DESIGN_MODULE = [
   {
     id: 'design',
-    title: '設計／內容／網站',
+    title: 'Design',
     kind: 'department',
     department: 'design',
     order: 10,

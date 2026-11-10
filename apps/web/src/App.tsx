@@ -11,6 +11,8 @@ import { t } from '@company-os/i18n';
 import { fetchAuthState, type PublicUser } from './api';
 import { navigate, useRoute } from './router';
 import { AdminArea } from './admin/AdminArea';
+import { BossPortal } from './boss/BossPortal';
+import { DesignApp } from './design/DesignApp';
 import { AccountScreen } from './screens/AccountScreen';
 import { HomeScreen } from './screens/HomeScreen';
 import { LoginScreen } from './screens/LoginScreen';
@@ -91,7 +93,9 @@ export function App() {
         route === '/admin' ||
         route === '/account' ||
         route === '/files' ||
-        route === '/needs')
+        route === '/needs' ||
+        route === '/boss' ||
+        route === '/design')
     ) {
       return;
     }
@@ -168,6 +172,15 @@ export function App() {
     // `/needs` 是 Needs 收件匣（issue 184）。Needs 屬外殼，唔屬任何一個 app。
     if (route === '/needs') {
       return <NeedsScreen user={effective.auth.user} onSignedOut={() => signedOut()} />;
+    }
+
+    // 部門 app 同 Boss Portal（issue 185）。兩者都係正式頁，唔係原型。
+    if (route === '/boss') {
+      return <BossPortal user={effective.auth.user} onSignedOut={signedOut} />;
+    }
+
+    if (route === '/design') {
+      return <DesignApp user={effective.auth.user} onSignedOut={signedOut} />;
     }
 
     return <HomeScreen user={effective.auth.user} onSignedOut={signedOut} />;

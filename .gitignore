@@ -181,3 +181,6 @@ secrets/
 
 # macOS 的 Finder 產物，不進版控。
 .DS_Store
+
+# vitest JSON reporter 產物（除錯用，唔入庫）
+.vitest/

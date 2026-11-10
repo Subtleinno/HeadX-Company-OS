@@ -15,6 +15,7 @@ import { registerGrants } from './grants/index.js';
 import { migrate } from './migrate.js';
 import { loadModules } from './modules/registry/index.js';
 import { registerModules } from './modules/routes.js';
+import { registerDirectory } from './directory/index.js';
 import { registerNeeds } from './needs/index.js';
 import { registerOrg, seedOrgUnits } from './org/index.js';
 import { DEFAULT_PROFILE_DIR, registerSettings, seedSettings } from './settings/index.js';
@@ -286,6 +287,7 @@ async function main(): Promise<void> {
 
   // Needs：agent 交返畀人嘅工作（issue 184）。讀要登入、認領要登入，
   // 開立與吸收屬 agent／MCP 的路，呢度唔開。
+  registerDirectory(app, { pool });
   registerNeeds(app, { pool });
 
   attachPoolErrorHandler(pool, (error) => {

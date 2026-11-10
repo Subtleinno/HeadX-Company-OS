@@ -36,10 +36,21 @@ export type FrameApp = ShellNavItem & {
   selectable?: boolean;
 };
 
+/**
+ * 左側導覽嘅一頁。
+ *
+ * `sections` 係「呢一頁之下嘅章節」（例如品牌設定之下的品牌標誌、色彩、字體）。
+ * 只有被選中嗰頁才列出自己嘅章節：同時展開幾頁會變成一份睇唔完嘅目錄，
+ * 而側欄嘅工作係「我而家喺邊、隔籬有咩」。
+ */
+export type FrameSidebarItem = ShellNavItem & {
+  sections?: readonly ShellNavItem[];
+};
+
 /** 左側子頁導覽嘅一個分組。分組標題同子頁文字都由呼叫端傳入。 */
 export type FrameSidebarGroup = {
   title?: string;
-  items: readonly ShellNavItem[];
+  items: readonly FrameSidebarItem[];
 };
 
 /** 阻塞狀態：標題同說明都係呼叫端傳入嘅如實文字。 */
@@ -128,6 +139,9 @@ export type FrameShellProps = {
   modulePages: readonly ShellNavItem[];
   currentPageKey: string | null;
   onSelectPage: (key: string) => void;
+  /** 左側欄：當前頁之下選中嘅章節。 */
+  currentSectionKey?: string | null;
+  onSelectSection?: (pageKey: string, sectionKey: string) => void;
 
   /** 左側：服務第二層選中頁嘅子頁，支援分組標題。 */
   sidebarGroups?: readonly FrameSidebarGroup[];
@@ -193,6 +207,8 @@ export function FrameShell({
   modulePages,
   currentPageKey,
   onSelectPage,
+  currentSectionKey,
+  onSelectSection,
   sidebarGroups,
   needs,
   needsRail,
@@ -384,7 +400,13 @@ export function FrameShell({
         </div>
       </header>
 
-      <nav className="frame-subbar" data-frame-subbar aria-label={t('frame.landmark.subbar')}>
+      {/* 冇頁就唔畫一條空嘅第二行：一條空白 bar 會令人以為載入失敗。 */}
+      <nav
+        className="frame-subbar"
+        data-frame-subbar
+        aria-label={t('frame.landmark.subbar')}
+        hidden={modulePages.length === 0}
+      >
         {modulePages.map((item) => (
           <button
             key={item.key}
@@ -407,6 +429,10 @@ export function FrameShell({
       >
         {showSidebar && (
           <aside className="frame-sidebar" data-frame-rail aria-label={t('frame.landmark.sidebar')}>
+            {/* 左側欄最頂嘅小標：講明「呢條欄列嘅係頁」。佢同下面嘅分組
+                標題（據點 MACHINES／權限與稽核）係兩層唔同嘅意思。 */}
+            <p className="frame-sidebar__legend">{t('frame.sidebar.legend')}</p>
+
             {groups.map((group, index) => (
               <section className="frame-sidebar__group" key={group.title ?? `group-${index}`}>
                 {group.title !== undefined && (
@@ -425,6 +451,29 @@ export function FrameShell({
                       >
                         {item.label}
                       </button>
+
+                      {item.key === currentPageKey &&
+                        item.sections !== undefined &&
+                        item.sections.length > 0 && (
+                          <ul className="frame-sidebar__sublist">
+                            {item.sections.map((section) => (
+                              <li key={section.key}>
+                                <button
+                                  type="button"
+                                  className="frame-sidebar__sublink"
+                                  aria-current={
+                                    section.key === currentSectionKey ? 'page' : undefined
+                                  }
+                                  onClick={() => {
+                                    onSelectSection?.(item.key, section.key);
+                                  }}
+                                >
+                                  {section.label}
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
                     </li>
                   ))}
                 </ul>

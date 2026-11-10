@@ -31,14 +31,19 @@ import {
 const OWNER = { id: 'u1', email: 'boss@example.com', displayName: '陳老闆', role: 'owner' };
 const STAFF = { id: 's1', email: 'staff@example.com', displayName: '林慧', role: 'staff' };
 
-/** manifest 六個 app，只作測試夾具；正式 app 清單唯一來源係 GET /modules。 */
+/**
+ * manifest 六個 app，只作測試夾具；正式 app 清單唯一來源係 GET /modules。
+ *
+ * 2026-11-10：boss 同 design 已經有真畫面（`/boss`、`/design`），所以
+ * `available: true` 並帶 route；其餘四個仍然係空殼。
+ */
 const SIX = [
-  { id: 'boss', title: '老闆台', kind: 'console', department: null, order: 0, available: false },
-  { id: 'design', title: '設計／內容／網站', kind: 'department', department: 'design', order: 10, available: false },
-  { id: 'sales', title: '銷售', kind: 'department', department: 'sales', order: 20, available: false },
-  { id: 'ops_finance', title: '營運與財務', kind: 'department', department: 'ops_finance', order: 30, available: false },
-  { id: 'hr', title: '人事', kind: 'department', department: 'hr', order: 40, available: false },
-  { id: 'support', title: '客服與 CRM', kind: 'department', department: 'support', order: 50, available: false },
+  { id: 'boss', title: '老闆台', kind: 'console', department: null, order: 0, available: true, route: '/boss' },
+  { id: 'design', title: '設計／內容／網站', kind: 'department', department: 'design', order: 10, available: true, route: '/design' },
+  { id: 'sales', title: '銷售', kind: 'department', department: 'sales', order: 20, available: false, route: '/sales' },
+  { id: 'ops_finance', title: '營運與財務', kind: 'department', department: 'ops_finance', order: 30, available: false, route: '/ops-finance' },
+  { id: 'hr', title: '人事', kind: 'department', department: 'hr', order: 40, available: false, route: '/hr' },
+  { id: 'support', title: '客服與 CRM', kind: 'department', department: 'support', order: 50, available: false, route: '/support' },
 ];
 
 function openHome(handlers: FakeHandlers = {}, user: typeof OWNER | typeof STAFF = OWNER) {
@@ -115,7 +120,7 @@ describe('App selector 與我的 Apps：共用同一次讀取', () => {
     expect(screen.getAllByRole('option')).toHaveLength(6);
   });
 
-  it('老闆見六個 app 全部未啟用、不可選、有狀態標籤與原因', async () => {
+  it('已經有畫面的兩個 app 可以入，其餘四個不可選並寫明原因', async () => {
     openHome();
 
     await waitForCard('boss');
@@ -125,14 +130,19 @@ describe('App selector 與我的 Apps：共用同一次讀取', () => {
 
     expect(options).toHaveLength(6);
 
-    for (const option of options) {
-      expect(option.getAttribute('aria-disabled')).toBe('true');
+    const enabled = options.filter((option) => option.getAttribute('aria-disabled') !== 'true');
+    const disabled = options.filter((option) => option.getAttribute('aria-disabled') === 'true');
+
+    // available 係「有冇畫面接得住」，所以只有兩個可以撳。
+    expect(enabled.map((option) => option.textContent).join(' ')).toContain('老闆台');
+    expect(enabled.map((option) => option.textContent).join(' ')).toContain('設計／內容／網站');
+    expect(disabled).toHaveLength(4);
+
+    for (const option of disabled) {
       expect(option.textContent).toContain('未啟用');
-      expect(option.textContent).toContain('未有前端入口');
     }
 
     // 名稱用後端 title（manifest 唯一來源），唔係 id、唔係示意值。
-    expect(options.map((option) => option.textContent).join(' ')).toContain('老闆台');
     expect(options.map((option) => option.textContent).join(' ')).toContain('客服與 CRM');
   });
 

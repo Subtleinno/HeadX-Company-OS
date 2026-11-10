@@ -16,7 +16,14 @@ import type { ModuleKind, ModuleManifest, ModuleRegistry } from './registry/inde
  * 所以漏咗嗰道閘門；唔好再喺路由入面抄第二份判斷。
  */
 
-/** 對外公開的六個欄位。manifest 其他欄位一律不出現在回應裡。 */
+/**
+ * 對外公開的欄位。manifest 其他欄位一律不出現在回應裡。
+ *
+ * 2026-11-10 起多一個 `route`：外殼要用它才知道「撳呢個 app 去邊」。
+ * 以前唔公開，係因為 app-host 未接線、冇任何畫面接得住；而家 Boss Portal
+ * 同 Design 兩個 app 已經有真畫面，唔公開 route 就等於要前端自己寫死
+ * app id ↔ 網址對照表，那正是「兩份清單，總有一份過時」。
+ */
 export type PublicModule = {
   id: string;
   title: string;
@@ -24,6 +31,8 @@ export type PublicModule = {
   department: string | null;
   order: number;
   available: boolean;
+  /** 這個 app 的入口路徑，例如 `/boss`。 */
+  route: string;
 };
 
 /** 逐個欄位抄出來，不是 spread —— spread 會把新欄位一併帶出去。 */
@@ -35,6 +44,7 @@ export function toPublicModule(module: ModuleManifest): PublicModule {
     department: module.department,
     order: module.order,
     available: module.available,
+    route: module.route,
   };
 }
 

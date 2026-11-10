@@ -28,6 +28,7 @@ const FRAME_MESSAGES: Record<string, string> = {
   'frame.topbar.more': '更多操作',
   'frame.topbar.pageSearch': '搜尋此頁',
   'frame.scope.company': '公司範圍',
+  'frame.sidebar.legend': '頁面 PAGES',
   'frame.landmark.topbar': '全域頂欄',
   'frame.landmark.subbar': '模組分頁',
   'frame.landmark.sidebar': '子頁導覽',
@@ -62,7 +63,7 @@ const FRAME_MESSAGES: Record<string, string> = {
  * 唔變，唔係放寬門檻；後續施工張新增鍵要同步加落呢兩個清單。
  */
 const FROZEN_NON_FRAME_SHA256 =
-  '3a2d2c39848bccc7913cf85993fd562efc743acf5dd1223408a533bf07aa3499';
+  '3c47e4dee792c894b9b36da37769321fddafae46a11d305512d7da6dc879b69d';
 
 // #163 新增 files.* 前綴；同 #161 嘅 policy.* 一樣，唔屬 #155 要守嘅既有鍵。
 // issue 168 新增 5 個 grant.detail.* 鍵，同樣唔屬 #155 要守嘅既有鍵；

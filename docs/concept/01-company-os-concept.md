@@ -369,7 +369,7 @@ Hyperframes（HeyGen 開源版）的實際輸出能力，官方文件只列：**
 | ---------------- | -------------------------------------------------- |
 | `postgres`       | 結構化狀態：專案、Needs、策略、偏好、事件、註冊表                        |
 | `minio`          | 檔案：Brand assets、Knowledge docs、Materials、render 輸出 |
-| `company-os-api` | 平台殼：身份、路由、註冊表、事件；同時提供 MCP server 與 HTTP API        |
+| `apps/platform` | 平台殼：身份、路由、註冊表、事件；同時提供 MCP server 與 HTTP API        |
 | `company-os-web` | Boss Portal 與部門 app 的前端外殼（同一 shell，按角色／app 切換）     |
 | `worker`         | 佇列：render job、標籤生成、索引建立                            |
 

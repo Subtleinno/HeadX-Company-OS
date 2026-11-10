@@ -10,7 +10,7 @@ import {
 import { t } from '@company-os/i18n';
 import { needDueLabel, needKindLabel, needStateLabel, needWaitingLabel } from '../needs/labels';
 import { useNeedsShell, type NeedsShellData } from '../needs/useNeedsShell';
-import { navigate } from '../router';
+import { navigate, type Route } from '../router';
 import { useAppList, type AppListView } from './useAppList';
 
 /**
@@ -31,10 +31,12 @@ import { useAppList, type AppListView } from './useAppList';
  *   - 只呈現 `kind`（喺「我的 Apps」），唔顯示「公司型・敏感」複合標籤：
  *     `sensitive` 唔喺 `/modules` 白名單內，本張唔改 `modules/routes.ts`、
  *     唔叫後端加欄位、唔喺前端自建模式或敏感表。
- *   - 後端刻意唔公開 manifest 嘅 `route`，app-host 亦未接線，所以所有 app
- *     嘅進入都不可用：selector 項目一律 `selectable: false`，並寫明原因，
- *     唔做一個按落唔知去邊嘅鍵。`currentAppId` 保持空、`onSelectApp` 唔跳轉。
  *   - 唔用 localStorage、唔硬編 app id 或標題；名稱一律用後端 `title`。
+ *
+ * issue 185 起，app 名稱亦經呢一層補入麵包屑：`/modules` 已經公開 `route`，
+ * 所以邊一條路徑屬於邊個 app、嗰個 app 叫乜名，都係後端講嘅事。頁面只需
+ * 交「模組 / 頁 / 章節」，第一格由 `withAppCrumb()` 加 —— 咁樣左上角
+ * selector 同麵包屑第一格唔會再出現兩個名。
  */
 
 const AppListContext = createContext<AppListView | null>(null);
@@ -70,8 +72,16 @@ export function useSharedNeeds(): NeedsShellData {
 
 export type FrameAppsProps = Omit<
   FrameShellProps,
-  'apps' | 'currentAppId' | 'onSelectApp' | 'needs' | 'needsRail'
+  'apps' | 'needs' | 'needsRail' | 'currentAppId' | 'onSelectApp'
 > & {
+  /**
+   * 而家喺邊個 app —— 用**路徑**講（`/boss`），唔用 app id。
+   * 清單由後端來，前端用路徑認返邊一個 app 被選中，就唔需要自己
+   * 記一份「app id 同網址」對照表。
+   */
+  currentAppRoute?: string;
+  /** 唔傳就照後端 manifest 的 `route` 跳過去。 */
+  onSelectApp?: (appId: string) => void;
   /** false ＝ 呢個畫面唔讀取 app 清單（首次強制改密碼嘅個人帳戶頁）。 */
   load?: boolean;
   /** false ＝ selector 只需要 app 清單，唔逐個 app 問存取判斷（「我的 Apps」先需要）。 */
@@ -95,12 +105,58 @@ function toFrameApps(view: AppListView): readonly FrameApp[] {
     return [];
   }
 
-  return view.list.modules.map((module) => ({
-    key: module.id,
-    label: module.title,
-    statusLabel: `${module.available ? t('myapps.available.yes') : t('myapps.available.no')} · ${t('myapps.entry.unavailable')}`,
-    selectable: false,
-  }));
+  return view.list.modules.map((module) => {
+    // 可以入去 = manifest 話 available，而且真係有一條路徑接住佢。
+    // 兩樣缺一都唔可以撳：撳完去一個空白頁比灰掉更差。
+    // route 用防禦式讀法：舊版後端唔會回呢個欄位，缺席要當「冇路徑」，
+    // 唔可以拋錯 —— 一個欄位缺失唔應該令整個 selector 空白。
+    const route = typeof module.route === 'string' ? module.route : '';
+    const selectable = module.available && route.length > 0;
+
+    return {
+      key: module.id,
+      label: module.title,
+      ...(selectable ? {} : { statusLabel: t('myapps.available.no') }),
+      selectable,
+    };
+  });
+}
+
+/** 由路徑認返邊一個 app：後端清單裡面 route 同傳入路徑一樣嗰個。 */
+function currentAppIdOf(view: AppListView, route: string): string {
+  if (route.length === 0 || view.list.kind !== 'ready') {
+    return '';
+  }
+
+  return view.list.modules.find((module) => module.route === route)?.id ?? '';
+}
+
+/**
+ * 麵包屑第一格 ＝ 目前 app 嘅 manifest 名稱。
+ *
+ * 讀唔到清單（載入中／失敗）就唔加 —— 寧願少一格，都唔好自己造一個名出嚟。
+ * 已經同第一格一樣就唔重複，避免「Boss Portal / Boss Portal / …」。
+ */
+function withAppCrumb(
+  view: AppListView,
+  route: string,
+  breadcrumbs: readonly string[] | undefined,
+): readonly string[] | undefined {
+  if (breadcrumbs === undefined || breadcrumbs.length === 0) {
+    return breadcrumbs;
+  }
+
+  if (view.list.kind !== 'ready' || route.length === 0) {
+    return breadcrumbs;
+  }
+
+  const title = view.list.modules.find((module) => module.route === route)?.title;
+
+  if (title === undefined || title.length === 0 || title === breadcrumbs[0]) {
+    return breadcrumbs;
+  }
+
+  return [title, ...breadcrumbs];
 }
 
 export function FrameApps({
@@ -108,6 +164,8 @@ export function FrameApps({
   includeAccess = true,
   needsActive = false,
   withRail = false,
+  currentAppRoute = '',
+  onSelectApp,
   ...shellProps
 }: FrameAppsProps) {
   const view = useAppList(load, includeAccess);
@@ -139,6 +197,7 @@ export function FrameApps({
         };
 
   const now = Date.now();
+  const crumbs = withAppCrumb(view, currentAppRoute, shellProps.breadcrumbs);
 
   const needsRail: FrameNeedsRail = {
     title: t('need.rail.title'),
@@ -174,11 +233,26 @@ export function FrameApps({
       <NeedsShellContext.Provider value={needs}>
         <FrameShell
           {...shellProps}
+          {...(crumbs === undefined ? {} : { breadcrumbs: crumbs })}
           {...(needsEntry === undefined ? {} : { needs: needsEntry })}
           {...(withRail ? { needsRail } : {})}
           apps={toFrameApps(view)}
-          currentAppId=""
-          onSelectApp={() => undefined}
+          currentAppId={currentAppIdOf(view, currentAppRoute)}
+          onSelectApp={(appId) => {
+            if (onSelectApp !== undefined) {
+              onSelectApp(appId);
+              return;
+            }
+
+            const target =
+              view.list.kind === 'ready'
+                ? view.list.modules.find((module) => module.id === appId)
+                : undefined;
+
+            if (target !== undefined && typeof target.route === 'string' && target.route.length > 0) {
+              navigate(target.route as Route);
+            }
+          }}
         />
       </NeedsShellContext.Provider>
     </AppListContext.Provider>

@@ -290,6 +290,16 @@
   margin-top: var(--hx-space-5);
 }
 
+/* 左側欄最頂小標（設計稿 frame-06：「頁面 PAGES」）。
+ * 同下面嘅分組標題唔同層次：呢個講「呢條欄係咩」，分組標題講「呢一組係咩」。
+ * 所以字更細、字距更闊、同第一組之間留白。 */
+.frame-sidebar__legend {
+  margin: 0 0 var(--hx-space-5);
+  color: var(--hx-frame-muted);
+  font: var(--hx-frame-font-small);
+  letter-spacing: 0.08em;
+}
+
 .frame-sidebar__group-title {
   margin: 0 0 var(--hx-space-2);
   color: var(--hx-frame-secondary);
@@ -1158,6 +1168,24 @@
 
   .frame-account__name {
     display: none;
+  }
+
+  /* 768 嗰陣 app 名唔應該先被犧牲：頂欄剩低嘅位交畀模組分頁去捲，
+     唔好把「Boss Portal」斬成「Boss P…」。 */
+  .frame-slot--app,
+  .frame-slot--scope {
+    flex: 0 0 auto;
+  }
+
+  /* 分頁收窄一級：三個中文模組名要喺 768 一次過顯示完。
+     捲得到但係斬咗半個字，睇落就係壞咗；寧願字細一級、位窄一級。 */
+  .frame-topbar {
+    gap: var(--hx-space-2);
+  }
+
+  .frame-tab {
+    padding: 0 var(--hx-space-2);
+    font: var(--hx-frame-font-small);
   }
 }
 
