@@ -19,6 +19,9 @@ Company OS 是 company starter：任何一間公司裝好 Docker 就能開始運
 | `docs/product/DECISIONS.md` | 決策日誌，後者優先；C41–C45 記錄 Workspace、三模式及整合邊界 |
 | `docs/product/BASE-UI-DESIGN.md` | 共用外殼、底座管理 UX、Agent-first、設定、模板及語系；不是完整施工規格。**2026-11-09 起舊外殼規格已被 Frame v1.3／`FRAME-UIUX-HANDOFF.md` v1.4 取代，唔留兩套（C61）** |
 | `docs/product/WORKSPACE-APP-SCOPE-DESIGN.md` | 公司／品牌語意、三模式候選互動與接入契約；第十一節列前置規劃交付與依賴分工 |
+| `docs/product/SCOPE-MODEL.md` | **範圍模型（現行設計依據）**：一機一公司、品牌 Workspace、三種 app 模式、**Context（管寫）vs Lens（管讀）**、四條紅線；第 1–9 節有效，第 10／12–16 節係外殼演變紀錄（已被 C70–C76 取代）。2026-11-11 由 gitignored 底稿收入 repo（C83） |
+| `docs/product/MULTI-MACHINE-ACCESS.md` | **跨機入口**：總部＝登記／批准／入口中心（trust hub）而非資料隧道；身份／目錄／授權三層分開；三步憑證流程（已落地成據點目錄）；Stage 0／1／2。2026-11-11 收入 repo（C83） |
+| `docs/product/BACKEND-FUNCTIONS-MAP.md` | 2026-11-09 的端點盤點：邊啲後端功能仲未有畫面。**有時效**，端點真相以 `apps/platform/src/*/routes.ts` 為準 |
 | `docs/product/BASE-UI-HXDESIGN-ALIGNMENT.md` | Base UI 對照 HxDesign（`eb079b6`）的逐項實測表：來源檔、尺寸、差距、做法、刻意不照搬、未對齊項。**#153 #148 A：HxDesign 只作歷史參考，本檔保留但唔係 UI 基準（C61）** |
 | `docs/product/FRAME-UIUX-HANDOFF.md` | 共用外殼（Frame）UI/UX 定稿交付 **v1.4**：外殼行為規格（Logo 貼名稱、據點機器入口喺頁尾左下）、公司型 app 正名 Boss Portal（據點管理歸屬佢，無「底座管理」獨立入口）、後端端點接回指引、Logo 管理撤回待重設計、**#153 主色 A 與 Q1–Q9 已裁決定及既有規則衝突對照**（決策落地 `DECISIONS.md` C53–C61）、F-02 驗收硬閘門；給 development manager AI 拆施工 issue 用。設計定稿，未施工 |
 | `docs/design/FRAME-DESIGN-INDEX.md` | 九張 Frame 設計稿索引（v1.4）：Ardot 檔 `745493588675335`、每頁 node ID、`docs/design/frame/*.png` 快照、對應規格章節、施工狀態，同埋可貼去另一個 WorkBuddy session 嘅開工卡。Ardot 圖層係原始真相，PNG 係快照 |
