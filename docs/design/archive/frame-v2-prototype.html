@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-HK">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Company OS — Frame v2 原型（Needs 入殼・文案定稿）</title>
+<style>
+  :root{
+    --paper:#F7F5F1;
+    --card:#FFFFFF;
+    --line:#E6E3DC;
+    --line-soft:#EFEDE7;
+    --ink:#171614;
+    --ink-2:#4A453C;
+    --ink-3:#8B8578;
+    --ink-4:#A8A296;
+    --blue:#0057FF;
+    --pill:#EBE8E1;
+    --rail:#FBFAF7;
+    --r:10px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font:400 14px/1.55 -apple-system,BlinkMacSystemFont,"PingFang HK","Noto Sans HK","Helvetica Neue",Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:inherit;text-decoration:none}
+  button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+  .mono{font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace}
+  .caps{font-size:11px;letter-spacing:.09em;color:var(--ink-4);font-weight:500}
+
+  /* ---------- shell frame ---------- */
+  .view{display:none;min-height:100vh;flex-direction:column}
+  .view.on{display:flex}
+
+  .topbar{
+    height:56px;flex:0 0 56px;display:flex;align-items:center;gap:6px;
+    padding:0 12px;background:var(--card);border-bottom:1px solid var(--line);
+    position:relative;z-index:20;
+  }
+  .icon-btn{
+    width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+    color:var(--ink-2);
+  }
+  .icon-btn:hover{background:var(--pill)}
+
+  .appsel{
+    display:flex;align-items:center;gap:8px;height:34px;padding:0 10px;border-radius:9px;
+  }
+  .appsel:hover{background:var(--pill)}
+  .appsel .glyph{
+    width:22px;height:22px;border-radius:6px;background:var(--ink);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;
+  }
+  .appsel .name{font-size:15px;font-weight:600;letter-spacing:-.01em}
+  .chev{width:9px;height:9px;border-right:1.5px solid var(--ink-3);border-bottom:1.5px solid var(--ink-3);transform:rotate(45deg) translateY(-1px)}
+
+  .brandsel{
+    display:flex;align-items:center;gap:7px;height:34px;padding:0 10px;border-radius:9px;
+    color:var(--ink-2);
+  }
+  .brandsel:hover{background:var(--pill)}
+  .brandsel .glyph{
+    width:18px;height:18px;border-radius:50%;border:1px solid var(--ink-3);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .brandsel .name{font-size:14px}
+
+  .modules{display:flex;gap:2px;background:var(--pill);border-radius:9px;padding:3px;margin-left:6px}
+  .modules a{height:28px;display:flex;align-items:center;padding:0 13px;border-radius:7px;font-size:13.5px;color:var(--ink-2)}
+  .modules a.on{background:var(--ink);color:#fff;font-weight:500}
+  .modulebtn{display:none;align-items:center;gap:7px;height:32px;padding:0 11px;border-radius:9px;
+    background:var(--pill);font-size:13.5px;color:var(--ink-2);margin-left:6px;white-space:nowrap;flex:0 0 auto}
+  .modulebtn b{font-weight:500;color:var(--ink)}
+
+  .spacer{flex:1}
+
+  .needs-btn{
+    display:inline-flex;align-items:center;gap:9px;height:32px;padding:0 11px;border-radius:9px;
+    background:var(--pill);font-size:13px;color:var(--ink-2);margin-right:4px;
+    white-space:nowrap;flex:0 0 auto;
+  }
+  .needs-btn:hover{background:#E3DFD7}
+  .needs-btn .n{font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
+  .needs-btn .sep{width:1px;height:12px;background:#D5D0C6}
+  .needs-btn .alert{font-size:12px;color:var(--ink-2)}
+
+  .divider-v{width:1px;height:20px;background:var(--line);margin:0 6px}
+  .lang{font-size:13px;color:var(--ink-2);padding:6px 8px;border-radius:7px}
+  .lang:hover{background:var(--pill)}
+  .avatar{
+    width:30px;height:30px;border-radius:50%;background:var(--ink);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;
+  }
+  .who{font-size:12.5px;color:var(--ink-2);margin-right:6px}
+
+  /* ---------- second layer ---------- */
+  .pagebar{
+    height:48px;flex:0 0 48px;display:flex;align-items:center;gap:4px;padding:0 16px;
+    background:var(--card);border-bottom:1px solid var(--line);position:relative;z-index:10;
+  }
+  .tab{height:30px;display:flex;align-items:center;padding:0 12px;border-radius:8px;font-size:13.5px;color:var(--ink-2)}
+  .tab.on{background:var(--pill);color:var(--ink);font-weight:500}
+  .tab:hover:not(.on){background:#F4F2EC}
+
+  /* ---------- body ---------- */
+  .body{flex:1;display:flex;min-height:0}
+  .side{
+    flex:0 0 200px;border-right:1px solid var(--line);padding:18px 10px;
+    display:flex;flex-direction:column;gap:22px;
+  }
+  .side .group{display:flex;flex-direction:column;gap:2px}
+  .side .glabel{padding:0 10px 8px}
+  .side a{
+    display:flex;align-items:center;height:32px;padding:0 10px;border-radius:7px;
+    font-size:13.5px;color:var(--ink-2);position:relative;
+  }
+  .side a:hover{background:#F1EEE8}
+  .side a.on{background:var(--pill);color:var(--ink);font-weight:500}
+  .side a.on::before{
+    content:"";position:absolute;left:-4px;top:8px;bottom:8px;width:2px;background:var(--ink);border-radius:2px;
+  }
+
+  .main{flex:1;min-width:0;padding:26px 32px 40px;overflow:auto}
+  .crumb{font-size:12.5px;color:var(--ink-4);display:flex;gap:7px;align-items:center;margin-bottom:14px}
+  .crumb b{color:var(--ink-2);font-weight:500}
+  .crumb .s{color:#C9C4B8}
+  h1{font-size:38px;line-height:1.15;letter-spacing:-.02em;font-weight:700;margin:0 0 8px}
+  .sub{font-size:14.5px;color:var(--ink-3);margin:0 0 22px}
+
+  .infobar{
+    background:#F1EFE9;border-radius:8px;padding:11px 14px;font-size:13px;color:var(--ink-2);
+    margin-bottom:20px;
+  }
+
+  /* empty state: no fake button */
+  .empty{
+    background:var(--card);border:1px solid var(--line);border-radius:12px;
+    min-height:340px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;padding:40px;
+  }
+  .empty h3{font-size:16px;font-weight:600;margin:0 0 8px}
+  .empty p{font-size:13.5px;color:var(--ink-3);margin:0;max-width:420px;line-height:1.7}
+
+  /* buttons */
+  .btn{
+    height:36px;padding:0 16px;border-radius:8px;font-size:13.5px;font-weight:500;
+    display:inline-flex;align-items:center;gap:7px;
+  }
+  .btn-primary{background:var(--blue);color:#fff}
+  .btn-primary:hover{background:#0049D6}
+  .btn-ghost{border:1px solid var(--line);background:var(--card);color:var(--ink-2)}
+  .btn-ghost:hover{background:#F4F2EC}
+
+  .pagehead{position:relative}
+  .pagehead .right{position:absolute;right:0;top:32px;display:flex;gap:8px}
+
+  /* table */
+  .ledger{width:100%;border-collapse:separate;border-spacing:0;background:var(--card);
+    border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-top:4px}
+  .ledger th{
+    background:#F1EFE9;font-size:11px;letter-spacing:.09em;color:var(--ink-4);font-weight:500;
+    text-align:left;padding:10px 16px;white-space:nowrap;
+  }
+  .ledger td{padding:14px 16px;border-top:1px solid var(--line-soft);vertical-align:top;font-size:13.5px}
+  .ledger tbody tr:hover td{background:#FCFBF8}
+  .ledger .nm{font-weight:600;font-size:14px;display:block}
+  .ledger .mt{font-size:12.5px;color:var(--ink-4);display:block;margin-top:3px}
+  .ledger .act{color:var(--ink);font-weight:500;white-space:nowrap}
+  .ledger .muted{color:var(--ink-4)}
+  .ledger td.mono{white-space:nowrap;font-size:12.5px}
+  .tablenote{font-size:12.5px;color:var(--ink-4);padding:12px 16px;background:#FCFBF8;border-top:1px solid var(--line-soft)}
+  .below{font-size:13px;color:var(--ink-3);margin-top:16px}
+
+  /* ---------- right needs rail ---------- */
+  .rail{
+    flex:0 0 320px;border-left:1px solid var(--line);background:var(--rail);
+    display:flex;flex-direction:column;min-height:0;
+  }
+  .rail head{display:block}
+  .rail-top{
+    padding:18px 16px 12px;display:flex;align-items:baseline;justify-content:space-between;gap:8px;
+    border-bottom:1px solid var(--line-soft);
+  }
+  .rail-top .t{font-size:12.5px;font-weight:600;color:var(--ink-2);letter-spacing:.01em}
+  .rail-top .t span{color:var(--ink-4);font-weight:400}
+  .rail-top a{font-size:12.5px;color:var(--ink-3)}
+  .rail-top a:hover{color:var(--blue)}
+  .rail-list{padding:12px;display:flex;flex-direction:column;gap:8px;overflow:auto}
+  .need{
+    background:var(--card);border:1px solid var(--line);border-radius:9px;padding:11px 12px;display:block;
+  }
+  .need:hover{border-color:#D8D3C8;box-shadow:0 1px 2px rgba(23,22,20,.04)}
+  .need .hd{display:flex;align-items:center;gap:7px;margin-bottom:6px}
+  .need .code{font-size:11px;color:var(--ink-4)}
+  .badge{font-size:10.5px;padding:1px 6px;border-radius:4px;background:var(--pill);color:var(--ink-2);white-space:nowrap}
+  .badge.decide{background:#E7EDFF;color:#0040BF}
+  .need .ti{font-size:13.5px;line-height:1.5;color:var(--ink);display:block}
+  .need .meta{font-size:12px;color:var(--ink-3);margin-top:7px;display:flex;gap:6px;align-items:center}
+  .need .meta .dot{width:3px;height:3px;border-radius:50%;background:#CFC9BC}
+  .rail-foot{
+    border-top:1px solid var(--line-soft);padding:12px 16px;font-size:12.5px;color:var(--ink-4);
+    display:flex;justify-content:space-between;
+  }
+  .rail-foot a:hover{color:var(--blue)}
+  .rail-empty{padding:16px;color:var(--ink-4);font-size:12.5px;line-height:1.75}
+
+  /* ---------- footer ---------- */
+  .foot{
+    height:42px;flex:0 0 42px;display:flex;align-items:center;gap:10px;padding:0 14px;
+    background:var(--paper);border-top:1px solid var(--line);font-size:12px;color:var(--ink-3);
+  }
+  .foot .flogo{width:16px;height:16px;border-radius:4px;background:var(--ink);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700}
+  .foot .dot{width:5px;height:5px;border-radius:50%;background:var(--ink-3)}
+  .foot b{color:var(--ink-2);font-weight:500}
+  .foot .link:hover{color:var(--ink)}
+
+  /* ---------- dropdown ---------- */
+  .menu{
+    position:absolute;top:52px;left:56px;width:340px;background:var(--card);
+    border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 32px rgba(23,22,20,.12);
+    padding:6px;z-index:40;display:none;
+  }
+  .menu.on{display:block}
+  .menu .mhead{padding:8px 10px 10px}
+  .menu .item{display:flex;align-items:center;justify-content:space-between;padding:9px 10px;border-radius:8px;font-size:13.5px}
+  .menu .item .r{font-size:12px;color:var(--ink-4)}
+  .menu .item:hover{background:#F4F2EC}
+  .menu .item.off{color:var(--ink-3);cursor:default}
+  .menu .item.off:hover{background:transparent}
+  .menu .item.cur{background:var(--pill)}
+
+  /* ---------- deny ---------- */
+  .deny-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:40px}
+  .deny{
+    width:520px;background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:36px 40px;text-align:center;box-shadow:0 1px 2px rgba(23,22,20,.03);
+  }
+  .deny .lock{
+    width:38px;height:38px;border-radius:50%;background:#F1EFE9;margin:0 auto 16px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .deny h2{font-size:18px;font-weight:600;margin:0 0 12px}
+  .deny p{font-size:13.5px;color:var(--ink-2);line-height:1.75;margin:0 0 10px}
+  .deny .fine{font-size:12.5px;color:var(--ink-4);line-height:1.7;margin:0 0 22px}
+
+  /* ---------- needs page ---------- */
+  .chips{display:flex;align-items:center;gap:8px;margin-bottom:18px}
+  .chip{height:30px;padding:0 12px;border-radius:8px;border:1px solid var(--line);background:var(--card);
+    font-size:13px;color:var(--ink-2);display:flex;align-items:center;gap:6px}
+  .chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .chip .c{font-size:12px;opacity:.6}
+  .chip.on .c{opacity:.75}
+
+  /* ---------- responsive ---------- */
+  @media (max-width:1279px){
+    .rail{display:none}
+    .main{padding:24px 24px 36px}
+  }
+  @media (max-width:1023px){
+    .side{flex:0 0 180px}
+    .who,.lang{display:none}
+    h1{font-size:32px}
+    .modules a{padding:0 10px}
+  }
+  @media (max-width:840px){
+    .modules{display:none}
+    .modulebtn{display:flex}
+    .brandsel .name{max-width:118px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .needs-btn .alert{display:none}
+    .side{flex:0 0 168px}
+    .main{padding:20px 18px 32px}
+    h1{font-size:28px}
+  }
+
+  /* prototype switcher — not part of the product UI */
+  .proto{
+    position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:99;
+    display:flex;align-items:center;gap:4px;background:#fff;border:1px solid var(--line);
+    border-radius:10px;padding:4px;box-shadow:0 6px 20px rgba(23,22,20,.12);
+  }
+  .proto span{font-size:10.5px;color:var(--ink-4);padding:0 6px;letter-spacing:.04em}
+  .proto button{height:26px;min-width:26px;border-radius:7px;font-size:11.5px;color:var(--ink-3);padding:0 7px}
+  .proto button.on{background:var(--ink);color:#fff}
+  .proto button:hover:not(.on){background:var(--pill)}
+</style>
+</head>
+<body>
+
+<!-- ============ 01 品牌型外殼（含右側 Needs 欄） ============ -->
+<section class="view on" id="v1">
+  <div class="topbar">
+    <button class="icon-btn" aria-label="主選單">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h12"/></svg>
+    </button>
+    <button class="appsel" onclick="toggleMenu()">
+      <span class="glyph">D</span><span class="name">Design</span><span class="chev"></span>
+    </button>
+    <button class="brandsel">
+      <span class="glyph"><svg width="8" height="8" viewBox="0 0 8 8" fill="none"><path d="M4 0v8M0 4h8" stroke="#8B8578" stroke-width="1"/></svg></span>
+      <span class="name">品牌・Moonic 滿月堂</span><span class="chev"></span>
+    </button>
+    <nav class="modules">
+      <a href="#" class="on">品牌</a><a href="#">知識</a><a href="#">素材</a><a href="#">創作</a>
+    </nav>
+    <button class="modulebtn">模組・<b>品牌</b><span class="chev"></span></button>
+    <div class="spacer"></div>
+    <a class="needs-btn" href="#" onclick="show(3);return false;" title="前往 Needs">
+      <span>Needs</span><span class="sep"></span><span class="n">7</span>
+      <span class="alert">・逾期 1</span>
+    </a>
+    <button class="lang">繁</button>
+    <button class="icon-btn" aria-label="通知">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M4 6.5a4 4 0 018 0c0 3 1 4 1 4H3s1-1 1-4z"/><path d="M6.5 13a1.6 1.6 0 003 0"/></svg>
+    </button>
+    <button class="icon-btn" aria-label="說明">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="8" cy="8" r="6.2"/><path d="M8 11.2V7.4M8 5.2v.6"/></svg>
+    </button>
+    <span class="avatar">B</span>
+    <span class="who">Super Admin</span>
+  </div>
+
+  <div class="menu" id="appmenu">
+    <div class="mhead"><span class="caps">應用程式 APPS・尚未啟用</span></div>
+    <a class="item cur" href="#"><span>Design</span><span class="r">原型</span></a>
+    <a class="item off" href="#"><span>Boss Portal</span><span class="r">公司型・敏感</span></a>
+    <a class="item off" href="#"><span>銷售 Sales</span><span class="r">品牌型</span></a>
+    <a class="item off" href="#"><span>營運與財務</span><span class="r">公司型・敏感</span></a>
+    <a class="item off" href="#"><span>人事 HR</span><span class="r">公司型・敏感</span></a>
+    <a class="item off" href="#"><span>客服與 CRM</span><span class="r">品牌型</span></a>
+  </div>
+
+  <div class="pagebar">
+    <a class="tab" href="#">品牌主頁</a>
+    <a class="tab" href="#">儀表板</a>
+    <a class="tab on" href="#">品牌設定</a>
+    <div class="spacer"></div>
+    <button class="icon-btn" aria-label="更多" style="width:30px;height:30px">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="8" r="1.2"/><circle cx="8" cy="8" r="1.2"/><circle cx="13" cy="8" r="1.2"/></svg>
+    </button>
+  </div>
+
+  <div class="body">
+    <aside class="side">
+      <div class="group">
+        <div class="glabel caps">頁面 PAGES</div>
+      </div>
+      <div class="group">
+        <div class="glabel caps">識別 IDENTITY</div>
+        <a href="#" class="on">品牌標誌</a>
+        <a href="#">品牌識別</a>
+        <a href="#">色彩</a>
+        <a href="#">字體</a>
+      </div>
+      <div class="group">
+        <div class="glabel caps">策略與紀錄</div>
+        <a href="#">渠道與策略</a>
+        <a href="#">版本紀錄</a>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="crumb"><span>Design</span><span class="s">/</span><span>品牌</span><span class="s">/</span><span>品牌設定</span><span class="s">/</span><b>品牌標誌</b></div>
+      <h1>品牌標誌</h1>
+      <p class="sub">Moonic 滿月堂・品牌設定</p>
+
+      <div class="empty">
+        <h3>此頁尚未接入內容</h3>
+        <p>目前只完成外殼。此頁會在 Design app 施工階段接入真實的模組內容。</p>
+      </div>
+    </main>
+
+    <aside class="rail">
+      <div class="rail-top">
+        <span class="t">此頁 Needs <span>・7</span></span>
+        <a href="#" onclick="show(3);return false;">全部</a>
+      </div>
+      <div class="rail-list">
+        <a class="need" href="#">
+          <div class="hd"><span class="code mono">COS-HK-014</span><span class="badge">交付</span></div>
+          <span class="ti">拍攝新包裝實物照（正面、側面、成分標籤）</span>
+          <div class="meta"><span>待認領</span><span class="dot"></span><span>已等 2 日</span></div>
+        </a>
+        <a class="need" href="#">
+          <div class="hd"><span class="code mono">COS-HK-012</span><span class="badge decide">決定</span></div>
+          <span class="ti">秋季活動主視覺：從兩個方向選一個</span>
+          <div class="meta"><span>待你決定</span><span class="dot"></span><span>已等 5 日</span></div>
+        </a>
+        <a class="need" href="#">
+          <div class="hd"><span class="code mono">COS-HK-009</span><span class="badge">交付</span></div>
+          <span class="ti">補產品成分說明，供設計排版使用</span>
+          <div class="meta"><span>進行中</span><span class="dot"></span><span>Grace Lam</span></div>
+        </a>
+        <a class="need" href="#">
+          <div class="hd"><span class="code mono">COS-HK-006</span><span class="badge">交付</span></div>
+          <span class="ti">整理 2026 秋季渠道報價</span>
+          <div class="meta"><span>已上載・待吸收</span><span class="dot"></span><span>Kary</span></div>
+        </a>
+      </div>
+      <div class="rail-foot">
+        <span>已關閉 12 單</span>
+        <a href="#" onclick="show(3);return false;">查看紀錄</a>
+      </div>
+    </aside>
+  </div>
+
+  <div class="foot">
+    <span class="flogo">V</span><span class="dot"></span>
+    <span class="link"><b>本機公司</b></span>
+    <span><b>滿月堂集團</b>　香港</span>
+    <span class="link">據點與機器・</span>
+    <div class="spacer"></div>
+    <span>總部主機</span>
+  </div>
+</section>
+
+<!-- ============ 02 App selector 展開 ============ -->
+<section class="view" id="v2">
+  <div class="topbar">
+    <button class="icon-btn" aria-label="主選單">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h12"/></svg>
+    </button>
+    <button class="appsel" onclick="toggleMenu()">
+      <span class="glyph">D</span><span class="name">Design</span><span class="chev"></span>
+    </button>
+    <button class="brandsel">
+      <span class="glyph"><svg width="8" height="8" viewBox="0 0 8 8" fill="none"><path d="M4 0v8M0 4h8" stroke="#8B8578" stroke-width="1"/></svg></span>
+      <span class="name">品牌・Moonic 滿月堂</span><span class="chev"></span>
+    </button>
+    <nav class="modules">
+      <a href="#" class="on">品牌</a><a href="#">知識</a><a href="#">素材</a><a href="#">創作</a>
+    </nav>
+    <div class="spacer"></div>
+    <a class="needs-btn" href="#" onclick="show(3);return false;">
+      <span>Needs</span><span class="sep"></span><span class="n">7</span><span class="alert">・逾期 1</span>
+    </a>
+    <button class="lang">繁</button>
+    <button class="icon-btn" aria-label="通知">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M4 6.5a4 4 0 018 0c0 3 1 4 1 4H3s1-1 1-4z"/><path d="M6.5 13a1.6 1.6 0 003 0"/></svg>
+    </button>
+    <button class="icon-btn" aria-label="說明">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="8" cy="8" r="6.2"/><path d="M8 11.2V7.4M8 5.2v.6"/></svg>
+    </button>
+    <span class="avatar">B</span>
+    <span class="who">Super Admin</span>
+  </div>
+
+  <div class="menu on" id="appmenu2" style="left:56px">
+    <div class="mhead"><span class="caps">應用程式 APPS・尚未啟用</span></div>
+    <a class="item cur" href="#"><span>Design</span><span class="r">原型</span></a>
+    <a class="item off" href="#"><span>Boss Portal</span><span class="r">公司型・敏感</span></a>
+    <a class="item off" href="#"><span>銷售 Sales</span><span class="r">品牌型</span></a>
+    <a class="item off" href="#"><span>營運與財務</span><span class="r">公司型・敏感</span></a>
+    <a class="item off" href="#"><span>人事 HR</span><span class="r">公司型・敏感</span></a>
+    <a class="item off" href="#"><span>客服與 CRM</span><span class="r">品牌型</span></a>
+  </div>
+
+  <div class="pagebar">
+    <a class="tab" href="#">品牌主頁</a><a class="tab" href="#">儀表板</a><a class="tab on" href="#">品牌設定</a>
+  </div>
+  <div class="body">
+    <aside class="side">
+      <div class="group"><div class="glabel caps">頁面 PAGES</div></div>
+      <div class="group"><div class="glabel caps">識別 IDENTITY</div>
+        <a href="#" class="on">品牌標誌</a><a href="#">品牌識別</a><a href="#">色彩</a><a href="#">字體</a>
+      </div>
+    </aside>
+    <main class="main">
+      <div class="crumb"><span>Design</span><span class="s">/</span><span>品牌</span><span class="s">/</span><span>品牌設定</span><span class="s">/</span><b>品牌標誌</b></div>
+      <h1>品牌標誌</h1>
+      <p class="sub">Moonic 滿月堂・品牌設定</p>
+      <div class="empty"><h3>此頁尚未接入內容</h3><p>目前只完成外殼。此頁會在 Design app 施工階段接入真實的模組內容。</p></div>
+    </main>
+  </div>
+  <div class="foot">
+    <span class="flogo">V</span><span class="dot"></span><span class="link"><b>本機公司</b></span>
+    <span><b>滿月堂集團</b>　香港</span><span class="link">據點與機器・</span>
+    <div class="spacer"></div><span>總部主機</span>
+  </div>
+</section>
+
+<!-- ============ 03 Needs 頁 ============ -->
+<section class="view" id="v3">
+  <div class="topbar">
+    <button class="icon-btn" aria-label="主選單">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h12"/></svg>
+    </button>
+    <button class="appsel" onclick="toggleMenu()">
+      <span class="glyph">D</span><span class="name">Design</span><span class="chev"></span>
+    </button>
+    <div class="spacer"></div>
+    <a class="needs-btn" href="#" style="background:var(--ink);color:#fff">
+      <span>Needs</span><span class="sep" style="background:#5A554B"></span><span class="n" style="color:#fff">7</span>
+    </a>
+    <button class="lang">繁</button>
+    <span class="avatar">B</span><span class="who">Super Admin</span>
+  </div>
+  <div class="pagebar">
+    <a class="tab on" href="#">收件匣</a>
+    <a class="tab" href="#">我負責</a>
+    <a class="tab" href="#">已關閉</a>
+  </div>
+  <div class="body">
+    <aside class="side">
+      <div class="group">
+        <div class="glabel caps">來源 SOURCE</div>
+        <a href="#" class="on">全部來源</a>
+        <a href="#">Design</a>
+        <a href="#">銷售 Sales</a>
+        <a href="#">營運與財務</a>
+        <a href="#">人事 HR</a>
+      </div>
+    </aside>
+    <main class="main">
+      <div class="crumb"><span>Needs</span><span class="s">/</span><b>收件匣</b></div>
+      <h1>Needs</h1>
+      <p class="sub">所有 app 交給你處理的事，集中在這裡。</p>
+
+      <div class="chips">
+        <button class="chip on">全部 <span class="c">7</span></button>
+        <button class="chip">待認領 <span class="c">3</span></button>
+        <button class="chip">待你決定 <span class="c">1</span></button>
+        <button class="chip">進行中 <span class="c">2</span></button>
+        <button class="chip">待吸收 <span class="c">1</span></button>
+        <span class="spacer"></span>
+        <button class="chip" style="border-color:transparent;background:transparent;color:var(--ink-3)">逾期 1 單</button>
+      </div>
+
+      <table class="ledger">
+        <thead>
+          <tr><th style="width:132px">編號</th><th>需求</th><th style="width:74px">類型</th><th style="width:150px">狀態</th><th style="width:72px">已等</th><th style="width:100px">負責人</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="mono muted">COS-HK-014</td>
+            <td><span class="nm">拍攝新包裝實物照</span><span class="mt">Design・品牌標誌</span></td>
+            <td><span class="badge">交付</span></td><td>待認領</td><td>2 日</td><td class="muted">—</td>
+          </tr>
+          <tr>
+            <td class="mono muted">COS-HK-012</td>
+            <td><span class="nm">秋季活動主視覺：從兩個方向選一個</span><span class="mt">Design・創作</span></td>
+            <td><span class="badge decide">決定</span></td><td>待你決定</td><td>5 日</td><td class="muted">Billy</td>
+          </tr>
+          <tr>
+            <td class="mono muted">COS-HK-009</td>
+            <td><span class="nm">補產品成分說明</span><span class="mt">Design・品牌識別</span></td>
+            <td><span class="badge">交付</span></td><td>進行中</td><td>3 日</td><td>Grace Lam</td>
+          </tr>
+          <tr>
+            <td class="mono muted">COS-HK-006</td>
+            <td><span class="nm">整理 2026 秋季渠道報價</span><span class="mt">銷售 Sales・報價</span></td>
+            <td><span class="badge">交付</span></td><td>已上載・待吸收</td><td>1 日</td><td>Kary</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="below">Needs 由 AI agent 開立。你完成之後，agent 會把成果吸收到素材庫，之後同類工作可以直接重用。</div>
+    </main>
+  </div>
+  <div class="foot">
+    <span class="flogo">V</span><span class="dot"></span><span class="link"><b>本機公司</b></span>
+    <span><b>滿月堂集團</b>　香港</span><span class="link">據點與機器・</span>
+    <div class="spacer"></div><span>總部主機</span>
+  </div>
+</section>
+
+<!-- ============ 04 Boss Portal 據點目錄 ============ -->
+<section class="view" id="v4">
+  <div class="topbar">
+    <button class="icon-btn" aria-label="主選單">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h12"/></svg>
+    </button>
+    <button class="appsel">
+      <span class="glyph">B</span><span class="name">Boss Portal</span><span class="chev"></span>
+    </button>
+    <span class="caps" style="margin-left:6px">公司範圍</span>
+    <div class="spacer"></div>
+    <a class="needs-btn" href="#" onclick="show(3);return false;">
+      <span>Needs</span><span class="sep"></span><span class="n">7</span><span class="alert">・逾期 1</span>
+    </a>
+    <button class="lang">繁</button>
+    <button class="icon-btn" aria-label="通知">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M4 6.5a4 4 0 018 0c0 3 1 4 1 4H3s1-1 1-4z"/><path d="M6.5 13a1.6 1.6 0 003 0"/></svg>
+    </button>
+    <span class="avatar">B</span><span class="who">Super Admin</span>
+  </div>
+  <div class="pagebar">
+    <a class="tab" href="#">總覽</a><a class="tab on" href="#">據點與機器</a><a class="tab" href="#">存取紀錄</a>
+    <div class="spacer"></div>
+    <button class="icon-btn" aria-label="更多" style="width:30px;height:30px">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="8" r="1.2"/><circle cx="8" cy="8" r="1.2"/><circle cx="13" cy="8" r="1.2"/></svg>
+    </button>
+  </div>
+  <div class="body">
+    <aside class="side">
+      <div class="group"><div class="glabel caps">頁面 PAGES</div></div>
+      <div class="group">
+        <div class="glabel caps">據點 MACHINES</div>
+        <a href="#" class="on">據點目錄</a><a href="#">新增據點</a><a href="#">憑證與金鑰</a><a href="#">批准紀錄</a>
+      </div>
+      <div class="group">
+        <div class="glabel caps">權限與稽核</div>
+        <a href="#">管理級成員</a><a href="#">操作紀錄</a>
+      </div>
+    </aside>
+    <main class="main">
+      <div class="pagehead">
+        <div>
+          <div class="crumb"><span>Boss Portal</span><span class="s">/</span><span>據點與機器</span><span class="s">/</span><b>據點目錄</b></div>
+          <h1>據點與機器</h1>
+          <p class="sub">總部主機只做登記、批准與入口，不儲存業務資料。</p>
+        </div>
+        <div class="right"><button class="btn btn-primary">新增據點機器</button></div>
+      </div>
+
+      <div class="infobar">只有老闆與管理級人員可以新增、批准或撤銷據點；其他角色不會看到此頁。</div>
+
+      <table class="ledger">
+        <thead>
+          <tr><th>據點／公司</th><th style="width:120px">狀態</th><th style="width:130px">憑證指紋</th><th style="width:100px">入口</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="nm">香港（總部）・滿月堂集團</span><span class="mt">HQ-HK-01・本機・最後憑證交換 2026-11-09</span></td>
+            <td>已登記・本機</td><td class="mono muted">8F:2A...C1</td><td class="muted">—</td>
+          </tr>
+          <tr>
+            <td><span class="nm">深圳・滿月堂（深圳）</span><span class="mt">CN-SZ-01・最後憑證交換 2026-11-08</span></td>
+            <td>已登記</td><td class="mono muted">4D:91...7B</td><td class="act">另開新分頁</td>
+          </tr>
+          <tr>
+            <td><span class="nm">東京・Moonic JP</span><span class="mt">JP-TK-01・等待對方回傳確認檔</span></td>
+            <td>待批准</td><td class="muted">—</td><td class="act">檢視憑證</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="tablenote">目錄不顯示即時連線狀態；以上為原型示意資料，未接任何 API。</div>
+      <div class="below">入口只會另開分頁到該機器；身份與授權由該機器自行驗證，總部不代為讀取資料。</div>
+    </main>
+
+    <aside class="rail">
+      <div class="rail-top">
+        <span class="t">此頁 Needs <span>・0</span></span>
+        <a href="#" onclick="show(3);return false;">全部</a>
+      </div>
+      <div class="rail-empty">此頁暫無 Needs。據點相關的跟進事項，由 AI agent 開立後會出現在這裡。</div>
+    </aside>
+  </div>
+  <div class="foot">
+    <span class="flogo">V</span><span class="dot"></span><span class="link"><b>本機公司</b></span>
+    <span><b>滿月堂集團</b>　香港</span><span class="link">據點與機器・</span>
+    <div class="spacer"></div><span>總部主機</span>
+  </div>
+</section>
+
+<!-- ============ 05 權限不足（修正版） ============ -->
+<section class="view" id="v5">
+  <div class="topbar">
+    <button class="icon-btn" aria-label="主選單">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h12"/></svg>
+    </button>
+    <button class="appsel">
+      <span class="glyph">D</span><span class="name">Design</span><span class="chev"></span>
+    </button>
+    <div class="spacer"></div>
+    <a class="needs-btn" href="#" onclick="show(3);return false;">
+      <span>Needs</span><span class="sep"></span><span class="n">7</span><span class="alert">・逾期 1</span>
+    </a>
+    <button class="lang">繁</button>
+    <span class="avatar" style="background:#E6E2D9;color:#4A453C">陳</span><span class="who">設計主管</span>
+  </div>
+  <div class="body">
+    <div class="deny-wrap">
+      <div class="deny">
+        <div class="lock">
+          <svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="#4A453C" stroke-width="1.4"><rect x="3.2" y="7" width="9.6" height="6.6" rx="1.6"/><path d="M5.6 7V5.4a2.4 2.4 0 014.8 0V7"/></svg>
+        </div>
+        <h2>需要老闆或管理級授權</h2>
+        <p>登記、批准與撤銷據點機器，只有老闆與管理級人員可以做。</p>
+        <p>你的角色是「設計主管」，所以沒有這個入口。</p>
+        <p class="fine">如需存取，請該機器的老闆在本機授予管理級權限。在總部登記，並不等於該機器已授權。</p>
+        <button class="btn btn-ghost" onclick="show(1)">返回工作區</button>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <span class="flogo">V</span><span class="dot"></span><span class="link"><b>本機公司</b></span>
+    <span><b>滿月堂集團</b>　香港</span>
+    <div class="spacer"></div><span>總部主機</span>
+  </div>
+</section>
+
+<div class="proto">
+  <span>原型</span>
+  <button class="on" onclick="show(1)">01 外殼</button>
+  <button onclick="show(2)">02 切 app</button>
+  <button onclick="show(3)">03 Needs</button>
+  <button onclick="show(4)">04 據點</button>
+  <button onclick="show(5)">05 權限</button>
+</div>
+
+<script>
+  function show(n){
+    document.querySelectorAll('.view').forEach(function(v,i){
+      v.classList.toggle('on', i === n-1);
+    });
+    document.querySelectorAll('.proto button').forEach(function(b,i){
+      b.classList.toggle('on', i === n-1);
+    });
+    window.scrollTo(0,0);
+  }
+  function toggleMenu(){
+    var m = document.querySelector('.view.on .menu');
+    if(m) m.classList.toggle('on');
+  }
+  document.addEventListener('keydown', function(e){
+    if(e.key >= '1' && e.key <= '5') show(Number(e.key));
+  });
+</script>
+</body>
+</html>
