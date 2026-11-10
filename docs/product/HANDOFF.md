@@ -30,38 +30,39 @@ Needs 能看、能認領，但**還不能在介面上開立**。其餘四個部�
 
 ```bash
 cd /Users/riderhin/Dev/Dev/Github/HeadX-Company-OS
-set -a && . ./.env && set +a
-docker compose -p company-os-needs up -d --build
+npm run install:stack
 ```
+
+一條命令做齊：查 Node／Docker → 建 `.env` 並產生四個密鑰 → 端口檢查 → 建置 → 啟動 → 等健康 → 開老闆帳戶。
+**重跑安全**：已有的 `.env` 值不會被覆寫，已存在的帳戶不會被重建。Mac 與 Windows 都是同一條命令（詳見 README）。
 
 種示範資料（可重覆跑，會把據點目錄還原成三行）：
 
 ```bash
-set -a && . ./.env && set +a
-docker compose -p company-os-needs exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
-  < scripts/seed-frame-demo.sql
+npm run seed:frame
 ```
+
+不用 `docker compose exec … < file.sql`：PowerShell 不支援 `<` 重定向，那條命令在 Windows 上行不通。
 
 | 服務 | 位址 |
 |---|---|
-| 網頁 | http://127.0.0.1:5210 |
-| API | http://127.0.0.1:5420 |
-| Postgres | 127.0.0.1:35432 |
-| MinIO API／主控台 | 39000／39001 |
+| 網頁 | http://127.0.0.1:4210 |
+| API | http://127.0.0.1:4420 |
+| Postgres | 127.0.0.1:25432 |
+| MinIO API／主控台 | 29000／29001 |
 
 帳戶（本機 demo 專用，不是真實憑證）：
 
 | 角色 | 帳號 | 密碼 |
 |---|---|---|
 | 老闆 | `boss@company.local` | `Frame-needs-2026!` |
-| 員工 | `staff@company.local` | 同上（用來看權限不足畫面） |
 
-改完程式碼要看到畫面，需要重建前端容器：
+**員工帳戶現時不存在。** 2026-11-11 清空重裝之後未重建，所以「權限不足」那張全螢幕畫面暫時沒有帳號可以試。
+
+改完程式碼要看到畫面，重建映像再起：
 
 ```bash
-set -a && . ./.env && set +a
-docker compose -p company-os-needs build gateway-internal api && \
-  docker compose -p company-os-needs up -d gateway-internal api
+npm run deploy:build && docker compose up -d
 ```
 
 ## 3. 現在看得到什麼
@@ -75,7 +76,7 @@ docker compose -p company-os-needs build gateway-internal api && \
 | `#/design` | 品牌（清單、新增） | 可用 |
 | `#/design/brand/settings/color` | 品牌設定之下四個章節 | 章節導覽可用，內容未接 |
 
-`staff@company.local` 直接開 `#/boss` 會見到全螢幕權限說明，冇任何選單外流。
+非老闆帳戶直接開 `#/boss` 會見到全螢幕權限說明，冇任何選單外流（現時未有員工帳戶，這一頁暫時無法實試）。
 
 ## 4. 邊份文件管邊件事
 
@@ -86,7 +87,7 @@ docker compose -p company-os-needs build gateway-internal api && \
 | 介面長成什麼樣（唯一真相） | `docs/design/frame/frame-0*.png` |
 | **公司層／品牌層、三種 app 模式、Context 管寫 vs Lens 管讀** | `docs/product/SCOPE-MODEL.md` |
 | **對外公開 vs 只准內網／VPN、跨機入口** | `docs/product/MULTI-MACHINE-ACCESS.md`、`docs/trusted-entry.md` |
-| 為什麼這樣決定 | `docs/product/DECISIONS.md`（後者優先，現到 C85） |
+| 為什麼這樣決定 | `docs/product/DECISIONS.md`（後者優先，現到 C88） |
 | 目錄、分層、邊界 | `docs/architecture/CODE-MAP.md` |
 | 端口、容器 | `docs/architecture/REPO-MAP.md` |
 | 邊啲後端功能仲未有畫面 | `docs/product/BACKEND-FUNCTIONS-MAP.md` |

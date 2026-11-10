@@ -5,8 +5,15 @@
  * 用錯的設定跑一整年而沒有人發現，比直接失敗更糟。
  */
 
-/** 只有 api 會寫 Postgres 與 MinIO，所以備份期間暫停它就可以凍結寫入。 */
-export const DEFAULT_QUIESCE_CONTAINERS = ['company-os-api-1'];
+/**
+ * 只有 api 會寫 Postgres 與 MinIO，所以備份期間暫停它就可以凍結寫入。
+ *
+ * 名字 ＝ compose project 名（`docker-compose.yml` 的 `name:`）＋ 服務名 ＋ `-1`。
+ * 改 project 名時這裡要一齊改；`tools/rename/rename-guard.test.ts` 會讀 compose 檔
+ * 對照，兩邊不一致就紅 —— 因為名字寫錯的後果是「備份停在錯的容器」，
+ * 要等到真的要還原那一日才會發現。
+ */
+export const DEFAULT_QUIESCE_CONTAINERS = ['headx-company-os-api-1'];
 
 function readInteger(raw, fallback, minimum, name, errors) {
   const text = typeof raw === 'string' ? raw.trim() : '';

@@ -12,14 +12,14 @@ describe('readBackupConfig', () => {
       COMPANY_OS_BACKUP_ROOT: 'D:/company-os-backups',
       BACKUP_RETENTION: '5',
       BACKUP_INTERVAL_HOURS: '12',
-      BACKUP_QUIESCE_CONTAINERS: 'company-os-api-1, co-accept-api',
+      BACKUP_QUIESCE_CONTAINERS: 'headx-company-os-api-1, co-accept-api',
     });
 
     expect(config.errors).toEqual([]);
     expect(config.root).toBe('D:/company-os-backups');
     expect(config.retention).toBe(5);
     expect(config.intervalHours).toBe(12);
-    expect(config.quiesceContainers).toEqual(['company-os-api-1', 'co-accept-api']);
+    expect(config.quiesceContainers).toEqual(['headx-company-os-api-1', 'co-accept-api']);
   });
 
   it('沒有設定根目錄時 root 是 null（由根目錄驗證給出明確錯誤碼）', () => {

@@ -1,8 +1,11 @@
 import { execFile } from 'node:child_process';
-import { pathToFileURL } from 'node:url';
+import { readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { promisify } from 'node:util';
 
 const execFileAsync = promisify(execFile);
+const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
 /**
  * 正在運行的容器，對應哪一個 main commit（issue #143）。
@@ -29,7 +32,22 @@ export const LABEL_KEY = 'org.opencontainers.image.revision';
  */
 export const REPO_BUILT_SERVICES = ['api', 'gateway-internal', 'apps'];
 
-export const DEFAULT_PROJECT = 'company-os';
+/**
+ * compose project 名的唯一來源是 `docker-compose.yml` 的 `name:`。
+ *
+ * 不在這裡另存一個常數：兩份一定會漂移，而漂移的後果是這支腳本去查一個
+ * 不存在的 project，然後如實報告「全部未知」—— 看起來像標記壞了，其實只是名改過。
+ */
+function readComposeProject() {
+  try {
+    const text = readFileSync(resolve(repoRoot, 'docker-compose.yml'), 'utf8');
+    return /^name:\s*(\S+)\s*$/m.exec(text)?.[1] ?? 'headx-company-os';
+  } catch {
+    return 'headx-company-os';
+  }
+}
+
+export const DEFAULT_PROJECT = readComposeProject();
 
 const MISSING_LABEL_REASON = '沒有標記';
 const SKIPPED_REASON = '不是由本 repo 建置';
@@ -311,7 +329,7 @@ export async function main() {
   const options = parseArgs(process.argv.slice(2));
 
   if (options.help) {
-    console.log('用法：npm run deploy:revision -- [--project=company-os] [--current=<sha>] [--json]');
+    console.log(`用法：npm run deploy:revision -- [--project=${DEFAULT_PROJECT}] [--current=<sha>] [--json]`);
     console.log(`退出碼：0 全部相符、${EXIT_STALE} 有落後、${EXIT_UNKNOWN} 有未知、${EXIT_PRECONDITION} 前置條件失敗`);
     return;
   }

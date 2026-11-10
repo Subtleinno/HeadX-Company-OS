@@ -101,7 +101,7 @@ async function buildFixture(options: FixtureOptions = {}) {
     bucket: 'company-os',
     quiesce: {
       strategy: 'stop-writers',
-      containers: ['company-os-api-1'],
+      containers: ['headx-company-os-api-1'],
       alreadyStopped: [],
       stoppedAt: '2026-01-01T00:00:01.000Z',
     },

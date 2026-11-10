@@ -30,7 +30,7 @@ COMPANY_OS_BACKUP_ROOT=D:/company-os-backups
 COMPANY_OS_DATA_ROOT=C:/company-os-data
 BACKUP_RETENTION=7
 BACKUP_INTERVAL_HOURS=24
-BACKUP_QUIESCE_CONTAINERS=company-os-api-1
+BACKUP_QUIESCE_CONTAINERS=headx-company-os-api-1
 ```
 
 `COMPANY_OS_BACKUP_ROOT` 留空、指向 `C:`、指向 `C:/company-os-data` 之內、不存在、
@@ -112,7 +112,7 @@ npm run storage:check                     # 儲存空間遺失檢查
 
 Company OS 只有 `api` 容器會寫 Postgres 與 MinIO。備份流程是：
 
-1. 停掉 `BACKUP_QUIESCE_CONTAINERS` 列出的容器（預設 `company-os-api-1`），凍結寫入。
+1. 停掉 `BACKUP_QUIESCE_CONTAINERS` 列出的容器（預設 `headx-company-os-api-1`），凍結寫入。
    容器不存在就即刻失敗；容器本來就已經停了，會記在 manifest 的 `quiesce.alreadyStopped`。
 2. `pg_dump`（本身是單一交易快照）。
 3. 經 S3 協定逐個下載物件。
@@ -238,7 +238,7 @@ MinIO，連不上會直接退出（`無法初始化檔案儲存：connect ECONNR
 
 按順序做，不要跳步。
 
-1. [ ] 確認壞的是什麼：`docker compose ps`、`npm run storage:check`、`docker logs company-os-api-1`。
+1. [ ] 確認壞的是什麼：`docker compose ps`、`npm run storage:check`、`docker logs headx-company-os-api-1`。
 2. [ ] 確認備份碟接好：`dir D:\company-os-backups\company-os`。
 3. [ ] 列出備份，記下要用的 ID：`npm run backup:list`。
 4. [ ] 驗證那份備份：`npm run backup:verify -- --backup-id <id>`，要見到 `VERIFY_OK`。

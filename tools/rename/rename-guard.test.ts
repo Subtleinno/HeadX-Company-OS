@@ -22,6 +22,16 @@ const OLD_APP_PATH = ['apps', 'api'].join('/');
 const OLD_CONTAINER_NAME = ['company-os', 'api'].join('-');
 
 /**
+ * 舊容器名，但容許前面帶 `headx-`。
+ *
+ * compose project 已由 `company-os` 改名為 `headx-company-os`，所以
+ * `headx-company-os-api-1` 這個**正確**的名字本身包含舊字串。單純 includes
+ * 會把正確的東西也判成錯，所以這裡用負向環視：只有「沒有 headx- 前綴」的
+ * `company-os-api-1` 才算殘留。
+ */
+const BARE_OLD_CONTAINER = new RegExp(`(?<!headx-)${OLD_CONTAINER_NAME}-1`);
+
+/**
  * 本檔自我豁免：這個測試必須寫出它要禁的字串（測試名稱、註解、斷言），
  * 否則連「禁止 apps/api」這件事都表達不到。豁免只限本檔一個。
  */
@@ -42,22 +52,12 @@ const OLD_PATH_ALLOWLIST = [
 ];
 
 /**
- * 允許保留 `company-os-api` 的地方：全部是 compose 容器名 `company-os-api-1`
- * （project `company-os` + 服務 `api` 自動生成），不是資料夾路徑。
+ * 允許保留舊容器名的地方。
  *
- * issue #72 的實作規則 4 明確寫「備份腳本裡的服務名稱」本張不改、留給 R6，
- * 所以這幾個檔案在 R2 必須原樣保留；R6 改服務名時會一併更新。
- * 已於 issue #72 留言取得裁定：擴大允許清單，不改容器名。
+ * 2026-11-11 完成 compose project 改名（`company-os` → `headx-company-os`）之後，
+ * 全 repo 只應該剩下新名字，所以這張清單只豁免本檔（它要寫出被禁的字串）。
  */
-const OLD_CONTAINER_ALLOWLIST = [
-  '.env.example',
-  'docs/backup-restore.md',
-  'scripts/backup/config.mjs',
-  'scripts/backup/config.test.ts',
-  'scripts/backup/manifest.test.ts',
-  'scripts/backup/verify.test.ts',
-  SELF,
-];
+const OLD_CONTAINER_ALLOWLIST = [SELF];
 
 /**
  * 掃描整個 repo 的檔案內容，找出含某字串的檔案。
@@ -84,7 +84,7 @@ function isSkippedPath(relativePath: string): boolean {
     .some((segment) => SKIP_DIRS.has(segment));
 }
 
-function scanTree(needle: string): string[] {
+function scanTree(matcher: string | RegExp): string[] {
   const hits: string[] = [];
 
   const walk = (dir: string, prefix: string): void => {
@@ -117,7 +117,10 @@ function scanTree(needle: string): string[] {
         continue;
       }
 
-      if (buffer.toString('utf8').includes(needle)) {
+      const text = buffer.toString('utf8');
+      const matched = typeof matcher === 'string' ? text.includes(matcher) : matcher.test(text);
+
+      if (matched) {
         hits.push(relativePath);
       }
     }
@@ -129,8 +132,8 @@ function scanTree(needle: string): string[] {
 }
 
 /** 去掉允許清單之後仍有命中的檔案。 */
-function strayFiles(needle: string, allowlist: string[]): string[] {
-  return scanTree(needle).filter(
+function strayFiles(matcher: string | RegExp, allowlist: string[]): string[] {
+  return scanTree(matcher).filter(
     (file) => !allowlist.some((allowed) => (allowed.endsWith('/') ? file.startsWith(allowed) : file === allowed)),
   );
 }
@@ -156,8 +159,8 @@ describe('R2：apps/api 改名為 apps/platform', () => {
     expect(strayFiles(OLD_APP_PATH, OLD_PATH_ALLOWLIST)).toEqual([]);
   }, 30_000);
 
-  it('除了 compose 容器名之外，沒有人再提到 company-os-api', () => {
-    expect(strayFiles(OLD_CONTAINER_NAME, OLD_CONTAINER_ALLOWLIST)).toEqual([]);
+  it('沒有人再用未加 headx- 前綴的舊容器名', () => {
+    expect(strayFiles(BARE_OLD_CONTAINER, OLD_CONTAINER_ALLOWLIST)).toEqual([]);
   }, 30_000);
 
   it('本張不改的東西真的沒有被改：compose 服務仍叫 api、仍用 API_PORT', () => {
@@ -168,8 +171,15 @@ describe('R2：apps/api 改名為 apps/platform', () => {
     expect(compose).toMatch(/dockerfile: apps\/platform\/Dockerfile/);
   });
 
-  it('備份腳本裡的容器名沒有被動過（留給 R6）', () => {
+  it('備份腳本預設暫停的容器，等於 compose project 名 + -api-1', () => {
+    const compose = readFileSync(join(repoRoot, 'docker-compose.yml'), 'utf8');
+    const project = /^name:\s*(\S+)\s*$/m.exec(compose)?.[1];
+
+    expect(project, 'docker-compose.yml 必須有頂層 name:').toBeTruthy();
+
+    // 名字寫錯的後果是「備份停在錯的容器」，要等到真的要還原那一日才發現，
+    // 所以這裡不接受手抄的常數：一定要等於 compose 的 project 名。
     const config = readFileSync(join(repoRoot, 'scripts/backup/config.mjs'), 'utf8');
-    expect(config).toContain(`'${OLD_CONTAINER_NAME}-1'`);
+    expect(config).toContain(`'${project}-api-1'`);
   });
 });

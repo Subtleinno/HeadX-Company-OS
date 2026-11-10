@@ -6,11 +6,10 @@
 
 - 公司由一個 **Boss portal**（老闆的入口）和多個部門 app 組成。程式碼按 app 模組化，容器按版本打包；Postgres 與 MinIO 是所有容器共用的底座。
 - 單一入口、單一登入頁；登入後只看到被授權給自己的 app。
-- AI 盡力做事；AI 做不到的才變成 Need 派給員工，員工交成果，老闆驗收。
-- 本 repo 不執行 AI 模型。AI 是外部客戶端，只經 MCP 的六個動詞（browse、read、write、find、render、help）連入，MCP 永遠沒有 approve 工具。
-- 對外訊息一律先進發件箱，由規則決定放行或交老闆批准。
-- 香港與大陸各裝一份，是兩間獨立公司，帳戶分開。主機是公司自己的電腦。
-- 安裝時選版本：國際版有完整的對外入口（夥伴、客戶、Cloudflare）；大陸版第一階段只做內網，通知以站內為主，選配企業微信與飛書。安裝將由 UI 精靈協助。
+- AI 盡力做事；AI 做不到的才變成 Needs 派給員工，員工交成果，老闆驗收。
+- 本 repo 不執行 AI 模型。AI 是外部客戶端，經 MCP 連入（**MCP 未做**，C79 排在頁面成形之後）。
+- 預設不加閘：判斷交給人看成品。唯一不變的是**對外發送永遠由人按一下**（`docs/CONCEPT.md` §1）。
+- 主機是公司自己的電腦。一個安裝＝一間公司；同一套程式要裝幾間公司都可以，業務語義一律在設定內，不寫死在程式（原則 6）。
 
 ## 現在到哪裡（2026-11-11）
 
@@ -40,25 +39,67 @@
 
 ## 需求
 
-- Node.js 26.13.0（見 `.nvmrc`）
-- Docker Desktop（目標是長期開機的 Windows 機）
+| | 要求 | 說明 |
+|---|---|---|
+| Node.js | 22 或以上 | `.nvmrc` 寫建議版本 26.13.0；容器內的 Node 固定 26.13.0。22 是下限，因為幾個腳本直接用 Node 的型別剝離執行 `.ts` |
+| Docker | Docker Desktop（Compose v2） | macOS 與 Windows 用同一個。**要開著**：安裝腳本第一步就會問 daemon 拿版本，未開會直接停下並講清楚 |
 
-## 首次啟動
+兩個都裝好之後，**不需要**手動改任何設定檔。
 
-在 repo 根目錄執行：
+## 首次安裝（macOS／Windows 同一條命令）
 
-```powershell
-copy .env.example .env
-npm ci
-npm run ports:check
-docker compose up -d --build
+```bash
+npm run install:stack
 ```
 
-**首次啟動前必須在 `.env` 內的 `POSTGRES_PASSWORD`、`MINIO_ROOT_PASSWORD`、`LOGIN_FAILURE_HASH_KEY`、`INTERNAL_GATEWAY_TOKEN` 與 `COMPANY_OS_BACKUP_ROOT` 填入自己的值** —— 範本刻意留空，沒有可用的預設值；留空時 `docker compose` 會即時失敗，不會起一個弱密碼的服務。
+依序做八件事，每一步失敗都講一句人話而不是把 Docker 原文倒出來：
 
-前端：<http://localhost:4210>；API：<http://localhost:4420/livez>。所有端口現在只綁 `127.0.0.1`，區網內其他機器連不到；讓同事連線的 LAN 設定屬於 S2-02，尚未完成。
+1. 檢查 Node 版本、`docker`、`docker compose`、daemon 是否起得來
+2. 沒有 `node_modules` 就先 `npm ci`
+3. 沒有 `.env` 就由 `.env.example` 建立，並**自動產生**四個必要密鑰 —— Postgres 密碼、MinIO 密碼、登入失敗審計的 HMAC key、內網入口憑證。已有的值不會被覆寫
+4. 檢查端口有沒有被佔用（容器已在跑時跳過，因為它會把己方 stack 誤報成衝突）
+5. 建置映像（有 git 時會把 commit SHA 寫進映像標記，`npm run deploy:revision` 之後查得到）
+6. 啟動容器
+7. 等全部容器健康（最多五分鐘，每 20 秒報一次狀態）
+8. 開好老闆帳戶，並把 email 與密碼印在終端
 
-`npm run ports:check` 會檢查 `.env` 內的端口能否綁定，再探測有沒有人正在回應（容器發佈的端口「綁得上」但其實已被佔用，所以兩樣都要查）；有衝突或無法確認會列出原因，並以 exit 1 結束。在 Windows 上它會用 `netstat`／`tasklist` 指出佔用的是哪個程序（例如「佔用者 com.docker.backend.exe（PID 3552），可能是其他 compose 專案」）；查不到誰佔用會明說「無法識別佔用者」，一樣 exit 1，不會把查不到當成沒問題。它現在讀 `packages/edition-profile` 的版本設定：版本由 `EDITION` 決定（預設 `intl`，另一個是 `cn`），未知的值會即時報錯，不會默默當成國際版。
+前端：<http://127.0.0.1:4210>；API：<http://127.0.0.1:4420/livez>。
+
+**為甚麼只有一條命令**：舊版要人先 `copy .env.example .env` 再手動填四個密碼。留空就失敗，而失敗訊息是 compose 講的「請先複製 .env.example 為 .env」—— 與真正原因無關。現在填值、驗值、起服務、等健康、開帳戶全部由腳本做，而腳本只用 Node 與 `docker` 兩個外部程式，所以 macOS 與 Windows 跑的是**同一段程式**，不會有兩份各自腐壞的腳本。
+
+指定自己的帳號（非互動環境會自動產生密碼並印出）：
+
+```bash
+npm run install:stack -- --owner-email=me@company.com --owner-name=Billy
+```
+
+**唯一要你自己填的是 `COMPANY_OS_BACKUP_ROOT`**（備份根目錄），因為它必須指向**另一粒實體碟**，腳本無法替你判斷。未填時備份指令會拒絕執行 —— 這是刻意的，寧願不做，也不要寫一份與資料同一粒碟的假備份。
+
+要示意資料（據點目錄三行）看畫面：
+
+```bash
+npm run seed:frame
+```
+
+（不用 `docker compose exec … < file.sql`：PowerShell 不支援 `<` 重定向，那條命令在 Windows 上行不通。）
+
+### Windows 與 macOS：實測到哪
+
+| | macOS | Windows |
+|---|---|---|
+| 一鍵安裝 | **實測通過**（2026-11-11，由零：無 `.env`、無容器、無 volume） | 同一段程式，**未實測** |
+| 換行 | LF | `.gitattributes` 強制 LF，所以 checkout 不會變成 CRLF |
+
+同一段程式不等於兩邊都驗過。Windows 上已知要留意的三點：
+
+1. **Docker Desktop 要開著**，用預設的 WSL2 backend。腳本第一步會問 daemon 拿版本，未開就停下來講清楚，不會留下一堆看不懂的 compose 錯誤。
+2. **路徑可以用空格與中文**，但 `.env` 內的 `MINIO_DATA_DIR` 與 `COMPANY_OS_BACKUP_ROOT` 要用**正斜線**（`D:/…`，不是 `D:\…`），因為那個值會直接進 compose 的 YAML。
+3. **第一次建置要連 github.com 與 Docker Hub**（MinIO 由官方原始碼的固定 tag 編譯）。公司網絡有代理時，要先在 Docker Desktop 設 proxy，否則建置會停在 clone 那一步。
+
+所有端口只綁 `127.0.0.1`，區網內其他機器連不到；讓同事連線的 LAN 設定屬於 S2-02，尚未完成。
+
+`npm run ports:check` 會逐一嘗試綁定 `.env` 內的端口，**再**探測有沒有人正在回應（Docker Desktop 用 `SO_REUSEADDR` 發佈端口，所以「綁得上」不代表空閒）。有衝突或無法確認會列出是哪個端口、哪一種原因，並以 exit 1 結束。它**不會**指出佔用的是哪個程序 —— 跨平台查程序名要另外做，目前未做，所以只能自己按端口去找。它讀 `packages/edition-profile` 的版本設定：版本由 `EDITION` 決定（預設 `intl`，另一個是 `cn`），未知的值會即時報錯，不會默默當成國際版。
+
 
 ## 更新到最新 main
 
@@ -96,7 +137,7 @@ npm run deploy:revision
 apps 在 profile 之下，要另外：docker compose --profile apps up -d apps
 ```
 
-（`<專案>` 是 compose 專案名，預設 `company-os`；實際輸出會印真實容器名。）
+（`<專案>` 是 compose 專案名，見 `docker-compose.yml` 的 `name:`，現在是 `headx-company-os`；實際輸出會印真實容器名。）
 
 甚麼時候**不用**重建映像：只改 `.env` 內的值（端口、密碼、`COOKIE_SECURE`）時，`docker compose up -d` 就夠。改到任何 Dockerfile、`package.json`／`package-lock.json`、`apps/`、`packages/`、`db/migrations`、`profiles/` 就一定要重建 —— 那些都是 COPY 進映像的東西。
 
