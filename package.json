@@ -11,6 +11,8 @@
     "node": ">=26.0.0"
   },
   "scripts": {
+    "install:stack": "node scripts/install.mjs",
+    "seed:frame": "node scripts/seed.mjs scripts/seed-frame-demo.sql",
     "lint": "eslint .",
     "lint:boundaries": "depcruise apps packages",
     "test": "vitest run",

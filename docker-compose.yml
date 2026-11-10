@@ -1,4 +1,8 @@
-name: company-os
+# compose project 名 = 容器名前綴（docker ps 見到的 headx-company-os-api-1 等）。
+# 與 repo／資料夾名一致，避免 `company-os` 這三個字同時代表「已歸檔的舊 repo」與
+# 「正在跑的這套」。改名只影響容器／網絡／volume 的名字，不影響資料：
+# bucket 與資料庫名刻意保持 company-os／company_os，備份清單才對得上舊備份。
+name: headx-company-os
 
 services:
   db:
@@ -21,7 +25,7 @@ services:
 
   storage:
     build: ./docker/minio
-    image: company-os-minio:RELEASE.2025-10-15T17-29-55Z
+    image: headx-company-os-minio:RELEASE.2025-10-15T17-29-55Z
     restart: unless-stopped
     command: server /data --console-address ":9001"
     environment:

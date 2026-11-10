@@ -155,3 +155,32 @@
   **改文件的規矩從此寫進入口**：任何概念改動先改 `docs/CONCEPT.md`，再同步 `DECISIONS.md` 記一條，最後才改下面的細節文件。三處各說各話是這次混亂的成因，不能再發生。
 
 - C86 **`AGENTS.md` 的權限從「不准改」放寬為「改要一併記決策」。** 原文第 8 條寫「不要改這個檔案，除非 issue 明確要求」。問題是它自己是世界觀的載體：舊計劃被取代之後，它仍在教 agent「批准只能由人按下」「六個動詞」「國際版三個入口」。留著不改，等於每天都派一份過時的指令給所有 agent。新規則：`AGENTS.md` 可以改，但每次改動必須在 `DECISIONS.md` 留一條，並在 PR 描述寫明改了哪一條不變量與為甚麼。**不變量本身仍然不是隨手可改的**——改一條不變量要老闆明確同意，不是 agent 自己判斷。
+
+### 2026-11-11 增補：清乾淨 Docker、改 compose project 名、一鍵安裝
+
+來源：老闆 2026-11-11「let's delete all the Company-os Docker, then use the latest one to install again. (Make sure this project must able to install in Mac / Windows) In github, i want to archive the company-os, keep HeadX-Company-OS」
+
+- C87 **清掉三個舊 compose project，只留一套，並把 project 名改為 `headx-company-os`。**
+
+  當日實際存在三套在跑：`company-os`（舊資料夾，資料夾本身已不存在，容器仍在）、`company-os-demo`（公開 Demo）、`company-os-needs`（施工時用 `-p` 起的名字）。三套共用同一部機、同一個 owner 帳戶概念，任何人看 `docker ps` 都分不出哪一套才是真的。全部移除：12 個容器、3 個 db volume、7 個映像、3 個網絡，加上 repo 的 `.data/` 與 `~/Dev/Dev/company-os-demo-data/`。
+
+  **改名的範圍刻意切在「名字」而不動「資料身份」**：
+  | 改 | 不改 |
+  |---|---|
+  | compose project 名 → `headx-company-os`（容器變成 `headx-company-os-api-1`） | Postgres 資料庫名 `company_os` |
+  | MinIO 映像 tag → `headx-company-os-minio:…` | MinIO bucket `company-os` |
+  | `BACKUP_QUIESCE_CONTAINERS` → `headx-company-os-api-1` | 備份目錄 `<root>/company-os/<id>` |
+
+  理由：容器名是**今日在跑的這套**的身份，要同 repo／資料夾一致；bucket、資料庫名、備份目錄是**資料的身份**，改了就與舊備份對不上，換取的好處只是好看。
+
+  `scripts/deploy-revision.mjs` 的 `DEFAULT_PROJECT` 不再寫死，改為讀 `docker-compose.yml` 的 `name:`；`tools/rename/rename-guard.test.ts` 由「凍結字串」改成「斷言備份腳本的容器名等於 compose 的 `name:` ＋ `-api-1`」。兩處都是同一個原則：**會漂移的值不要手抄兩份**。
+
+- C88 **安裝收成一句 `npm run install:stack`，Mac 與 Windows 跑同一段程式。**
+
+  舊 README 要人先 `copy .env.example .env`，再手動填四個密碼（Postgres、MinIO、登入審計 HMAC、內網入口憑證），其中 `COMPANY_OS_BACKUP_ROOT` 還要另外指到另一粒碟。實務結果：新機安裝失敗的第一名原因就是這一步，而失敗訊息是 compose 講的「請先複製 .env.example 為 .env」—— 與真正原因（某個值是空）無關。
+
+  新做法：`scripts/install.mjs`，只用 Node 與 `docker` 兩個外部程式（**不用 bash、不用 PowerShell**），所以 Mac 與 Windows 跑的是同一段程式，不是兩份會各自腐壞的腳本。八步：查 Node／Docker／daemon → 補 `npm ci` → 建 `.env` 並自動產生四個密鑰（已有的值不覆寫）→ 端口檢查 → 建置 → 啟動 → 等健康 → 開老闆帳戶並印出帳密。
+
+  兩個附帶決定：
+  1. **老闆帳戶由安裝腳本代開。** 系統本身有 `POST /auth/setup`（只在一個 owner 都未有的時候接受），但**網頁還沒有對應畫面**。不代開就會出現「裝好但登入不到」。這是暫時的補位，不是長期設計 —— 第一版安裝精靈（UI）落地時，這一步應該搬回畫面。
+  2. **`.gitattributes` 由逐個資料夾改成全 repo `* text=auto eol=lf`。** 原本只鎖 `db/migrations/*.sql`、`apps/web/docker-entrypoint.d/*.sh` 與一個已經不存在的 `modules/**/*.json`。只要是 COPY 進 Linux 映像的文字檔，換行不同就會建出與 Mac／CI 不同的映像，而畫面上完全看不出來。實測改動前 repo 內 CRLF 檔數為 0，所以這條是純保險，沒有一次性 renormalize 的大量 diff。
