@@ -8,7 +8,7 @@ import {
   type FrameShellProps,
 } from '@company-os/app-shell';
 import { t } from '@company-os/i18n';
-import { needKindLabel, needStateLabel, needWaitingLabel } from '../needs/labels';
+import { needDueLabel, needKindLabel, needStateLabel, needWaitingLabel } from '../needs/labels';
 import { useNeedsShell, type NeedsShellData } from '../needs/useNeedsShell';
 import { navigate } from '../router';
 import { useAppList, type AppListView } from './useAppList';
@@ -149,7 +149,9 @@ export function FrameApps({
         title: item.title,
         kindLabel: needKindLabel(item),
         stateLabel: needStateLabel(item),
-        metaLabel: needWaitingLabel(item, now),
+        // 逾期先講逾期，其餘講「已等幾日」—— 一句話講最緊要嘅事。
+        metaLabel: item.overdue ? needDueLabel(item, now) : needWaitingLabel(item, now),
+        overdue: item.overdue,
       };
 
       return railItem;

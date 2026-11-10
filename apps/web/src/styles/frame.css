@@ -1080,6 +1080,10 @@
   font: var(--hx-font-caption);
 }
 
+.frame-need__meta--overdue {
+  color: var(--hx-danger-text);
+}
+
 .frame-need__sep {
   width: 3px;
   height: 3px;

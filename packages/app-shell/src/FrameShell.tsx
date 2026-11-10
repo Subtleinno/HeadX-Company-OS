@@ -62,6 +62,8 @@ export type FrameNeedItem = {
   stateLabel: string;
   /** 次要一行，例如「已等 2 日」；undefined 就唔顯示，唔留一個空格。 */
   metaLabel?: string;
+  /** 逾期要喺逐件上面講（C69），唔可以只靠 Needs 頁；真嘅時候 meta 轉紅色。 */
+  overdue?: boolean;
 };
 
 /**
@@ -501,7 +503,13 @@ export function FrameShell({
                         <span className="frame-need__kind">{item.kindLabel}</span>
                       </span>
                       <span className="frame-need__title">{item.title}</span>
-                      <span className="frame-need__meta">
+                      <span
+                        className={
+                          item.overdue === true
+                            ? 'frame-need__meta frame-need__meta--overdue'
+                            : 'frame-need__meta'
+                        }
+                      >
                         <span>{item.stateLabel}</span>
                         {item.metaLabel !== undefined && (
                           <>
