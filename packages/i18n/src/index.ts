@@ -561,6 +561,69 @@ export const messages = {
   'setup.error.passwordTooShort': '密碼至少需要 12 個字元。',
   'setup.error.passwordMismatch': '兩次輸入的密碼不一致。',
 
+  // ── Needs 文案鍵（issue 184）──────────────────────────────────
+  // Needs 屬外殼，唔屬任何一個 app：頂欄計數、右側欄、Needs 頁三處共用同一組字。
+  // 全部繁體中文（香港書面語）：不用「呢／喺／嘅／唔」，稱呼用戶用「你」。
+  // 狀態用短語、不加句號；按鈕用動詞開頭。
+  'need.topbar.label': 'Needs',
+  'need.topbar.open': '開啟 Needs',
+  'need.rail.title': '此頁 Needs',
+  'need.rail.toggle': '顯示或收起 Needs 欄',
+  'need.rail.all': '全部',
+  'need.rail.empty': '此頁暫無 Needs。相關的跟進事項，由 AI agent 開立後會出現在這裡。',
+  'need.rail.closed': '已關閉 {count} 單',
+  'need.rail.history': '查看紀錄',
+
+  'need.title': 'Needs',
+  'need.subtitle': '所有 app 交給你處理的事，集中在這裡。',
+  'need.tab.inbox': '收件匣',
+  'need.tab.mine': '我負責',
+  'need.tab.closed': '已關閉',
+
+  'need.filter.all': '全部',
+  'need.filter.open': '待認領',
+  'need.filter.claimed': '進行中',
+  'need.filter.uploaded': '待吸收',
+  'need.filter.absorbed': '待驗收',
+  'need.filter.overdue': '逾期 {count} 單',
+
+  'need.state.open': '待認領',
+  'need.state.claimed': '進行中',
+  'need.state.uploaded': '已上載・待吸收',
+  'need.state.absorbed': '已吸收・待驗收',
+  'need.state.closed': '已關閉',
+  'need.kind.deliverable': '交付',
+  'need.kind.decision': '決定',
+
+  'need.col.code': '編號',
+  'need.col.title': '需求',
+  'need.col.kind': '類型',
+  'need.col.state': '狀態',
+  'need.col.assignee': '負責人',
+  'need.col.due': '到期',
+
+  'need.assignee.none': '未認領',
+  'need.due.none': '未定',
+  'need.due.overdue': '已逾期 {days} 日',
+  'need.due.today': '今日到期',
+  'need.due.daysLeft': '剩 {days} 日',
+  'need.waitToday': '今日開立',
+  'need.waitDays': '已等 {days} 日',
+
+  'need.loading': '正在讀取 Needs…',
+  'need.failed': '讀不到 Needs，請重試。',
+  'need.denied': '你沒有查看 Needs 的權限。',
+  'need.empty': '目前沒有 Needs。',
+  'need.emptyClosed': '沒有已關閉的 Needs。',
+  'need.footnote':
+    'Needs 由 AI agent 開立。你完成之後，agent 會把成果吸收到素材庫，之後同類工作可以直接重用。',
+  'need.claim': '認領',
+  'need.claiming': '正在認領…',
+  'need.claimConflict': '這件工作已經有人認領，清單已重新載入。',
+  'need.claimClosed': '這件工作已經關閉。',
+  'need.claimFailed': '認領失敗，請重試。',
+  'need.detail.missing': '找不到這件工作。',
+
   // ── Frame 文案鍵（issue #155）─────────────────────────────────────
   // 只新增鍵，不改、不刪、不重命名上面任何既有鍵或文字。繁體中文（香港）、
   // 零 emoji、零插值；文案待老闆事後審閱。
@@ -577,6 +640,10 @@ export const messages = {
   'frame.topbar.pageSearch': '搜尋此頁',
 
   'frame.scope.company': '公司範圍',
+
+  // 左側欄最上面嘅小標（設計稿 frame-06：「頁面 PAGES」）。佢講「呢條欄列嘅係
+  // 頁」，同下面嘅分組標題（據點 MACHINES）係兩層唔同嘅意思，唔可以合併。
+  'frame.sidebar.legend': '頁面 PAGES',
 
   'frame.landmark.topbar': '全域頂欄',
   'frame.landmark.subbar': '模組分頁',
@@ -605,6 +672,132 @@ export const messages = {
   'frame.state.readFailed': '讀取失敗，請重試。',
   'frame.state.permissionDenied': '你沒有查看呢頁嘅權限。',
   'frame.state.notProvided': '未提供',
+
+  // ── Boss Portal 與 Design app 的導覽與頁面文案 ──────────────────────
+  // 四層各有名字，唔可以互相借用：app（Boss Portal／Design）、模組（品牌、
+  // 據點與機器）、頁（品牌設定、據點目錄）、章節（品牌標誌、色彩）。
+  // 借用上一層的名字，用戶就分唔清「我轉咗 app」同「我轉咗頁」。
+
+  'boss.module.overview': '總覽',
+  'boss.module.sites': '據點與機器',
+  'boss.module.access': '存取紀錄',
+  'boss.page.overview': '總覽',
+  'boss.page.directory': '據點目錄',
+  'boss.page.addSite': '新增據點',
+  'boss.page.credentials': '憑證與金鑰',
+  'boss.page.approvals': '批准紀錄',
+  'boss.page.members': '管理級成員',
+  'boss.page.actions': '操作紀錄',
+  'boss.group.machines': '據點 MACHINES',
+  'boss.group.governance': '權限與稽核',
+
+  'boss.overview.title': '總覽',
+  'boss.overview.lead': '全公司而家嘅樣子。呢版只讀已經存在嘅事實，唔會自己計一個「健康分」。',
+  'boss.overview.sites': '已登記據點',
+  'boss.overview.pending': '待批准',
+  'boss.overview.brands': '品牌',
+  'boss.overview.needs': '未關閉 Needs',
+  'boss.overview.readFailed': '有部分數字讀唔到，所以冇顯示。唔會用 0 代替。',
+
+  'boss.sites.title': '據點與機器',
+  'boss.sites.lead': '總部主機・只做登記、批准同入口，唔搬資料',
+  'boss.sites.add': '新增據點機器',
+  // 主要動作掣用呢個（設計稿 frame-06 帶「＋」）。上面嗰個係空狀態內嘅文字連結，
+  // 唔帶「＋」—— 句字中間有個加號會讀唔通。
+  'boss.sites.addAction': '＋ 新增據點',
+  'boss.sites.notice': '只有老闆同管理級可以新增、批准或撤銷據點；其他角色唔會見到呢頁。',
+  'boss.sites.col.site': '據點／公司',
+  'boss.sites.col.status': '狀態',
+  'boss.sites.col.fingerprint': '憑證指紋',
+  'boss.sites.col.entry': '入口',
+  'boss.sites.status.registered': '已登記',
+  'boss.sites.status.pending': '待批准',
+  'boss.sites.status.revoked': '已撤銷',
+  'boss.sites.localTag': '本機',
+  'boss.sites.empty': '仲未有任何據點。用「新增據點機器」加入第二台。',
+  'boss.sites.footnote': '目錄唔顯示即時在線狀態：最後憑證交換時間係事實，在線與否唔係。',
+  'boss.sites.lastExchange': '最後憑證交換 {date}',
+  'boss.sites.noExchange': '未交換過憑證',
+  'boss.sites.entryOpen': '開新分頁',
+  'boss.sites.entryPending': '檢視憑證',
+  'boss.sites.entryNote': '入口只係開新分頁去該機；身份同授權由該機自己驗證，總部唔代為讀取資料。',
+  'boss.sites.loading': '載入據點…',
+  'boss.sites.readFailed': '讀唔到據點目錄，請重新載入。',
+  'boss.sites.approve': '批准',
+  'boss.sites.approveFailed': '批准唔成功，可能已經批過。請重新載入。',
+  'boss.sites.missing': '—',
+
+  'boss.add.title': '新增據點',
+  'boss.add.lead': '總部只登記同批准，三步都唔傳業務資料',
+  // 三步指示器（設計稿 frame-07 三個 pill）。第三步而家未接通，
+  // 所以照列但要灰掉 —— 收起一格等於呃人話得兩步。
+  'boss.add.stepFill': '填寫據點資料',
+  'boss.add.stepToken': '產生邀請憑證',
+  'boss.add.stepConfirm': '匯入確認檔並批准',
+  'boss.add.code': '據點代碼',
+  'boss.add.codeHint': '三段，例如 HK-HQ-01、CN-SZ-01',
+  'boss.add.name': '據點名',
+  'boss.add.company': '公司名',
+  'boss.add.companyHint': '可以留空：留空即係未定，比編一個假名好。',
+  'boss.add.city': '城市',
+  'boss.add.submit': '產生邀請憑證',
+  'boss.add.cancel': '返回目錄',
+  'boss.add.tokenTitle': '把這串字交給對方一次',
+  'boss.add.tokenNote': '有效期 72 小時、只可以用一次。系統只存 hash，關掉這一頁就再顯示唔返。',
+  'boss.add.expires': '到期：{date}',
+  'boss.add.copy': '複製憑證',
+  'boss.add.copied': '已複製',
+  'boss.add.copyFailed': '複製唔到，請自己選取上面嗰串字。',
+  'boss.add.done': '我已經交低，返回目錄',
+  'boss.add.invalid': '據點代碼要三段，例如 HK-HQ-01。',
+  'boss.add.duplicate': '呢個據點代碼已經存在。',
+  'boss.add.failed': '建立唔到據點，請再試。',
+  'boss.add.saving': '建立中…',
+
+  'boss.stub.title': '呢頁仲未接內容',
+  'boss.stub.body': '位置已經定咗，但內容未做。呢度唔會放一個假表格充場面。',
+
+  'gate.title': '你冇權限睇呢頁',
+  'gate.body': '呢頁只有老闆同管理級可以開。你而家嘅身份係「{role}」。',
+  'gate.back': '返去今日',
+  'gate.role.staff': '員工',
+  'gate.role.owner': '老闆',
+
+  'design.module.brand': '品牌',
+  'design.module.material': '素材',
+  'design.module.knowledge': '知識',
+  'design.module.create': '創作',
+  'design.page.brandHome': '品牌主頁',
+  'design.page.brandDashboard': 'Dashboard',
+  'design.page.brandSettings': '品牌設定',
+  'design.page.channel': '渠道與策略',
+  'design.page.versions': '版本紀錄',
+  'design.section.logo': '品牌標誌',
+  'design.section.identity': '品牌識別',
+  'design.section.color': '色彩',
+  'design.section.type': '字體',
+  'design.page.materialLibrary': '素材庫',
+  'design.page.materialCategories': '分類',
+  'design.page.materialLicence': '授權',
+  'design.page.knowledgeList': '內容清單',
+  'design.page.knowledgeRegister': '內容登記',
+  'design.page.knowledgeCta': 'CTA 庫',
+  'design.page.createBoard': 'Create 工作台',
+  'design.page.createOutputs': '成品',
+  'design.brand.lead': '{brand}・品牌設定',
+  'design.brand.homeLead': '呢個品牌有咩、去到邊',
+  'design.brand.count': '已登記品牌',
+  'design.brand.add': '新增品牌',
+  'design.brand.newCode': '品牌代碼',
+  'design.brand.newCodeHint': '小寫英文字母、數字同連字號，例如 moonic。',
+  'design.brand.newName': '品牌名',
+  'design.brand.create': '建立',
+  'design.brand.createFailed': '建立唔到品牌，請再試。',
+  'design.brand.duplicate': '呢個品牌代碼已經存在。',
+  'design.brand.invalid': '品牌代碼同品牌名都要填，代碼只可用小寫英文字母、數字同連字號。',
+  'design.brand.empty': '仲未有任何品牌。新增第一個品牌之後，品牌 selector 同呢一頁就會有內容。',
+  'design.stub.title': '呢頁仲未接內容',
+  'design.stub.body': '而家只接好外殼同導覽；內容喺對應模組做完之後出現。',
 
   // ── 政策規則頁文案鍵（issue #161）────────────────────────────────
   // 只新增鍵，不改、不刪、不重命名上面任何既有鍵或文字。繁體中文（香港）、

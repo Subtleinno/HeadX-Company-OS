@@ -1,0 +1,704 @@
+/*
+ * Boss Portal 同部門 app 的頁面樣式。
+ *
+ * 全部顏色經 design tokens（決策 C62）：只有白、灰、黑，加一個藍。
+ * 藍只出現在「寫入／確認」（主要按鈕、連結動作的字色），唔會用來做裝飾。
+ *
+ * 呢個檔同時補兩處外殼缺件：左側欄的章節第二層、頁尾的據點入口。
+ */
+
+/* ── 第二行：冇頁就真係唔見 ────────────────────────────────────
+ * `hidden` 只係 UA 的 `display:none`，而 `.frame-subbar` 自己有
+ * `display:flex`，class 一定贏 —— 結果係每一頁都多一條 40px 空白帶。
+ * 呢一條就係為咗蓋返佢。
+ */
+
+.frame-subbar[hidden] {
+  display: none;
+}
+
+/* ── 頁頭：標題喺左、主要動作喺右 ─────────────────────────────
+ * 外殼預設把主要動作排在副題下面（垂直排列），設計稿係放喺標題右邊。
+ * 用 grid 分兩欄，唔改 DOM、亦唔會影響冇主要動作嘅頁。
+ */
+
+.frame-content__head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'title action'
+    'subtitle action';
+  column-gap: var(--hx-space-5);
+  align-items: start;
+}
+
+.frame-content__title {
+  grid-area: title;
+}
+
+.frame-content__subtitle {
+  grid-area: subtitle;
+}
+
+.frame-content__action {
+  grid-area: action;
+  margin-top: 0;
+}
+
+@media (max-width: 560px) {
+  .frame-content__head {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'title'
+      'subtitle'
+      'action';
+  }
+
+  .frame-content__action {
+    margin-top: var(--hx-space-3);
+  }
+}
+
+/* ── 左側欄：頁之下的章節 ─────────────────────────────────────── */
+
+.frame-sidebar__sublist {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 2px 0 var(--hx-space-2);
+  padding: 0 0 0 var(--hx-space-5);
+  list-style: none;
+}
+
+.frame-sidebar__sublink {
+  display: block;
+  width: 100%;
+  min-height: var(--hx-frame-size-touch);
+  padding: var(--hx-space-2) var(--hx-space-3);
+  border: 0;
+  border-radius: var(--hx-radius-sm);
+  background: transparent;
+  color: var(--hx-frame-muted);
+  font: var(--hx-frame-font-small-lg);
+  text-align: left;
+  cursor: pointer;
+}
+
+.frame-sidebar__sublink:hover {
+  color: var(--hx-chrome-ink);
+}
+
+.frame-sidebar__sublink[aria-current='page'] {
+  color: var(--hx-chrome-ink);
+  font-weight: 600;
+}
+
+/* ── 頁尾據點入口 ───────────────────────────────────────────────
+ * 設計稿把「據點與機器」放喺公司身份右邊，而唔係頁尾正中：
+ * 佢係「呢台機」嘅延伸，唔係第三組獨立資訊。
+ */
+
+.frame-footer {
+  justify-content: flex-start;
+}
+
+.frame-footer__sites {
+  margin-left: var(--hx-space-3);
+}
+
+.frame-footer__headoffice {
+  margin-left: auto;
+}
+
+.frame-footer__link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--hx-frame-secondary);
+  font: var(--hx-frame-font-small);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.frame-footer__link:hover {
+  color: var(--hx-chrome-ink);
+}
+
+/* ── 權限不足：獨立全螢幕，唔套外殼（決策 C66）──────────────────── */
+
+.gate {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  padding: var(--hx-space-6);
+  background: var(--hx-chrome-white);
+}
+
+.gate__panel {
+  max-width: 34rem;
+  text-align: center;
+}
+
+.gate__title {
+  margin: 0 0 var(--hx-space-3);
+  color: var(--hx-frame-ink);
+  font: var(--hx-frame-font-title);
+}
+
+.gate__body {
+  margin: 0 0 var(--hx-space-5);
+  color: var(--hx-frame-secondary);
+  font: var(--hx-frame-font-body);
+  line-height: 1.7;
+}
+
+.gate__back {
+  min-height: var(--hx-frame-size-touch);
+  padding: var(--hx-space-2) var(--hx-space-4);
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-sm);
+  background: var(--hx-chrome-white);
+  color: var(--hx-frame-ink);
+  font: var(--hx-frame-font-small-lg);
+  cursor: pointer;
+}
+
+.gate__back:hover {
+  background: var(--hx-chrome-selected);
+}
+
+/* ── 共用：動作按鈕 ───────────────────────────────────────────── */
+
+.boss-btn,
+.design-btn {
+  min-height: var(--hx-frame-size-touch);
+  padding: var(--hx-space-2) var(--hx-space-4);
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-sm);
+  background: var(--hx-chrome-white);
+  color: var(--hx-frame-ink);
+  font: var(--hx-frame-font-small-lg);
+  cursor: pointer;
+}
+
+.boss-btn:hover:not(:disabled),
+.design-btn:hover:not(:disabled) {
+  background: var(--hx-chrome-selected);
+}
+
+.boss-btn:disabled,
+.design-btn:disabled {
+  color: var(--hx-frame-muted);
+  cursor: not-allowed;
+}
+
+.boss-btn--primary,
+.design-btn--primary {
+  border-color: var(--hx-frame-accent);
+  background: var(--hx-frame-accent);
+  /*
+   * 藍底上面一定要白字。`--hx-frame-accent-fg` 係「強調色當前景用」
+   * （連結、圖示），值就係同一個藍；用佢做藍底按鈕的字色，等於藍字藍底，
+   * 睇落會似一個空白嘅藍色方塊。
+   */
+  color: var(--hx-chrome-white);
+}
+
+.boss-btn--primary:hover:not(:disabled),
+.design-btn--primary:hover:not(:disabled) {
+  background: var(--hx-accent-hover);
+  border-color: var(--hx-accent-hover);
+}
+
+/* 文字型動作（連結樣），用於表格內。 */
+.boss-link,
+.design-link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--hx-frame-accent);
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.boss-link:hover,
+.design-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ── 說明句 ───────────────────────────────────────────────────── */
+
+.boss-note,
+.design-note {
+  margin: 0 0 var(--hx-space-4);
+  padding: var(--hx-space-3) var(--hx-space-4);
+  border-radius: var(--hx-radius-sm);
+  background: var(--hx-frame-surface);
+  color: var(--hx-frame-secondary);
+  font: var(--hx-frame-font-small-lg);
+  line-height: 1.7;
+}
+
+.boss-note--error,
+.design-note--error {
+  color: var(--hx-danger-text);
+}
+
+.boss-empty,
+.design-empty {
+  margin: 0 0 var(--hx-space-5);
+  color: var(--hx-frame-secondary);
+  font: var(--hx-frame-font-body);
+  line-height: 1.7;
+}
+
+.boss-sites__footnote,
+.design-footnote {
+  margin: var(--hx-space-3) 0 0;
+  color: var(--hx-frame-muted);
+  font: var(--hx-frame-font-small);
+  line-height: 1.7;
+}
+
+/* ── Boss Portal：據點目錄 ────────────────────────────────────── */
+
+/* 卡：邊框同圓角喺外層，咁先可以連表頭底色同卡內備註一齊包住。 */
+.boss-sites-card {
+  overflow: hidden;
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-md);
+  background: var(--hx-chrome-white);
+}
+
+.boss-sites {
+  width: 100%;
+  border-collapse: collapse;
+  font: var(--hx-font-footnote);
+  table-layout: fixed;
+}
+
+.boss-sites th {
+  padding: var(--hx-space-3) var(--hx-space-4);
+  border-bottom: 1px solid var(--hx-frame-border);
+  background: var(--hx-frame-surface);
+  color: var(--hx-frame-secondary);
+  font: var(--hx-frame-font-small);
+  font-weight: 500;
+  text-align: left;
+}
+
+.boss-sites td {
+  padding: var(--hx-space-4);
+  border-bottom: 1px solid var(--hx-frame-border);
+  color: var(--hx-frame-ink);
+  vertical-align: middle;
+}
+
+.boss-sites tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.boss-sites th:nth-child(1) {
+  width: 46%;
+}
+
+.boss-sites th:nth-child(2) {
+  width: 16%;
+}
+
+.boss-sites th:nth-child(3) {
+  width: 20%;
+}
+
+.boss-sites th:nth-child(4) {
+  width: 18%;
+}
+
+.boss-sites__name {
+  display: block;
+  font-weight: 600;
+}
+
+.boss-sites__meta {
+  display: block;
+  margin-top: 2px;
+  color: var(--hx-frame-secondary);
+  font: var(--hx-frame-font-small);
+}
+
+.boss-sites__status {
+  font-weight: 500;
+}
+
+.boss-sites__fp {
+  color: var(--hx-frame-secondary);
+  font: var(--hx-font-mono);
+  white-space: nowrap;
+}
+
+.boss-sites__dim {
+  color: var(--hx-frame-muted);
+}
+
+/* 卡內備註：講嘅係呢張表本身嘅限制，所以留喺卡裡面。 */
+.boss-sites-card__note {
+  margin: 0;
+  padding: var(--hx-space-3) var(--hx-space-4);
+  border-top: 1px solid var(--hx-frame-border);
+  color: var(--hx-frame-muted);
+  font: var(--hx-frame-font-small);
+}
+
+/* ── Boss Portal：總覽 ────────────────────────────────────────── */
+
+.boss-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: var(--hx-space-4);
+  margin-bottom: var(--hx-space-5);
+}
+
+.boss-metric {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hx-space-2);
+  padding: var(--hx-space-5) var(--hx-space-4);
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-md);
+  background: var(--hx-chrome-white);
+}
+
+/* 數字係呢張卡唯一要睇嘅嘢，所以明顯大一級；
+ * 唔好用標題字級（會同頁標題打架），用介乎兩者嘅尺寸。 */
+.boss-metric__value {
+  color: var(--hx-frame-ink);
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+.boss-metric__label {
+  color: var(--hx-frame-secondary);
+  font: var(--hx-frame-font-small);
+}
+
+/* ── Boss Portal：新增據點 ────────────────────────────────────── */
+
+.boss-form,
+.design-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hx-space-4);
+  max-width: 32rem;
+}
+
+.design-form__heading {
+  margin: 0 0 var(--hx-space-3);
+  color: var(--hx-frame-ink);
+  font: var(--hx-frame-font-subtitle);
+}
+
+.boss-form__step,
+.design-form__step {
+  margin: 0;
+  color: var(--hx-frame-secondary);
+  font: var(--hx-frame-font-small);
+}
+
+/* 三步指示器（設計稿 frame-07）。當前步＝黑底白字，未到＝淺底灰字。
+ * 第三步永遠係未到：收確認檔嘅端點未做，所以佢只會顯示為未到，
+ * 唔會假裝已完成。 */
+.boss-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--hx-space-2);
+  margin: 0 0 var(--hx-space-5);
+  padding: 0;
+  list-style: none;
+}
+
+.boss-steps__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+  padding: var(--hx-space-1) var(--hx-space-3);
+  border-radius: 999px;
+  background: var(--hx-frame-surface);
+  color: var(--hx-frame-secondary);
+  font: var(--hx-frame-font-small);
+}
+
+.boss-steps__num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--hx-chrome-white);
+  color: var(--hx-frame-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.boss-steps__item[data-step-state='current'] {
+  background: var(--hx-frame-ink);
+  color: var(--hx-chrome-white);
+}
+
+.boss-steps__item[data-step-state='current'] .boss-steps__num {
+  background: var(--hx-chrome-white);
+  color: var(--hx-frame-ink);
+}
+
+.boss-steps__item[data-step-state='done'] {
+  background: var(--hx-frame-surface);
+  color: var(--hx-frame-ink);
+}
+
+.boss-field,
+.design-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hx-space-2);
+}
+
+.boss-field__label,
+.design-field__label {
+  color: var(--hx-frame-ink);
+  font: var(--hx-frame-font-small-lg);
+  font-weight: 500;
+}
+
+.boss-field__hint,
+.design-field__hint {
+  color: var(--hx-frame-muted);
+  font: var(--hx-frame-font-small);
+}
+
+.boss-input,
+.design-input {
+  min-height: var(--hx-frame-size-touch);
+  padding: var(--hx-space-2) var(--hx-space-3);
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-sm);
+  background: var(--hx-chrome-white);
+  color: var(--hx-frame-ink);
+  font: var(--hx-frame-font-body);
+}
+
+.boss-input:focus,
+.design-input:focus {
+  outline: 2px solid var(--hx-frame-accent-soft);
+  outline-offset: 1px;
+  border-color: var(--hx-frame-accent);
+}
+
+.boss-form__actions,
+.design-form__actions {
+  display: flex;
+  gap: var(--hx-space-3);
+}
+
+.boss-invite {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hx-space-3);
+  max-width: 40rem;
+  padding: var(--hx-space-5);
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-md);
+}
+
+.boss-invite__step {
+  margin: 0;
+  color: var(--hx-frame-secondary);
+  font: var(--hx-frame-font-small);
+}
+
+.boss-invite__title {
+  margin: 0;
+  color: var(--hx-frame-ink);
+  font: var(--hx-frame-font-subtitle);
+}
+
+.boss-invite__token {
+  display: block;
+  padding: var(--hx-space-3);
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-sm);
+  background: var(--hx-frame-surface);
+  color: var(--hx-frame-ink);
+  font: var(--hx-font-mono);
+  overflow-wrap: anywhere;
+}
+
+.boss-invite__actions {
+  display: flex;
+  gap: var(--hx-space-3);
+}
+
+.boss-invite__note {
+  margin: 0;
+  color: var(--hx-frame-muted);
+  font: var(--hx-frame-font-small);
+  line-height: 1.7;
+}
+
+/* ── 未接內容 ────────────────────────────────────────────────── */
+
+.boss-stub,
+.design-stub {
+  padding: var(--hx-space-6);
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-md);
+  background: var(--hx-frame-surface);
+}
+
+.boss-stub__title,
+.design-stub__title {
+  margin: 0 0 var(--hx-space-2);
+  color: var(--hx-frame-ink);
+  font: var(--hx-frame-font-subtitle);
+}
+
+.boss-stub__body,
+.design-stub__body {
+  margin: 0;
+  color: var(--hx-frame-secondary);
+  font: var(--hx-frame-font-body);
+  line-height: 1.7;
+}
+
+/* ── Design app：品牌 ────────────────────────────────────────── */
+
+.design-brands {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 0 0 var(--hx-space-5);
+  padding: 0;
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-md);
+  list-style: none;
+  overflow: hidden;
+}
+
+.design-brands__item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--hx-space-3);
+  padding: var(--hx-space-3) var(--hx-space-4);
+  border-bottom: 1px solid var(--hx-frame-border);
+  background: var(--hx-chrome-white);
+}
+
+.design-brands__item:last-child {
+  border-bottom: 0;
+}
+
+.design-brands__item[data-brand-current='true'] {
+  background: var(--hx-chrome-selected);
+}
+
+.design-brands__name {
+  color: var(--hx-frame-ink);
+  font: var(--hx-frame-font-body);
+  font-weight: 600;
+}
+
+.design-brands__code {
+  color: var(--hx-frame-secondary);
+  font: var(--hx-font-mono);
+}
+
+/* ── 窄螢幕：表格轉卡片排法（同 Needs 頁一致）────────────────── */
+
+@media (max-width: 560px) {
+  /*
+   * 窄螢幕的頂欄只有一行半的空間。公司範圍（純文字）同品牌 selector
+   * 講嘅係同一件事，而 app 名已經喺左邊，所以收起純文字那一格，
+   * 令「登出」唔需要自己跳去第二行。
+   */
+  .frame-scope-static {
+    display: none;
+  }
+
+  .frame-iconbtn--text {
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 760px) {
+  .boss-sites,
+  .boss-sites tbody,
+  .boss-sites tr,
+  .boss-sites td {
+    display: block;
+    width: auto;
+  }
+
+  .boss-sites thead {
+    display: none;
+  }
+
+  .boss-sites {
+    border: 0;
+    background: transparent;
+  }
+
+  .boss-sites tr {
+    margin-bottom: var(--hx-space-3);
+    padding: var(--hx-space-3) var(--hx-space-4);
+    border: 1px solid var(--hx-frame-border);
+    border-radius: var(--hx-radius-md);
+    background: var(--hx-chrome-white);
+  }
+
+  .boss-sites td {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--hx-space-4);
+    padding: var(--hx-space-1) 0;
+    border: 0;
+  }
+
+  .boss-sites td::before {
+    content: attr(data-label);
+    flex: 0 0 auto;
+    color: var(--hx-frame-secondary);
+    font: var(--hx-frame-font-small);
+  }
+
+  .boss-sites td:first-child {
+    display: block;
+  }
+
+  .boss-sites td:first-child::before {
+    content: none;
+  }
+
+  /* 窄螢幕每行自己係一張卡，外層卡就要讓路，
+     否則會變成「卡包住一堆卡」嘅雙重邊框。 */
+  .boss-sites-card {
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .boss-sites-card__note {
+    padding: var(--hx-space-1) 0 0;
+    border-top: 0;
+  }
+
+  .boss-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

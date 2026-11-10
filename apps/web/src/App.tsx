@@ -11,11 +11,14 @@ import { t } from '@company-os/i18n';
 import { fetchAuthState, type PublicUser } from './api';
 import { navigate, useRoute } from './router';
 import { AdminArea } from './admin/AdminArea';
+import { BossPortal } from './boss/BossPortal';
+import { DesignApp } from './design/DesignApp';
 import { AccountScreen } from './screens/AccountScreen';
 import { HomeScreen } from './screens/HomeScreen';
 import { LoginScreen } from './screens/LoginScreen';
 import { SetupScreen } from './screens/SetupScreen';
 import { FilesScreen } from './screens/FilesScreen';
+import { NeedsScreen } from './needs/NeedsScreen';
 import { WorkspacePrototype } from './prototype/WorkspacePrototype';
 
 /**
@@ -86,7 +89,13 @@ export function App() {
 
     if (
       screen === 'home' &&
-      (route === '/app' || route === '/admin' || route === '/account' || route === '/files')
+      (route === '/app' ||
+        route === '/admin' ||
+        route === '/account' ||
+        route === '/files' ||
+        route === '/needs' ||
+        route === '/boss' ||
+        route === '/design')
     ) {
       return;
     }
@@ -158,6 +167,20 @@ export function App() {
     // `/files` 是檔案頁（issue 164）。只接已完成的檔案端點，不改後端。
     if (route === '/files') {
       return <FilesScreen user={effective.auth.user} onSignedOut={signedOut} />;
+    }
+
+    // `/needs` 是 Needs 收件匣（issue 184）。Needs 屬外殼，唔屬任何一個 app。
+    if (route === '/needs') {
+      return <NeedsScreen user={effective.auth.user} onSignedOut={() => signedOut()} />;
+    }
+
+    // 部門 app 同 Boss Portal（issue 185）。兩者都係正式頁，唔係原型。
+    if (route === '/boss') {
+      return <BossPortal user={effective.auth.user} onSignedOut={signedOut} />;
+    }
+
+    if (route === '/design') {
+      return <DesignApp user={effective.auth.user} onSignedOut={signedOut} />;
     }
 
     return <HomeScreen user={effective.auth.user} onSignedOut={signedOut} />;

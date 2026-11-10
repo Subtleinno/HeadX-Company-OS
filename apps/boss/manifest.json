@@ -1,10 +1,10 @@
 {
   "id": "boss",
-  "title": "老闆台",
+  "title": "Boss Portal",
   "kind": "console",
   "department": null,
   "order": 0,
-  "available": false,
+  "available": true,
   "route": "/boss",
   "exposure": "internal",
   "sensitive": true

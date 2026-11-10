@@ -178,3 +178,9 @@ secrets/
 # 代理工具的工作目錄（不是專案內容）
 .workbuddy/
 .zcode/
+
+# macOS 的 Finder 產物，不進版控。
+.DS_Store
+
+# vitest JSON reporter 產物（除錯用，唔入庫）
+.vitest/

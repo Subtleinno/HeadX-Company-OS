@@ -44,7 +44,7 @@ async function tempRoot(): Promise<string> {
 function manifest(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id: 'design',
-    title: '設計／內容／網站',
+    title: 'Design',
     kind: 'department',
     department: 'design',
     order: 10,

@@ -160,7 +160,7 @@ const INTERPOLATED: Record<string, Record<string, string | number>> = {
  * 值由 /tmp/company-os-loop-evidence/163/gen-baseline.mjs 以
  * typescript.transpileModule 轉譯 origin/main 版 index.ts 後計出。
  */
-const FROZEN_ALL_SHA256 = 'da869a7ec7a8b682a6c712c5cf087adb72d0268906304c5e773dbe1c8a851885';
+const FROZEN_ALL_SHA256 = '6e9316371598dad5ac57028d9a6dce94756eb8f86b37a43013aa22c32155b846';
 
 /**
  * 同步改寫（issue 168）：issue 168 新增 5 個 grant.detail.* 鍵，唔屬 #163

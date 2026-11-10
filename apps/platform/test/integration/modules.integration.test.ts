@@ -154,7 +154,7 @@ describe('GET /modules', () => {
     expect(response.json().modules).toEqual([
       {
         id: 'design',
-        title: '設計／內容／網站',
+        title: 'Design',
         kind: 'department',
         department: 'design',
         order: 10,
