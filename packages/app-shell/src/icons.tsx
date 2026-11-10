@@ -24,7 +24,8 @@ export type IconName =
   | 'moon'
   | 'search'
   | 'bell'
-  | 'help';
+  | 'help'
+  | 'panel';
 
 const SHAPES: Record<IconName, ReactElement> = {
   menu: <path d="M4 7h16M4 12h16M4 17h16" />,
@@ -69,6 +70,13 @@ const SHAPES: Record<IconName, ReactElement> = {
       <circle cx="12" cy="12" r="9" />
       <path d="M9.5 9.2a2.6 2.6 0 1 1 3.6 2.4c-.9.4-1.1 1-1.1 1.9" />
       <path d="M12 17.2h.01" />
+    </>
+  ),
+  /* 右側欄開關（issue 184）：一個框、右邊一條分界線。 */
+  panel: (
+    <>
+      <rect x="3" y="4.5" width="18" height="15" rx="2" />
+      <path d="M15 4.5v15" />
     </>
   ),
 };

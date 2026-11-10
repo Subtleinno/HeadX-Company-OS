@@ -81,3 +81,16 @@
 - C59 Q6 C（補充 C45／C46）：暫不宣告模式，只列 manifest 六個 app；頁 02「公司型・敏感」改由現有 `kind`＋`sensitive` 直接呈現，唔加 `mode` 欄位、唔喺前端自建模式真相。原因：manifest 現時只接受既有欄位，三模式宣告嘅唯一來源未定。取代：無；三模式正式契約同合法範圍解析留到 Q5 嗰輪一併定。來源：#153 Q6 C。落地位置：`FRAME-UIUX-HANDOFF.md` 頁 02 描述、#160 範圍第 5 點。
 - C60 Q7 A／Q8 A／Q9 A（附邊界）：(Q7) Frame v1 只做到 768，360px 另開設計＋施工輪次排喺 F-02 之後，唔阻塞 Frame 開工；F-02 唔准用 `overflow: hidden` 或收起捲軸遮問題，驗收要留 360px 唔破版嘅基本證據。(Q8) 公司 Logo 欄位渲染兩次（App selector 嘅 app 名＋頁尾本機公司名），係同一個欄位渲染兩次，唔係兩份資料真相。(Q9) 頁 06–09 定稿為 Boss Portal 第一批據點管理畫面嘅**視覺／互動規格**，但 (1) 唔係施工授權；(2) `manifest.json` 嘅 `available: false` 維持不變（C50），直到 Q1／Q3 跨機契約同 Q2 權限等級落地；(3) 完整業務頁（今日／批准收件匣／部門摘要）仍然未開始，F-09 照排 Frame 全部完成之後。原因：避免把概念畫面當成已批規格。取代：無；`FRAME-UIUX-HANDOFF.md` 第 1.6／2.9／2.7／6.3 節同 `FRAME-DESIGN-INDEX.md` 按此改。來源：#153 Q7 A、Q8 A、Q9 A。
 - C61 既有 issue 處理（#118 A／#147 A／#148 A）：#118 併入 F-02（#158），由老闆自己 close，PM 唔好 close；搬過去要保留 #118 增補嘅硬閘門（原型雙向切換走查、`requireOwner` 唔放寬、負面測試、白／深色、窄螢幕、鍵盤證據、未執行指令如實寫），唔留兩套外殼規格。#147 A／B 兩個 P0 獨立繼續、唔等 Frame，C 項搬入 F-02；#147「設計方向（鎖死）」跟主色 A 同 #148 A。#148 A 取消：唔再參考 HxDesign 做 UI 基準，Frame v1.3（Ardot `745493588675335` ＋ `docs/design/frame/*.png`）係唯一 UI 真相，HxDesign 只作歷史參考；由老闆自己 close，PM 唔好 close。原因：唔留兩套 UI 標準。取代：`BASE-UI-DESIGN.md` 第 2 節舊外殼參考、`BASE-UI-HXDESIGN-ALIGNMENT.md` 嘅基準地位（檔保留）、`docs/INDEX.md` 文件地圖。來源：#153 既有 issue 段。
+
+### 2026-11-10 增補：Frame 色彩、外殼與 Needs（issue #184）
+
+來源：老闆 2026-11-10 對 Frame 導出稿（`docs/design/frame/*.png`）與 Needs 位置的指示。以下係落地規則，唔係新建議；除 C65 撤銷 C49 之外，其餘都係補充。
+
+- C62 色彩只有白、灰、黑，加一個藍（補充 C53）：Frame 全部畫面只准用導出稿取樣得到的 `#FFFFFF`、`#F5F6FA`、`#E1E4E8`、`#F0F1F3`、`#191919`、`#6E6E6E`、`#A3A3A3`，以及 `#0057FF`。**不准暖色中性**（米色、淺啡、「紙張」色）—— 之前原型用 `#F7F5F1`／`#EBE8E1` 屬錯，已改回上列 token。所有顏色經 `packages/design-tokens`，`apps/web/test/gates.test.ts` 禁止其他檔案出現 hex／rgb。原因：老闆原話「the correct should be only by White Gray Black, should not have light brown」。
+- C63 唔做全站搜尋：Frame 頂欄唔設搜尋框，亦唔設「即將推出」的假入口。原因：老闆原話「we actually don't need search」。取代：任何把搜尋列入 Frame 必做範圍的規格（包括 `FRAME-UIUX-HANDOFF.md` 舊版第 2.3 節）。
+- C64 主要按鈕唔用黑色（補充 C53）：藍 `#0057FF` 係唯一「寫入／確認」用色；次要動作同「離開」用外框；近黑只作文字與選中態底色，唔作按鈕底色。原因：老闆原話「we don't need black」。取代：C53 之後任何以近黑作主要按鈕的寫法。
+- C65 唔做深色 UI（**撤銷 C49**）：只做淺色一套，唔提供主題切換，唔維護深色 token 對照。原因：老闆原話「yes, actually we don't need dark UI」。注意：撤銷嘅只係「深色模式屬必做範圍」；既有程式若有主題切換，移除與否按實際使用處另計，唔可以靜靜留一個撳完冇分別的掣。
+- C66 權限不足係獨立全螢幕狀態（補充 C55）：唔顯示 app selector、模組第二行、左側欄、頁尾。原因：留低外殼等於把整個選單結構送給無權限的人；亦唔應該用「空畫面」假裝已載入。C55 要求顯示具體原因，維持。
+- C67 空狀態唔放撳唔到的圖示：空狀態只講「而家冇嘢，同下一步係咩」。之前原型放了 `+` 但冇作用，已移除。原因：一個睇得見而撳完冇反應的掣，比冇呢個掣更差。
+- C68 四層位置各有分工（補充 C46、C51、C60）：(1) 第一行左邊 = app selector + 品牌 selector；(2) 第一行右邊／第二行 = 該 app 的模組（例如 Marketing Design 的 Brand／Material／Knowledge／Create），呢層係 app 的模組；(3) 左側欄 = 當前模組的頁面，呢層先係「頁」；(4) breadcrumb 只表達「我而家喺邊」，唔兼做導航選單。768 寬度下模組第二行唔可以整行消失，要收成一個「模組・<名稱> ▾」按鈕。
+- C69 Needs 住喺 Frame 外殼，唔係一個 app（補充 C06、C12）：(1) 頂欄右邊一個 `Needs <數目>` 掣，去 Needs 頁；(2) 任何會產生 Need 的頁面，右邊有該頁的 Needs 側欄，最多 4 件、逾期先、可以自己收起（同左側欄一樣有掣），1280 以下自動收起；(3) 逾期唔上頂欄，只喺 Needs 頁同逐件 Need 顯示（紅色日期）；(4) Need 由 agent 自動開立，人只認領同驗收；(5) 計數由後端一次過回，唔由前端加總 —— 前端加總在清單只載 50 筆時一定錯。若日後證實做唔到跟頁面走，先退成獨立 app，但頂欄嗰個掣位置不變。

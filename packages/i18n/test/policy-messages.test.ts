@@ -214,7 +214,7 @@ const INTERPOLATED: Record<string, Record<string, string>> = {
  * 值由 /tmp/company-os-loop-evidence/161/gen-baseline.mjs 以
  * typescript.transpileModule 轉譯 origin/main 版 index.ts 後計出。
  */
-const FROZEN_ALL_SHA256 = 'f198408e30ea7d992af3375af859dc30e5bb1ca26b829efffa7302cdd3693209';
+const FROZEN_ALL_SHA256 = '557299e7389ee15385777d491ec04ea2620a7937961a1ae3b99ce43e7f4ec952';
 
 /**
  * 同步改寫（#163）：#163 起嘅 cat:packages 施工張會新增 files.* 前綴嘅鍵，

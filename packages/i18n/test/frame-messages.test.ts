@@ -62,7 +62,7 @@ const FRAME_MESSAGES: Record<string, string> = {
  * 唔變，唔係放寬門檻；後續施工張新增鍵要同步加落呢兩個清單。
  */
 const FROZEN_NON_FRAME_SHA256 =
-  'a48ab323779908ef848905616ca7c45cafb194482ba7a77aa9a5ef82838c47fd';
+  '3a2d2c39848bccc7913cf85993fd562efc743acf5dd1223408a533bf07aa3499';
 
 // #163 新增 files.* 前綴；同 #161 嘅 policy.* 一樣，唔屬 #155 要守嘅既有鍵。
 // issue 168 新增 5 個 grant.detail.* 鍵，同樣唔屬 #155 要守嘅既有鍵；

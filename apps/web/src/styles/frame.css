@@ -925,10 +925,198 @@
   outline-offset: 2px;
 }
 
+/* ---------- Needs（issue 184）：頂欄入口與右側欄 ---------- */
+
+/* 頂欄入口：一個計數 pill。存在嘅理由只有一個——唔好漏。
+   冇逾期字樣：逾期係每件工作自己的事，唔應該在頂欄搶注意力。 */
+.frame-needs-entry {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-1);
+}
+
+.frame-needs-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+  height: var(--hx-size-bar-control);
+  padding: 0 var(--hx-space-3);
+  border: 1px solid transparent;
+  border-radius: var(--hx-radius-sm);
+  background: var(--hx-chrome-selected);
+  color: var(--hx-chrome-ink);
+  font: var(--hx-frame-font-small-lg);
+  cursor: pointer;
+}
+
+.frame-needs-btn:hover {
+  background: var(--hx-fill-tertiary);
+}
+
+.frame-needs-btn[aria-current='page'] {
+  background: var(--hx-chrome-ink);
+  color: var(--hx-chrome-surface);
+}
+
+.frame-needs-btn__count {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 右側欄：第三欄。欄寬借用既有 sidebar token，唔新增重複嘅尺寸名。 */
+.frame-body[data-frame-has-rail='true'] {
+  grid-template-columns:
+    var(--hx-frame-sidebar-width)
+    minmax(0, 1fr)
+    var(--hx-size-sidebar);
+}
+
+.frame-body[data-frame-has-rail='true'][data-frame-has-sidebar='false'] {
+  grid-template-columns: minmax(0, 1fr) var(--hx-size-sidebar);
+}
+
+.frame-rail {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border-left: 1px solid var(--hx-chrome-border);
+  background: var(--hx-frame-surface);
+  overflow-y: auto;
+}
+
+.frame-rail__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--hx-space-2);
+  padding: var(--hx-space-4) var(--hx-space-4) var(--hx-space-3);
+  border-bottom: 1px solid var(--hx-chrome-border);
+}
+
+.frame-rail__title {
+  font: var(--hx-font-eyebrow);
+  letter-spacing: 0.09em;
+  color: var(--hx-frame-secondary);
+}
+
+.frame-rail__link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--hx-frame-secondary);
+  font: var(--hx-font-caption);
+  cursor: pointer;
+}
+
+.frame-rail__link:hover {
+  color: var(--hx-frame-accent);
+}
+
+.frame-rail__empty {
+  margin: 0;
+  padding: var(--hx-space-4);
+  color: var(--hx-frame-muted);
+  font: var(--hx-font-caption);
+  line-height: 1.7;
+}
+
+.frame-rail__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hx-space-2);
+  margin: 0;
+  padding: var(--hx-space-3);
+  list-style: none;
+}
+
+.frame-need {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hx-space-1);
+  width: 100%;
+  padding: var(--hx-space-3);
+  border: 1px solid var(--hx-chrome-border);
+  border-radius: var(--hx-radius-sm);
+  background: var(--hx-chrome-white);
+  text-align: left;
+  cursor: pointer;
+}
+
+.frame-need:hover {
+  border-color: var(--hx-frame-muted);
+}
+
+.frame-need__head {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+}
+
+.frame-need__code {
+  color: var(--hx-frame-muted);
+  font: var(--hx-font-caption);
+  font-family: var(--hx-font-mono);
+}
+
+.frame-need__kind {
+  padding: 0 var(--hx-space-1);
+  border-radius: var(--hx-radius-sm);
+  background: var(--hx-frame-accent-soft);
+  color: var(--hx-frame-accent-fg);
+  font: var(--hx-font-caption);
+}
+
+.frame-need__title {
+  color: var(--hx-chrome-ink);
+  font: var(--hx-font-footnote);
+  font-weight: 500;
+}
+
+.frame-need__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+  color: var(--hx-frame-secondary);
+  font: var(--hx-font-caption);
+}
+
+.frame-need__sep {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--hx-frame-muted);
+}
+
+.frame-rail__foot {
+  display: flex;
+  justify-content: space-between;
+  margin-top: auto;
+  padding: var(--hx-space-3) var(--hx-space-4);
+  border-top: 1px solid var(--hx-chrome-border);
+  color: var(--hx-frame-muted);
+  font: var(--hx-font-caption);
+}
+
 /* 1024：側欄 200px、內容 padding 收窄、收起工具標籤。 */
 @media (max-width: 1180px) {
   .frame-body {
     grid-template-columns: var(--hx-frame-sidebar-width-1024) minmax(0, 1fr);
+  }
+
+  /* 窄過 1024：右側欄收起。唔用抽屜遮內容——遮住嘅內容等於冇，
+     而頂欄那個計數仍然在，用戶照樣去得到 Needs 頁。 */
+  .frame-body[data-frame-has-rail='true'],
+  .frame-body[data-frame-has-rail='true'][data-frame-has-sidebar='false'] {
+    grid-template-columns: var(--hx-frame-sidebar-width-1024) minmax(0, 1fr);
+  }
+
+  .frame-body[data-frame-has-rail='true'][data-frame-has-sidebar='false'] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .frame-rail,
+  .frame-needs-entry .frame-iconbtn {
+    display: none;
   }
 
   .frame-content,
@@ -947,6 +1135,14 @@
 @media (max-width: 900px) {
   .frame-body {
     grid-template-columns: var(--hx-frame-sidebar-width-768) minmax(0, 1fr);
+  }
+
+  .frame-body[data-frame-has-rail='true'] {
+    grid-template-columns: var(--hx-frame-sidebar-width-768) minmax(0, 1fr);
+  }
+
+  .frame-body[data-frame-has-rail='true'][data-frame-has-sidebar='false'] {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .frame-content,

@@ -48,6 +48,48 @@ export type FrameBlocked = {
   description: string;
 };
 
+/**
+ * 右側 Needs 欄嘅一項（issue 184）。
+ *
+ * 文字全部由呼叫端提供：外殼唔自己組「已等 2 日」呢類句子，因為「等」
+ * 係業務講法，而外殼唔知業務。外殼只負責順序同版面。
+ */
+export type FrameNeedItem = {
+  id: string;
+  code: string;
+  title: string;
+  kindLabel: string;
+  stateLabel: string;
+  /** 次要一行，例如「已等 2 日」；undefined 就唔顯示，唔留一個空格。 */
+  metaLabel?: string;
+};
+
+/**
+ * 頂欄嘅 Needs 入口。
+ *
+ * 唔傳就完全唔渲染 —— 唔做一個冇數字的死掣。`railOpen` 同 `onToggleRail`
+ * 一齊缺席，代表呢一頁冇 Needs 欄可言，連開關都唔出現。
+ */
+export type FrameNeedsEntry = {
+  count: number;
+  active: boolean;
+  onOpen: () => void;
+  railOpen?: boolean;
+  onToggleRail?: () => void;
+};
+
+/** 右側 Needs 欄。items 空都要渲染：欄位穩定，跳版比空白更難用。 */
+export type FrameNeedsRail = {
+  title: string;
+  items: readonly FrameNeedItem[];
+  emptyLabel: string;
+  totalLabel: string;
+  closedLabel: string;
+  historyLabel: string;
+  onOpenAll: () => void;
+  onOpenNeed: (id: string) => void;
+};
+
 export type FrameShellProps = {
   /** 第一層：App selector。 */
   apps: readonly FrameApp[];
@@ -70,7 +112,11 @@ export type FrameShellProps = {
 
   /** 主題、帳戶與側欄：行為沿用 `BaseShell`。 */
   theme: ShellTheme;
-  onToggleTheme: () => void;
+  /**
+   * 唔再由 Frame 顯示切換掣（決策 C65：只有淺色一套）。保留這個屬性係為了
+   * 未清走的呼叫端仍然傳得入；一旦全部畫面都唔再傳，就可以刪。
+   */
+  onToggleTheme?: () => void;
   account: { displayName: string; signingOut: boolean };
   onSignOut: () => void;
   sidebarOpen: boolean;
@@ -83,6 +129,11 @@ export type FrameShellProps = {
 
   /** 左側：服務第二層選中頁嘅子頁，支援分組標題。 */
   sidebarGroups?: readonly FrameSidebarGroup[];
+
+  /** Needs 入口（issue 184）。Needs 屬外殼，唔屬任何一個 app。 */
+  needs?: FrameNeedsEntry;
+  /** 右側 Needs 欄；要 `needs.railOpen === true` 才會渲染。 */
+  needsRail?: FrameNeedsRail;
 
   /** 內容區。 */
   breadcrumbs?: readonly string[];
@@ -133,7 +184,6 @@ export function FrameShell({
   onNotifications,
   onHelp,
   theme,
-  onToggleTheme,
   account,
   onSignOut,
   sidebarOpen,
@@ -142,6 +192,8 @@ export function FrameShell({
   currentPageKey,
   onSelectPage,
   sidebarGroups,
+  needs,
+  needsRail,
   breadcrumbs,
   pageTitle,
   pageSubtitle,
@@ -162,6 +214,7 @@ export function FrameShell({
   const sidebarItemCount = groups.reduce((total, group) => total + group.items.length, 0);
   const hasSidebar = sidebarItemCount > 0;
   const showSidebar = hasSidebar && sidebarOpen;
+  const showRail = needsRail !== undefined && needs?.railOpen === true;
 
   const showBrandSelector =
     brands !== undefined && brands.length > 0 && scope !== null && scope !== undefined;
@@ -173,8 +226,6 @@ export function FrameShell({
       {initialOf(companyName)}
     </span>
   );
-
-  const themeLabel = theme === 'dark' ? t('shell.theme.toLight') : t('shell.theme.toDark');
 
   const appOptions: SelectorOption[] = apps.map((app) => ({
     id: app.key,
@@ -265,6 +316,33 @@ export function FrameShell({
 
         <div className="frame-spacer" aria-hidden="true" />
 
+        {needs !== undefined && (
+          <div className="frame-needs-entry" data-frame-slot="needs">
+            {needs.onToggleRail !== undefined && (
+              <button
+                type="button"
+                className="frame-iconbtn"
+                aria-label={t('need.rail.toggle')}
+                aria-pressed={needs.railOpen === true}
+                onClick={needs.onToggleRail}
+              >
+                <Icon name="panel" />
+              </button>
+            )}
+
+            <button
+              type="button"
+              className="frame-needs-btn"
+              aria-label={t('need.topbar.open')}
+              aria-current={needs.active ? 'page' : undefined}
+              onClick={needs.onOpen}
+            >
+              <span className="frame-needs-btn__label">{t('need.topbar.label')}</span>
+              <span className="frame-needs-btn__count">{needs.count}</span>
+            </button>
+          </div>
+        )}
+
         <div className="frame-slot frame-tools" data-frame-slot="tools">
           {tools
             .filter((tool) => tool.handler !== undefined)
@@ -281,14 +359,8 @@ export function FrameShell({
               </button>
             ))}
 
-          <button
-            type="button"
-            className="frame-iconbtn"
-            aria-label={themeLabel}
-            onClick={onToggleTheme}
-          >
-            <Icon name={theme === 'dark' ? 'sun' : 'moon'} />
-          </button>
+          {/* 唔放主題切換：設計稿只有淺色一套（決策 C65），撳落去只會
+              換到一套冇人設計過的深色，等於製造一個假功能。 */}
 
           <span className="frame-account">
             <span className="frame-avatar" aria-hidden="true">
@@ -326,7 +398,11 @@ export function FrameShell({
         ))}
       </nav>
 
-      <div className="frame-body" data-frame-has-sidebar={showSidebar ? 'true' : 'false'}>
+      <div
+        className="frame-body"
+        data-frame-has-sidebar={showSidebar ? 'true' : 'false'}
+        data-frame-has-rail={showRail ? 'true' : 'false'}
+      >
         {showSidebar && (
           <aside className="frame-sidebar" data-frame-rail aria-label={t('frame.landmark.sidebar')}>
             {groups.map((group, index) => (
@@ -397,6 +473,57 @@ export function FrameShell({
             children
           )}
         </main>
+
+        {showRail && needsRail !== undefined && (
+          <aside className="frame-rail" data-frame-needs-rail aria-label={needsRail.title}>
+            <div className="frame-rail__head">
+              <span className="frame-rail__title">{needsRail.title}</span>
+              <button type="button" className="frame-rail__link" onClick={needsRail.onOpenAll}>
+                {needsRail.totalLabel}
+              </button>
+            </div>
+
+            {needsRail.items.length === 0 ? (
+              <p className="frame-rail__empty">{needsRail.emptyLabel}</p>
+            ) : (
+              <ul className="frame-rail__list">
+                {needsRail.items.map((item) => (
+                  <li key={item.id}>
+                    <button
+                      type="button"
+                      className="frame-need"
+                      onClick={() => {
+                        needsRail.onOpenNeed(item.id);
+                      }}
+                    >
+                      <span className="frame-need__head">
+                        <span className="frame-need__code">{item.code}</span>
+                        <span className="frame-need__kind">{item.kindLabel}</span>
+                      </span>
+                      <span className="frame-need__title">{item.title}</span>
+                      <span className="frame-need__meta">
+                        <span>{item.stateLabel}</span>
+                        {item.metaLabel !== undefined && (
+                          <>
+                            <span className="frame-need__sep" aria-hidden="true" />
+                            <span>{item.metaLabel}</span>
+                          </>
+                        )}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <div className="frame-rail__foot">
+              <span>{needsRail.closedLabel}</span>
+              <button type="button" className="frame-rail__link" onClick={needsRail.onOpenAll}>
+                {needsRail.historyLabel}
+              </button>
+            </div>
+          </aside>
+        )}
       </div>
 
       <footer className="frame-footer" data-frame-footer aria-label={t('frame.landmark.footer')}>

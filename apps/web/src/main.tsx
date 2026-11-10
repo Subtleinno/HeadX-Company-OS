@@ -5,6 +5,7 @@ import './styles/app.css';
 import './styles/frame.css';
 import './styles/admin.css';
 import './styles/files.css';
+import './styles/needs.css';
 import { App } from './App';
 
 const root = document.getElementById('root');

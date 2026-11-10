@@ -15,6 +15,7 @@ import { registerGrants } from './grants/index.js';
 import { migrate } from './migrate.js';
 import { loadModules } from './modules/registry/index.js';
 import { registerModules } from './modules/routes.js';
+import { registerNeeds } from './needs/index.js';
 import { registerOrg, seedOrgUnits } from './org/index.js';
 import { DEFAULT_PROFILE_DIR, registerSettings, seedSettings } from './settings/index.js';
 import type { Storage } from './storage/index.js';
@@ -282,6 +283,10 @@ async function main(): Promise<void> {
     storage,
     maxUploadBytes: readMaxUploadBytes(),
   });
+
+  // Needs：agent 交返畀人嘅工作（issue 184）。讀要登入、認領要登入，
+  // 開立與吸收屬 agent／MCP 的路，呢度唔開。
+  registerNeeds(app, { pool });
 
   attachPoolErrorHandler(pool, (error) => {
     // 只記錄訊息，避免把連線參數寫入日誌。

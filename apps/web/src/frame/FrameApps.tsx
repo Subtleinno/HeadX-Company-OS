@@ -1,6 +1,16 @@
-import { createContext, useContext } from 'react';
-import { FrameShell, type FrameApp, type FrameShellProps } from '@company-os/app-shell';
+import { createContext, useContext, useState } from 'react';
+import {
+  FrameShell,
+  type FrameApp,
+  type FrameNeedItem,
+  type FrameNeedsEntry,
+  type FrameNeedsRail,
+  type FrameShellProps,
+} from '@company-os/app-shell';
 import { t } from '@company-os/i18n';
+import { needKindLabel, needStateLabel, needWaitingLabel } from '../needs/labels';
+import { useNeedsShell, type NeedsShellData } from '../needs/useNeedsShell';
+import { navigate } from '../router';
 import { useAppList, type AppListView } from './useAppList';
 
 /**
@@ -10,6 +20,10 @@ import { useAppList, type AppListView } from './useAppList';
  * `useAppList` 喺呢度**只讀一次** `GET /modules` 同逐個 app 嘅存取判斷，
  * 結果一方面變成 `FrameShell` 嘅 `apps`，另一方面經 context 交畀
  * 「我的 Apps」。兩者共用同一份事實，唔可以各自再讀、唔可以喺前端存副本。
+ *
+ * issue 184 起，Needs 亦經呢一層接駁：頂欄計數同右側欄由同一份 summary
+ * 推出來，所以「頂欄話 7、右側欄話 5」呢種矛盾唔會發生。讀唔到 summary
+ * 就唔渲染入口 —— 顯示「0」係講大話，用戶會以為真係冇事要做。
  *
  * 刻意唔做嘅嘢：
  *   - 唔新增文案鍵；狀態標籤用既有 `myapps.available.*`，原因用既有
@@ -36,14 +50,39 @@ export function useSharedAppList(): AppListView {
   return view;
 }
 
+const NeedsShellContext = createContext<NeedsShellData | null>(null);
+
+/**
+ * 頁面內容由呢度攞 Needs 數字，**唔可以自己再開一個 `useNeedsShell`**。
+ *
+ * 曾經就係咁：Needs 頁自己讀一次 summary，外殼又讀一次，結果喺頁內認領完
+ * 只有頁內那份更新，頂欄仍然顯示舊數。同一頁兩份事實，總有一份會過時。
+ */
+export function useSharedNeeds(): NeedsShellData {
+  const data = useContext(NeedsShellContext);
+
+  if (data === null) {
+    throw new Error('Needs content must be rendered inside FrameApps to share the Needs summary');
+  }
+
+  return data;
+}
+
 export type FrameAppsProps = Omit<
   FrameShellProps,
-  'apps' | 'currentAppId' | 'onSelectApp'
+  'apps' | 'currentAppId' | 'onSelectApp' | 'needs' | 'needsRail'
 > & {
   /** false ＝ 呢個畫面唔讀取 app 清單（首次強制改密碼嘅個人帳戶頁）。 */
   load?: boolean;
   /** false ＝ selector 只需要 app 清單，唔逐個 app 問存取判斷（「我的 Apps」先需要）。 */
   includeAccess?: boolean;
+  /** 而家就係 Needs 頁：頂欄入口顯示為當前頁。 */
+  needsActive?: boolean;
+  /**
+   * 呢一頁要唔要右側 Needs 欄。
+   * 只有宣告得到嘅頁面才有欄 —— 唔係每一頁都擠一條欄落去。
+   */
+  withRail?: boolean;
 };
 
 /**
@@ -64,17 +103,82 @@ function toFrameApps(view: AppListView): readonly FrameApp[] {
   }));
 }
 
-export function FrameApps({ load = true, includeAccess = true, ...shellProps }: FrameAppsProps) {
+export function FrameApps({
+  load = true,
+  includeAccess = true,
+  needsActive = false,
+  withRail = false,
+  ...shellProps
+}: FrameAppsProps) {
   const view = useAppList(load, includeAccess);
+  const needs = useNeedsShell(undefined, load);
+  const [railOpen, setRailOpen] = useState(true);
+
+  const counts = needs.counts;
+  // 「Needs 7」講嘅係未關閉的工作。已關閉的仍然在系統，但唔應該繼續計，
+  // 否則個數字只會一直升，慢慢變成一個冇人看的裝飾。
+  const openCount = counts === null ? 0 : counts.total - counts.closed;
+
+  const needsEntry: FrameNeedsEntry | undefined =
+    counts === null
+      ? undefined
+      : {
+          count: openCount,
+          active: needsActive,
+          onOpen: () => {
+            navigate('/needs');
+          },
+          ...(withRail
+            ? {
+                railOpen,
+                onToggleRail: () => {
+                  setRailOpen((open) => !open);
+                },
+              }
+            : {}),
+        };
+
+  const now = Date.now();
+
+  const needsRail: FrameNeedsRail = {
+    title: t('need.rail.title'),
+    items: needs.items.map((item) => {
+      const railItem: FrameNeedItem = {
+        id: item.id,
+        code: item.code,
+        title: item.title,
+        kindLabel: needKindLabel(item),
+        stateLabel: needStateLabel(item),
+        metaLabel: needWaitingLabel(item, now),
+      };
+
+      return railItem;
+    }),
+    emptyLabel: t('need.rail.empty'),
+    totalLabel: t('need.rail.all'),
+    closedLabel:
+      counts === null ? '' : t('need.rail.closed', { count: counts.closed }),
+    historyLabel: t('need.rail.history'),
+    onOpenAll: () => {
+      navigate('/needs');
+    },
+    onOpenNeed: () => {
+      navigate('/needs');
+    },
+  };
 
   return (
     <AppListContext.Provider value={view}>
-      <FrameShell
-        {...shellProps}
-        apps={toFrameApps(view)}
-        currentAppId=""
-        onSelectApp={() => undefined}
-      />
+      <NeedsShellContext.Provider value={needs}>
+        <FrameShell
+          {...shellProps}
+          {...(needsEntry === undefined ? {} : { needs: needsEntry })}
+          {...(withRail ? { needsRail } : {})}
+          apps={toFrameApps(view)}
+          currentAppId=""
+          onSelectApp={() => undefined}
+        />
+      </NeedsShellContext.Provider>
     </AppListContext.Provider>
   );
 }

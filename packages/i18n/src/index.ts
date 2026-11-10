@@ -561,6 +561,69 @@ export const messages = {
   'setup.error.passwordTooShort': '密碼至少需要 12 個字元。',
   'setup.error.passwordMismatch': '兩次輸入的密碼不一致。',
 
+  // ── Needs 文案鍵（issue 184）──────────────────────────────────
+  // Needs 屬外殼，唔屬任何一個 app：頂欄計數、右側欄、Needs 頁三處共用同一組字。
+  // 全部繁體中文（香港書面語）：不用「呢／喺／嘅／唔」，稱呼用戶用「你」。
+  // 狀態用短語、不加句號；按鈕用動詞開頭。
+  'need.topbar.label': 'Needs',
+  'need.topbar.open': '開啟 Needs',
+  'need.rail.title': '此頁 Needs',
+  'need.rail.toggle': '顯示或收起 Needs 欄',
+  'need.rail.all': '全部',
+  'need.rail.empty': '此頁暫無 Needs。相關的跟進事項，由 AI agent 開立後會出現在這裡。',
+  'need.rail.closed': '已關閉 {count} 單',
+  'need.rail.history': '查看紀錄',
+
+  'need.title': 'Needs',
+  'need.subtitle': '所有 app 交給你處理的事，集中在這裡。',
+  'need.tab.inbox': '收件匣',
+  'need.tab.mine': '我負責',
+  'need.tab.closed': '已關閉',
+
+  'need.filter.all': '全部',
+  'need.filter.open': '待認領',
+  'need.filter.claimed': '進行中',
+  'need.filter.uploaded': '待吸收',
+  'need.filter.absorbed': '待驗收',
+  'need.filter.overdue': '逾期 {count} 單',
+
+  'need.state.open': '待認領',
+  'need.state.claimed': '進行中',
+  'need.state.uploaded': '已上載・待吸收',
+  'need.state.absorbed': '已吸收・待驗收',
+  'need.state.closed': '已關閉',
+  'need.kind.deliverable': '交付',
+  'need.kind.decision': '決定',
+
+  'need.col.code': '編號',
+  'need.col.title': '需求',
+  'need.col.kind': '類型',
+  'need.col.state': '狀態',
+  'need.col.assignee': '負責人',
+  'need.col.due': '到期',
+
+  'need.assignee.none': '未認領',
+  'need.due.none': '未定',
+  'need.due.overdue': '已逾期 {days} 日',
+  'need.due.today': '今日到期',
+  'need.due.daysLeft': '剩 {days} 日',
+  'need.waitToday': '今日開立',
+  'need.waitDays': '已等 {days} 日',
+
+  'need.loading': '正在讀取 Needs…',
+  'need.failed': '讀不到 Needs，請重試。',
+  'need.denied': '你沒有查看 Needs 的權限。',
+  'need.empty': '目前沒有 Needs。',
+  'need.emptyClosed': '沒有已關閉的 Needs。',
+  'need.footnote':
+    'Needs 由 AI agent 開立。你完成之後，agent 會把成果吸收到素材庫，之後同類工作可以直接重用。',
+  'need.claim': '認領',
+  'need.claiming': '正在認領…',
+  'need.claimConflict': '這件工作已經有人認領，清單已重新載入。',
+  'need.claimClosed': '這件工作已經關閉。',
+  'need.claimFailed': '認領失敗，請重試。',
+  'need.detail.missing': '找不到這件工作。',
+
   // ── Frame 文案鍵（issue #155）─────────────────────────────────────
   // 只新增鍵，不改、不刪、不重命名上面任何既有鍵或文字。繁體中文（香港）、
   // 零 emoji、零插值；文案待老闆事後審閱。

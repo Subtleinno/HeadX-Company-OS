@@ -801,3 +801,80 @@ export function deleteFile(id: string): Promise<ApiResult<null>> {
 export function fileDownloadUrl(id: string): string {
   return `/api/files/${encodeURIComponent(id)}`;
 }
+
+/**
+ * Needs（issue 184）。
+ *
+ * 呢三條路只讀同一組事實：清單、計數、認領。狀態同逾期都由後端推導，
+ * 前端唔自己算 —— 前端算一次就會與清單講唔同嘅故事（例如清單只載 50 筆）。
+ */
+
+export type NeedKind = 'deliverable' | 'decision';
+export type NeedState = 'open' | 'claimed' | 'uploaded' | 'absorbed' | 'closed';
+export type NeedFilter = 'all' | 'open' | 'claimed' | 'uploaded' | 'absorbed' | 'closed' | 'overdue';
+
+export type NeedItem = {
+  id: string;
+  code: string;
+  title: string;
+  detail: string | null;
+  kind: NeedKind;
+  state: NeedState;
+  appId: string | null;
+  pageKey: string | null;
+  assignee: { id: string; name: string } | null;
+  dueAt: string | null;
+  overdue: boolean;
+  createdAt: string;
+};
+
+export type NeedCounts = {
+  open: number;
+  claimed: number;
+  uploaded: number;
+  absorbed: number;
+  closed: number;
+  overdue: number;
+  total: number;
+};
+
+export type NeedQuery = {
+  status?: NeedFilter;
+  /** `'company'` ＝ 只要未綁 app 的公司層工作；唔傳 ＝ 全部來源。 */
+  appId?: string;
+  limit?: number;
+};
+
+function needQueryString(query: NeedQuery): string {
+  const params = new URLSearchParams();
+
+  if (query.status !== undefined) {
+    params.set('status', query.status);
+  }
+
+  if (query.appId !== undefined) {
+    params.set('appId', query.appId);
+  }
+
+  if (query.limit !== undefined) {
+    params.set('limit', String(query.limit));
+  }
+
+  const text = params.toString();
+
+  return text === '' ? '' : `?${text}`;
+}
+
+export function fetchNeeds(query: NeedQuery = {}): Promise<ApiResult<{ items: NeedItem[] }>> {
+  return request<{ items: NeedItem[] }>(`/api/needs${needQueryString(query)}`);
+}
+
+export function fetchNeedSummary(query: NeedQuery = {}): Promise<ApiResult<{ counts: NeedCounts }>> {
+  return request<{ counts: NeedCounts }>(`/api/needs/summary${needQueryString(query)}`);
+}
+
+export function claimNeed(id: string): Promise<ApiResult<{ item: NeedItem }>> {
+  return request<{ item: NeedItem }>(`/api/needs/${encodeURIComponent(id)}/claim`, {
+    method: 'POST',
+  });
+}

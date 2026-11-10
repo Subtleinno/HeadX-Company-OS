@@ -54,6 +54,7 @@ export function HomeScreen({ user, onSignedOut }: HomeScreenProps) {
 
   return (
     <FrameApps
+      withRail
       moduleTabs={mainNavItems(user.role === 'owner')}
       currentModuleTabKey="today"
       onSelectModuleTab={(key) => {
