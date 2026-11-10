@@ -35,6 +35,9 @@ const OLD_PATH_ALLOWLIST = [
   'docs/architecture/REPO-MAP.md',
   'docs/architecture/CODE-MAP.md',
   'docs/product/',
+  // 歸檔目錄一律是歷史紀錄（例如 `MASTER-PLAN-2026-11-07.md` 寫的是搬遷前的架構），
+  // 改掉就會變成錯的歷史。歸檔不代表現行規則，所以掃描豁免整批。
+  'docs/archive/',
   SELF,
 ];
 

@@ -132,3 +132,26 @@
   一句：**manifest 講「最多可以去到邊」，部署講「今次開幾道門」，UI 只講「你而家喺邊」。** 任何一層都唔可以由 UI 直接提高上限。
 - C83 **設計底稿收入 repo。** `SCOPE-MODEL.md`（範圍模型：公司／品牌、三種 app 模式、Context 管寫 vs Lens 管讀）、`MULTI-MACHINE-ACCESS.md`（跨機入口：總部係登記／批准／入口中心，唔係資料隧道）、`BACKEND-FUNCTIONS-MAP.md`（端點對照）原本只存在 `.workbuddy/design/`，而該目錄**在 `.gitignore` 裡面**，所以 repo、GitHub、任何新 session 都看不到。老闆講「i think it is a good design, let's get them back」—— 呢個係真正風險：設計存在但無人讀得到，等於唔存在。已收入 `docs/product/`，各自加一段來源與時效說明；`loop-engineering-worker-v1.1.md` 屬過期授權書，收入 `docs/design/archive/`，並在檔頭寫明「唔可以再用」。
 - C84 **「對外存取」頁排在頁面隊列之後，形態已定。** Boss Portal → 設定 → 對外存取，只做三件事：(1) 顯示目前生效的門（例：「內部網絡」）；(2) 三個具名 profile 供選擇（`僅內網` / `內網＋VPN` / `內網＋指定 app 可經 tunnel`）；(3) 改動一律標「需重新部署才生效」，並列出「即使公開，以下仍然只限內網」，該清單由 `exposure: internal` 的 manifest 自動生成，**不由人手勾**。呢頁在 `exposure` 落地之前唔開工 —— 開一個撳完唔會生效的掣，比唔開更差。
+
+### 2026-11-11 增補：文件收斂成一份概念真相（老闆要求）
+
+來源：老闆 2026-11-11「i see the folder have a lot of files, that's make me hard to manage, and also may makes you confuse and work slow… i actually need that level of doc to remind me and remind you what is the truth of design. Can you find me back the docs that i was created with you?… let's make the repo clean」
+
+- C85 **`docs/` 收斂成「三份真相 ＋ 一個入口」。** 真相三份：`docs/CONCEPT.md`（這套東西是什麼）、`docs/product/HANDOFF.md`（今日做到哪）、`docs/product/DECISIONS.md`（為甚麼這樣定）。入口一份：`docs/INDEX.md`，三段式（讀概念／看現況／查細節）。其餘文件只做細節或歷史，不需要順序讀。
+
+  為甚麼要這樣做——**問題不是檔案多，是同時有三套「真相」在互相覆蓋**：(1) `docs/concept/` 十三份 2026-11-10 的構思（七原則、十二物件、Needs 兩型）；(2) `docs/product/MASTER-PLAN.md` 2026-11-07 的舊全盤計劃（國際版／大陸版、gateway 三入口、customer-portal／supplier-portal、發件箱、MCP 六動詞）；(3) `SCOPE-MODEL.md`＋`FRAME-UIUX-HANDOFF.md`＋`DECISIONS.md` 這批真正在施工的。三套的世界觀直接衝突——最明顯一對：舊計劃寫「所有對外訊息先進發件箱，由規則決定放行或交老闆批准」，新概念寫「預設無閘」。而 `AGENTS.md`（每個 agent 開工第一份讀的）站的是舊計劃那邊。任何 agent 讀完都會同時拿到兩份相反的指令，這就是「你會混亂、會慢」的機制，不是錯覺。
+
+  具體做法：
+  | 動作 | 內容 |
+  |---|---|
+  | 新建 | `docs/CONCEPT.md` v2.0 —— 由 iCloud 的 `Headx-company-os-concept.md` v0.1（老闆原稿）、`concept/01` v0.8、C1–C84 合併而成。十二節，一頁讀完，生意語言為主 |
+  | 重寫 | `docs/INDEX.md` —— 三段式入口；刪掉「規劃交付與開工條件」「驗證與狀態」等舊規劃體系語言（三十行），保留「一個真相，一個方向」全表（那是硬資產） |
+  | 改寫 | `docs/concept/README.md` —— 由「專案 README」改成「概念附錄索引」，明寫主真相在 `CONCEPT.md` |
+  | 歸檔 | 8 份到 `docs/archive/`：`MASTER-PLAN-2026-11-07`、`00-master-plan-v1.0`、`BASE-UI-DESIGN-2026-11-07`、`BASE-UI-HXDESIGN-ALIGNMENT-2026-11-07`、`WORKSPACE-APP-SCOPE-DESIGN-v0.3`、`PERPLEXITY-MANAGER-PROMPT`、`planning-loop`、`12-ui-brief` |
+  | 移入子目錄 | 9 份到 `docs/concept/future/`：`02`–`08`（各部門 app 構思）、`11-delivery-plan`、`strategy-doc-questions` |
+  | 修正 | `AGENTS.md` 的「這個 repo 是什麼」與不變量 1、2；`HANDOFF.md` 第 4 節文件地圖；`README.md` 文件表；`FRAME-UIUX-HANDOFF.md` §6.2 讀次序；`FRAME-DESIGN-INDEX.md` 開工卡 |
+  | 同步 | `tools/rename/rename-guard.test.ts` 的 `OLD_PATH_ALLOWLIST` 加 `docs/archive/`（歸檔是歷史，允許提舊路徑） |
+
+  **改文件的規矩從此寫進入口**：任何概念改動先改 `docs/CONCEPT.md`，再同步 `DECISIONS.md` 記一條，最後才改下面的細節文件。三處各說各話是這次混亂的成因，不能再發生。
+
+- C86 **`AGENTS.md` 的權限從「不准改」放寬為「改要一併記決策」。** 原文第 8 條寫「不要改這個檔案，除非 issue 明確要求」。問題是它自己是世界觀的載體：舊計劃被取代之後，它仍在教 agent「批准只能由人按下」「六個動詞」「國際版三個入口」。留著不改，等於每天都派一份過時的指令給所有 agent。新規則：`AGENTS.md` 可以改，但每次改動必須在 `DECISIONS.md` 留一條，並在 PR 描述寫明改了哪一條不變量與為甚麼。**不變量本身仍然不是隨手可改的**——改一條不變量要老闆明確同意，不是 agent 自己判斷。

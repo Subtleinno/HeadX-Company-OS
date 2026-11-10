@@ -81,17 +81,18 @@ docker compose -p company-os-needs build gateway-internal api && \
 
 | 想知道 | 去邊 |
 |---|---|
+| **這套東西是什麼**（設計真相） | `docs/CONCEPT.md` |
 | 外殼版面、四層導覽、據點目錄規則 | `docs/product/FRAME-UIUX-HANDOFF.md`（v1.4 已按落地版本改） |
 | 介面長成什麼樣（唯一真相） | `docs/design/frame/frame-0*.png` |
 | **公司層／品牌層、三種 app 模式、Context 管寫 vs Lens 管讀** | `docs/product/SCOPE-MODEL.md` |
 | **對外公開 vs 只准內網／VPN、跨機入口** | `docs/product/MULTI-MACHINE-ACCESS.md`、`docs/trusted-entry.md` |
-| 為什麼這樣決定 | `docs/product/DECISIONS.md`（後者優先，現到 C84） |
-| 全盤計劃 | `docs/product/MASTER-PLAN.md` |
+| 為什麼這樣決定 | `docs/product/DECISIONS.md`（後者優先，現到 C85） |
 | 目錄、分層、邊界 | `docs/architecture/CODE-MAP.md` |
 | 端口、容器 | `docs/architecture/REPO-MAP.md` |
 | 邊啲後端功能仲未有畫面 | `docs/product/BACKEND-FUNCTIONS-MAP.md` |
 | 備份與還原 | `docs/backup-restore.md` |
-| 上位構思（歷史，不是施工規格） | `docs/concept/` |
+| 未來部門 app 的構思（做到那個 app 才讀） | `docs/concept/future/` |
+| 已取代的舊計劃（不是真相） | `docs/archive/` |
 
 外殼程式碼：`packages/app-shell/src/FrameShell.tsx`。
 前端接駁：`apps/web/src/frame/`（`AppFrame`、`appNav`、`FrameApps`）＋ `apps/web/src/boss/`、`apps/web/src/design/`。

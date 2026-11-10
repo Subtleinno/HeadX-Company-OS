@@ -1,17 +1,23 @@
 # AGENTS.md
 
-給在這個 repo 工作的 AI agent。開工前先讀完這一份，然後讀 `docs/INDEX.md`、你要改的 app 的 `AGENTS.md` 與 `DESIGN.md`（如果有），最後讀你被指派的 issue。
+給在這個 repo 工作的 AI agent。開工前依次讀：**這一份 → `docs/CONCEPT.md`（設計真相）→ `docs/INDEX.md`（文件入口）→ `docs/product/HANDOFF.md`（今日現況）→ 你要改的 app 的 `AGENTS.md` 與 `DESIGN.md`（如果有）→ 你被指派的 issue**。
+
+若 `CONCEPT.md` 與本檔衝突，以 `CONCEPT.md` 為設計真相、本檔為施工紀律；兩者意思相反時停手，在 issue 提問，不要自己揀一份。
 
 ## 這個 repo 是什麼
 
-company-os 是一間公司的整套軟件，全部放在這個 repo，全部跑在 Docker。一部機器 = 一間公司，主機是公司自己的電腦。
+HeadX Company OS：一間公司運作的唯一底座，全部放在這個 repo，全部跑在 Docker。一次安裝 = 一個 Site（一個地點的營運單位），主機是公司自己的電腦。
 
-- Boss portal 是老闆的入口，看各部門的運作、產物質素與營運。
-- 每個部門是一個獨立的 app 模組，有自己的介面與資料：員工、設計／內容／網站、銷售、營運財務、人事、客服（日後會再加，例如研發）。程式碼按 app 模組化，容器按版本 profile 打包。
-- 安裝時選國際版或大陸版。國際版有三個入口（內網、夥伴經 Cloudflare Access、客戶）和 customer-portal、supplier-portal；大陸版第一階段只有內網入口。登入後只看到被授權的 app。
-- 所有容器共用同一個 Postgres 與同一個 MinIO。身份、授權、Need、發件箱、審計、設定、MCP 與背景隊列屬於 platform，不屬於任何一個 app。
-- AI 盡力做事；AI 做不到的才變成 Need 派給員工，員工上傳成果，老闆驗收。
-- 這個 repo 不執行 AI 模型。AI 是外部客戶端，經 MCP 連入，只能用固定六個動詞：browse、read、write、find、render、help。
+**這不是 ERP，也不是 SaaS。是老闆開公司用的基建。** 設計真相在 `docs/CONCEPT.md`，這裡只講施工紀律。
+
+- **agent 是主要執行者，人是判斷者與補位者。** 接口是一等公民；畫面是給人看結果與補位。
+- **Boss Portal 只讀。** 它只看各 app 交出的四個 shape（projects／needs／approvals／schedule），**不讀別人的資料表**；不在 Portal 內指派、改期、改狀態。
+- 每個部門是一個獨立的 app 模組，有自己的資料與畫面：設計、銷售、營運、財務、人事、客服（日後再加）。清單對一間公司固定，老闆管註冊與升級。原始碼沒有的 app 由 **App Forge** 生成（`docs/concept/09-app-forge.md`），不是手寫。
+- 所有容器共用同一個 Postgres 與同一個 MinIO。身份、授權、Need、審計、設定與背景隊列屬於 platform，不屬於任何一個 app。
+- **AI 做不到的才變成 Need**——不是錯誤訊息，不是靜靜降級。Need 兩型：`deliverable`（交東西）與 `decision`（下判斷；agent 必須先做一次並附建議，不是原封把問題丟給人）。
+- **預設不加閘**（原則 1）：不預設 approval gate、不預設 validator。批核是老闆逐項開啟的設定，不是架構預設。
+- **對外可達性只能向下收窄**：manifest 的 `exposure` 是硬上限，部署決定今次開幾道門，畫面只誠實顯示你而家喺邊道門。現時只開 `gateway-internal` 一道。見 `docs/CONCEPT.md` 第 9 節。
+- 這個 repo 不執行 AI 模型。AI 是外部客戶端（MCP／HTTP），同人一樣經介面接入。
 
 ## 開工規則
 
@@ -22,7 +28,7 @@ company-os 是一間公司的整套軟件，全部放在這個 repo，全部跑�
 5. issue 裡的驗收指令沒有全部通過，不要宣稱完成。
 6. 超出 issue 範圍的想法，開新 issue，不要順手做。
 7. 規格有空白或互相矛盾：停下，在 issue 留言提問，不要猜。
-8. 不要新增說明文件，也不要改這個檔案，除非 issue 明確要求。`docs/` 與各 app 的 `DESIGN.md` 只在 issue 指定時才改。
+8. 不要新增說明文件。`docs/` 與各 app 的 `DESIGN.md` 只在 issue 指定時才改。**`AGENTS.md` 可以改，但每次改動必須在 `docs/product/DECISIONS.md` 留一條**（C86）；改動任何一條「不變量」要老闆明確同意，不是你自己判斷。
 9. 只改你被指派的 app 資料夾。要改 `packages/` 或 platform，必須有獨立的 issue。
 10. app 之間不可互相 import；只能用 `packages/` 與 platform 的介面。搬動檔案的 issue（R1 至 R6）不改行為，搬動前後同一組測試必須全過。
 
@@ -31,7 +37,7 @@ company-os 是一間公司的整套軟件，全部放在這個 repo，全部跑�
 - 語言：TypeScript（strict）。Node 用當日 LTS，版本同時寫在 .nvmrc 與 Dockerfile。
 - npm workspaces（`apps/*` 與 `packages/*`）；後端 Fastify；前端 React＋Vite；單元測試 Vitest；e2e 測試 Playwright。
 - 程式碼按 app 模組化，邊界由 `npm run lint:boundaries` 強制；容器是打包選擇：同一個 `app-host` 映像用 `APP_SET` 載入 app，曝露程度不同的 app 不同容器。細節見 `docs/architecture/CODE-MAP.md`。
-- 入口：gateway 是同一個映像，按版本 profile 起實例（internal；國際版另有 partner、customer）。國際版對外只經 Cloudflare Tunnel（cloudflared）連到 gateway-partner 與 gateway-customer；大陸版沒有 cloudflared。
+- 入口：gateway 是同一個映像，按版本 profile 起實例（internal；國際版另有 partner、customer）。國際版對外只經 Cloudflare Tunnel（cloudflared）連到 gateway-partner 與 gateway-customer；大陸版沒有 cloudflared。**現時實際只開一道門 `gateway-internal`**——partner／customer 的 profile 與 exposure 語義已存在，但未部署；不要因為 profile 裡寫得出來就當它已開通。
 - 版本差異（入口、容器組合、端口、渠道、預設語言）只寫在 `packages/edition-profile`，app 內不寫地區判斷。
 - 資料庫：一個 Postgres，每個 app 一個 schema、一個資料庫帳號，只能存取自己的 schema 與 platform 開放的介面。純 SQL migration，每個 schema 獨立編號 NNNN_說明.sql，只往前加，不改已套用的檔案。
 - 檔案儲存：MinIO，版本固定（server RELEASE.2025-10-15T17-29-55Z、mc RELEASE.2025-08-13T08-35-41Z），不可升級；由官方原始碼在本機建置，不修改上游程式碼，資料放在 host 資料夾（bind mount）。MinIO 是 AGPL-3.0，私有自架已接受。大陸版需要預先建置的映像或離線安裝包（S2-06）。
@@ -43,8 +49,8 @@ company-os 是一間公司的整套軟件，全部放在這個 repo，全部跑�
 
 ## 不變量（違反即退回，即使測試通過）
 
-1. 批准只能由人按下。MCP 永遠沒有 approve 工具。
-2. AI 不能直接對外發訊息。一律寫入發件箱，由規則決定放行或交老闆批准。
+1. **對外發送永遠由人按下。** agent 只做到草稿／準備發送為止；approve 類工具不在 MCP 可用範圍。注意這不是「AI 做任何事都要批」——預設無閘（原則 1），只有老闆明確開啟的動作才需批核。
+2. **AI 不能直接對外發訊息。** 草稿留在系統內，等 staff 或老闆按下發送。
 3. 做不到的必須留痕。沒有來源的內容不准寫，缺口要變成 Need。
 4. 失敗要看得見。越權要報錯，不要回空結果；空畫面要說真話，不用假資料。
 5. 狀態盡量用算的，不要存。新增狀態值，必須同時有寫入它的程式。
