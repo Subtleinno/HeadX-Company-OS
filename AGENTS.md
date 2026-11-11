@@ -36,7 +36,7 @@ HeadX Company OS：一間公司運作的唯一底座，全部放在這個 repo�
 
 只有老闆書面授權某一輪時才適用。沒有一輪的授權，不要自己開 loop，也不要假設上一輪的授權還有效（上一次的授權已明確寫「不會延伸到之後任何一輪」）。
 
-1. **一次一張。** 前一張的 PR 已合併到 `main`，才開下一張。次序寫在 `docs/product/HANDOFF.md` §5，不要自己重排；每張 issue 頂部有 `Loop 位置 n／8`，那是同一份次序的鏡像。
+1. **一次一張。** 前一張的 PR 已合併到 `main`，才開下一張。次序寫在 `docs/product/HANDOFF.md` §5，不要自己重排；每張 issue 頂部有 `Loop 位置 n／9`，那是同一份次序的鏡像。
 2. 開工前：`git status --porcelain` 要空 → `git switch main` → `git pull --ff-only` → 記 HEAD SHA → 開 `task/<issue>-<短英文>`。
 3. 先紅後綠：先寫會 fail 的測試，貼實際輸出與 exit code，再實作。
 4. **合併條件要全部齊**：CI 全綠、issue 驗收逐條有實際輸出、真瀏覽器走過、文件在同一個 PR 已同步、無範圍外檔案、無 TODO。缺一項就不合併。
