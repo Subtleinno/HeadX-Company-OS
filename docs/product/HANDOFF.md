@@ -3,7 +3,13 @@
 > `docs/INDEX.md` 是文件地圖，`AGENTS.md` 是規則。這一頁只管四件事：
 > **現在有什麼、怎樣跑起來、下一步做什麼、哪幾個坑別踩。**
 
-最後更新：2026-11-11（老闆與 AI 共同確認）
+最後更新：2026-11-11（Always Use HTTPS 已開，實測 301）
+
+## 開新 session 時，貼這一句就夠
+
+> 讀 `docs/product/HANDOFF.md`，然後按 §5 的頁面隊列，做我在 issue 指定的那一頁。只做那一頁。
+
+新 session 不要期望記得以前的事；這一頁就是全部的入場卷。
 
 ## 一句話現況
 
@@ -91,7 +97,9 @@ npm run deploy:build && docker compose up -d
 curl -s https://hxd.subtle-inno.com/api/auth/state    # 應回 {"setupRequired":false,"signedIn":false}
 ```
 
-> **現在的保安級別＝只有 app 自己的登入。** 任何人拿到網址都見到登入頁，試得出密碼就入得去。開發期可以接受，**但不可以這樣開始管理公司資料**；正式用之前要做三件：換掉 demo 密碼、在 Cloudflare 開 Always Use HTTPS（現時 `http://` 仍然回 200，不跳轉）、加 Access 政策。決策 C89 有寫。
+> **現在的保安級別＝只有 app 自己的登入。** 任何人拿到網址都見到登入頁，試得出密碼就入得去。開發期可以接受，**但不可以這樣開始管理公司資料**；正式用之前還要做兩件：換掉 demo 密碼、加 Access 政策。決策 C89 有寫。
+>
+> **Always Use HTTPS 已開（2026-11-11 實測）。** `http://hxd.subtle-inno.com` 與 `http://subtle-inno.com` 都回 301 跳 https，明文的門已封。剩下 `COOKIE_SECURE` 仍然 `false` —— 因為本機 `http://127.0.0.1:4210` 要能登入；等不再需要本機 http 入口時才可以開。
 
 ## 3. 現在看得到什麼
 
@@ -115,7 +123,7 @@ curl -s https://hxd.subtle-inno.com/api/auth/state    # 應回 {"setupRequired":
 | 介面長成什麼樣（唯一真相） | `docs/design/frame/frame-0*.png` |
 | **公司層／品牌層、三種 app 模式、Context 管寫 vs Lens 管讀** | `docs/product/SCOPE-MODEL.md` |
 | **對外公開 vs 只准內網／VPN、跨機入口** | `docs/product/MULTI-MACHINE-ACCESS.md`、`docs/trusted-entry.md` |
-| 為什麼這樣決定 | `docs/product/DECISIONS.md`（後者優先，現到 C88） |
+| 為什麼這樣決定 | `docs/product/DECISIONS.md`（後者優先，現到 C90） |
 | 目錄、分層、邊界 | `docs/architecture/CODE-MAP.md` |
 | 端口、容器 | `docs/architecture/REPO-MAP.md` |
 | 邊啲後端功能仲未有畫面 | `docs/product/BACKEND-FUNCTIONS-MAP.md` |
