@@ -93,7 +93,11 @@ const FROZEN_ALL_SHA256 = '4af9f8e145020638a2b141f52026861eed7031250932204b5a38a
  * 凍結值同守衛嘅既有鍵都唔變，唔係放寬門檻。
  */
 const LATER_EXACT_KEYS = [
-  'design.page.brandPage','design.brand.ownerOnly'];
+  'design.page.brandPage',
+  // 2026-11-12（issue #32）：品牌模組五頁的頁名。舊的 `design.page.brandPage`
+  // 與 `design.section.*` 沒有刪，只是不再有人讀 —— 凍結閘本來就不准刪。
+  'design.page.brandLogo', 'design.page.brandColor', 'design.page.brandType',
+  'design.page.brandTone','design.brand.ownerOnly'];
 
 const LATER_KEY_PREFIXES = ['brand.page.', 
   'boss.members.',

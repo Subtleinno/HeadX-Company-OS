@@ -1,5 +1,6 @@
 import { Fragment, useCallback, useEffect, useState } from 'react';
 import { t } from '@company-os/i18n';
+import { BrandEditorsPanel } from './BrandEditorsPanel';
 import {
   assignStaffDepartment,
   createStaff,
@@ -791,6 +792,9 @@ export function MembersScreen() {
           <p className="boss-sites-card__note">{t('boss.members.footnote')}</p>
         </div>
       )}
+
+      {/* 品牌級編輯權（issue #32）：牌子與人是同一件事的兩面，所以放在同一頁。 */}
+      <BrandEditorsPanel staff={state.staff} />
     </>
   );
 }

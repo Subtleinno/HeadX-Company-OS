@@ -1028,10 +1028,95 @@ export type BrandPageDetail = {
   current: BrandPageVersionDetail | null;
 };
 
+/**
+ * 這個品牌的頁清單，以及「我是不是可以改這個品牌的頁」。
+ *
+ * `canEdit` 由伺服器回答（老闆，或者被老闆授予品牌編輯權的人）。前端用它決定
+ * 顯示什麼表單，但**不決定可不可以做**：每一條寫入路徑後端都會自己再問一次
+ * （issue #32 第 13 點）。
+ */
 export function fetchBrandPages(
   brandId: string,
-): Promise<ApiResult<{ items: BrandPageSummary[] }>> {
-  return request<{ items: BrandPageSummary[] }>(`/api/brands/${encodeURIComponent(brandId)}/pages`);
+): Promise<ApiResult<{ items: BrandPageSummary[]; canEdit: boolean }>> {
+  return request<{ items: BrandPageSummary[]; canEdit: boolean }>(
+    `/api/brands/${encodeURIComponent(brandId)}/pages`,
+  );
+}
+
+/** 建立自定義頁。三樣一次過要齊，缺一樣由後端回 400 並講明欠什麼。 */
+export function createBrandPage(
+  brandId: string,
+  input: { name: string; slug: string; brief: string },
+): Promise<ApiResult<{ page: BrandPageSummary }>> {
+  return request<{ page: BrandPageSummary }>(`/api/brands/${encodeURIComponent(brandId)}/pages`, {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+}
+
+/** 改顯示名。**沒有 slug**：改 slug 等於另一張頁，舊連結會斷（C101）。 */
+export function renameBrandPage(
+  brandId: string,
+  key: string,
+  input: { name: string },
+): Promise<ApiResult<{ page: BrandPageSummary }>> {
+  return request<{ page: BrandPageSummary }>(
+    `/api/brands/${encodeURIComponent(brandId)}/pages/${encodeURIComponent(key)}`,
+    { method: 'PATCH', body: JSON.stringify(input) },
+  );
+}
+
+/** 軟刪除自定義頁（連它的版本）。被成品釘住時後端回 409，原樣顯示理由。 */
+export function deleteBrandPage(
+  brandId: string,
+  key: string,
+): Promise<ApiResult<{ deleted: boolean; key: string; versions: number }>> {
+  return request<{ deleted: boolean; key: string; versions: number }>(
+    `/api/brands/${encodeURIComponent(brandId)}/pages/${encodeURIComponent(key)}`,
+    { method: 'DELETE' },
+  );
+}
+
+/**
+ * 誰可以改這個品牌的頁（issue #32）。
+ *
+ * 這是 (品牌, 人) 一對的授權，不是職位、不是部門，role 仍然是 staff。老闆
+ * 永遠可以改，所以永遠不在名單裡 —— 寫進來只會出現「老闆被移除編輯權」這種
+ * 講不通的狀態。
+ */
+export type BrandEditor = {
+  userId: string;
+  displayName: string;
+  email: string;
+  grantedAt: string;
+};
+
+export function fetchBrandEditors(
+  brandId: string,
+): Promise<ApiResult<{ items: BrandEditor[] }>> {
+  return request<{ items: BrandEditor[] }>(
+    `/api/brands/${encodeURIComponent(brandId)}/editors`,
+  );
+}
+
+export function grantBrandEditor(
+  brandId: string,
+  userId: string,
+): Promise<ApiResult<{ items: BrandEditor[] }>> {
+  return request<{ items: BrandEditor[] }>(
+    `/api/brands/${encodeURIComponent(brandId)}/editors/${encodeURIComponent(userId)}`,
+    { method: 'PUT' },
+  );
+}
+
+export function revokeBrandEditor(
+  brandId: string,
+  userId: string,
+): Promise<ApiResult<{ items: BrandEditor[] }>> {
+  return request<{ items: BrandEditor[] }>(
+    `/api/brands/${encodeURIComponent(brandId)}/editors/${encodeURIComponent(userId)}`,
+    { method: 'DELETE' },
+  );
 }
 
 export function fetchBrandPage(

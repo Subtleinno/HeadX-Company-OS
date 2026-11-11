@@ -78,7 +78,11 @@ const LATER_KEY_PREFIXES = ['brand.page.', 'policy.', 'files.', 'grant.detail.',
   // 2026-11-12（issue #34）：品牌頁策略是新增的介面，不屬本檔要守的既有鍵。
   'boss.policy.', 'boss.module.policy', 'boss.page.brandPolicy'];
 const LATER_EXACT_KEYS = [
-  'design.page.brandPage','admin.page.policy', 'design.brand.ownerOnly'];
+  'design.page.brandPage',
+  // 2026-11-12（issue #32）：品牌模組五頁的頁名。舊的 `design.page.brandPage`
+  // 與 `design.section.*` 沒有刪，只是不再有人讀 —— 凍結閘本來就不准刪。
+  'design.page.brandLogo', 'design.page.brandColor', 'design.page.brandType',
+  'design.page.brandTone','admin.page.policy', 'design.brand.ownerOnly'];
 
 function hashNonFrame(msgs: Record<string, string>): string {
   const entries = Object.entries(msgs)

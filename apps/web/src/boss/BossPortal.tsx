@@ -1,7 +1,7 @@
 import { t, type MessageKey } from '@company-os/i18n';
 import type { PublicUser } from '../api';
 import { AppFrame } from '../frame/AppFrame';
-import { BOSS_NAV, resolveNav, type NavPosition } from '../frame/appNav';
+import { BOSS_NAV, navLabel, resolveNav, type NavPosition } from '../frame/appNav';
 import { navigatePath, useHashPath } from '../router';
 import { AddSiteScreen } from './AddSiteScreen';
 import { BossOverview } from './BossOverview';
@@ -101,7 +101,7 @@ export function BossPortal({ user, onSignedOut }: BossPortalProps) {
       user={user}
       path={path}
       onSignOut={onSignedOut}
-      pageTitle={t(position.page.labelKey)}
+      pageTitle={navLabel(position.page)}
       {...(subtitleKey === undefined ? {} : { pageSubtitle: t(subtitleKey) })}
       {...(position.page.key === 'directory'
         ? {

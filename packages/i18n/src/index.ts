@@ -814,6 +814,21 @@ export const messages = {
   'boss.members.resetMissing': '兩格都要填：你自己嘅密碼，同新嘅臨時密碼。',
   'boss.members.tooManyAttempts': '試咗太多次，請等一陣再試。',
 
+  // 品牌級編輯權（issue #32）。唔講「品牌設計師」—— 讀的人會當它是一個職位。
+  // 這是 (品牌, 人) 一對的授權，不是新職位、新部門，role 仍然是 staff。
+  'boss.members.brandEditTitle': '可以改哪個品牌的頁',
+  'boss.members.brandEditLead':
+    '被勾選的人可以改這個品牌的所有頁，包括日後新加的自定義頁。這不是職位，也不會改他的角色。',
+  'boss.members.brandEditBrand': '品牌',
+  'boss.members.brandEditNone': '這間公司還未有品牌，所以沒有人可以獲授權。',
+  'boss.members.brandEditOwner': '你（老闆）永遠可以改所有品牌，所以你不在名單裡。',
+  'boss.members.brandEditEmpty': '這個品牌暫時沒有人可以改。只有你可以改。',
+  'boss.members.brandEditGranted': '已讓 {name} 可以改這個品牌的頁。',
+  'boss.members.brandEditRevoked': '已收回 {name} 對這個品牌的編輯權。',
+  'boss.members.brandEditFailed': '做唔到，請再試一次。',
+  'boss.members.brandEditLoading': '正在讀誰可以改這個品牌…',
+  'boss.members.brandEditLoadFailed': '讀唔到名單，請再試。',
+
   // 品牌頁策略（issue #34）。六個槽、一份策略、只有老闆可以改。
   // 每一句都要講清楚「改了會怎樣」：已經做好的頁不會被重寫。
   'boss.policy.lead': '六個槽的專業標準。只有你可以改；每次儲存是一個新版本，舊版留著。',
@@ -859,6 +874,10 @@ export const messages = {
   'design.module.knowledge': '知識',
   'design.module.create': '創作',
   'design.page.brandHome': '品牌主頁',
+  'design.page.brandLogo': '標誌',
+  'design.page.brandColor': '色彩',
+  'design.page.brandType': '字體',
+  'design.page.brandTone': '語氣',
   'design.page.brandDashboard': 'Dashboard',
   'design.page.brandSettings': '品牌設定',
   'design.page.channel': '渠道與策略',
@@ -1080,6 +1099,51 @@ export const messages = {
   // 這一版當時用的是第幾版策略（#34）。null 就講「未記錄」，不要假設第 1 版。
   'brand.page.policyVersionNo': '依第 {no} 版策略',
   'brand.page.policyUnrecorded': '策略版本未記錄',
+
+  // ── 品牌模組的頁清單與自定義頁（issue #32）──────────────────────
+  // 每一句都講「這一頁」，因為這裡管的是頁，不是內容。三樣齊才建得成：
+  // 顯示名、slug、一句「這一頁要決定什麼」。缺了 brief 的頁只會在主頁多一個
+  // 永遠寫「未完成」的入口，所以當場拒絕，不是建完之後才發現。
+  'brand.page.manage.new': '新增頁',
+  'brand.page.manage.createTitle': '新增一頁',
+  'brand.page.manage.name': '顯示名',
+  'brand.page.manage.slug': 'slug（網址）',
+  'brand.page.manage.slugHint': '小寫英文字母、數字同連字號，以字母開頭。建立之後不可以改。',
+  'brand.page.manage.brief': '這一頁要決定什麼',
+  'brand.page.manage.briefHint': '寫這一頁的方向，唔係策略。共用規則寫喺策略。',
+  'brand.page.manage.belongs': '這一頁是不是其實屬於其中一頁？',
+  'brand.page.manage.belongsNone': '都不是，開一張新頁',
+  'brand.page.manage.belongsHint': '揀了任何一頁就唔會開新頁，直接去嗰一頁。',
+  'brand.page.manage.create': '建立這一頁',
+  'brand.page.manage.creating': '建立中…',
+  'brand.page.manage.cancel': '取消',
+  'brand.page.manage.missing': '要填齊三樣：顯示名、slug、一句「這一頁要決定什麼」。',
+  'brand.page.manage.created': '已建立「{name}」。',
+  'brand.page.manage.createFailed': '建立唔到，請再試。',
+  'brand.page.manage.belongsMoved': '這一張其實係「{name}」，所以冇開新頁。內容喺嗰一頁做。',
+  'brand.page.manage.rename': '改顯示名',
+  'brand.page.manage.renameTitle': '改顯示名',
+  'brand.page.manage.renameSave': '儲存名稱',
+  'brand.page.manage.renamed': '已改名為「{name}」。',
+  'brand.page.manage.renameFailed': '改名唔到，請再試。',
+  'brand.page.manage.slugFixed': '網址（slug）建立之後不可以改；要搬就新建一張再刪舊那張。',
+  'brand.page.manage.remove': '刪除這一頁',
+  'brand.page.manage.removeConfirm': '再按一次確定刪除這一頁',
+  'brand.page.manage.removed': '已刪除「{name}」。',
+  'brand.page.manage.removeFailed': '刪除唔到，請再試。',
+  'brand.page.manage.readOnly': '你只可以看這些頁。要加頁、改名、刪頁，請找老闆。',
+  'brand.page.manage.customTag': '自定義頁',
+  'brand.page.manage.briefLine': '這一頁要決定什麼：{brief}',
+  'brand.page.manage.loading': '正在讀這個品牌的頁…',
+  'brand.page.manage.loadFailed': '讀唔到這個品牌的頁。',
+  'brand.page.manage.missingPage': '這一頁不存在。可能已經刪除。',
+  /* 品牌主頁的內容由 #39 交付。未交付就講未交付，不畫一個假的總覽。 */
+  'brand.page.homePending': '品牌主頁仲未做好。',
+  'brand.page.homePendingBody':
+    '主頁會把每一頁的現行版本排成一個總覽。這一部分還未做，所以這裡不畫任何內容。',
+  /* 一個品牌都未有：不是白畫面，也不是「載入中」。 */
+  'brand.page.noBrand': '還沒有品牌，只有老闆可以開第一個。',
+  'brand.page.noBrandBody': '品牌切換而家是空的。開第一個品牌之後，這裡就會有頁。',
 } as const;
 
 export type MessageKey = keyof typeof messages;

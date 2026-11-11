@@ -470,3 +470,278 @@ export async function deleteVersion(
     client.release();
   }
 }
+
+/* ── 自定義頁的建立／改名／刪除（issue #32） ───────────────────── */
+
+export type CreatePageResult =
+  | { status: 'ok'; page: BrandPageView }
+  | { status: 'fixed_key'; key: string }
+  | { status: 'conflict'; key: string; name: string };
+
+/**
+ * 建立一張自定義頁。
+ *
+ * 三樣一次過要齊（顯示名、slug、brief）：缺 brief 的頁等於沒有方向，建了只會
+ * 在主頁多一個永遠寫「未完成」的入口（C101）。驗證在 schema.ts 做；這裡只負責
+ * 「撞名要講明撞了哪一張」—— 不是靜靜改成另一個名，因為設計師會以為自己成功。
+ */
+export async function createPage(
+  db: Pool,
+  input: { brandId: string; name: string; slug: string; brief: string },
+): Promise<CreatePageResult> {
+  const client = await db.connect();
+
+  try {
+    await client.query('begin');
+
+    // 自定義頁不可以用五個固定鍵（0013 的 check 會擋），先在這裡講清楚。
+    const fixed = await client.query<{ name: string }>(
+      `select name from brand_page
+        where brand_id = $1 and key = $2 and deleted_at is null`,
+      [input.brandId, input.slug],
+    );
+
+    if (fixed.rowCount !== null && fixed.rowCount > 0) {
+      await client.query('rollback');
+      return {
+        status: 'conflict',
+        key: input.slug,
+        name: fixed.rows[0]?.name ?? input.slug,
+      };
+    }
+
+    const sort = await client.query<{ next: number }>(
+      'select coalesce(max(sort_order), 50) + 10 as next from brand_page where brand_id = $1',
+      [input.brandId],
+    );
+
+    const inserted = await client.query<{ id: string }>(
+      `insert into brand_page (brand_id, kind, key, name, brief, sort_order)
+       values ($1, 'custom', $2, $3, $4, $5)
+       returning id`,
+      [input.brandId, input.slug, input.name, input.brief, sort.rows[0]?.next ?? 60],
+    );
+
+    await client.query('commit');
+
+    const id = inserted.rows[0]?.id;
+
+    if (id === undefined) {
+      throw new Error('建立自定義頁之後沒有回傳 id');
+    }
+
+    const page = await findPageById(db, input.brandId, id);
+
+    if (page === null) {
+      throw new Error('建立自定義頁之後讀唔返');
+    }
+
+    return { status: 'ok', page };
+  } catch (error) {
+    await client.query('rollback').catch(() => undefined);
+
+    // 23505：同品牌已有一張未刪的頁用同一個鍵（0013 的部分唯一索引）。
+    if (isUniqueViolation(error)) {
+      const clash = await db.query<{ name: string }>(
+        `select name from brand_page
+          where brand_id = $1 and key = $2 and deleted_at is null`,
+        [input.brandId, input.slug],
+      );
+
+      return {
+        status: 'conflict',
+        key: input.slug,
+        name: clash.rows[0]?.name ?? input.slug,
+      };
+    }
+
+    // 23514：check 約束 —— 用固定鍵做自定義頁的 slug。
+    if (isCheckViolation(error)) {
+      return { status: 'fixed_key', key: input.slug };
+    }
+
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+function isUniqueViolation(error: unknown): boolean {
+  return typeof error === 'object' && error !== null && 'code' in error &&
+    (error as { code?: string }).code === '23505';
+}
+
+function isCheckViolation(error: unknown): boolean {
+  return typeof error === 'object' && error !== null && 'code' in error &&
+    (error as { code?: string }).code === '23514';
+}
+
+async function findPageById(db: Pool, brandId: string, id: string): Promise<BrandPageView | null> {
+  const pages = await listPages(db, brandId);
+  return pages.find((page) => page.id === id) ?? null;
+}
+
+/**
+ * 改顯示名。slug 不在參數裡 —— 改 slug 等於另一張頁，舊連結會斷（C101）。
+ */
+export async function renamePage(
+  db: Pool,
+  input: { brandId: string; key: string; name: string },
+): Promise<BrandPageView | null> {
+  const result = await db.query<{ id: string }>(
+    `update brand_page set name = $3
+      where brand_id = $1 and key = $2 and deleted_at is null
+      returning id`,
+    [input.brandId, input.key, input.name],
+  );
+
+  const id = result.rows[0]?.id;
+  return id === undefined ? null : findPageById(db, input.brandId, id);
+}
+
+export type DeletePageResult =
+  | { status: 'deleted'; key: string; name: string; versions: number }
+  | { status: 'not_found' }
+  /** 五個固定頁是網址的一部分，不可以刪（#32）。 */
+  | { status: 'fixed'; key: string; name: string }
+  /** 任何一版被已出街成品釘住：講明釘在哪一件（#32 第 10 點）。 */
+  | { status: 'pinned'; key: string; name: string; labels: string[] };
+
+/**
+ * 軟刪除一張自定義頁：頁本身、它的全部版本，一併寫 `deleted_at`。
+ *
+ * 為咩連版本一齊軟刪除：留著只會被 `listVersions` 之外的查詢撿到，而同一個鍵
+ * 之後可以再建立 —— 新舊兩張頁的版本會混在同一條查詢裡。資料不刪，審計留著，
+ * 但畫面上不再有一條指向已刪頁的版本鏈。
+ *
+ * 檢查與寫入在同一個交易、同一把頁鎖之內，所以不會「查到沒釘、刪的一刻有人釘上」。
+ */
+export async function deletePage(
+  db: Pool,
+  input: { brandId: string; key: string },
+): Promise<DeletePageResult> {
+  const client = await db.connect();
+
+  try {
+    await client.query('begin');
+
+    const found = await client.query<{ id: string; kind: PageKind; name: string }>(
+      `select id, kind, name from brand_page
+        where brand_id = $1 and key = $2 and deleted_at is null
+        for update`,
+      [input.brandId, input.key],
+    );
+
+    const row = found.rows[0];
+
+    if (row === undefined) {
+      await client.query('rollback');
+      return { status: 'not_found' };
+    }
+
+    if (row.kind === 'fixed') {
+      await client.query('rollback');
+      return { status: 'fixed', key: input.key, name: row.name };
+    }
+
+    const pins = await client.query<{ ref_label: string }>(
+      `select pin.ref_label
+         from brand_page_version_pin pin
+         join brand_page_version v on v.id = pin.version_id
+        where v.page_id = $1
+        order by pin.created_at`,
+      [row.id],
+    );
+
+    if (pins.rowCount !== null && pins.rowCount > 0) {
+      await client.query('rollback');
+      return {
+        status: 'pinned',
+        key: input.key,
+        name: row.name,
+        labels: pins.rows.map((pin) => pin.ref_label),
+      };
+    }
+
+    const versionCount = await client.query<{ n: number }>(
+      'select count(*)::int as n from brand_page_version where page_id = $1 and deleted_at is null',
+      [row.id],
+    );
+
+    await client.query(
+      'update brand_page_version set deleted_at = now() where page_id = $1 and deleted_at is null',
+      [row.id],
+    );
+    await client.query('update brand_page set deleted_at = now() where id = $1', [row.id]);
+
+    await client.query('commit');
+
+    return {
+      status: 'deleted',
+      key: input.key,
+      name: row.name,
+      versions: versionCount.rows[0]?.n ?? 0,
+    };
+  } catch (error) {
+    await client.query('rollback').catch(() => undefined);
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+/* ── 品牌編輯權（issue #32） ─────────────────────────────────── */
+
+export type BrandEditorView = {
+  userId: string;
+  displayName: string;
+  email: string;
+  grantedAt: string;
+};
+
+export async function listEditors(db: Pool, brandId: string): Promise<BrandEditorView[]> {
+  const result = await db.query<{
+    user_id: string;
+    display_name: string;
+    email: string;
+    created_at: Date;
+  }>(
+    `select e.user_id, u.display_name, u.email, e.created_at
+       from brand_editor e
+       join app_user u on u.id = e.user_id
+      where e.brand_id = $1
+      order by u.display_name`,
+    [brandId],
+  );
+
+  return result.rows.map((row) => ({
+    userId: row.user_id,
+    displayName: row.display_name,
+    email: row.email,
+    grantedAt: row.created_at.toISOString(),
+  }));
+}
+
+/** 授予或收回。回傳 false＝那個帳戶不存在（不是品牌不存在：品牌由路由先驗）。 */
+export async function setEditor(
+  db: Pool,
+  input: { brandId: string; userId: string; grantedBy: string; granted: boolean },
+): Promise<boolean> {
+  if (!input.granted) {
+    await db.query('delete from brand_editor where brand_id = $1 and user_id = $2', [
+      input.brandId,
+      input.userId,
+    ]);
+
+    return true;
+  }
+
+  const result = await db.query(
+    `insert into brand_editor (brand_id, user_id, granted_by)
+     select $1, u.id, $3 from app_user u where u.id = $2
+     on conflict (brand_id, user_id) do nothing`,
+    [input.brandId, input.userId, input.grantedBy],
+  );
+
+  return result.rowCount !== null;
+}

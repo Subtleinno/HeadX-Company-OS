@@ -81,6 +81,12 @@ export type FakeHandlers = Partial<
     | 'brandFocus'
     | 'brandPages'
     | 'brandPage'
+    | 'brandPageCreate'
+    | 'brandPageRename'
+    | 'brandPageDeletePage'
+    | 'brandEditors'
+    | 'brandEditorGrant'
+    | 'brandEditorRevoke'
     | 'brandPageSave'
     | 'brandPageRestore'
     | 'brandPageDelete'
@@ -341,12 +347,34 @@ function routeKey(path: string, method: string): keyof FakeHandlers | null {
     return method === 'POST' ? 'brandPageSave' : null;
   }
 
+  // 一頁本身（issue #32）：讀、改顯示名、軟刪除。
   if (/\/brands\/[^/]+\/pages\/[^/]+$/.test(bare)) {
-    return method === 'GET' ? 'brandPage' : null;
+    if (method === 'GET') {
+      return 'brandPage';
+    }
+
+    if (method === 'PATCH') {
+      return 'brandPageRename';
+    }
+
+    return method === 'DELETE' ? 'brandPageDeletePage' : null;
   }
 
   if (/\/brands\/[^/]+\/pages$/.test(bare)) {
-    return method === 'GET' ? 'brandPages' : null;
+    return method === 'GET' ? 'brandPages' : method === 'POST' ? 'brandPageCreate' : null;
+  }
+
+  // ── 誰可以改這個品牌的頁（issue #32）。`/editors/:id` 先於 `/editors`。
+  if (/\/brands\/[^/]+\/editors\/[^/]+$/.test(bare)) {
+    if (method === 'PUT') {
+      return 'brandEditorGrant';
+    }
+
+    return method === 'DELETE' ? 'brandEditorRevoke' : null;
+  }
+
+  if (/\/brands\/[^/]+\/editors$/.test(bare)) {
+    return method === 'GET' ? 'brandEditors' : null;
   }
 
   // ── 品牌頁策略（issue #34）。`/policy/:slot/versions` 要放喺 `/policy` 之前。
