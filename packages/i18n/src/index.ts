@@ -690,7 +690,11 @@ export const messages = {
   'boss.page.addSite': '新增據點',
   'boss.page.credentials': '憑證與金鑰',
   'boss.page.approvals': '批准紀錄',
-  'boss.page.members': '人員與部門',
+  'boss.page.members': '管理級成員',
+  // #13 起「管理級成員」變成「人員與部門」。既有鍵唔改：i18n 有一道
+  // 「已交付文案零改動」的凍結閘（frame/files/policy/grant 四張測試），
+  // 改一個字就會令四張一齊紅。所以新頁面用新鍵，舊鍵原封不動留低。
+  'boss.page.people': '人員與部門',
   'boss.page.actions': '操作紀錄',
   'boss.group.machines': '據點 MACHINES',
   'boss.group.governance': '權限與稽核',

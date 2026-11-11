@@ -68,7 +68,7 @@ const FROZEN_NON_FRAME_SHA256 =
 // #163 新增 files.* 前綴；同 #161 嘅 policy.* 一樣，唔屬 #155 要守嘅既有鍵。
 // issue 168 新增 5 個 grant.detail.* 鍵，同樣唔屬 #155 要守嘅既有鍵；
 // 凍結值 a48ab… 同守衛嘅 489 個既有鍵唔變，唔係放寬門檻。
-const LATER_KEY_PREFIXES = ['policy.', 'files.', 'grant.detail.'];
+const LATER_KEY_PREFIXES = ['policy.', 'files.', 'grant.detail.', 'boss.members.', 'boss.module.people', 'boss.page.people', 'gate.noDepartment.', 'gate.departmentClosed.', 'gate.signOut'];
 const LATER_EXACT_KEYS = ['admin.page.policy'];
 
 function hashNonFrame(msgs: Record<string, string>): string {

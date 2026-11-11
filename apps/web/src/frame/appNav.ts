@@ -88,7 +88,7 @@ export const BOSS_NAV: AppNav = {
        */
       key: 'people',
       labelKey: 'boss.module.people',
-      groups: [{ pages: [{ key: 'members', labelKey: 'boss.page.members' }] }],
+      groups: [{ pages: [{ key: 'members', labelKey: 'boss.page.people' }] }],
     },
     {
       key: 'access',
