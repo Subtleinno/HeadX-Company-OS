@@ -228,3 +228,25 @@
   執行：兩份文件 `git mv` 入 `docs/archive/`（附上被誰取代）；`docker-compose.demo*.yml`、`.env.demo.example`、`scripts/demo-stack*` 直接刪除 —— 留著就可 `docker compose -f docker-compose.demo.yml up` 復活一套叫 `company-os-demo` 的舊 stack，正是昨日清掉的東西。`package.json` 的 `demo:check` 一併移除，`.gitignore` 的 `!.env.demo.example` 例外一併清掉。
 
   仍然有效的原則（不因 Demo stack 消失而失效）：**對外只經一條隧道、只指向 `gateway-internal`、不開其他入口。** 這三條現在寫在 C89、`README.md` 的「對外存取」與 `docs/product/HANDOFF.md` §2.5。
+
+### 2026-11-11 晚增補：文件不許過時、CI 不許偶發紅
+
+來源：老闆 2026-11-11「規矩不是我寫的，規矩由我定斷，請將所有有問題的東西 fix 晒佢」。
+
+背景是上一輪我報告「HANDOFF 未更新，但規矩係冇 issue 唔改 `docs/`，要更新就開一張 issue 我做」。老闆的回應指出問題的本質：**那條規矩不是他定的，是他收貨時看到的一份文件。** 一條令「明知寫錯卻不能改」的規矩，比沒有規矩更貴。
+
+- C93 **文件與程式碼不一致時，改文件，不要等 issue。**（修訂 AGENTS.md 開工規則 8）
+
+  原文：「`docs/` 與各 app 的 `DESIGN.md` 只在 issue 指定時才改。」
+
+  問題：`HANDOFF.md` 當時同時寫著六件已經不成立的事 —— 「登入後仍然全部去 `#/`」、「帳戶頁未做」、「員工帳戶現時不存在」、「`modulePages` 一律傳空」、「資料表只有 0011」、「介面唯一真相是 frame PNG」。每一件都是這一天之內被改掉的，而規矩令它們只能繼續留在紙上。下一個 session 讀到的是這一份，不是程式碼。
+
+  新規則：**`docs/` 與各 app 的 `DESIGN.md` 與程式碼不一致時，以程式碼為真相，即刻改文件。** 純粹「想新增一份文件」才要 issue。`AGENTS.md` 仍然可以改，但改動要記在這裡（C86 不變）。
+
+  同時把「不要等老闆的 UI 設計稿才開工」寫進 HANDOFF §7：先做成可以在 Docker 裡真的用，老闆用完直接提意見。
+
+- C94 **測試的單進程是配置，不是口訣。**
+
+  `HANDOFF` §6 第 1 條一直寫「測試要加 `--no-file-parallelism`」，但 CI 跑的是 `npm test`，它不會讀 §6。結果 PR #25 第一次跑 CI 紅在 `setup-form.test.tsx`（1 failed / 1660 passed），同一個 commit 原封重跑全綠。
+
+  會偶發紅的閘門，久了就被當成 flake；那時真正的紅燈也會被「重跑一次」蓋掉。所以 `fileParallelism: false` 寫進 `vitest.config.ts`，不再靠人記得。代價是 CI 慢一點，換來的是紅燈一定有原因。
