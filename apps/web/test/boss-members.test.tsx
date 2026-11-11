@@ -108,7 +108,7 @@ describe('人員名單', () => {
     openMembers({ staff: () => jsonResponse(200, { staff: [], total: 0 }) });
 
     await waitFor(() => {
-      expect(document.body.textContent).toContain('這間公司還沒有任何員工');
+      expect(document.body.textContent).toContain('呢間公司仲未有任何員工');
     });
   });
 
@@ -129,7 +129,7 @@ describe('人員名單', () => {
       expect(document.body.textContent).toContain('讀不到員工名單');
     });
 
-    expect(document.body.textContent).not.toContain('這間公司還沒有任何員工');
+    expect(document.body.textContent).not.toContain('呢間公司仲未有任何員工');
   });
 });
 

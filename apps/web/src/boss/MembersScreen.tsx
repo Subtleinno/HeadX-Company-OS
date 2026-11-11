@@ -204,8 +204,6 @@ export function MembersScreen() {
 
   return (
     <>
-      <p className="boss-note">{t('boss.members.lead')}</p>
-
       {created !== null && (
         <p className="boss-note" role="status" data-member-created>
           {t('boss.members.created', { name: created })}
@@ -216,7 +214,7 @@ export function MembersScreen() {
         <p className="boss-members__count">{t('staff.total', { count: state.total })}</p>
         <button
           type="button"
-          className="boss-btn boss-btn--primary"
+          className={formOpen ? 'boss-btn' : 'boss-btn boss-btn--primary'}
           onClick={() => {
             setFormOpen((open) => !open);
             setCreateError(null);
@@ -303,22 +301,23 @@ export function MembersScreen() {
             <button type="submit" className="boss-btn boss-btn--primary" disabled={creating}>
               {creating ? t('staff.create.busy') : t('staff.create.submit')}
             </button>
-            <button
-              type="button"
-              className="boss-btn"
-              onClick={() => {
-                setFormOpen(false);
-                setCreateError(null);
-              }}
-            >
-              {t('boss.members.createCancel')}
-            </button>
           </div>
         </form>
       )}
 
       {state.staff.length === 0 ? (
-        <p className="boss-empty">{t('staff.empty')}</p>
+        <p className="boss-empty">
+          {t('boss.members.empty')}{' '}
+          <button
+            type="button"
+            className="boss-link"
+            onClick={() => {
+              setFormOpen(true);
+            }}
+          >
+            {t('staff.create')}
+          </button>
+        </p>
       ) : (
         <div className="boss-sites-card boss-members">
           <table className="boss-sites">
