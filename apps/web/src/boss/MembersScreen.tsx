@@ -315,7 +315,7 @@ export function MembersScreen() {
               setFormOpen(true);
             }}
           >
-            {t('staff.create')}
+            {t('boss.members.createFirst')}
           </button>
         </p>
       ) : (
