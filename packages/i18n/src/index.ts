@@ -688,6 +688,9 @@ export const messages = {
   // 「邊個人屬於邊個部門」係老闆最常做的一件事，埋在機器設定之下
   // 只會令佢每次都要想兩次。模組名講「人員」，頁名講「人員與部門」。
   'boss.module.people': '人員',
+  // 策略獨立成一個模組（#34）：它不屬於任何一個品牌，講的是「這一類頁
+  // 要怎樣做」。模組名講「策略」，頁名講「品牌頁策略」。
+  'boss.module.policy': '策略',
   'boss.module.access': '存取紀錄',
   'boss.page.overview': '總覽',
   'boss.page.directory': '據點目錄',
@@ -699,6 +702,7 @@ export const messages = {
   // 「已交付文案零改動」的凍結閘（frame/files/policy/grant 四張測試），
   // 改一個字就會令四張一齊紅。所以新頁面用新鍵，舊鍵原封不動留低。
   'boss.page.people': '人員與部門',
+  'boss.page.brandPolicy': '品牌頁策略',
   'boss.page.actions': '操作紀錄',
   'boss.group.machines': '據點 MACHINES',
   'boss.group.governance': '權限與稽核',
@@ -809,6 +813,33 @@ export const messages = {
   'boss.members.actionFailed': '做唔到，請再試一次。',
   'boss.members.resetMissing': '兩格都要填：你自己嘅密碼，同新嘅臨時密碼。',
   'boss.members.tooManyAttempts': '試咗太多次，請等一陣再試。',
+
+  // 品牌頁策略（issue #34）。六個槽、一份策略、只有老闆可以改。
+  // 每一句都要講清楚「改了會怎樣」：已經做好的頁不會被重寫。
+  'boss.policy.lead': '六個槽的專業標準。只有你可以改；每次儲存是一個新版本，舊版留著。',
+  'boss.policy.picker': '策略的六個槽',
+  'boss.policy.slot.home': '品牌主頁',
+  'boss.policy.slot.logo': '標誌',
+  'boss.policy.slot.color': '色彩',
+  'boss.policy.slot.type': '字體',
+  'boss.policy.slot.tone': '語氣',
+  'boss.policy.slot.custom': '自定義頁通用',
+  'boss.policy.loading': '正在讀策略…',
+  'boss.policy.loadFailed': '讀唔到策略。',
+  'boss.policy.missing': '這個槽未有內容，標成缺。',
+  'boss.policy.editorLabel': '這一類頁的標準',
+  'boss.policy.hint': '每次儲存都會新增一版。已經做好的頁照舊版做，不會被這次改動重寫。',
+  'boss.policy.save': '儲存（新增一版）',
+  'boss.policy.saving': '儲存中…',
+  'boss.policy.saved': '已儲存第 {no} 版。',
+  'boss.policy.saveFailed': '儲存唔到，請再試。',
+  'boss.policy.emptyContent': '未有內容。',
+  'boss.policy.versions': '版本',
+  'boss.policy.versionNo': '第 {no} 版',
+  'boss.policy.currentTag': '現行',
+  'boss.policy.currentNote': '這是現行版本。策略只加不改：要改就儲存新版本，舊版永遠讀得返。',
+  'boss.policy.noVersion': '這個槽仲未有版本。',
+  'boss.policy.immutable': '策略只加不改：沒有刪除，也沒有改寫。舊版留著，因為已出街的成品可能引用它。',
 
   'gate.title': '你冇權限睇呢頁',
   'gate.body': '呢頁只有老闆同管理級可以開。你而家嘅身份係「{role}」。',
@@ -1046,6 +1077,9 @@ export const messages = {
   'brand.page.pinned': '呢一版被已出街成品釘住：{labels}。要斷開，先改嗰件成品。',
   'brand.page.readOnly': '你只可以看這一頁。要改，請找老闆。',
   'brand.page.actionFailed': '做唔到，請再試。',
+  // 這一版當時用的是第幾版策略（#34）。null 就講「未記錄」，不要假設第 1 版。
+  'brand.page.policyVersionNo': '依第 {no} 版策略',
+  'brand.page.policyUnrecorded': '策略版本未記錄',
 } as const;
 
 export type MessageKey = keyof typeof messages;

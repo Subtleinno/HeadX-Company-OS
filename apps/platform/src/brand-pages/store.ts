@@ -1,4 +1,5 @@
 import type { Pool, PoolClient } from 'pg';
+import { currentPolicyVersion, slotForPageKey } from '../brand-policy/store.js';
 
 /**
  * 品牌頁與頁版本的讀寫（issue #33，決策 C97）。
@@ -25,6 +26,13 @@ export type VersionSummary = {
   note: string | null;
   /** 頭 160 個字元；列表要顯示「這一版大概是什麼」，不要為了預覽搬整個文件。 */
   preview: string;
+  /**
+   * 這一版當時用的是第幾版策略（issue #34）。
+   *
+   * null＝未記錄：策略功能之前建立的版本（示範資料）沒有這個資訊。硬填一個
+   * 號碼就是虛構，所以畫面講「未記錄」，而不是講第 1 版。
+   */
+  policyVersionNo: number | null;
 };
 
 export type VersionDetail = VersionSummary & { content: string };
@@ -57,6 +65,7 @@ type VersionRow = {
   note: string | null;
   preview?: string;
   content?: string;
+  policy_version_no?: number | null;
 };
 
 /**
@@ -78,6 +87,7 @@ function toSummary(row: VersionRow): VersionSummary {
     createdAt: row.created_at.toISOString(),
     note: row.note,
     preview: row.preview ?? '',
+    policyVersionNo: row.policy_version_no ?? null,
   };
 }
 
@@ -112,16 +122,20 @@ export async function ensureFixedPages(db: Pool, brandId: string): Promise<void>
 }
 
 export async function listPages(db: Pool, brandId: string): Promise<BrandPageView[]> {
-  const result = await db.query<PageRow & { version_id: string | null; version_no: number | null; version_created_at: Date | null; version_note: string | null; version_preview: string | null }>(
+  const result = await db.query<PageRow & { version_id: string | null; version_no: number | null; version_created_at: Date | null; version_note: string | null; version_preview: string | null; version_policy_no: number | null }>(
     `select p.id, p.brand_id, p.kind, p.key, p.name, p.brief, p.sort_order,
             v.id as version_id, v.version_no, v.created_at as version_created_at,
-            v.note as version_note, v.preview as version_preview
+            v.note as version_note, v.preview as version_preview,
+            v.policy_version_no as version_policy_no
        from brand_page p
        left join lateral (
-         select id, version_no, created_at, note, left(content, 160) as preview
-           from brand_page_version
-          where page_id = p.id and deleted_at is null
-          order by version_no desc
+         select vv.id, vv.version_no, vv.created_at, vv.note,
+                left(vv.content, 160) as preview,
+                pv.version_no as policy_version_no
+           from brand_page_version vv
+           left join brand_policy_version pv on pv.id = vv.policy_version_id
+          where vv.page_id = p.id and vv.deleted_at is null
+          order by vv.version_no desc
           limit 1
        ) v on true
       where p.brand_id = $1 and p.deleted_at is null
@@ -146,6 +160,7 @@ export async function listPages(db: Pool, brandId: string): Promise<BrandPageVie
             createdAt: row.version_created_at.toISOString(),
             note: row.version_note,
             preview: row.version_preview ?? '',
+            policyVersionNo: row.version_policy_no,
           },
   }));
 }
@@ -162,10 +177,12 @@ export async function findPage(
 /** 版本列表，新的在前。已刪除的不會出現（歷史仍在資料庫）。 */
 export async function listVersions(db: Pool, pageId: string): Promise<VersionSummary[]> {
   const result = await db.query<VersionRow>(
-    `select id, version_no, created_at, note, left(content, 160) as preview
-       from brand_page_version
-      where page_id = $1 and deleted_at is null
-      order by version_no desc`,
+    `select v.id, v.version_no, v.created_at, v.note, left(v.content, 160) as preview,
+            pv.version_no as policy_version_no
+       from brand_page_version v
+       left join brand_policy_version pv on pv.id = v.policy_version_id
+      where v.page_id = $1 and v.deleted_at is null
+      order by v.version_no desc`,
     [pageId],
   );
 
@@ -177,10 +194,12 @@ export async function findCurrentVersion(
   pageId: string,
 ): Promise<VersionDetail | null> {
   const result = await db.query<VersionRow>(
-    `select id, version_no, created_at, note, left(content, 160) as preview, content
-       from brand_page_version
-      where page_id = $1 and deleted_at is null
-      order by version_no desc
+    `select v.id, v.version_no, v.created_at, v.note, left(v.content, 160) as preview,
+            v.content, pv.version_no as policy_version_no
+       from brand_page_version v
+       left join brand_policy_version pv on pv.id = v.policy_version_id
+      where v.page_id = $1 and v.deleted_at is null
+      order by v.version_no desc
       limit 1`,
     [pageId],
   );
@@ -189,9 +208,19 @@ export async function findCurrentVersion(
   return row === undefined ? null : toDetail(row);
 }
 
-async function lockPage(client: PoolClient, pageId: string): Promise<boolean> {
-  const result = await client.query('select 1 from brand_page where id = $1 for update', [pageId]);
-  return result.rowCount !== null && result.rowCount > 0;
+/**
+ * 鎖住這一頁並取回它的鍵。
+ *
+ * 鍵用來找對應的策略槽（第 6 個是自定義頁通用），所以同一個鎖要一併交回，
+ * 不要為了拿鍵再查一次 —— 兩次查詢之間有人改頁的鍵，就會記錯槽。
+ */
+async function lockPage(client: PoolClient, pageId: string): Promise<string | null> {
+  const result = await client.query<{ key: string }>(
+    'select key from brand_page where id = $1 for update',
+    [pageId],
+  );
+
+  return result.rows[0]?.key ?? null;
 }
 
 async function nextVersionNo(client: PoolClient, pageId: string): Promise<number> {
@@ -230,18 +259,32 @@ export async function createVersion(db: Pool, input: NewVersion): Promise<Versio
   try {
     await client.query('begin');
 
-    if (!(await lockPage(client, input.pageId))) {
+    const pageKey = await lockPage(client, input.pageId);
+
+    if (pageKey === null) {
       await client.query('rollback');
       throw new Error(`頁不存在：${input.pageId}`);
     }
 
     const versionNo = await nextVersionNo(client, input.pageId);
 
+    // 記住這一版是照第幾版策略做的（#34）。策略之後改了，這一版仍然指著
+    // 當時那一版 —— 已經做好的頁不會被靜靜重寫。
+    const policy = await currentPolicyVersion(client, slotForPageKey(pageKey));
+
     const inserted = await client.query<VersionRow>(
-      `insert into brand_page_version (page_id, version_no, content, note, created_by)
-       values ($1, $2, $3, $4, $5)
+      `insert into brand_page_version
+         (page_id, version_no, content, note, created_by, policy_version_id)
+       values ($1, $2, $3, $4, $5, $6)
        returning id, version_no, created_at, note, left(content, 160) as preview, content`,
-      [input.pageId, versionNo, input.content, input.note, input.actorId],
+      [
+        input.pageId,
+        versionNo,
+        input.content,
+        input.note,
+        input.actorId,
+        policy?.id ?? null,
+      ],
     );
 
     await client.query('commit');
@@ -252,7 +295,7 @@ export async function createVersion(db: Pool, input: NewVersion): Promise<Versio
       throw new Error('新增版本之後沒有回傳列');
     }
 
-    return toDetail(row);
+    return toDetail({ ...row, policy_version_no: policy?.versionNo ?? null });
   } catch (error) {
     await client.query('rollback').catch(() => undefined);
     throw error;
@@ -280,15 +323,21 @@ export async function restoreVersion(
   try {
     await client.query('begin');
 
-    if (!(await lockPage(client, input.pageId))) {
+    if ((await lockPage(client, input.pageId)) === null) {
       await client.query('rollback');
       return { status: 'not_found' };
     }
 
-    const source = await client.query<{ version_no: number; content: string }>(
-      `select version_no, content
-         from brand_page_version
-        where id = $1 and page_id = $2 and deleted_at is null`,
+    const source = await client.query<{
+      version_no: number;
+      content: string;
+      policy_version_id: string | null;
+      policy_version_no: number | null;
+    }>(
+      `select v.version_no, v.content, v.policy_version_id, pv.version_no as policy_version_no
+         from brand_page_version v
+         left join brand_policy_version pv on pv.id = v.policy_version_id
+        where v.id = $1 and v.page_id = $2 and v.deleted_at is null`,
       [input.sourceVersionId, input.pageId],
     );
 
@@ -301,11 +350,21 @@ export async function restoreVersion(
 
     const versionNo = await nextVersionNo(client, input.pageId);
 
+    // 內容來自那一版，所以策略引用也照抄那一版：這一版畫面上寫「用回第 N 版」，
+    // 就不應該同時聲稱自己用的是今天的策略。
     const inserted = await client.query<VersionRow>(
-      `insert into brand_page_version (page_id, version_no, content, note, created_by)
-       values ($1, $2, $3, $4, $5)
+      `insert into brand_page_version
+         (page_id, version_no, content, note, created_by, policy_version_id)
+       values ($1, $2, $3, $4, $5, $6)
        returning id, version_no, created_at, note, left(content, 160) as preview, content`,
-      [input.pageId, versionNo, row.content, `用回第 ${row.version_no} 版`, input.actorId],
+      [
+        input.pageId,
+        versionNo,
+        row.content,
+        `用回第 ${row.version_no} 版`,
+        input.actorId,
+        row.policy_version_id,
+      ],
     );
 
     await client.query('commit');
@@ -316,7 +375,10 @@ export async function restoreVersion(
       throw new Error('用回舊版之後沒有回傳列');
     }
 
-    return { status: 'ok', version: toDetail(created) };
+    return {
+      status: 'ok',
+      version: toDetail({ ...created, policy_version_no: row.policy_version_no }),
+    };
   } catch (error) {
     await client.query('rollback').catch(() => undefined);
     throw error;
@@ -349,7 +411,7 @@ export async function deleteVersion(
   try {
     await client.query('begin');
 
-    if (!(await lockPage(client, input.pageId))) {
+    if ((await lockPage(client, input.pageId)) === null) {
       await client.query('rollback');
       return { status: 'not_found' };
     }

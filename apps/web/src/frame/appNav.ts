@@ -91,6 +91,18 @@ export const BOSS_NAV: AppNav = {
       groups: [{ pages: [{ key: 'members', labelKey: 'boss.page.people' }] }],
     },
     {
+      /**
+       * 策略獨立成一個模組（issue #34）。
+       *
+       * 它不屬於任何一個品牌：策略講的是「這一類頁要怎樣做」，同一套專業標準
+       * 用於所有品牌。所以放在公司範圍的 Boss Portal，而不是品牌模組。
+       * 放在「人員」之後、「存取紀錄」之前：前者是工作區，後者是唯讀紀錄。
+       */
+      key: 'policy',
+      labelKey: 'boss.module.policy',
+      groups: [{ pages: [{ key: 'brand', labelKey: 'boss.page.brandPolicy' }] }],
+    },
+    {
       key: 'access',
       labelKey: 'boss.module.access',
       groups: [

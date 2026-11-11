@@ -9,6 +9,7 @@ import { createHashLimiter, parseHashLimits, type HashLimitsConfig } from './aut
 import { registerAuth } from './auth/routes.js';
 import { registerAgents } from './agents/index.js';
 import { registerBrandPages } from './brand-pages/index.js';
+import { registerBrandPolicy } from './brand-policy/index.js';
 import { registerStaff } from './staff/index.js';
 import { attachPoolErrorHandler, createDbCheck } from './db.js';
 import { DEFAULT_MAX_UPLOAD_BYTES, registerFiles } from './files/routes.js';
@@ -264,6 +265,9 @@ async function main(): Promise<void> {
 
   // 品牌頁與頁版本（issue #33）：讀要登入，寫只有老闆（品牌級授權見 #32）。
   registerBrandPages(app, { pool });
+
+  // 品牌頁策略（issue #34）：六個槽，只加不改，寫只有老闆。
+  registerBrandPolicy(app, { pool });
 
   // 公司設定與政策規則：全部要老闆，寫入留審計。
   registerSettings(app, { pool });

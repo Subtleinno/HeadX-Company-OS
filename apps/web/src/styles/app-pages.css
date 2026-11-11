@@ -816,7 +816,9 @@
 }
 
 /* ── 品牌頁版本（issue #33）──────────────────────────────────── */
-/* 版面對齊既有內容頁：細線分隔、不用卡片堆疊、不加裝飾色。 */
+/* 版面對齊既有內容頁：細線分隔、不用卡片堆疊、不加裝飾色。
+   這組 class 是「頁籤＋編輯框＋版本列表」的共用版型：#33 的品牌頁與
+   #34 的策略頁都用它。名字裡的 brand 是歷史，不是範圍。 */
 .brand-page {
   display: flex;
   flex-direction: column;
@@ -990,6 +992,13 @@
 }
 
 .brand-page__currentNote {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--hx-frame-muted);
+}
+
+/* 這一版當時用的策略版本（#34）。細一級：它是註腳，不是內容。 */
+.brand-page__policy {
   margin: 6px 0 0;
   font-size: 12px;
   color: var(--hx-frame-muted);

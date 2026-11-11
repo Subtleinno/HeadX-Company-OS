@@ -59,12 +59,12 @@ const DESIGN = {
 
 const PAGES = [
   { id: 'p-home', brandId: 'b-moonic', kind: 'fixed', key: 'home', name: '品牌主頁', brief: null, sortOrder: 10, current: null },
-  { id: 'p-logo', brandId: 'b-moonic', kind: 'fixed', key: 'logo', name: '標誌', brief: null, sortOrder: 20, current: { id: 'v2', versionNo: 2, createdAt: '2026-11-11T10:00:00.000Z', note: null, preview: '第二版內容' } },
+  { id: 'p-logo', brandId: 'b-moonic', kind: 'fixed', key: 'logo', name: '標誌', brief: null, sortOrder: 20, current: { id: 'v2', versionNo: 2, createdAt: '2026-11-11T10:00:00.000Z', note: null, preview: '第二版內容', policyVersionNo: 2 } },
   { id: 'p-color', brandId: 'b-moonic', kind: 'fixed', key: 'color', name: '色彩', brief: null, sortOrder: 30, current: null },
 ];
 
-const V2 = { id: 'v2', versionNo: 2, createdAt: '2026-11-11T10:00:00.000Z', note: null, preview: '第二版內容' };
-const V1 = { id: 'v1', versionNo: 1, createdAt: '2026-11-10T10:00:00.000Z', note: '第一次', preview: '第一版內容' };
+const V2 = { id: 'v2', versionNo: 2, createdAt: '2026-11-11T10:00:00.000Z', note: null, preview: '第二版內容', policyVersionNo: 2 };
+const V1 = { id: 'v1', versionNo: 1, createdAt: '2026-11-10T10:00:00.000Z', note: '第一次', preview: '第一版內容', policyVersionNo: 1 };
 
 function pageDetail(overrides: { current?: unknown; versions?: unknown[] } = {}) {
   return {

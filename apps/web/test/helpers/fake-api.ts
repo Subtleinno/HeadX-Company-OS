@@ -83,7 +83,9 @@ export type FakeHandlers = Partial<
     | 'brandPage'
     | 'brandPageSave'
     | 'brandPageRestore'
-    | 'brandPageDelete',
+    | 'brandPageDelete'
+    | 'policy'
+    | 'policySave',
     Handler
   >
 >;
@@ -345,6 +347,15 @@ function routeKey(path: string, method: string): keyof FakeHandlers | null {
 
   if (/\/brands\/[^/]+\/pages$/.test(bare)) {
     return method === 'GET' ? 'brandPages' : null;
+  }
+
+  // ── 品牌頁策略（issue #34）。`/policy/:slot/versions` 要放喺 `/policy` 之前。
+  if (/\/policy\/[^/]+\/versions$/.test(bare)) {
+    return method === 'POST' ? 'policySave' : null;
+  }
+
+  if (bare.endsWith('/policy')) {
+    return method === 'GET' ? 'policy' : null;
   }
 
   if (bare.endsWith('/brands')) {

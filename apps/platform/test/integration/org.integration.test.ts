@@ -880,6 +880,7 @@ describe('舊資料庫升級（#80 的 0001–0004 → 0005 及之後）', () =>
         '0011_brands_sites.sql',
         '0012_user_brand_focus.sql',
         '0013_brand_pages.sql',
+        '0014_brand_policy.sql',
       ]);
 
       // 4. 既有資料一個字都沒動。
