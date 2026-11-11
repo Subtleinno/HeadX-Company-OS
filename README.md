@@ -183,7 +183,7 @@ apps 在 profile 之下，要另外：docker compose --profile apps up -d apps
 
 **為甚麼只指向 4210**：對外只應該見到「網頁 ＋ `/api`」。`api`（4420）、`storage`（MinIO 主控台）、`apps`、`db` 都不經隧道 —— 多開一個，等於多一個繞過入口憑證與 CSRF 前哨的門。
 
-**這條隧道只屬開發期。** 現時唯一閘門是 app 自己的登入頁，而密碼是 demo 密碼。正式管理公司資料之前，必須換密碼、開 Cloudflare 的 Always Use HTTPS、並加 Access 政策（決策 C89）。
+**這條隧道只屬開發期。** 現時唯一閘門是 app 自己的登入頁，而密碼是 demo 密碼。正式管理公司資料之前，必須換密碼、並加 Access 政策（決策 C89）。Cloudflare 的 **Always Use HTTPS 已開**（2026-11-11），`http://` 會 301 跳去 `https://`。
 
 ## 檔案儲存
 

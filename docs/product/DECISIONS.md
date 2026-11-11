@@ -211,7 +211,9 @@
 
   **`COOKIE_SECURE` 維持 `false`**：同一套 stack 同時要服務 `http://127.0.0.1:4210` 與 `https://hxd.subtle-inno.com`，設 `true` 會令本機 http 登入失效。代價是對外那個 cookie 沒有 Secure 旗標 —— 而 Cloudflare 現時**未開 Always Use HTTPS**（實測 `http://` 仍然回 200 不跳轉），即明文 http 一樣送得出這個 cookie。**這條要在正式對外之前修好**（開 Always Use HTTPS；到時只留 https 入口，`COOKIE_SECURE` 就可以開）。
 
-  **保安級別如實講**：現在唯一閘門是 app 自己的登入頁，密碼是 demo 密碼 `Frame-needs-2026!`。這是「開發期可接受」，不是「可以開始用」。正式管理公司資料之前必須做三件：(1) 換掉 demo 密碼；(2) Cloudflare 開 Always Use HTTPS；(3) 加 Access 政策（只准指定 email 過得去）。
+  **2026-11-11 補記：Always Use HTTPS 已開**（Cloudflare → SSL/TLS → Edge Certificates → Always Use HTTPS = On）。實測 `http://hxd.subtle-inno.com` 與 `http://subtle-inno.com` 均回 `301 Moved Permanently`，明文的門已封；這是全 zone 設定，`subtle-inno.com` 底下其他子域名同樣只走 https。**`COOKIE_SECURE` 仍然 `false`**，理由是同一套 stack 要服務本機 `http://127.0.0.1:4210`；等不再需要本機 http 入口（或改用本機 https）才開。剩下未做的兩件：換掉 demo 密碼、加 Access 政策。
+
+  **保安級別如實講**：現在唯一閘門是 app 自己的登入頁，密碼是 demo 密碼 `Frame-needs-2026!`。這是「開發期可接受」，不是「可以開始用」。正式管理公司資料之前必須做三件：(1) 換掉 demo 密碼；(2) Cloudflare 開 Always Use HTTPS（**2026-11-11 已完成**）；(3) 加 Access 政策（只准指定 email 過得去）。
 
   **來源 IP 的實測結果**：nginx 日誌的 `remote_addr` 是 `172.20.0.1`（docker bridge gateway），但 `X-Forwarded-For` 帶有真實訪客 IP（實測見到 `218.190.15.227`），所以審計查得到人。登入限流 `password-throttle` 是按 **user id** 而不是按 IP，所以不會出現「一人試錯、全公司被鎖」。到要做按 IP 封鎖那天，才需要令 nginx 讀 `CF-Connecting-IP`。
 
