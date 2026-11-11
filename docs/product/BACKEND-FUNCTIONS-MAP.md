@@ -209,6 +209,7 @@
 | `DesignApp` | `#/design`：品牌模組的頁清單與自定義頁（建立／改名／刪除）、品牌主頁位置、記住上次品牌 | `/brands`、`/brands/:id/pages`、`/me/brand-focus` |
 | `BrandEditorsPanel` | `#/boss/people/members` 下半：誰可以改這個品牌的頁 | `/brands`、`/brands/:id/editors` |
 | `BrandColorEditor` | `#/design/brand/color` 的表身：九個角色／淺色與深色／HEX・RGB・CMYK／階／准用與不准／標誌可用角色。內容是版本內容的一段 JSON（C105），儲存仍然走 `BrandPageScreen` 那一個鍵 | 無（純前端計算：對比與 RGB 都即時算） |
+| `BrandTypeEditor` | `#/design/brand/type` 的表身：四個層級（家族・尺寸・行距・字重・最小尺寸・文字顏色）＋家族與授權（最多兩個）＋配對・備用字・行長・對齊・錯誤用法。內容是版本內容的一段 JSON（C106），儲存仍然走 `BrandPageScreen` 那一個鍵 | 無（文字顏色由 `brandColors.ts` 的角色名單來） |
 | `NeedsScreen` | `#/needs`：需求列表與認領（**不可以新增**） | `/needs`、`/needs/:id/claim` |
 | `FilesScreen` | `#/files`：上傳、列表、下載、軟刪除 | `/files*` |
 

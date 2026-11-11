@@ -100,6 +100,10 @@ describe('字串表', () => {
       'brand.color.pairUnknown',
       'brand.color.ratio',
       'brand.color.logoNote',
+      'brand.type.familyGap',
+      'brand.type.missingLine',
+      'brand.type.gapScripts',
+      'brand.type.gapRoles',
     ]);
   });
 });
