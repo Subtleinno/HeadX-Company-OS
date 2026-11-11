@@ -1299,3 +1299,193 @@
   border-radius: 4px;
   border: 1px solid var(--hx-frame-border);
 }
+
+/* ── 字體頁（issue #38） ───────────────────────────────────── */
+
+/*
+ * 四個層級 × 兩個家族的表。左邊永遠是角色名（寫死的鍵），數值在右邊。
+ * 這一頁的閱讀次序是「哪個層級用哪個家族、幾多 px」，不是「哪個字好看」。
+ */
+.brand-type {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hx-space-5);
+}
+
+.brand-type__missing {
+  margin: 0;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+}
+
+.brand-type__missing--gap {
+  color: var(--hx-danger-text);
+}
+
+.brand-type__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hx-space-2);
+}
+
+.brand-type__key {
+  font-family: var(--hx-font-mono);
+  font-size: 13px;
+  color: var(--hx-frame-ink);
+}
+
+.brand-type__family {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hx-space-2);
+  padding: var(--hx-space-2) 0;
+  border-top: 1px solid var(--hx-frame-border);
+}
+
+.brand-type__familyHead {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+  flex-wrap: wrap;
+}
+
+/* 刪除鍵推到最右：貼住家族名會令人以為那是家族狀態。 */
+.brand-type__familyHead [data-type-family-remove] {
+  margin-left: auto;
+}
+
+.brand-type__familyName {
+  font: var(--hx-frame-font-ui);
+  color: var(--hx-frame-ink);
+}
+
+.brand-type__badge {
+  flex: none;
+  border-radius: var(--hx-radius-sm);
+  padding: 1px 6px;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-danger-text);
+  border: 1px solid var(--hx-danger-text);
+}
+
+.brand-type__familyFields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--hx-space-2) var(--hx-space-3);
+}
+
+.brand-type__field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.brand-type__field .design-input {
+  max-width: 160px;
+}
+
+.brand-type__field--wide .design-input {
+  max-width: 240px;
+}
+
+.brand-type__fieldLabel {
+  flex: none;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-muted);
+}
+
+.brand-type__check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+}
+
+.brand-type__adder {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+  flex-wrap: wrap;
+}
+
+.brand-type__adder .design-input {
+  max-width: 260px;
+}
+
+/* 一個層級一行。窄的時候兩欄，數值仍然跟在角色名後面。 */
+.brand-type__row {
+  display: grid;
+  grid-template-columns: 92px minmax(150px, 200px) 104px 104px 100px 108px 148px;
+  align-items: center;
+  gap: var(--hx-space-2);
+  padding: var(--hx-space-2) 0;
+  border-top: 1px solid var(--hx-frame-border);
+}
+
+.brand-type__row .design-input {
+  max-width: 100%;
+}
+
+/* 一行的標籤壓在輸入框上面：七欄橫排，標籤與輸入框爭位只會有人被切走。 */
+.brand-type__row .brand-type__field {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+}
+
+.brand-type__row [data-type-unit-error] {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+@media (max-width: 1100px) {
+  .brand-type__row {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.brand-type__roleHead {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+  min-width: 0;
+}
+
+.brand-type__textarea {
+  min-height: 72px;
+}
+
+.brand-type__misuseList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.brand-type__misuseItem {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+}
+
+/* 版本列表的字體頁：家族名，不印 JSON。 */
+.brand-page__families {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.brand-page__familyChip {
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-sm);
+  padding: 1px 6px;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+}

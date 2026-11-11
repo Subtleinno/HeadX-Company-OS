@@ -12,7 +12,9 @@ import {
 } from '../api';
 import { failureMessage } from './apiFailure';
 import { BrandColorEditor } from './BrandColorEditor';
+import { BrandTypeEditor } from './BrandTypeEditor';
 import { hexesInText } from './brandColors';
+import { namesInText } from './brandType';
 
 /**
  * 一頁品牌頁的時間軸（issue #33），加上自定義頁的改名與刪除（issue #32）。
@@ -67,6 +69,30 @@ function ColorVersionPreview({ preview }: { preview: string }) {
           data-color-version-swatch={hex}
           aria-hidden="true"
         />
+      ))}
+    </span>
+  );
+}
+
+/**
+ * 字體頁的版本預覽：家族名，不印 JSON。
+ *
+ * 版本列表只拿到 160 字元的截斷內容，解析不到；但家族名寫在 JSON 最前面，
+ * 所以抽得到。抽不到就講「未有可供顯示的家族名」，不畫假的。
+ */
+function TypeVersionPreview({ preview }: { preview: string }) {
+  const names = namesInText(preview).slice(0, 3);
+
+  if (names.length === 0) {
+    return <p className="brand-page__preview">{t('brand.type.versionNoName')}</p>;
+  }
+
+  return (
+    <span className="brand-page__families" data-type-version-names>
+      {names.map((name) => (
+        <span className="brand-page__familyChip" key={name} data-type-version-name={name}>
+          {name}
+        </span>
       ))}
     </span>
   );
@@ -138,7 +164,11 @@ export function BrandPageScreen({
 
     if (draft.trim() === '') {
       setError(
-        pageKey === 'color' ? t('brand.color.empty') : t('brand.page.emptyContent'),
+        pageKey === 'color'
+          ? t('brand.color.empty')
+          : pageKey === 'type'
+            ? t('brand.type.empty')
+            : t('brand.page.emptyContent'),
       );
       return;
     }
@@ -412,11 +442,17 @@ export function BrandPageScreen({
         </p>
       )}
 
-      {/* 色彩頁（#35）用表，不用自由文字。兩者共用同一個 draft 與同一個儲存鍵：
-          在這裡分岔而不是另開一個畫面，版本列表、改名、刪頁就只有一份。 */}
+      {/* 色彩（#35）與字體（#38）用表，不用自由文字。三者共用同一個 draft
+          與同一個儲存鍵：在這裡分岔而不是另開一個畫面，版本列表、改名、
+          刪頁就只有一份。 */}
       {pageKey === 'color' ? (
         <div className="brand-page__body" data-brand-page-body="color">
           <BrandColorEditor content={draft} canEdit={canEdit} onChange={setDraft} />
+          {canEdit && <p className="design-field__hint">{t('brand.page.hint')}</p>}
+        </div>
+      ) : pageKey === 'type' ? (
+        <div className="brand-page__body" data-brand-page-body="type">
+          <BrandTypeEditor content={draft} canEdit={canEdit} onChange={setDraft} />
           {canEdit && <p className="design-field__hint">{t('brand.page.hint')}</p>}
         </div>
       ) : (
@@ -491,6 +527,8 @@ export function BrandPageScreen({
 
                   {pageKey === 'color' ? (
                     <ColorVersionPreview preview={version.preview} />
+                  ) : pageKey === 'type' ? (
+                    <TypeVersionPreview preview={version.preview} />
                   ) : (
                     version.preview !== '' && (
                       <p className="brand-page__preview">{version.preview}</p>
