@@ -335,9 +335,10 @@ export function MembersScreen() {
       {created !== null && (
         <p className="boss-note" role="status" data-member-created>
           {t('boss.members.created', { name: created.name })}
+          {/* 不加前導空格：中文句號後面直接接下一句，加了會見到「。 已指派」。 */}
           {created.departmentTitle === null
-            ? ` ${t('boss.members.createdUnassigned')}`
-            : ` ${t('boss.members.createdIn', { department: created.departmentTitle })}`}
+            ? t('boss.members.createdUnassigned')
+            : t('boss.members.createdIn', { department: created.departmentTitle })}
         </p>
       )}
 
