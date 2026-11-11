@@ -27,9 +27,11 @@ import {
  * 2. **改部門是即時儲存，不是按「儲存」**。一次只改一個欄位，加一個確定
  *    步驟只會令人以為未儲存。失敗就把下拉還原成原本的值，並在該行講清楚
  *    —— 不假裝成功，也不留一個「畫面顯示 A、資料庫是 B」的狀態。
- * 3. **建立員工時不順便指派部門**。後端建立帳戶時 department 一定是
- *    `null`（issue #12 的決定），所以表單沒有部門欄位。員工建立之後會以
- *    「未指派」出現在表上，這一頁直接引導下一步，而不是假裝一步做完。
+ * 3. **建立員工時可以一併選部門**（issue #28，C92「建立時就要選部門」）。
+ *    選了就在同一個請求送 `department`；沒選就送 `null`，並即刻講清楚後果
+ *    （「佢登入會被擋」）。先建人、再回頭找那一行指派，中間會有一個
+ *    「帳戶存在但登入即被擋」的狀態 —— 對老闆只是多按一下，對那個人是
+ *    「我入唔到系統」。建完之後仍然可以在表上改，因為部門會變、人也會調。
  *
  * 停用與重設密碼（issue #24）刻意放在同一張表的每一行：這兩件事都是
  * 「這個人仲可不可以用這個身份進來」，跟部門是同一個問題的三面。停用之前
@@ -85,9 +87,18 @@ export function MembersScreen() {
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
   const [initialPassword, setInitialPassword] = useState('');
+  /**
+   * 建立時順便選的部門（issue #28，C92「建立時就要選部門」）。
+   *
+   * 預設是「未指派」而不是強制選一個：部門會變、人也會調，強制填一個
+   * 只會令人亂揀一個來過關。但下拉就在表單上，不必建立完再回頭找那一行。
+   */
+  const [newDepartment, setNewDepartment] = useState(NO_DEPARTMENT);
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
-  const [created, setCreated] = useState<string | null>(null);
+  const [created, setCreated] = useState<{ name: string; departmentTitle: string | null } | null>(
+    null,
+  );
 
   /**
    * 停用與重設密碼（issue #24）的面板。一次只開一個：同一個人身上不會同時
@@ -271,6 +282,9 @@ export function MembersScreen() {
       displayName: displayName.trim(),
       email: email.trim(),
       initialPassword,
+      // 一次請求講齊「這個人是誰、在哪個部門」。分兩次送，中間會有一個
+      // 帳戶存在但登入即被擋的狀態。
+      department: newDepartment === NO_DEPARTMENT ? null : newDepartment,
     });
 
     setCreating(false);
@@ -284,7 +298,19 @@ export function MembersScreen() {
     setInitialPassword('');
     setDisplayName('');
     setEmail('');
-    setCreated(result.data.staff.displayName);
+    setNewDepartment(NO_DEPARTMENT);
+
+    const assigned = result.data.staff.department;
+    // 講「已指派到設計部」，而不是講「已指派到 design」。後者是 schema 名，
+    // 是給程式看的；老闆看的是部門叫什麼。
+    const title =
+      assigned === null
+        ? null
+        : ((state.kind === 'ready'
+            ? state.departments.find((item) => (item.department ?? item.id) === assigned)?.title
+            : undefined) ?? assigned);
+
+    setCreated({ name: result.data.staff.displayName, departmentTitle: title });
     void load();
   }
 
@@ -308,7 +334,10 @@ export function MembersScreen() {
     <>
       {created !== null && (
         <p className="boss-note" role="status" data-member-created>
-          {t('boss.members.created', { name: created })}
+          {t('boss.members.created', { name: created.name })}
+          {created.departmentTitle === null
+            ? ` ${t('boss.members.createdUnassigned')}`
+            : ` ${t('boss.members.createdIn', { department: created.departmentTitle })}`}
         </p>
       )}
 
@@ -376,6 +405,36 @@ export function MembersScreen() {
                 setEmail(event.target.value);
               }}
             />
+          </div>
+
+          {/* 部門放密碼之前：先講「這個人屬於邊個部門」，再講「用邊個密碼入嚟」。
+              密碼是最後一格，符合填表習慣，也代表它是最不該留在畫面上的一格。 */}
+          <div className="boss-field">
+            <label className="boss-field__label" htmlFor="member-department">
+              {t('boss.members.newDepartment')}
+            </label>
+            <select
+              id="member-department"
+              className="boss-input boss-select"
+              name="department"
+              value={newDepartment}
+              aria-describedby="member-department-hint"
+              onChange={(event) => {
+                setNewDepartment(event.target.value);
+              }}
+            >
+              <option value={NO_DEPARTMENT}>{t('boss.members.unassigned')}</option>
+              {state.departments.map((department) => (
+                <option key={department.id} value={department.department ?? NO_DEPARTMENT}>
+                  {department.available
+                    ? department.title
+                    : `${department.title}${t('boss.members.notOpen')}`}
+                </option>
+              ))}
+            </select>
+            <span className="boss-field__hint" id="member-department-hint">
+              {t('boss.members.newDepartmentHint')}
+            </span>
           </div>
 
           <div className="boss-field">

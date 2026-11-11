@@ -15,7 +15,10 @@ export type { PageQuery, ParseResult } from '../pagination.js';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-const CREATE_FIELDS = ['displayName', 'email', 'initialPassword'] as const;
+/** 與 app id／schema 名同一套規則（`apps/platform/src/db-access/naming.ts`）。 */
+const DEPARTMENT_KEY = /^[a-z][a-z0-9_]{0,40}$/;
+
+const CREATE_FIELDS = ['displayName', 'email', 'initialPassword', 'department'] as const;
 
 export const DISPLAY_NAME_MAX_LENGTH = 100;
 
@@ -23,6 +26,14 @@ export type CreateStaffInput = {
   displayName: string;
   email: string;
   initialPassword: string;
+  /**
+   * 建立時一併指派部門（issue #28，C92：「建立時就要選部門」）。
+   *
+   * `null` ＝未指派，是一個合法值；**欄位缺席也當 `null`**，因為舊呼叫端
+   * （測試、腳本）沒有這個欄位，突然要它必填只是把相容性當成規格。
+   * 但「在 body 裡寫了這個鍵、值卻是空白」不是未指派 —— 那是打錯，要拒絕。
+   */
+  department: string | null;
 };
 
 export function parseCreateStaffInput(raw: unknown): ParseResult<CreateStaffInput> {
@@ -52,6 +63,25 @@ export function parseCreateStaffInput(raw: unknown): ParseResult<CreateStaffInpu
     errors.push('initialPassword 太短（最少 12 個字）');
   }
 
+  let department: string | null = null;
+
+  if ('department' in raw && raw.department !== null) {
+    if (typeof raw.department !== 'string') {
+      errors.push('department 必須是字串或 null');
+    } else {
+      const trimmed = raw.department.trim();
+
+      if (trimmed === '') {
+        // 空字串刻意不是「未指派」：要未指派就傳 null 或整個鍵不傳。
+        errors.push('department 不可以是空白（未指派請傳 null）');
+      } else if (!DEPARTMENT_KEY.test(trimmed)) {
+        errors.push(`department 格式不對：${JSON.stringify(raw.department)}`);
+      } else {
+        department = trimmed;
+      }
+    }
+  }
+
   if (errors.length > 0) {
     return { errors };
   }
@@ -62,6 +92,7 @@ export function parseCreateStaffInput(raw: unknown): ParseResult<CreateStaffInpu
       displayName,
       email: normalizeEmail(rawEmail),
       initialPassword,
+      department,
     },
   };
 }
@@ -112,9 +143,6 @@ export function parseResetPasswordInput(raw: unknown): ParseResult<ResetPassword
 }
 
 const DEPARTMENT_FIELDS = ['department'] as const;
-
-/** 與 app id／schema 名同一套規則（`apps/platform/src/db-access/naming.ts`）。 */
-const DEPARTMENT_KEY = /^[a-z][a-z0-9_]{0,40}$/;
 
 export type SetDepartmentInput = {
   /** null 代表「未指派」；這是一個合法值，不是「沒有填」。 */

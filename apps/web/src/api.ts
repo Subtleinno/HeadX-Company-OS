@@ -400,6 +400,13 @@ export function createStaff(input: {
   displayName: string;
   email: string;
   initialPassword: string;
+  /**
+   * 建立時一併指派部門（issue #28）。`null`／缺席＝未指派。
+   *
+   * 為什麼要一次做完：先建人、再指派，中間會有一個「帳戶存在但登入即被擋」
+   * 的狀態 —— 對老闆只是少按一下，對那個人是「我登入之後進不去」。
+   */
+  department?: string | null;
 }): Promise<ApiResult<{ staff: StaffMember }>> {
   return request<{ staff: StaffMember }>('/api/staff', {
     method: 'POST',
