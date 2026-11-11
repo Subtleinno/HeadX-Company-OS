@@ -57,10 +57,24 @@ const DESIGN = {
   route: '/design',
 };
 
+/*
+ * 這一支驗的是**版本鏈**，與內容是甚麼形狀無關，所以用一張自定義頁。
+ *
+ * 固定頁一個一個變成表（色彩 #35、字體 #38、標誌 #36、語氣 #37、主頁 #41），
+ * 用完之後就沒有自由文字輸入框。自定義頁（#32）永遠是自由文字，所以拿它做
+ * 版本機制的樣本不會因為某一頁改版而再紅一次。
+ */
 const PAGES = [
-  { id: 'p-home', brandId: 'b-moonic', kind: 'fixed', key: 'home', name: '品牌主頁', brief: null, sortOrder: 10, current: null },
-  { id: 'p-logo', brandId: 'b-moonic', kind: 'fixed', key: 'logo', name: '標誌', brief: null, sortOrder: 20, current: { id: 'v2', versionNo: 2, createdAt: '2026-11-11T10:00:00.000Z', note: null, preview: '第二版內容', policyVersionNo: 2 } },
-  { id: 'p-color', brandId: 'b-moonic', kind: 'fixed', key: 'color', name: '色彩', brief: null, sortOrder: 30, current: null },
+  {
+    id: 'p-photo',
+    brandId: 'b-moonic',
+    kind: 'custom',
+    key: 'photography',
+    name: '攝影指引',
+    brief: '產品照怎樣打燈',
+    sortOrder: 60,
+    current: { id: 'v2', versionNo: 2, createdAt: '2026-11-11T10:00:00.000Z', note: null, preview: '第二版內容', policyVersionNo: 2 },
+  },
 ];
 
 const V2 = { id: 'v2', versionNo: 2, createdAt: '2026-11-11T10:00:00.000Z', note: null, preview: '第二版內容', policyVersionNo: 2 };
@@ -68,7 +82,7 @@ const V1 = { id: 'v1', versionNo: 1, createdAt: '2026-11-10T10:00:00.000Z', note
 
 function pageDetail(overrides: { current?: unknown; versions?: unknown[] } = {}) {
   return {
-    page: PAGES[1],
+    page: PAGES[0],
     versions: overrides.versions ?? [V2, V1],
     current: overrides.current === undefined ? { ...V2, content: '第二版內容' } : overrides.current,
   };
@@ -78,7 +92,7 @@ function openPage(
   user: typeof BOSS | typeof WAI,
   overrides: FakeHandlers = {},
 ): ReturnType<typeof installFakeApi> {
-  window.history.replaceState(null, '', '/#/design/brand/logo');
+  window.history.replaceState(null, '', '/#/design/brand/photography');
 
   const api = installFakeApi({
     state: () => jsonResponse(200, { setupRequired: false, signedIn: true, user }),
@@ -107,7 +121,7 @@ describe('品牌頁版本', () => {
     openPage(BOSS);
 
     await waitFor(() => {
-      expect(document.querySelector('[data-brand-page="logo"]')).not.toBeNull();
+      expect(document.querySelector('[data-brand-page="photography"]')).not.toBeNull();
     });
 
     const editor = document.querySelector('textarea');
