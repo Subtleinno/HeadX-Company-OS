@@ -212,6 +212,7 @@
 | `BrandTypeEditor` | `#/design/brand/type` 的表身：四個層級（家族・尺寸・行距・字重・最小尺寸・文字顏色）＋家族與授權（最多兩個）＋配對・備用字・行長・對齊・錯誤用法。內容是版本內容的一段 JSON（C106），儲存仍然走 `BrandPageScreen` 那一個鍵 | 無（文字顏色由 `brandColors.ts` 的角色名單來） |
 | `BrandLogoEditor` | `#/design/brand/logo` 的表身：五類資產（名稱／主檔向量／位圖預覽，同一類只一個）＋主標誌＋四種顏色模式（角色值由色彩頁讀，螢幕 px／印刷 mm）＋安全範圍・方向・背景・何時用・怎樣用・錯誤用法。內容是版本內容的一段 JSON（C107），儲存仍然走 `BrandPageScreen` 那一個鍵 | `/brands/:id/pages/color`、`/brands/:id/pages/type`（只讀，取角色值與家族名單） |
 | `NeedsScreen` | `#/needs`：需求列表與認領（**不可以新增**） | `/needs`、`/needs/:id/claim` |
+| `BrandToneEditor` | `#/design/brand/tone` 的表身：三到五個聲音特質（名／做／不做／兩句實際句子）＋禁用詞＋繁中與英文是否並用＋五個情境例句（說明／邀請／拒絕／致歉／出問題）。內容是版本內容的一段 JSON（C108），儲存仍然走 `BrandPageScreen` 那一個鍵 | 無（這一頁不引用任何其他頁） |
 | `FilesScreen` | `#/files`：上傳、列表、下載、軟刪除 | `/files*` |
 
 ---
