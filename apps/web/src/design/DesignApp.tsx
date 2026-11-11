@@ -70,7 +70,7 @@ function BrandHome(props: {
       ) : (
         // 唔畫一個按落去會 403 的表單：先假裝你可以做，再把拒絕講成
         // 「代碼格式有問題」，係講錯原因。如實講邊個可以開。
-        <p className="design-note" data-brand-create="owner-only">
+        <p className="design-footnote" data-brand-create="owner-only">
           {t('design.brand.ownerOnly')}
         </p>
       )}
