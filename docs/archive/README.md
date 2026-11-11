@@ -14,5 +14,7 @@
 | `PERPLEXITY-MANAGER-PROMPT.md` | 給 Perplexity 做 PM 開 issue 的 prompt | 2026-11-11（C80） | 老闆直接對 issue 講，AI 自己開 |
 | `planning-loop.md` | 規劃（Perplexity）與施工（WorkBuddy）的分工 | 2026-11-11（C80、C85） | `docs/product/HANDOFF.md` 第 5、7 節 |
 | `12-ui-brief.md` | 外框第一版設計 brief | 2026-11-09（C53–C61） | `docs/design/frame/frame-0*.png` |
+| `demo-public-stack-2026-11-07.md` | 隔離 Demo stack 的部署契約（`company-os-demo` project、零主機端口、named volume、cloudflared 對外） | 2026-11-11（C90） | 同一套 stack ＋ compose profile `tunnel`（C89） |
+| `DEMO-PUBLIC-TESTING-2026-11-07.md` | 用 browser-use AI 測 Demo stack 的方法與報告格式 | 2026-11-11（C90） | 無（改為直接測現行那一套） |
 
 歸檔不是刪除：`git log --follow <檔案>` 仍可追。但**不要在歸檔上繼續施工**——若某個舊計劃要復活，先寫進 `CONCEPT.md`，再開新檔。

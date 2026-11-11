@@ -158,7 +158,32 @@ apps 在 profile 之下，要另外：docker compose --profile apps up -d apps
 
 內網入口（`gateway-internal`）在每一個轉發去後端的請求上寫入 `X-Company-OS-Entry: internal`，並**先覆寫**客戶端自帶的同名標頭，所以後端可以信任這個值；回應一律帶 `X-Content-Type-Options: nosniff`、`X-Frame-Options: DENY`、`Referrer-Policy: same-origin`（連 404 與 5xx 都有，全部 `always`）。夥伴與客戶兩個入口屬 S8-01，現時未存在。
 
-**目標端口表與版本差異以 `packages/edition-profile` 為準**：哪個版本有哪個容器、每個容器的端口與預設值都只寫在那裡，`docs/architecture/REPO-MAP.md` 的端口表與 `.env.example` 由 `npm test` 的一致性測試釘住，不會各說各話。上表是現況（真的存在的五個容器）；`gateway-partner`、`gateway-customer`、`cloudflared` 與兩個 portal 仍是 `planned`，未有容器。
+**目標端口表與版本差異以 `packages/edition-profile` 為準**：哪個版本有哪個容器、每個容器的端口與預設值都只寫在那裡，`docs/architecture/REPO-MAP.md` 的端口表與 `.env.example` 由 `npm test` 的一致性測試釘住，不會各說各話。上表是現況（真的存在的五個容器，全部只綁 `127.0.0.1`）；`gateway-partner`、`gateway-customer` 與兩個 portal 仍是 `planned`。
+
+## 對外存取（開發期，Cloudflare Tunnel）
+
+由街外開到這套系統，用 Cloudflare Tunnel。**不需要路由器開端口、不需要固定 IP**：連接器由本機主動連出去。
+
+**cloudflared 跑在主機上，不在 Docker 裡。** 這是一個明確選擇：tunnel 要指去 `127.0.0.1:4210`（已經只綁 loopback 的入口），跑在主機就沒有第二個要同步的設定；而它是全機共用的一個服務，不是這套 app 的一部分。
+
+現況（Mac）：
+
+| 項目 | 值 |
+|---|---|
+| 網址 | `https://hxd.subtle-inno.com` |
+| 連接器 | `/Users/riderhin/.local/bin/cloudflared`，由 `LaunchDaemons/com.cloudflare.cloudflared.plist` 開機自動起 |
+| token | `/Library/Application Support/com.cloudflare.cloudflared/token`（dashboard 發） |
+| 指向 | dashboard 的 Public Hostname → `http://localhost:4210` |
+
+換機或在 Windows 重做，只有三步（全部在 Cloudflare 後台與一行指令，repo 內沒有東西要改）：
+
+1. Zero Trust → Networks → Tunnels → Create tunnel → 揀 `cloudflared`，複製 token。
+2. 該 tunnel 加一個 Public Hostname：你的網域 → Type `HTTP` → URL `localhost:4210`。
+3. 本機裝連接器：`cloudflared service install <TOKEN>`（Windows 用 `cloudflared.exe service install <TOKEN>`，或臨時跑 `cloudflared tunnel run --token <TOKEN>`）。
+
+**為甚麼只指向 4210**：對外只應該見到「網頁 ＋ `/api`」。`api`（4420）、`storage`（MinIO 主控台）、`apps`、`db` 都不經隧道 —— 多開一個，等於多一個繞過入口憑證與 CSRF 前哨的門。
+
+**這條隧道只屬開發期。** 現時唯一閘門是 app 自己的登入頁，而密碼是 demo 密碼。正式管理公司資料之前，必須換密碼、開 Cloudflare 的 Always Use HTTPS、並加 Access 政策（決策 C89）。
 
 ## 檔案儲存
 

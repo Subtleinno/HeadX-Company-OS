@@ -184,3 +184,45 @@
   兩個附帶決定：
   1. **老闆帳戶由安裝腳本代開。** 系統本身有 `POST /auth/setup`（只在一個 owner 都未有的時候接受），但**網頁還沒有對應畫面**。不代開就會出現「裝好但登入不到」。這是暫時的補位，不是長期設計 —— 第一版安裝精靈（UI）落地時，這一步應該搬回畫面。
   2. **`.gitattributes` 由逐個資料夾改成全 repo `* text=auto eol=lf`。** 原本只鎖 `db/migrations/*.sql`、`apps/web/docker-entrypoint.d/*.sh` 與一個已經不存在的 `modules/**/*.json`。只要是 COPY 進 Linux 映像的文字檔，換行不同就會建出與 Mac／CI 不同的映像，而畫面上完全看不出來。實測改動前 repo 內 CRLF 檔數為 0，所以這條是純保險，沒有一次性 renormalize 的大量 diff。
+
+### 2026-11-11 增補：開發期用 Cloudflare Tunnel 對外
+
+來源：老闆 2026-11-11「i need to able to use cloudflare tunnel to work with Headx-Company-OS, i like to assign URL name for it… make sure whole HeadX-Company-OS can be public via cloudflare (it is only for development now) we will move to higher security once we really using the software for managing company」
+
+- C89 **對外只開一條 Cloudflare Tunnel，指向 `gateway-internal`，其餘一概不對外。連接器跑在主機上，不在 compose 內。**
+
+  這是第一次讓這套系統離開 `127.0.0.1`。先把「哪一道門」寫清楚，因為開錯一道門，之後所有權限設計都會被繞過：
+
+  | 對外 | 不對外 |
+  |---|---|
+  | `gateway-internal`（網頁 ＋ `/api`）＝ `http://localhost:4210` | `api`（4420）—— 繞過 nginx 就沒有入口憑證與 CSRF 前哨 |
+  | | `storage`（MinIO 主控台 29001）—— 那不應該是最先被互聯網看見的東西 |
+  | | `apps`（app-host）與 `db` |
+
+  **為甚麼是 outbound tunnel 而不是 port forward**：連接器主動連去 Cloudflare，主機不開任何入站端口、不需要固定 IP、不需要在路由器打洞。六個容器端口一個都沒改，仍然只綁 `127.0.0.1`，`scripts/config-guard.test.ts` 那條仍然綠。
+
+  **為甚麼連接器在主機、不在 compose（這一條推翻了本決策的初稿）**：初稿寫成 compose 加一個 `tunnel` 服務（profile `tunnel`，憑證放 `.data/cloudflared`，配 `scripts/tunnel.mjs` 建 tunnel）。落地時走的是另一條路：**Cloudflare 後台建 tunnel（dashboard-managed）＋ 本機 `cloudflared service install <TOKEN>`**。後者更好，理由三條：
+
+  1. **ingress 規則存在 Cloudflare 雲端，本機只有一個 token。** 沒有 `config.yml` 要跟 repo 同步，也沒有「repo 寫的規則與後台改的規則不一致」這個坑。
+  2. **它指去 4210，也就是已經只綁 loopback 的入口。** 放在 compose 網路內雖然可以直連 `gateway-internal:80`，但要為容器多養一份設定，換來的只是省一次 loopback 跳轉。
+  3. **它是全機共用的一個服務，不屬於這套 app。** launchd 開機就起，不依賴 Docker Desktop 是否已經起好。
+
+  代價（已寫進 HANDOFF §2.5）：換機要重做三步；不能 `npm run tunnel:down` 收起，要用 dashboard 停或 `launchctl bootout`。**初稿的 `scripts/tunnel.mjs`、compose 的 `tunnel` 服務與四條 `tunnel:*` npm script 已全部撤回** —— 它們要靠 `cloudflared tunnel login` 產生的 `cert.pem`，而 dashboard-managed tunnel 根本不用那個檔；兩套並存等於又製造「兩份真相」。
+
+  **`COOKIE_SECURE` 維持 `false`**：同一套 stack 同時要服務 `http://127.0.0.1:4210` 與 `https://hxd.subtle-inno.com`，設 `true` 會令本機 http 登入失效。代價是對外那個 cookie 沒有 Secure 旗標 —— 而 Cloudflare 現時**未開 Always Use HTTPS**（實測 `http://` 仍然回 200 不跳轉），即明文 http 一樣送得出這個 cookie。**這條要在正式對外之前修好**（開 Always Use HTTPS；到時只留 https 入口，`COOKIE_SECURE` 就可以開）。
+
+  **保安級別如實講**：現在唯一閘門是 app 自己的登入頁，密碼是 demo 密碼 `Frame-needs-2026!`。這是「開發期可接受」，不是「可以開始用」。正式管理公司資料之前必須做三件：(1) 換掉 demo 密碼；(2) Cloudflare 開 Always Use HTTPS；(3) 加 Access 政策（只准指定 email 過得去）。
+
+  **來源 IP 的實測結果**：nginx 日誌的 `remote_addr` 是 `172.20.0.1`（docker bridge gateway），但 `X-Forwarded-For` 帶有真實訪客 IP（實測見到 `218.190.15.227`），所以審計查得到人。登入限流 `password-throttle` 是按 **user id** 而不是按 IP，所以不會出現「一人試錯、全公司被鎖」。到要做按 IP 封鎖那天，才需要令 nginx 讀 `CF-Connecting-IP`。
+
+- C90 **取消「Demo stack」這套並行環境，改為同一套 stack 經主機上的 Cloudflare Tunnel 對外。**（修訂 C52）
+
+  C52 定過一個獨立的 `company-os-demo` project：零主機端口、named volume、獨立 bucket、獨立 secret，只經 cloudflared 對外，給 browser-use AI 做 UI／UX 測試。**這套從未部署過。** 2026-11-11 清 Docker 時它連同另外兩套一併刪掉，而它的 8 個檔案（`docker-compose.demo.yml`、`.local.yml`、`.env.demo.example`、`scripts/demo-stack*.{mjs,ts}`、兩份文件）在 repo 內孤立存在，沒有任何東西 import 它們。
+
+  殺掉的理由不是「檔案多」，而是它與 C89 講相反的話：C52 明文寫「**正式 stack 仍然只經內網 `gateway-internal`**」，而 C89 讓這一套對外。兩份契約並存的話，下一個 agent 一定會挑錯那份。
+
+  更根本的理由：**Demo stack 的前提是「測試一套假的、用真的那套」。** 但現在要測的恰恰是「真的那套經隧道之後長什麼樣」—— 假的環境測不到 DNS、測不到 HTTPS、測不到 cookie 在 https 下的行為。而維護兩套的代價已經用事實證明：它存在四天，部署次數 0。
+
+  執行：兩份文件 `git mv` 入 `docs/archive/`（附上被誰取代）；`docker-compose.demo*.yml`、`.env.demo.example`、`scripts/demo-stack*` 直接刪除 —— 留著就可 `docker compose -f docker-compose.demo.yml up` 復活一套叫 `company-os-demo` 的舊 stack，正是昨日清掉的東西。`package.json` 的 `demo:check` 一併移除，`.gitignore` 的 `!.env.demo.example` 例外一併清掉。
+
+  仍然有效的原則（不因 Demo stack 消失而失效）：**對外只經一條隧道、只指向 `gateway-internal`、不開其他入口。** 這三條現在寫在 C89、`README.md` 的「對外存取」與 `docs/product/HANDOFF.md` §2.5。

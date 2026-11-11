@@ -65,6 +65,34 @@ npm run seed:frame
 npm run deploy:build && docker compose up -d
 ```
 
+## 2.5 對外存取（開發期，Cloudflare Tunnel）
+
+現時已經開通：**<https://hxd.subtle-inno.com>** → 本機 `127.0.0.1:4210`。
+
+雲端設定在 Cloudflare 後台（dashboard-managed tunnel），本機只有一個系統服務連出去：
+
+| 項目 | 位置 |
+|---|---|
+| 連接器 | `/Users/riderhin/.local/bin/cloudflared` |
+| 開機自動起 | `/Library/LaunchDaemons/com.cloudflare.cloudflared.plist`（`RunAtLoad` ＋ `KeepAlive`） |
+| token | `/Library/Application Support/com.cloudflare.cloudflared/token` |
+| 指向 | dashboard → Public Hostname → `http://localhost:4210` |
+| 日誌 | `/Library/Logs/com.cloudflare.cloudflared.{out,err}.log` |
+
+**cloudflared 刻意不在 compose 內**：它指去已經只綁 loopback 的 4210，跑在主機就沒有第二個要同步的設定；而且它是全機共用，不屬於這套 app。
+
+換機或搬到 Windows：後台建 tunnel 拿 token → 加 Public Hostname（`HTTP` → `localhost:4210`）→ `cloudflared service install <TOKEN>`。repo 內沒有任何東西要改。
+
+只有一個網址對外。**`api`（4420）、`storage`（MinIO 主控台）、`apps`、`db` 都不經這條隧道** —— 多開一個，就是多一道繞過入口憑證與 CSRF 前哨的門。
+
+驗證一句就夠：
+
+```bash
+curl -s https://hxd.subtle-inno.com/api/auth/state    # 應回 {"setupRequired":false,"signedIn":false}
+```
+
+> **現在的保安級別＝只有 app 自己的登入。** 任何人拿到網址都見到登入頁，試得出密碼就入得去。開發期可以接受，**但不可以這樣開始管理公司資料**；正式用之前要做三件：換掉 demo 密碼、在 Cloudflare 開 Always Use HTTPS（現時 `http://` 仍然回 200，不跳轉）、加 Access 政策。決策 C89 有寫。
+
 ## 3. 現在看得到什麼
 
 | 路由 | 畫面 | 狀態 |

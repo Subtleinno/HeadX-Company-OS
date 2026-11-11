@@ -114,17 +114,6 @@ jobs:
         run: docker compose --env-file .env.example config -q
       - name: 驗證 apps profile 的 compose 檔
         run: docker compose --env-file .env.example --profile apps config -q
-      # Demo Public Stack（issue #145）：Demo 是公開環境，所以「零主機端口、零 bind mount、
-      # 獨立 project／volume／bucket／資料庫」不可以靠人記得。這一步只做
-      # `docker compose config`，不 build、不 up。
-      - name: 安裝 Node（跑 Demo 隔離檢查，不需要依賴）
-        uses: actions/setup-node@v7
-        with:
-          node-version-file: .nvmrc
-      - name: 驗證 Demo stack 零主機端口
-        run: node scripts/demo-stack-check.mjs
-      - name: 驗證 Demo 本機除錯端口不撞正式端口
-        run: node scripts/demo-stack-check.mjs --local
       # 反向測試：不給密碼時 docker compose 必須失敗。這一步綠代表保護還在工作，
       # 紅代表有人把 :? 改成了預設值 —— 那才是真正要擋的改動。
       - name: 反向測試：不給密碼時必須失敗

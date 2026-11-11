@@ -32,7 +32,8 @@ R1 至 R6、R8 已合併。下表是每一片在 `main` 上的實際結果，按
 | gateway-customer | B2C 客戶 | 客戶自己的帳戶；Cloudflare WAF 限流加 Turnstile，不經 Access | `exposure` 為 customer 的 app | 無 | 有 |
 
 - 大陸版沒有 cloudflared 與對外 gateway，session 的 `entry` 只有 internal 一個值。
-- 國際版：cloudflared 只指向 gateway-partner 與 gateway-customer，規則最後一條是 404；app 容器與 gateway-internal 不對外。
+- 國際版（目標狀態）：cloudflared 只指向 gateway-partner 與 gateway-customer，規則最後一條是 404；app 容器與 gateway-internal 不對外。
+- **開發期例外（C89，2026-11-11）**：現時 cloudflared **不在這份 compose 內**，它以主機服務方式執行（macOS 的 `LaunchDaemons/com.cloudflare.cloudflared.plist`，用 dashboard 發的 token 連出），公開主機名指向 `gateway-internal`，只用來由街外測試這一套。它沒有 Cloudflare Access，唯一閘門是 app 自己的登入。正式對外之前要恢復上面那條，並補 Access 政策。
 - 每個 app 的 manifest 宣告 `exposure`：`internal`（預設）、`partner`、`customer`。接受規則：
 
 | app 的 exposure | 接受的 session entry |
@@ -60,7 +61,7 @@ R1 至 R6、R8 已合併。下表是每一片在 `main` 上的實際結果，按
 | gateway-internal | `GATEWAY_INTERNAL_PORT` | 4210 | 有 | 有 |
 | gateway-partner | `GATEWAY_PARTNER_PORT` | 4211 | 無 | 有 |
 | gateway-customer | `GATEWAY_CUSTOMER_PORT` | 4212 | 無 | 有 |
-| cloudflared | 無 | — | 無 | 有 |
+| cloudflared（主機服務，不在 compose 內） | 無 | — | 無 | 有 |
 | platform（含 worker） | `PLATFORM_PORT` | 4420 | 有 | 有 |
 | apps（全部 app） | `APPS_PORT` | 4431 | 有 | 無 |
 | apps-internal | `APPS_INTERNAL_PORT` | 4431 | 無 | 有 |
