@@ -13,9 +13,11 @@ import {
 import { failureMessage } from './apiFailure';
 import { BrandColorEditor } from './BrandColorEditor';
 import { BrandLogoEditor } from './BrandLogoEditor';
+import { BrandToneEditor } from './BrandToneEditor';
 import { BrandTypeEditor } from './BrandTypeEditor';
 import { hexesInText } from './brandColors';
 import { assetNamesInText } from './brandLogo';
+import { traitNamesInText } from './brandTone';
 import { namesInText } from './brandType';
 
 /**
@@ -124,6 +126,30 @@ function LogoVersionPreview({ preview }: { preview: string }) {
   );
 }
 
+/**
+ * 語氣頁的版本預覽：特質名，不印 JSON。
+ *
+ * 版本列表只拿到 160 字元的截斷內容；特質名寫在 JSON 最前面，所以抽得到。
+ * 抽不到就講抽不到 —— 不會假裝有特質。
+ */
+function ToneVersionPreview({ preview }: { preview: string }) {
+  const names = traitNamesInText(preview).slice(0, 5);
+
+  if (names.length === 0) {
+    return <p className="brand-page__preview">{t('brand.tone.versionNoName')}</p>;
+  }
+
+  return (
+    <span className="brand-page__traits" data-tone-version-names>
+      {names.map((name) => (
+        <span className="brand-page__traitChip" key={name} data-tone-version-name={name}>
+          {name}
+        </span>
+      ))}
+    </span>
+  );
+}
+
 function formatTime(value: string): string {  const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {
@@ -195,7 +221,9 @@ export function BrandPageScreen({
             ? t('brand.type.empty')
             : pageKey === 'logo'
               ? t('brand.logo.empty')
-              : t('brand.page.emptyContent'),
+              : pageKey === 'tone'
+                ? t('brand.tone.empty')
+                : t('brand.page.emptyContent'),
       );
       return;
     }
@@ -492,6 +520,11 @@ export function BrandPageScreen({
           />
           {canEdit && <p className="design-field__hint">{t('brand.page.hint')}</p>}
         </div>
+      ) : pageKey === 'tone' ? (
+        <div className="brand-page__body" data-brand-page-body="tone">
+          <BrandToneEditor content={draft} canEdit={canEdit} onChange={setDraft} />
+          {canEdit && <p className="design-field__hint">{t('brand.page.hint')}</p>}
+        </div>
       ) : (
         <label className="brand-page__editor">
           <span className="design-field__label">{t('brand.page.editorLabel')}</span>
@@ -568,6 +601,8 @@ export function BrandPageScreen({
                     <TypeVersionPreview preview={version.preview} />
                   ) : pageKey === 'logo' ? (
                     <LogoVersionPreview preview={version.preview} />
+                  ) : pageKey === 'tone' ? (
+                    <ToneVersionPreview preview={version.preview} />
                   ) : (
                     version.preview !== '' && (
                       <p className="brand-page__preview">{version.preview}</p>

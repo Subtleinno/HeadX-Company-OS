@@ -109,6 +109,11 @@ describe('字串表', () => {
       'brand.logo.modeValueMissing',
       'brand.logo.gapAssets',
       'brand.logo.gapModes',
+      'brand.tone.missingLine',
+      'brand.tone.gapTooFew',
+      'brand.tone.gapTraits',
+      'brand.tone.gapSituations',
+      'brand.tone.traitLimit',
     ]);
   });
 });

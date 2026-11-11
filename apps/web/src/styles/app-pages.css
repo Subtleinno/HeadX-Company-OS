@@ -1682,3 +1682,168 @@
   color: var(--hx-frame-secondary);
 }
 
+
+/* ── 語氣頁（issue #37） ───────────────────────────────────── */
+
+/*
+ * 這一頁的閱讀次序是「有哪幾把聲音（特質）、每把聲音做與不做的實際句子、
+ * 不准講的字、五個場合怎樣講」。所以每個特質是一塊：名、做、不做在上，
+ * 兩句實際句子並排在下 —— 句子才是證據，形容詞不是。
+ */
+.brand-tone {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hx-space-5);
+}
+
+.brand-tone__missing {
+  margin: 0;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+}
+
+.brand-tone__missing--gap {
+  color: var(--hx-danger-text);
+}
+
+.brand-tone__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hx-space-2);
+}
+
+.brand-tone__trait {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hx-space-2);
+  padding: var(--hx-space-3) 0;
+  border-top: 1px solid var(--hx-frame-border);
+}
+
+.brand-tone__traitHead {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+  flex-wrap: wrap;
+}
+
+/* 刪除鍵推到最右：貼住特質名會令人以為那是特質狀態。 */
+.brand-tone__traitHead [data-tone-trait-remove] {
+  margin-left: auto;
+}
+
+.brand-tone__badge {
+  flex: none;
+  border-radius: var(--hx-radius-sm);
+  padding: 1px 6px;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-danger-text);
+  border: 1px solid var(--hx-danger-text);
+}
+
+.brand-tone__fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--hx-space-2) var(--hx-space-3);
+}
+
+.brand-tone__field {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  flex: 1 1 180px;
+  min-width: 0;
+}
+
+.brand-tone__field--wide {
+  flex: 1 1 240px;
+}
+
+.brand-tone__field--half {
+  flex: 1 1 320px;
+}
+
+.brand-tone__field .design-input {
+  max-width: 100%;
+}
+
+.brand-tone__fieldLabel {
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-muted);
+}
+
+.brand-tone__textarea {
+  min-height: 56px;
+}
+
+.brand-tone__adder {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+  flex-wrap: wrap;
+}
+
+.brand-tone__adder .design-input {
+  max-width: 260px;
+}
+
+.brand-tone__words {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.brand-tone__word {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-sm);
+  padding: 1px 4px 1px 8px;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+}
+
+.brand-tone__wordRemove {
+  border: none;
+  background: none;
+  padding: 0 2px;
+  cursor: pointer;
+  color: var(--hx-frame-muted);
+  font: var(--hx-frame-font-small);
+}
+
+/* 一個情境一行：左邊是場合，右邊是句子。 */
+.brand-tone__situation {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  align-items: start;
+  gap: var(--hx-space-2);
+  padding: var(--hx-space-2) 0;
+  border-top: 1px solid var(--hx-frame-border);
+}
+
+.brand-tone__situationLabel {
+  padding-top: 6px;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-muted);
+}
+
+/* 版本列表的語氣頁：特質名，不印 JSON。 */
+.brand-page__traits {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.brand-page__traitChip {
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-sm);
+  padding: 1px 6px;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+}
