@@ -752,6 +752,30 @@
   font: var(--hx-frame-font-small);
 }
 
+/* 操作欄用文字型動作：一行有兩個動作，用兩顆實心按鈕會令表格睇落似工具列。 */
+.boss-members__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--hx-space-3);
+}
+
+/* 停用／重設面板掛在該行下面：凹入去的底色代表「這是上面那一個人的事」，
+   而不是另一張卡。 */
+.boss-members__panel > td {
+  background: var(--hx-frame-surface);
+}
+
+.boss-members__panelbody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hx-space-3);
+  max-width: 34rem;
+}
+
+.boss-members__panelbody .boss-form__actions {
+  margin-top: 0;
+}
+
 @media (max-width: 820px) {
   .boss-members__bar {
     align-items: flex-start;

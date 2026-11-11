@@ -207,6 +207,144 @@ describe('指派部門', () => {
   });
 });
 
+describe('停用登入（issue #24）', () => {
+  it('先講清楚後果，確認之後才送 POST /staff/:id/disable', async () => {
+    const api = openMembers({
+      staffDisable: () =>
+        jsonResponse(200, { staff: { ...WAI, disabledAt: '2026-11-11T10:00:00.000Z' } }),
+    });
+
+    await row();
+    await userEvent.click(screen.getByRole('button', { name: '停用 林慧 嘅登入' }));
+
+    // 未確認之前一定不可以已經送出去。
+    expect(api.count('staffDisable')).toBe(0);
+    expect(document.body.textContent).toContain('全部 session 會即刻撤銷');
+
+    await userEvent.click(screen.getByRole('button', { name: '確認停用' }));
+
+    await waitFor(() => {
+      expect(api.count('staffDisable')).toBe(1);
+    });
+
+    const call = api.calls.find((item) => item.method === 'POST' && item.path.endsWith('/disable'));
+
+    expect(call?.path).toBe('/api/staff/s-wai/disable');
+
+    // 成功之後，畫面講的是真正發生的事：已停用、部門下拉鎖住。
+    await waitFor(() => {
+      expect(document.body.textContent).toContain('已停用');
+    });
+
+    expect(departmentSelect().disabled).toBe(true);
+    expect(screen.queryByRole('button', { name: '停用 林慧 嘅登入' })).toBeNull();
+  });
+
+  it('取消就等於冇發生過：不送請求，按鈕回來', async () => {
+    const api = openMembers();
+
+    await row();
+    await userEvent.click(screen.getByRole('button', { name: '停用 林慧 嘅登入' }));
+    await userEvent.click(screen.getByRole('button', { name: '取消' }));
+
+    expect(api.count('staffDisable')).toBe(0);
+    expect(screen.getByRole('button', { name: '停用 林慧 嘅登入' })).toBeTruthy();
+  });
+
+  it('後端說已經停用：照它的原因講，不假裝成功', async () => {
+    openMembers({ staffDisable: () => jsonResponse(409, { error: 'already_disabled' }) });
+
+    await row();
+    await userEvent.click(screen.getByRole('button', { name: '停用 林慧 嘅登入' }));
+    await userEvent.click(screen.getByRole('button', { name: '確認停用' }));
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-member-error]')?.textContent).toContain('已經停用');
+    });
+  });
+});
+
+describe('重設密碼（issue #24）', () => {
+  function openReset(): void {
+    void userEvent.click(screen.getByRole('button', { name: '重設 林慧 嘅密碼' }));
+  }
+
+  it('兩格都要填：老闆自己的密碼與臨時密碼，送出的就是這兩串', async () => {
+    const api = openMembers({
+      staffReset: () =>
+        jsonResponse(200, { staff: { ...WAI, mustChangePassword: true } }),
+    });
+
+    await row();
+    openReset();
+
+    await userEvent.type(await screen.findByLabelText('你自己的密碼'), 'boss-secret');
+    await userEvent.type(screen.getByLabelText('新的臨時密碼'), 'temp-secret-2026');
+    await userEvent.click(screen.getByRole('button', { name: '確認重設' }));
+
+    await waitFor(() => {
+      expect(api.count('staffReset')).toBe(1);
+    });
+
+    const call = api.calls.find((item) => item.path.endsWith('/reset-password'));
+
+    expect(call?.path).toBe('/api/staff/s-wai/reset-password');
+    expect(JSON.parse(call?.body ?? '{}')).toEqual({
+      ownerPassword: 'boss-secret',
+      newTemporaryPassword: 'temp-secret-2026',
+    });
+
+    // 成功後講清楚：要改密碼、session 撤銷、冇寄出任何郵件。
+    await waitFor(() => {
+      expect(document.body.textContent).toContain('沒有寄出任何郵件');
+    });
+
+    // 密碼不留在畫面上。
+    expect(screen.queryByLabelText('你自己的密碼')).toBeNull();
+  });
+
+  it('老闆自己的密碼不對：照後端的原因講，不是「網絡問題」', async () => {
+    const api = openMembers({
+      staffReset: () => jsonResponse(403, { error: 'invalid_owner_password' }),
+    });
+
+    await row();
+    openReset();
+
+    await userEvent.type(await screen.findByLabelText('你自己的密碼'), 'wrong-one');
+    await userEvent.type(screen.getByLabelText('新的臨時密碼'), 'temp-secret-2026');
+    await userEvent.click(screen.getByRole('button', { name: '確認重設' }));
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-member-error]')?.textContent).toContain('你自己的密碼不對');
+    });
+
+    expect(api.count('staffReset')).toBe(1);
+  });
+
+  it('未填齊：不送請求，直接講清楚', async () => {
+    const api = openMembers();
+
+    await row();
+    openReset();
+    await userEvent.click(await screen.findByRole('button', { name: '確認重設' }));
+
+    expect(api.count('staffReset')).toBe(0);
+    expect(document.body.textContent).toContain('兩格都要填');
+  });
+
+  it('取消之後，密碼欄不會留在記憶體畫面裡', async () => {
+    openMembers();
+
+    await row();
+    openReset();
+    await userEvent.type(await screen.findByLabelText('你自己的密碼'), 'boss-secret');
+    await userEvent.click(screen.getByRole('button', { name: '取消' }));
+
+    expect(screen.queryByLabelText('你自己的密碼')).toBeNull();
+  });
+});
+
 describe('建立員工', () => {
   it('填三格之後送出 POST /staff，成功後清空密碼欄並講下一步', async () => {
     const api = openMembers({

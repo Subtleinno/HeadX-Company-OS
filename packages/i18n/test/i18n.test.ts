@@ -62,6 +62,8 @@ describe('字串表', () => {
   'boss.add.expires',
   'boss.members.assignLabel',
   'boss.members.created',
+  'boss.members.disableLabel',
+  'boss.members.resetLabel',
   'gate.body',
   'gate.departmentClosed.body',
   'design.brand.lead',
