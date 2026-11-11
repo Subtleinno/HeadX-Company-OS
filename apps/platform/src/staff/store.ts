@@ -18,6 +18,7 @@ export type StaffRow = {
   email: string;
   display_name: string;
   role: string;
+  department: string | null;
   must_change_password: boolean;
   disabled_at: Date | null;
   created_at: Date;
@@ -28,12 +29,15 @@ export type StaffView = {
   email: string;
   displayName: string;
   role: 'staff';
+  /** null = 未指派。登入分流靠這一個值，所以列表與單筆回應都要帶它。 */
+  department: string | null;
   mustChangePassword: boolean;
   disabledAt: string | null;
   createdAt: string;
 };
 
-const COLUMNS = 'id, email, display_name, role, must_change_password, disabled_at, created_at';
+const COLUMNS =
+  'id, email, display_name, role, department, must_change_password, disabled_at, created_at';
 
 export function toStaffView(row: StaffRow): StaffView {
   return {
@@ -41,6 +45,7 @@ export function toStaffView(row: StaffRow): StaffView {
     email: row.email,
     displayName: row.display_name,
     role: 'staff',
+    department: row.department,
     mustChangePassword: row.must_change_password,
     disabledAt: row.disabled_at?.toISOString() ?? null,
     createdAt: row.created_at.toISOString(),
@@ -350,6 +355,87 @@ export async function resetStaffPassword(
 
     if (staff === undefined) {
       throw new Error('重設員工密碼之後沒有回傳列');
+    }
+
+    return { status: 'ok', staff: toStaffView(staff) };
+  } catch (error) {
+    await client.query('rollback').catch(() => undefined);
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+export type SetDepartmentResult =
+  | { status: 'ok'; staff: StaffView }
+  | { status: 'not_found' }
+  | { status: 'owner_protected' };
+
+/**
+ * 指派（或取消指派）員工部門（issue #12）。
+ *
+ * 值本身是不是一個存在的部門，由路由對 registry 檢查；這裡只認一個已經
+ * 驗證過的字串或 null。分開放是因為「部門清單」的唯一來源是 manifest，
+ * 資料層不應該知道 `design`、`sales` 這些字。
+ *
+ * 幾個刻意的選擇：
+ *   1. `for update` 鎖住該列再讀舊值，審計裡的 before／after 才是同一刻的事實。
+ *   2. 值沒有變就**不寫審計**：一件沒有發生的事不應該留下紀錄，否則審計會被
+ *      「重新儲存一次」的雜訊淹沒。回應照樣 200，呼叫端不需要分兩種成功。
+ *   3. 審計與更新同一個交易：寫不入就等於沒有改過。
+ *   4. 停用中的帳戶照樣可以改部門 —— 停用只影響登入，不影響資料整理。
+ */
+export async function setStaffDepartment(
+  pool: Pool,
+  input: { id: string; department: string | null; actorId: string },
+): Promise<SetDepartmentResult> {
+  const client = await pool.connect();
+
+  try {
+    await client.query('begin');
+
+    const locked = await client.query<{ id: string; role: string; department: string | null }>(
+      'select id, role, department from app_user where id = $1 for update',
+      [input.id],
+    );
+
+    const row = locked.rows[0];
+
+    if (row === undefined) {
+      await client.query('rollback');
+      return { status: 'not_found' };
+    }
+
+    // 老闆不屬於任何部門（DB constraint 同樣這樣要求），所以這條路徑對他沒有意思。
+    if (row.role === 'owner') {
+      await client.query('rollback');
+      return { status: 'owner_protected' };
+    }
+
+    const updated = await client.query<StaffRow>(
+      `update app_user set department = $2 where id = $1 returning ${COLUMNS}`,
+      [input.id, input.department],
+    );
+
+    if (row.department !== input.department) {
+      await writeAudit(
+        { query: (text, values) => client.query(text, values) },
+        {
+          actorType: 'human',
+          actorId: input.actorId,
+          action: 'staff.department_changed',
+          target: input.id,
+          detail: { from: row.department, to: input.department },
+        },
+      );
+    }
+
+    await client.query('commit');
+
+    const staff = updated.rows[0];
+
+    if (staff === undefined) {
+      throw new Error('指派部門之後沒有回傳列');
     }
 
     return { status: 'ok', staff: toStaffView(staff) };

@@ -10,6 +10,7 @@ import {
 import {
   isValidUuid,
   parseCreateStaffInput,
+  parseDepartmentInput,
   parsePageQuery,
   parseResetPasswordInput,
 } from './schema.js';
@@ -18,22 +19,32 @@ import {
   disableStaffAccount,
   listStaffAccounts,
   resetStaffPassword,
+  setStaffDepartment,
   toStaffView,
   type StaffHooks,
 } from './store.js';
+import type { ModuleRegistry } from '../modules/registry/index.js';
 
 /**
  * 員工帳戶管理 API（issue #84）。只有已驗證的人類老闆可以用。
  *
- * 這一組路由刻意很窄：建立、列表、停用。沒有改角色、沒有改 email、沒有搬部門、
- * 沒有刪除 —— 每一樣都可以之後再加，但一旦現在有了，就會有人用它繞過
- * 「不可以建立第二個 owner」這條線。
+ * 這一組路由刻意很窄：建立、列表、停用、指派部門（issue #12）。
+ * 仍然沒有改角色、沒有改 email、沒有刪除 —— 每一樣都可以之後再加，但一旦
+ * 現在有了，就會有人用它繞過「不可以建立第二個 owner」這條線。
+ *
+ * 指派部門與建立帳戶刻意分開：建立時 department 一定是 null，把「新人先入
+ * 系統、再由老闆放進部門」變成兩個可審計的動作，而不是一個大 body。
  */
 
 export type StaffDeps = {
   pool: Pool;
   /** 與 auth 共用的同一個雜湊限制器。 */
   hashRun: HashRun;
+  /**
+   * 部門清單的唯一來源（issue #12）。不另設一份部門常數：
+   * 多一份清單，就多一個「改了 manifest 但這裡沒有改」的機會。
+   */
+  registry: ModuleRegistry;
   now?: () => Date;
   /** 測試專用的併發鉤子；正式路徑不傳。 */
   hooks?: StaffHooks;
@@ -99,6 +110,59 @@ export function registerStaff(app: FastifyInstance, deps: StaffDeps): void {
 
     return { staff: rows.map(toStaffView), total };
   });
+
+  /**
+   * 指派員工部門（issue #12）。
+   *
+   * 三步檢查，次序有意義：
+   *   1. 形狀（422）：body 只有 department，值是字串或 null。
+   *   2. 存在（400 unknown_department）：值必須是 registry 現有的部門。
+   *      這樣「打錯字」與「未指派的 null」在回應上分得開，畫面才講得出真話。
+   *   3. 目標（404／400 owner_protected）：由 store 在同一個交易內判斷。
+   */
+  app.patch<{ Params: { id: string } }>(
+    '/staff/:id/department',
+    { preHandler: app.requireOwner },
+    async (request, reply) => {
+      if (!isValidUuid(request.params.id)) {
+        return reply.code(422).send({ error: 'invalid_input', field: 'id' });
+      }
+
+      const parsed = parseDepartmentInput(request.body);
+
+      if (parsed.errors.length > 0 || parsed.value === undefined) {
+        return reply.code(422).send({ error: 'invalid_input', reasons: parsed.errors });
+      }
+
+      const department = parsed.value.department;
+
+      if (department !== null && !deps.registry.departmentKeys().includes(department)) {
+        return reply.code(400).send({ error: 'unknown_department', department });
+      }
+
+      const actor = request.currentUser;
+
+      if (actor === null) {
+        return reply.code(401).send({ error: 'not_signed_in' });
+      }
+
+      const result = await setStaffDepartment(deps.pool, {
+        id: request.params.id,
+        department,
+        actorId: actor.id,
+      });
+
+      if (result.status === 'not_found') {
+        return reply.code(404).send({ error: 'not_found' });
+      }
+
+      if (result.status === 'owner_protected') {
+        return reply.code(400).send({ error: 'owner_protected' });
+      }
+
+      return { staff: result.staff };
+    },
+  );
 
   app.post<{ Params: { id: string } }>(
     '/staff/:id/disable',

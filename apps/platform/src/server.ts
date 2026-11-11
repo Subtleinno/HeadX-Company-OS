@@ -250,7 +250,8 @@ async function main(): Promise<void> {
   });
 
   // 員工與 agent 身份：全部只有老闆可以用（issue #84）。
-  registerStaff(app, { pool, hashRun });
+  // 指派部門需要部門清單，來源與 /modules 同一個 registry（issue #12）。
+  registerStaff(app, { pool, hashRun, registry });
   registerAgents(app, {
     pool,
     registry,
