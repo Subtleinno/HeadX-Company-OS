@@ -85,7 +85,7 @@ async function build(): Promise<Built> {
     hashRun,
     // 刻意不注入 resolveEntry：走真正的 request context（見 trusted-entry.ts）。
   });
-  registerStaff(app, { pool: db.pool, hashRun });
+  registerStaff(app, { pool: db.pool, hashRun, registry });
   // 授權檢查的入口也由服務端 context 取，不經 body／query。
   registerGrants(app, {
     pool: db.pool,

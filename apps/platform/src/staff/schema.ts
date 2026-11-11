@@ -110,3 +110,58 @@ export function parseResetPasswordInput(raw: unknown): ParseResult<ResetPassword
 
   return { errors: [], value: { ownerPassword, newTemporaryPassword } };
 }
+
+const DEPARTMENT_FIELDS = ['department'] as const;
+
+/** 與 app id／schema 名同一套規則（`apps/platform/src/db-access/naming.ts`）。 */
+const DEPARTMENT_KEY = /^[a-z][a-z0-9_]{0,40}$/;
+
+export type SetDepartmentInput = {
+  /** null 代表「未指派」；這是一個合法值，不是「沒有填」。 */
+  department: string | null;
+};
+
+/**
+ * 指派員工部門的輸入（issue #12）。
+ *
+ * 這支只負責**形狀**：body 只有一個鍵、值是字串或 null、字串不是空白而且符合
+ * schema 命名規則。值本身存不存在於 registry，是路由的事 —— 部門清單的唯一
+ * 來源是 manifest，不是這支檔案裡的一份常數。
+ *
+ * 空白字串刻意不是「取消指派」：要取消就傳 null。把兩個意思混在同一個值，
+ * 將來一定有人以為自己清空了、其實只是打錯。
+ */
+export function parseDepartmentInput(raw: unknown): ParseResult<SetDepartmentInput> {
+  if (!isRecord(raw)) {
+    return { errors: ['body 必須是一個物件'] };
+  }
+
+  const errors = unknownFields(raw, DEPARTMENT_FIELDS, 'body');
+
+  if (!('department' in raw)) {
+    return { errors: [...errors, 'department 必須存在（未指派請傳 null）'] };
+  }
+
+  const value = raw.department;
+
+  if (value === null) {
+    return errors.length > 0 ? { errors } : { errors: [], value: { department: null } };
+  }
+
+  if (typeof value !== 'string') {
+    return { errors: [...errors, 'department 必須是字串或 null'] };
+  }
+
+  const department = value.trim();
+
+  if (department === '') {
+    return { errors: [...errors, 'department 不可以是空白（未指派請傳 null）'] };
+  }
+
+  if (!DEPARTMENT_KEY.test(department)) {
+    return { errors: [...errors, `department 格式不對：${JSON.stringify(value)}`] };
+  }
+
+  return errors.length > 0 ? { errors } : { errors: [], value: { department } };
+}
+

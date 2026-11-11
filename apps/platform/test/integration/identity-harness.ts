@@ -96,7 +96,13 @@ export async function createHarness(): Promise<Harness> {
     resolveEntry: () => 'internal',
   });
   registerGrants(app, { pool: db.pool, registry, resolveEntry: () => entry.trusted });
-  registerStaff(app, { pool: db.pool, hashRun, now: () => new Date(), hooks: staffHooks });
+  registerStaff(app, {
+    pool: db.pool,
+    hashRun,
+    registry,
+    now: () => new Date(),
+    hooks: staffHooks,
+  });
   registerAgents(app, {
     pool: db.pool,
     registry,
