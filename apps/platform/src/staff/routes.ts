@@ -66,6 +66,13 @@ export function registerStaff(app: FastifyInstance, deps: StaffDeps): void {
     }
 
     const input = parsed.value;
+
+    // 部門 key 要存在於 registry（manifest 是唯一來源，同 PATCH 那條）。
+    // 放在雜湊之前：一個打錯的部門名不應該先燒一次 scrypt 才知道錯。
+    if (input.department !== null && !deps.registry.departmentKeys().includes(input.department)) {
+      return reply.code(400).send({ error: 'unknown_department' });
+    }
+
     let passwordHash: string;
 
     try {
@@ -90,6 +97,7 @@ export function registerStaff(app: FastifyInstance, deps: StaffDeps): void {
       displayName: input.displayName,
       passwordHash,
       actorId: actor.id,
+      department: input.department,
     });
 
     if (result.status === 'duplicate_email') {

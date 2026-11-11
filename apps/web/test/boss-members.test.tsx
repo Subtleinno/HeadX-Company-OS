@@ -16,8 +16,9 @@ import { installFakeApi, jsonResponse, resetBrowserState, type FakeHandlers } fr
  *      照樣列出（可以預先指派），但要寫明「未開放」。
  *   3. 改部門＝即刻送 `PATCH /staff/:id/department`，送的就是選的那個值；
  *      失敗要如實講，而且畫面要回到真正的事實（不是留在用戶選的那個）。
- *   4. 建立員工後，帳戶是「未指派」—— 因為後端建立時 department 一定是 null。
- *      頁面要引導下一步，而不是假裝一步做完。
+ *   4. 建立員工時可以一併選部門（C92「建立時就要選部門」）。選了就直接送
+ *      `department`，沒選就送 `null` 並講清楚後果 —— 不要讓老闆建立完才發現
+ *      那個人登入會被擋。
  */
 
 const BOSS = {
@@ -376,6 +377,9 @@ describe('建立員工', () => {
       displayName: '黃小明',
       email: 'ming@example.com',
       initialPassword: 'temp-secret-2026',
+      // 沒有選部門：要明確送 null，而不是漏傳。漏傳在前端看不出分別，
+      // 但日後後端改成必填時，這種呼叫會靜靜變成不合法。
+      department: null,
     });
 
     // 密碼只活在表單那一次請求裡：成功後欄位要清空。
@@ -384,7 +388,67 @@ describe('建立員工', () => {
     });
 
     expect(document.body.textContent).toContain('已建立「黃小明」');
-    expect(document.body.textContent).toContain('下一步：喺下面指派部門');
+    expect(document.body.textContent).toContain('未有任何部門');
+  });
+
+  it('建立時選了部門：同一個請求送 department，提示講部門名而不是 schema 名', async () => {
+    const api = openMembers({
+      staffCreate: () =>
+        jsonResponse(201, {
+          staff: { ...WAI, id: 's-new', displayName: '黃小明', department: 'design' },
+        }),
+    });
+
+    await row();
+    await userEvent.click(screen.getByRole('button', { name: '新增員工' }));
+
+    await userEvent.type(screen.getByLabelText('名稱'), '黃小明');
+    await userEvent.type(screen.getByLabelText('電郵'), 'ming@example.com');
+    await userEvent.selectOptions(screen.getByLabelText('部門'), 'design');
+    await userEvent.type(screen.getByLabelText('初始密碼'), 'temp-secret-2026');
+    await userEvent.click(screen.getByRole('button', { name: '建立' }));
+
+    await waitFor(() => {
+      expect(api.count('staffCreate')).toBe(1);
+    });
+
+    const call = api.calls.find((item) => item.method === 'POST' && item.path.endsWith('/staff'));
+
+    expect(JSON.parse(call?.body ?? '{}')).toMatchObject({ department: 'design' });
+
+    // 老闆看的是部門叫什麼，不是 schema 名。
+    expect(document.body.textContent).toContain('已指派到 Design');
+  });
+
+  it('可以預先指派一個未開放的部門（部門照樣列出）', async () => {
+    const api = openMembers({
+      staffCreate: () =>
+        jsonResponse(201, {
+          staff: { ...WAI, id: 's-new', displayName: '黃小明', department: 'sales' },
+        }),
+    });
+
+    await row();
+    await userEvent.click(screen.getByRole('button', { name: '新增員工' }));
+
+    const select = screen.getByLabelText('部門') as HTMLSelectElement;
+
+    // 未開放的部門要出現在選項裡，並寫明未開放。
+    expect(select.textContent).toContain('銷售（未開放）');
+
+    await userEvent.type(screen.getByLabelText('名稱'), '黃小明');
+    await userEvent.type(screen.getByLabelText('電郵'), 'ming@example.com');
+    await userEvent.selectOptions(select, 'sales');
+    await userEvent.type(screen.getByLabelText('初始密碼'), 'temp-secret-2026');
+    await userEvent.click(screen.getByRole('button', { name: '建立' }));
+
+    await waitFor(() => {
+      expect(api.count('staffCreate')).toBe(1);
+    });
+
+    const call = api.calls.find((item) => item.method === 'POST' && item.path.endsWith('/staff'));
+
+    expect(JSON.parse(call?.body ?? '{}')).toMatchObject({ department: 'sales' });
   });
 
   it('三格未填齊：不送出請求，直接講清楚', async () => {

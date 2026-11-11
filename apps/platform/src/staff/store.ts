@@ -66,6 +66,13 @@ export type CreateStaffParams = {
   displayName: string;
   passwordHash: string;
   actorId: string;
+  /**
+   * 建立時一併指派的部門（issue #28）。`null` ＝ 未指派。
+   *
+   * 這裡刻意收一個必填欄位（即使值是 null），而不是 optional：呼叫端要明確
+   * 講出「我知道我在建立一個沒有部門的帳戶」，而不是漏傳一個參數。
+   */
+  department: string | null;
 };
 
 export type CreateStaffResult =
@@ -87,9 +94,9 @@ export async function createStaffAccount(
 
     const inserted = await client.query<StaffRow>(
       `insert into app_user (email, display_name, role, department, password_hash, must_change_password)
-       values ($1, $2, 'staff', null, $3, true)
+       values ($1, $2, 'staff', $3, $4, true)
        returning ${COLUMNS}`,
-      [params.email, params.displayName, params.passwordHash],
+      [params.email, params.displayName, params.department, params.passwordHash],
     );
 
     const row = inserted.rows[0];
@@ -105,8 +112,14 @@ export async function createStaffAccount(
         actorId: params.actorId,
         action: 'staff.create',
         target: row.id,
-        // 只有角色與「要改密碼」這個事實。密碼、salt、雜湊一律不進審計。
-        detail: { role: 'staff', mustChangePassword: true },
+        // 只有角色、部門與「要改密碼」這些事實。密碼、salt、雜湊一律不進審計。
+        detail: {
+          role: 'staff',
+          mustChangePassword: true,
+          // 建立時就有部門的話要留痕（issue #28）：日後查「邊個把這個人放進設計部」，
+          // 答案不應該只有「建立帳戶」這一筆。
+          department: params.department,
+        },
       },
     );
 
