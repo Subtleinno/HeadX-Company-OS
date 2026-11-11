@@ -95,6 +95,11 @@ describe('字串表', () => {
       'brand.page.manage.renamed',
       'brand.page.manage.removed',
       'brand.page.manage.briefLine',
+      'brand.color.missingLine',
+      'brand.color.missingMustHave',
+      'brand.color.pairUnknown',
+      'brand.color.ratio',
+      'brand.color.logoNote',
     ]);
   });
 });
