@@ -30,8 +30,7 @@
     "restore": "node scripts/backup/cli.mjs restore",
     "db:app-access": "npm run db:app-access --workspace @company-os/platform --",
     "deploy:build": "node scripts/deploy-build.mjs",
-    "deploy:revision": "node scripts/deploy-revision.mjs",
-    "demo:check": "node scripts/demo-stack-check.mjs"
+    "deploy:revision": "node scripts/deploy-revision.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1161.0"

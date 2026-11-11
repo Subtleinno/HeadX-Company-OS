@@ -69,8 +69,6 @@ web_modules/
 .env
 .env.*
 !.env.example
-# Demo Public Stack 的範本（issue #145）。真正的 .env.demo 仍然被忽略。
-!.env.demo.example
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache
@@ -157,8 +155,6 @@ vite.config.ts.timestamp-*
 *.env
 .env*
 !.env.example
-# Demo Public Stack 的範本（issue #145）。真正的 .env.demo 仍然被忽略。
-!.env.demo.example
 *.pem
 *.key
 *.pfx
