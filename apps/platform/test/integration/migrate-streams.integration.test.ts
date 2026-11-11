@@ -578,6 +578,7 @@ describe('舊資料庫升級', () => {
         '0012_user_brand_focus.sql',
         '0013_brand_pages.sql',
         '0014_brand_policy.sql',
+      '0015_brand_editor.sql',
       ]);
 
       const after = await db.pool.query<{ name: string; checksum: string; applied_at: Date }>(
@@ -599,6 +600,7 @@ describe('舊資料庫升級', () => {
         '0012_user_brand_focus.sql',
         '0013_brand_pages.sql',
         '0014_brand_policy.sql',
+      '0015_brand_editor.sql',
       ]);
 
       // 再跑一次才真的沒有待套用的，並且明講。
@@ -648,6 +650,7 @@ describe('舊資料庫升級', () => {
         '0012_user_brand_focus.sql',
         '0013_brand_pages.sql',
         '0014_brand_policy.sql',
+      '0015_brand_editor.sql',
         'app_alpha/0001_alpha_one.sql',
       ]);
 

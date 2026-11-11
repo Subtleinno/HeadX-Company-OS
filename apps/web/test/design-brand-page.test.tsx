@@ -78,14 +78,15 @@ function openPage(
   user: typeof BOSS | typeof WAI,
   overrides: FakeHandlers = {},
 ): ReturnType<typeof installFakeApi> {
-  window.history.replaceState(null, '', '/#/design/brand/page/logo');
+  window.history.replaceState(null, '', '/#/design/brand/logo');
 
   const api = installFakeApi({
     state: () => jsonResponse(200, { setupRequired: false, signedIn: true, user }),
     modules: () => jsonResponse(200, { modules: [DESIGN] }),
     brands: () => jsonResponse(200, { items: BRANDS }),
     brandFocus: () => jsonResponse(200, { brandId: 'b-moonic' }),
-    brandPages: () => jsonResponse(200, { items: PAGES }),
+    // 寫入介面由伺服器回的 canEdit 決定（品牌級授權，#32）；畫面不自己看 role。
+    brandPages: () => jsonResponse(200, { items: PAGES, canEdit: user.role === 'owner' }),
     brandPage: () => jsonResponse(200, pageDetail()),
     ...overrides,
   });

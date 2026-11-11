@@ -1,6 +1,6 @@
 > **收入 repo 的來源**：原檔 `.workbuddy/design/BACKEND-FUNCTIONS-MAP.md`（2026-11-09，長期 gitignored）。2026-11-11 收入 `docs/product/`。
 >
-> **注意時效**：2026-11-09 首次盤點，**2026-11-12 已同步**（補 `directory`、`needs`、`staff` 的部門與 `brand-focus`，資料實體補到 0012；2026-11-12 補品牌頁版本 0013 與品牌頁策略 0014）。
+> **注意時效**：2026-11-09 首次盤點，**2026-11-12 已同步**（補 `directory`、`needs`、`staff` 的部門與 `brand-focus`，資料實體補到 0012；2026-11-12 補品牌頁版本 0013、品牌頁策略 0014 與品牌編輯權 0015）。
 > **真相以 `apps/platform/src/*/routes.ts` 為準**；本檔的價值是用語對照與「邊啲後端功能仲未有畫面」。與程式碼不一致時，改這一頁，不要改程式碼去迎合它。
 
 # company-os 後端功能清單（UI/UX 重設計逐頁對照用）
@@ -52,11 +52,17 @@
 | POST | `/brands` | 開新品牌 | **`requireOwner`** | ✅ 只有老闆見到表單（#19） |
 | GET | `/me/brand-focus` | 我上次工作的品牌，未揀過回 `null` | `requireUser` | ✅ `useDirectory` |
 | PUT | `/me/brand-focus` | 記住我這次的品牌（只寫自己那一行；品牌不存在 → `400 unknown_brand`） | `requireUser` | ✅ |
-| GET | `/brands/:id/pages` | 品牌頁清單（順手確保五個固定頁存在） | `requireUser` | ✅ `BrandPageScreen` |
+| GET | `/brands/:id/pages` | 品牌頁清單＋`canEdit`（順手確保五個固定頁存在） | `requireUser` | ✅ `DesignApp`／`useBrandPages` |
+| POST | `/brands/:id/pages` | 建立自定義頁（名／slug／brief 三樣齊；撞鍵 409 `page_key_taken`、固定鍵 409 `page_key_reserved`） | 品牌編輯權（`canEditBrand`，C103） | ✅ `BrandPageCreate` |
+| PATCH | `/brands/:id/pages/:key` | 改顯示名（帶 `slug` 一律 400：slug 不可改） | 品牌編輯權 | ✅ `BrandPageScreen` |
+| DELETE | `/brands/:id/pages/:key` | 軟刪除自定義頁連版本；固定頁 409 `page_is_fixed`、被成品釘住 409 `page_pinned` | 品牌編輯權 | ✅ |
+| GET | `/brands/:id/editors` | 誰可以改這個品牌的頁 | `requireUser` | ✅ `BrandEditorsPanel` |
+| PUT | `/brands/:id/editors/:userId` | 授予品牌編輯權 | **`requireOwner`** | ✅ |
+| DELETE | `/brands/:id/editors/:userId` | 收回品牌編輯權 | **`requireOwner`** | ✅ |
 | GET | `/brands/:id/pages/:key` | 一頁的現行版本＋版本列表 | `requireUser` | ✅ |
-| POST | `/brands/:id/pages/:key/versions` | 儲存＝新增一版（空內容 400） | **`requireOwner`**（品牌級授權見 #32） | ✅ |
-| POST | `/brands/:id/pages/:key/versions/:vid/restore` | 用回舊版：以舊內容新增一版，不改歷史 | **`requireOwner`** | ✅ |
-| DELETE | `/brands/:id/pages/:key/versions/:vid` | 軟刪除舊版；現行 409 `current_version`、被成品釘住 409 `version_pinned` | **`requireOwner`** | ✅ |
+| POST | `/brands/:id/pages/:key/versions` | 儲存＝新增一版（空內容 400） | 品牌編輯權（C103；老闆永遠可以） | ✅ |
+| POST | `/brands/:id/pages/:key/versions/:vid/restore` | 用回舊版：以舊內容新增一版，不改歷史 | 品牌編輯權 | ✅ |
+| DELETE | `/brands/:id/pages/:key/versions/:vid` | 軟刪除舊版；現行 409 `current_version`、被成品釘住 409 `version_pinned` | 品牌編輯權 | ✅ |
 | GET | `/policy` | 策略六個槽：現行全文＋版本列表 | `requireUser` | ✅ `PolicyScreen` |
 | POST | `/policy/:slot/versions` | 儲存＝新增一版（六個槽：home／logo／color／type／tone／custom） | **`requireOwner`** | ✅ |
 | GET | `/company` | 頁尾要顯示的公司識別（本機公司・公司名・城市） | `requireUser` | ✅ `AppFrame` |
@@ -200,13 +206,14 @@
 | `AppGrantsScreen` | 申請／批准／生效／拒絕／撤銷／修改，人與 agent 兩視角 | `/app-grants*`、`/agents/:id/grants` 等 |
 | `WorkspacePrototype` | `#/app/*` 原型外殼，**唔叫任何真 API**、唔顯示業務數字 | 無（fixtures） |
 | `BossPortal`／`MembersScreen` | `#/boss/people/members`：員工名單、建立員工、指派部門、停用、恢復、重設密碼 | `/staff*`、`/modules` |
-| `DesignApp` | `#/design`：品牌清單、新增品牌（只老闆）、記住上次品牌 | `/brands`、`/me/brand-focus` |
+| `DesignApp` | `#/design`：品牌模組的頁清單與自定義頁（建立／改名／刪除）、品牌主頁位置、記住上次品牌 | `/brands`、`/brands/:id/pages`、`/me/brand-focus` |
+| `BrandEditorsPanel` | `#/boss/people/members` 下半：誰可以改這個品牌的頁 | `/brands`、`/brands/:id/editors` |
 | `NeedsScreen` | `#/needs`：需求列表與認領（**不可以新增**） | `/needs`、`/needs/:id/claim` |
 | `FilesScreen` | `#/files`：上傳、列表、下載、軟刪除 | `/files*` |
 
 ---
 
-## 4. 資料實體（`db/migrations/0001`–`0014`）
+## 4. 資料實體（`db/migrations/0001`–`0015`）
 
 | 實體 | 一句說明 |
 |---|---|
@@ -227,6 +234,7 @@
 | `brand_page_version` | 頁的版本快照：`version_no` 逐頁計、`content`、`note`、`created_by`、`policy_version_id`（當時用的策略版本，0014 加）；**只加不改**由 trigger 強制，軟刪除是唯一合法 UPDATE，0013 新增 |
 | `brand_page_version_pin` | 已出街成品釘住某一版；現時未有任何寫入者，但刪除檢查已讀它，0013 新增 |
 | `brand_policy_version` | 品牌頁策略：`slot`（六個槽）＋逐槽 `version_no`、`content`、`note`；**只加不改**（UPDATE 與 DELETE 都被 trigger 拒），第一版由 0014 寫入 |
+| `brand_editor` | 誰可以改這個品牌的頁：`(brand_id, user_id)` 做主鍵，`granted_by` 記是誰給的；老闆不寫進來（他永遠可以改，C103）；0015 新增 |
 
 ---
 

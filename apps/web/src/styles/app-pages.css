@@ -586,47 +586,6 @@
 
 /* ── Design app：品牌 ────────────────────────────────────────── */
 
-.design-brands {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  margin: 0 0 var(--hx-space-5);
-  padding: 0;
-  border: 1px solid var(--hx-frame-border);
-  border-radius: var(--hx-radius-md);
-  list-style: none;
-  overflow: hidden;
-}
-
-.design-brands__item {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--hx-space-3);
-  padding: var(--hx-space-3) var(--hx-space-4);
-  border-bottom: 1px solid var(--hx-frame-border);
-  background: var(--hx-chrome-white);
-}
-
-.design-brands__item:last-child {
-  border-bottom: 0;
-}
-
-.design-brands__item[data-brand-current='true'] {
-  background: var(--hx-chrome-selected);
-}
-
-.design-brands__name {
-  color: var(--hx-frame-ink);
-  font: var(--hx-frame-font-body);
-  font-weight: 600;
-}
-
-.design-brands__code {
-  color: var(--hx-frame-secondary);
-  font: var(--hx-font-mono);
-}
-
 /* ── 窄螢幕：表格轉卡片排法（同 Needs 頁一致）────────────────── */
 
 @media (max-width: 560px) {
@@ -826,47 +785,10 @@
   max-width: 880px;
 }
 
-.brand-page__picker {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  border-bottom: 1px solid var(--hx-frame-border);
-  padding-bottom: var(--hx-space-2);
-}
-
-.brand-page__tab {
-  border: 0;
-  background: none;
-  padding: 6px 10px;
-  font: var(--hx-frame-font-small-lg);
-  color: var(--hx-frame-secondary);
-  cursor: pointer;
-  border-radius: var(--hx-radius-sm);
-}
-
-.brand-page__tab:hover {
-  color: var(--hx-frame-ink);
-  background: var(--hx-chrome-selected);
-}
-
-/* 現行頁籤用底色與字重講清楚，不用藍色：整份外殼只有 accent 一個彩色，
-   分頁不是動作，不應該搶走畫面唯一的重點。 */
-.brand-page__tab--active {
-  color: var(--hx-frame-ink);
-  font-weight: 600;
-  box-shadow: inset 0 -2px 0 var(--hx-frame-ink);
-}
-
 .brand-page__head {
   display: flex;
   align-items: baseline;
   gap: 12px;
-}
-
-.brand-page__title {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 600;
 }
 
 .brand-page__meta {
@@ -1002,4 +924,89 @@
   margin: 6px 0 0;
   font-size: 12px;
   color: var(--hx-frame-muted);
+}
+
+/* ── 品牌模組：頁清單與自定義頁（issue #32）──────────────────── */
+
+/* 頁頭右上角的動作（新增頁／新增品牌）。兩個都是次要動作，所以排在一起、
+   唔搶走頁面自己的重點。 */
+.design-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+}
+
+/* 空狀態的兩段：一句講發生什麼事，一句講跟住會點。 */
+.design-empty__title {
+  margin: 0 0 var(--hx-space-2);
+  color: var(--hx-frame-ink);
+  font-weight: 600;
+}
+
+.design-empty__body {
+  margin: 0 0 var(--hx-space-4);
+  line-height: 1.7;
+}
+
+/* 建立表單的面板：與頁內容分開一個框，因為它是「暫時開著的東西」，不是這一頁的一部分。 */
+.brand-manage {
+  margin: 0 0 var(--hx-space-5);
+  padding: var(--hx-space-4);
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-md);
+  background: var(--hx-chrome-white);
+}
+
+.brand-manage__title {
+  margin: 0 0 var(--hx-space-3);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* 自定義頁的 brief：它是這一頁的方向，所以放在標題下面、內容之前。 */
+.brand-page__brief {
+  margin: 0;
+  color: var(--hx-frame-secondary);
+  font: var(--hx-frame-font-small);
+  line-height: 1.7;
+}
+
+/* 改名與刪頁：只在自定義頁出現，而且只在可以改這個品牌的人面前出現。 */
+.brand-page__manage {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hx-space-2);
+  padding: var(--hx-space-2) 0 var(--hx-space-3);
+  border-bottom: 1px solid var(--hx-frame-border);
+}
+
+.brand-page__rename {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* 誰可以改這個品牌的頁（issue #32）：一行一個人，勾選即儲存。 */
+.brand-editors {
+  margin: var(--hx-space-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.brand-editors__item {
+  border-top: 1px solid var(--hx-frame-border);
+}
+
+.brand-editors__label {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+  padding: var(--hx-space-2) 0;
+  cursor: pointer;
+}
+
+/* 人員表與「誰可以改這個品牌的頁」是兩件事，中間要有一道明顯的距離：
+   貼在一起會令人以為它是表格的一部分。 */
+.brand-editors-panel {
+  margin-top: var(--hx-space-6);
 }

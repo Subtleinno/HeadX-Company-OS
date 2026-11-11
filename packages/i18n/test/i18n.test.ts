@@ -67,6 +67,8 @@ describe('字串表', () => {
   'boss.members.disableLabel',
   'boss.members.enableLabel',
   'boss.members.resetLabel',
+  'boss.members.brandEditGranted',
+  'boss.members.brandEditRevoked',
   'boss.policy.saved',
   'boss.policy.versionNo',
   'gate.body',
@@ -88,6 +90,11 @@ describe('字串表', () => {
       'brand.page.deleted',
       'brand.page.pinned',
       'brand.page.policyVersionNo',
+      'brand.page.manage.created',
+      'brand.page.manage.belongsMoved',
+      'brand.page.manage.renamed',
+      'brand.page.manage.removed',
+      'brand.page.manage.briefLine',
     ]);
   });
 });

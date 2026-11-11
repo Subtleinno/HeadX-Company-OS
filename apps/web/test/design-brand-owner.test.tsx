@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it } from 'vitest';
 import './helpers/rtl';
 import { App } from '../src/App';
@@ -48,15 +49,22 @@ const DESIGN = {
   route: '/design',
 };
 
-function openDesign(user: typeof BOSS | typeof WAI): FakeApi {
+function openDesign(user: typeof BOSS | typeof WAI, brands = BRANDS): FakeApi {
   // 直接由 /design 開機：這一張測的是「有咩角色見到咩」，不是落點。
   window.history.replaceState(null, '', '/#/design');
 
   const api = installFakeApi({
     state: () => jsonResponse(200, { setupRequired: false, signedIn: true, user }),
     modules: () => jsonResponse(200, { modules: [DESIGN] }),
-    brands: () => jsonResponse(200, { items: BRANDS }),
-    brandFocus: () => jsonResponse(200, { brandId: BRANDS[0]?.id ?? null }),
+    brands: () => jsonResponse(200, { items: brands }),
+    brandFocus: () => jsonResponse(200, { brandId: brands[0]?.id ?? null }),
+    brandPages: () =>
+      jsonResponse(200, {
+        items: [
+          { id: 'p-home', brandId: 'b-moonic', kind: 'fixed', key: 'home', name: '品牌主頁', brief: null, sortOrder: 10, current: null },
+        ],
+        canEdit: user.role === 'owner',
+      }),
   });
 
   render(<App />);
@@ -71,24 +79,49 @@ afterEach(() => {
 });
 
 describe('只有老闆可以開新品牌', () => {
-  it('老闆：見到新增品牌的表單', async () => {
+  it('老闆：按「新增品牌」之後見到表單', async () => {
     openDesign(BOSS);
 
-    expect(await screen.findByRole('heading', { name: '新增品牌' })).toBeTruthy();
+    const open = await screen.findByRole('button', { name: '新增品牌' });
+
+    await userEvent.click(open);
+
+    expect(screen.getByRole('heading', { name: '新增品牌' })).toBeTruthy();
     expect(screen.getByRole('button', { name: '建立' })).toBeTruthy();
     expect(document.querySelector('[data-brand-create="owner-only"]')).toBeNull();
   });
 
-  it('員工：見不到表單，而且見到原因', async () => {
-    openDesign(WAI);
+  it('員工：沒有「新增品牌」入口，也沒有表單', async () => {
+    const api = openDesign(WAI);
 
-    // 等品牌清單畫出來，證明這一頁真的渲染了，不是仍在載入。
+    // 等頁清單畫出來，證明這一頁真的渲染了，不是仍在載入。
     await waitFor(() => {
-      expect(document.querySelectorAll('[data-brand-row]').length).toBe(1);
+      expect(document.querySelector('[data-brand-home-pending]')).not.toBeNull();
     });
 
+    expect(screen.queryByRole('button', { name: '新增品牌' })).toBeNull();
     expect(screen.queryByRole('heading', { name: '新增品牌' })).toBeNull();
     expect(screen.queryByRole('button', { name: '建立' })).toBeNull();
+    // 冇任何 POST：入口根本不存在，唔會有人誤按。
+    expect(api.calls.some((call) => call.method === 'POST')).toBe(false);
+  });
+
+  it('員工：品牌清單照樣讀得到（selector 要用），只係唔可以開新的', async () => {
+    const api = openDesign(WAI);
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-brand-home-pending]')).not.toBeNull();
+    });
+
+    expect(api.calls.some((call) => call.path.endsWith('/brands') && call.method === 'GET')).toBe(
+      true,
+    );
+  });
+
+  it('一個品牌都未有：員工見到「只有老闆可以開第一個」的原因，不是白畫面', async () => {
+    openDesign(WAI, []);
+
+    expect(await screen.findByText('還沒有品牌，只有老闆可以開第一個。')).toBeTruthy();
 
     const note = document.querySelector('[data-brand-create="owner-only"]');
 
@@ -96,19 +129,5 @@ describe('只有老闆可以開新品牌', () => {
     expect(note?.textContent).toBe(
       '只有老闆可以開新品牌。品牌一開就全公司都用得，所以入口只放喺老闆嗰邊。',
     );
-  });
-
-  it('員工：品牌清單照樣讀得到（selector 要用），只係唔可以開新的', async () => {
-    const api = openDesign(WAI);
-
-    await waitFor(() => {
-      expect(document.querySelectorAll('[data-brand-row]').length).toBe(1);
-    });
-
-    expect(api.calls.some((call) => call.path.endsWith('/brands') && call.method === 'GET')).toBe(
-      true,
-    );
-    // 冇任何 POST：表單根本不存在，唔會有人誤按。
-    expect(api.calls.some((call) => call.method === 'POST')).toBe(false);
   });
 });

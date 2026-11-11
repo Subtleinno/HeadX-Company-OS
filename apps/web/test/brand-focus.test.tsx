@@ -63,11 +63,16 @@ function focusReads(api: FakeApi): RecordedRequest[] {
   );
 }
 
-/** 哪一行被標成「而家嘅品牌」。 */
+/**
+ * 而家選中的品牌 —— 由頂欄的品牌 selector 讀。
+ *
+ * 品牌清單不再是一頁（issue #32）：它住在品牌切換裡，所以「選中哪一個」也
+ * 只有那一個地方答得到。
+ */
 function currentBrandName(): string | null {
-  const row = document.querySelector('[data-brand-row][data-brand-current="true"]');
+  const button = document.querySelector('[data-frame-slot="scope"] .selector__button');
 
-  return row?.querySelector('.design-brands__name')?.textContent ?? null;
+  return button?.querySelector('.selector__value')?.textContent ?? null;
 }
 
 async function signInAsStaff(focusBrandId: string | null, handlers: FakeHandlers = {}): Promise<FakeApi> {
@@ -82,6 +87,13 @@ async function signInAsStaff(focusBrandId: string | null, handlers: FakeHandlers
       request.method === 'GET'
         ? jsonResponse(200, { brandId: focusBrandId })
         : jsonResponse(200, { brandId: (JSON.parse(request.body ?? '{}') as { brandId: string }).brandId }),
+    brandPages: () =>
+      jsonResponse(200, {
+        items: [
+          { id: 'p-home', brandId: 'b-moonic', kind: 'fixed', key: 'home', name: '品牌主頁', brief: null, sortOrder: 10, current: null },
+        ],
+        canEdit: false,
+      }),
     ...handlers,
   });
 
@@ -96,7 +108,7 @@ async function signInAsStaff(focusBrandId: string | null, handlers: FakeHandlers
     expect(window.location.hash).toBe('#/design');
   });
   await waitFor(() => {
-    expect(document.querySelectorAll('[data-brand-row]').length).toBe(BRANDS.length);
+    expect(currentBrandName()).not.toBeNull();
   });
 
   return api;

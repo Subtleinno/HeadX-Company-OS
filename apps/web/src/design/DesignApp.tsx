@@ -1,22 +1,39 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { t } from '@company-os/i18n';
 import { createBrand, type BrandItem, type PublicUser } from '../api';
 import { AppFrame } from '../frame/AppFrame';
-import { DESIGN_NAV, resolveNav, type NavPosition } from '../frame/appNav';
+import {
+  DESIGN_NAV,
+  navLabel,
+  pageApiKey,
+  resolveNav,
+  withBrandPages,
+  type NavPosition,
+} from '../frame/appNav';
 import { useBrands, useSelectedBrand } from '../frame/useDirectory';
-import { useHashPath } from '../router';
+import { navigatePath, useHashPath } from '../router';
+import { BrandPageCreate } from './BrandPageCreate';
 import { BrandPageScreen } from './BrandPageScreen';
+import { useBrandPages } from './useBrandPages';
 
 /**
  * Design app（設計／內容／網站）。
  *
  * 四個模組：品牌、素材、知識、創作（老闆 2026-11-10：呢四個就係
- * Marketing Design app 的模組）。模組之下嘅頁全部喺左側欄，頁之下仲有章節
- * （品牌設定 → 品牌標誌／品牌識別／色彩／字體）。
+ * Marketing Design app 的模組）。
  *
- * 而家只接好品牌這一條：品牌清單同新增品牌係真資料、真寫入。其餘三頁
- * 顯示如實嘅「未接」——唔會畫一個假表出來充場面，因為假表會令人以為
- * 功能已有，然後喺要交貨嗰日才發現入唔到數。
+ * 品牌模組的形狀由 issue #32 定：
+ *   - 左側是**這個品牌的一組頁**：品牌主頁、標誌、色彩、字體、語氣，加上
+ *     零到多張自定義頁。不是儀表板、不是渠道、不是版本紀錄 —— 版本住在
+ *     每一頁自己裡面（#33）。
+ *   - 第一格是品牌主頁。它的內容由 #39 交付；未交付就講未交付，不畫假總覽。
+ *   - 品牌清單不在這裡：它住在頂欄的品牌切換。一間公司還未開第一個品牌時，
+ *     這裡講明「只有老闆可以開第一個」，不是白畫面。
+ *   - 自定義頁的鍵是 `p/<slug>`，網址 `#/design/brand/p/<slug>`，與五頁
+ *     的 `#/design/brand/<鍵>` 永遠不會撞。
+ *
+ * 頁清單由 `useBrandPages` 讀一次，左側導覽與頁面都由它推出來。兩處各讀
+ * 一次，早晚會出現「左側有四頁、頁籤有五頁」這種講不通的分別。
  */
 
 type DesignAppProps = {
@@ -24,6 +41,7 @@ type DesignAppProps = {
   onSignedOut: () => void;
 };
 
+/** 未接內容的三個模組（素材、知識、創作）：如實講未接，不畫假表。 */
 function DesignStub() {
   return (
     <div className="design-stub">
@@ -33,49 +51,21 @@ function DesignStub() {
   );
 }
 
-function BrandList(props: { items: readonly BrandItem[]; currentId: string | null }) {
+function NoBrand(props: { canCreate: boolean; onCreated: () => void }) {
   return (
-    <ul className="design-brands">
-      {props.items.map((item) => (
-        <li
-          key={item.id}
-          className="design-brands__item"
-          data-brand-row
-          data-brand-current={item.id === props.currentId ? 'true' : 'false'}
-        >
-          <span className="design-brands__name">{item.name}</span>
-          <span className="design-brands__code">{item.code}</span>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-function BrandHome(props: {
-  items: readonly BrandItem[];
-  currentId: string | null;
-  /** 只有老闆可以開新品牌（issue #19）。後端 `POST /brands` 已經係 requireOwner。 */
-  canCreate: boolean;
-  onCreated: () => void;
-}) {
-  return (
-    <>
-      {props.items.length === 0 ? (
-        <p className="design-empty">{t('design.brand.empty')}</p>
-      ) : (
-        <BrandList items={props.items} currentId={props.currentId} />
-      )}
+    <div className="design-empty" data-brand-nobrand>
+      <p className="design-empty__title">{t('brand.page.noBrand')}</p>
+      <p className="design-empty__body">{t('brand.page.noBrandBody')}</p>
 
       {props.canCreate ? (
         <CreateBrandForm onCreated={props.onCreated} />
       ) : (
-        // 唔畫一個按落去會 403 的表單：先假裝你可以做，再把拒絕講成
-        // 「代碼格式有問題」，係講錯原因。如實講邊個可以開。
+        // 唔畫一個按落去會 403 的表單：講錯原因比唔講更差。
         <p className="design-footnote" data-brand-create="owner-only">
           {t('design.brand.ownerOnly')}
         </p>
       )}
-    </>
+    </div>
   );
 }
 
@@ -180,32 +170,35 @@ function CreateBrandForm(props: { onCreated: () => void }) {
 
 export function DesignApp({ user, onSignedOut }: DesignAppProps) {
   const path = useHashPath();
-  const position = resolveNav(DESIGN_NAV, path);
   const brands = useBrands(true);
-  const items = brands.state.kind === 'ready' ? brands.state.items : [];
+  const items: readonly BrandItem[] = brands.state.kind === 'ready' ? brands.state.items : [];
   const { brandId } = useSelectedBrand(brands.state);
   const selected = items.find((item) => item.id === brandId) ?? null;
+  const pages = useBrandPages(brandId);
 
-  // 品牌頁的網址是 `#/design/brand/page/<key>`；第三段才是哪一頁。
-  const pageKey = path[0] === 'brand' && path[1] === 'page' ? (path[2] ?? 'home') : null;
+  const nav = withBrandPages(DESIGN_NAV, pages.items);
+  const position = resolveNav(nav, path);
+  const inBrand = position.navModule.key === 'brand';
 
-  function renderPage(current: NavPosition) {
-    if (current.page.key === 'page') {
+  const [panel, setPanel] = useState<'page' | 'brand' | null>(null);
+  /**
+   * 「已經幫你搬過去」的提示。連著它應該出現的那一條路徑一起存 —— 提示跟著
+   * 目的地走，換了頁就自然消失，不會在品牌主頁上講一件已經過去的事。
+   */
+  const [moved, setMoved] = useState<{ text: string; at: string } | null>(null);
+
+  // 網址上這一頁的鍵：自定義頁是 `p/<slug>`，佔兩段。
+  const requestedKey = path[0] === 'brand' ? path.slice(1).join('/') : '';
+  const pathKey = path.join('/');
+  const pageMissing =
+    pages.state.kind === 'ready' &&
+    requestedKey.startsWith('p/') &&
+    !pages.items.some((item) => `p/${item.key}` === requestedKey);
+
+  function renderBrand(current: NavPosition): ReactNode {
+    if (brandId === null) {
       return (
-        <BrandPageScreen
-          brandId={brandId}
-          pageKey={pageKey ?? 'home'}
-          canEdit={user.role === 'owner'}
-        />
-      );
-    }
-
-    if (current.page.key === 'home') {
-      return (
-        <BrandHome
-          items={items}
-          currentId={brandId}
-          // 只看 role，不看 department：老闆唔屬任何部門，但仍然係唯一可以開品牌的人。
+        <NoBrand
           canCreate={user.role === 'owner'}
           onCreated={() => {
             brands.reload();
@@ -214,28 +207,149 @@ export function DesignApp({ user, onSignedOut }: DesignAppProps) {
       );
     }
 
-    return <DesignStub />;
+    if (pages.state.kind === 'loading' || pages.state.kind === 'idle') {
+      return <p className="design-empty">{t('brand.page.manage.loading')}</p>;
+    }
+
+    if (pages.state.kind === 'failed') {
+      return (
+        <div className="design-empty" data-brand-pages-failed>
+          <p>{t('brand.page.manage.loadFailed')}</p>
+          <button type="button" className="design-btn" onClick={pages.reload}>
+            {t('common.retry')}
+          </button>
+        </div>
+      );
+    }
+
+    if (pageMissing) {
+      return (
+        <p className="design-empty" data-brand-page-missing>
+          {t('brand.page.manage.missingPage')}
+        </p>
+      );
+    }
+
+    if (current.page.key === 'home') {
+      return (
+        <div className="design-empty" data-brand-home-pending>
+          <p className="design-empty__title">{t('brand.page.homePending')}</p>
+          <p className="design-empty__body">{t('brand.page.homePendingBody')}</p>
+        </div>
+      );
+    }
+
+    return (
+      <BrandPageScreen
+        brandId={brandId}
+        pageKey={pageApiKey(current.page.key)}
+        canEdit={pages.canEdit}
+        onPagesChanged={pages.reload}
+        onRemoved={() => {
+          pages.reload();
+          navigatePath('/design', 'brand', 'home');
+        }}
+      />
+    );
   }
 
-  const subtitle =
-    position.page.key === 'page'
-      ? (selected === null ? undefined : selected.name)
-      : position.page.key === 'home'
-      ? t('design.brand.homeLead')
-      : selected === null
-        ? undefined
-        : t('design.brand.lead', { brand: selected.name });
+  function renderPage(current: NavPosition): ReactNode {
+    if (current.navModule.key !== 'brand') {
+      return <DesignStub />;
+    }
+
+    return renderBrand(current);
+  }
+
+  const headerActions =
+    inBrand && (user.role === 'owner' || pages.canEdit) ? (
+      <div className="design-actions">
+        {pages.canEdit && brandId !== null && (
+          <button
+            type="button"
+            className="design-btn"
+            data-brand-page-create-open
+            onClick={() => {
+              setMoved(null);
+              setPanel((open) => (open === 'page' ? null : 'page'));
+            }}
+          >
+            {t('brand.page.manage.new')}
+          </button>
+        )}
+
+        {/* 只有老闆可以開新品牌（後端 `POST /brands` 已經是 requireOwner）。 */}
+        {user.role === 'owner' && (
+          <button
+            type="button"
+            className="design-btn design-btn--primary"
+            onClick={() => {
+              setPanel((open) => (open === 'brand' ? null : 'brand'));
+            }}
+          >
+            {t('design.brand.add')}
+          </button>
+        )}
+      </div>
+    ) : undefined;
 
   return (
     <AppFrame
-      nav={DESIGN_NAV}
+      nav={nav}
       user={user}
       path={path}
       onSignOut={onSignedOut}
-      pageTitle={t(position.section?.labelKey ?? position.page.labelKey)}
-      {...(subtitle === undefined ? {} : { pageSubtitle: subtitle })}
+      pageTitle={navLabel(position.page)}
+      pageSubtitle={inBrand && selected !== null ? selected.name : undefined}
+      {...(headerActions === undefined ? {} : { primaryAction: headerActions })}
     >
-      {(current: NavPosition) => renderPage(current)}
+      {(current: NavPosition) => (
+        <>
+          {/* 加頁時選了「其實屬於某一頁」：不開新頁，帶去那一頁並講明原因。 */}
+          {moved !== null && moved.at === pathKey && (
+            <p className="design-note" role="status" data-brand-page-moved>
+              {moved.text}
+            </p>
+          )}
+
+          {panel === 'page' && brandId !== null && (
+            <BrandPageCreate
+              brandId={brandId}
+              pages={pages.items}
+              onClose={() => {
+                setPanel(null);
+              }}
+              onMoved={(key, name) => {
+                setPanel(null);
+                setMoved({ text: t('brand.page.manage.belongsMoved', { name }), at: `brand/${key}` });
+                navigatePath('/design', 'brand', key);
+              }}
+              onCreated={(name, key) => {
+                setPanel(null);
+                pages.reload();
+                setMoved({
+                  text: t('brand.page.manage.created', { name }),
+                  at: `brand/p/${key}`,
+                });
+                navigatePath('/design', 'brand', 'p', key);
+              }}
+            />
+          )}
+
+          {panel === 'brand' && (
+            <section className="brand-manage" data-brand-create-panel>
+              <CreateBrandForm
+                onCreated={() => {
+                  setPanel(null);
+                  brands.reload();
+                }}
+              />
+            </section>
+          )}
+
+          {renderPage(current)}
+        </>
+      )}
     </AppFrame>
   );
 }

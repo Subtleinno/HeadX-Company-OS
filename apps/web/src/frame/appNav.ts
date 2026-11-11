@@ -1,4 +1,4 @@
-import type { MessageKey } from '@company-os/i18n';
+import { t, type MessageKey } from '@company-os/i18n';
 
 /**
  * Frame 的導覽模型：app → 模組 → 頁 → 章節。
@@ -18,7 +18,16 @@ import type { MessageKey } from '@company-os/i18n';
  * 呢一份係純資料，冇 React、冇 fetch：加一個 app 唔應該要改外殼。
  */
 
-export type NavLeaf = { key: string; labelKey: MessageKey };
+export type NavLeaf = {
+  key: string;
+  /**
+   * 翻譯鍵。靜態頁一定有；**自定義品牌頁**冇 —— 它的名由用戶輸入，住在資料庫
+   * （`brand_page.name`），所以用下面的 `label`。兩者只有一個會有。
+   */
+  labelKey?: MessageKey;
+  /** 已經是人看得懂的字（自定義頁的顯示名）。與 `labelKey` 二選一。 */
+  label?: string;
+};
 
 export type NavPage = NavLeaf & {
   /** 呢一頁之下的章節。冇就唔會有第二層。 */
@@ -29,6 +38,20 @@ export type NavGroup = {
   titleKey?: MessageKey;
   pages: readonly NavPage[];
 };
+
+/**
+ * 一個節點在畫面上叫什麼。
+ *
+ * 只有一個來源：有 `label` 就用它（自定義品牌頁，名在資料庫），否則查
+ * `labelKey`。兩處各寫一份名，早晚會有一邊過時，而用戶一眼就見到。
+ */
+export function navLabel(leaf: NavLeaf): string {
+  if (leaf.label !== undefined) {
+    return leaf.label;
+  }
+
+  return leaf.labelKey === undefined ? leaf.key : t(leaf.labelKey);
+}
 
 export type NavModule = {
   key: string;
@@ -128,28 +151,22 @@ export const DESIGN_NAV: AppNav = {
           // （或重複左側欄最頂嘅「頁面 PAGES」）。分組標題留返俾真正
           // 有兩組以上嘅模組（Boss Portal 嘅據點／權限與稽核）。
           pages: [
-            { key: 'home', labelKey: 'design.page.brandHome' },
-            { key: 'dashboard', labelKey: 'design.page.brandDashboard' },
-            {
-              key: 'settings',
-              labelKey: 'design.page.brandSettings',
-              sections: [
-                { key: 'logo', labelKey: 'design.section.logo' },
-                { key: 'identity', labelKey: 'design.section.identity' },
-                { key: 'color', labelKey: 'design.section.color' },
-                { key: 'type', labelKey: 'design.section.type' },
-              ],
-            },
             /**
-             * 品牌頁的版本入口（issue #33）。
+             * 五個固定頁（issue #32）。鍵固定，唔可以改名：鍵係網址的一部分。
              *
-             * 這一頁是過渡的：真正的清單會由後端的品牌頁推出來（#32），
-             * 五頁加上自定義頁逐個列在左側。在此之前，這裡至少有一道門 ——
-             * 建好了版本鏈而沒有入口，等於沒有交付。
+             * 這一組只是**未讀到品牌頁清單之前**的骨架 —— 真正列在左側的
+             * 是後端回的清單（自定義頁幾張、叫什麼，只有資料庫知）。
+             * `withBrandPages()` 讀到之後會整組換走，包括這五頁的名。
+             *
+             * 移走的三頁各有原因：儀表板與渠道沒有一頁定義它們；版本住在
+             * 各頁自己裡面（#33），不再是獨立一頁；「品牌識別」不在五頁之內，
+             * 留一個空殼當第六頁只會令人以為它存在。
              */
-            { key: 'page', labelKey: 'design.page.brandPage' },
-            { key: 'channel', labelKey: 'design.page.channel' },
-            { key: 'versions', labelKey: 'design.page.versions' },
+            { key: 'home', labelKey: 'design.page.brandHome' },
+            { key: 'logo', labelKey: 'design.page.brandLogo' },
+            { key: 'color', labelKey: 'design.page.brandColor' },
+            { key: 'type', labelKey: 'design.page.brandType' },
+            { key: 'tone', labelKey: 'design.page.brandTone' },
           ],
         },
       ],
@@ -218,7 +235,13 @@ export function resolveNav(nav: AppNav, segments: readonly string[]): NavPositio
   }
 
   const pages = navModule.groups.flatMap((group) => group.pages);
-  const page = pages.find((item) => item.key === segments[1]) ?? pages[0];
+  // 頁鍵可以含斜線：自定義品牌頁是 `p/<slug>`，在網址上佔兩段。先拼返做
+  // 一段比對，再退回逐段比對 —— 手改網址、舊書籤都要對得返。
+  const joined = segments.slice(1).join('/');
+  const page =
+    pages.find((item) => item.key === joined) ??
+    pages.find((item) => item.key === segments[1]) ??
+    pages[0];
 
   if (page === undefined) {
     throw new Error(`module ${navModule.key} has no pages`);
@@ -227,4 +250,50 @@ export function resolveNav(nav: AppNav, segments: readonly string[]): NavPositio
   const section = page.sections?.find((item) => item.key === segments[2]) ?? page.sections?.[0] ?? null;
 
   return { navModule, page, section };
+}
+
+/* ── 品牌頁清單（issue #32） ─────────────────────────────────── */
+
+/** 後端回的一頁，只取導覽要用的欄位 —— 這樣這一支仍然是純資料轉換。 */
+export type BrandNavPage = {
+  key: string;
+  name: string;
+  kind: 'fixed' | 'custom';
+};
+
+/**
+ * 把導覽裡品牌模組的頁，換成後端真正有的那些頁。
+ *
+ * **次序不重排**：後端按 `sort_order` 回，那是一條建立時就固定的數（固定頁
+ * 10–50，自定義頁由 60 起遞增）。按最後修改時間排會令改完一頁就跳位，人會
+ * 以為自己按錯；按字母排則會令「包裝／攝影／命名」變成「命名／包裝／攝影」。
+ *
+ * 自定義頁的鍵是 `p/<slug>`，不是 `<slug>`：五頁的網址是
+ * `#/design/brand/<鍵>`，自定義頁是 `#/design/brand/p/<slug>`，兩者永遠
+ * 不會撞 —— 就算有人把頁改名做 `logo`，技術上也撞不入（後端另外會擋）。
+ */
+export function withBrandPages(
+  nav: AppNav,
+  pages: readonly BrandNavPage[],
+): AppNav {
+  if (pages.length === 0) {
+    return nav;
+  }
+
+  const mapped: NavPage[] = pages.map((page) => ({
+    key: page.kind === 'custom' ? `p/${page.key}` : page.key,
+    label: page.name,
+  }));
+
+  return {
+    ...nav,
+    modules: nav.modules.map((navModule) =>
+      navModule.key === 'brand' ? { ...navModule, groups: [{ pages: mapped }] } : navModule,
+    ),
+  };
+}
+
+/** 導覽鍵 → 後端路徑上的頁鍵。`p/packaging` → `packaging`；`logo` → `logo`。 */
+export function pageApiKey(navKey: string): string {
+  return navKey.startsWith('p/') ? navKey.slice(2) : navKey;
 }

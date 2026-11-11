@@ -184,7 +184,11 @@ const LATER_KEY_PREFIXES = ['brand.page.', 'grant.detail.', 'boss.members.', 'st
  * `design.brand.*` 一齊放走，所以唔可以用前綴。
  */
 const LATER_EXACT_KEYS = [
-  'design.page.brandPage','design.brand.ownerOnly'];
+  'design.page.brandPage',
+  // 2026-11-12（issue #32）：品牌模組五頁的頁名。舊的 `design.page.brandPage`
+  // 與 `design.section.*` 沒有刪，只是不再有人讀 —— 凍結閘本來就不准刪。
+  'design.page.brandLogo', 'design.page.brandColor', 'design.page.brandType',
+  'design.page.brandTone','design.brand.ownerOnly'];
 
 function hashExcluding(msgs: Record<string, string>, excluded: ReadonlySet<string>): string {
   const entries = Object.entries(msgs)

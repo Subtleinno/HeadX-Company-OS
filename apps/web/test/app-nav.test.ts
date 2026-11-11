@@ -26,17 +26,36 @@ describe('resolveNav', () => {
     expect(position.page.key).toBe('licence');
   });
 
-  it('頁有章節時預設第一個章節', () => {
+  it('舊書籤指向已移走的頁（品牌設定）：退回品牌主頁，唔會白畫面', () => {
     const position = resolveNav(DESIGN_NAV, ['brand', 'settings']);
 
-    expect(position.page.key).toBe('settings');
-    expect(position.section?.key).toBe('logo');
+    expect(position.page.key).toBe('home');
+    expect(position.section).toBeNull();
   });
 
-  it('章節對得上就唔會退回', () => {
-    const position = resolveNav(DESIGN_NAV, ['brand', 'settings', 'color']);
+  it('自定義頁的鍵含斜線（p/<slug>），要拼返做一段才對得上', () => {
+    const nav = {
+      ...DESIGN_NAV,
+      modules: DESIGN_NAV.modules.map((navModule) =>
+        navModule.key === 'brand'
+          ? {
+              ...navModule,
+              groups: [
+                {
+                  pages: [
+                    { key: 'home', labelKey: 'design.page.brandHome' as const },
+                    { key: 'p/packaging', label: '包裝' },
+                  ],
+                },
+              ],
+            }
+          : navModule,
+      ),
+    };
 
-    expect(position.section?.key).toBe('color');
+    const position = resolveNav(nav, ['brand', 'p', 'packaging']);
+
+    expect(position.page.key).toBe('p/packaging');
   });
 
   it('模組存在但頁唔存在：退回該模組第一頁', () => {
@@ -80,5 +99,29 @@ describe('resolveNav', () => {
       'knowledge',
       'create',
     ]);
+  });
+
+  it('品牌模組五頁：品牌主頁、標誌、色彩、字體、語氣（issue #32）', () => {
+    const brand = DESIGN_NAV.modules.find((item) => item.key === 'brand');
+
+    expect(brand?.groups.flatMap((group) => group.pages.map((page) => page.key))).toEqual([
+      'home',
+      'logo',
+      'color',
+      'type',
+      'tone',
+    ]);
+  });
+
+  it('儀表板、渠道、版本、品牌設定、品牌識別都已經移走（issue #32）', () => {
+    const pages = DESIGN_NAV.modules.flatMap((item) => item.groups.flatMap((group) => group.pages));
+    const keys = pages.map((page) => page.key);
+    const sections = pages.flatMap((page) => page.sections ?? []).map((section) => section.key);
+
+    for (const gone of ['dashboard', 'channel', 'versions', 'settings', 'page']) {
+      expect(keys.includes(gone), gone).toBe(false);
+    }
+
+    expect(sections.includes('identity'), 'identity').toBe(false);
   });
 });

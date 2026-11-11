@@ -3,7 +3,7 @@ import type { FrameSidebarGroup } from '@company-os/app-shell';
 import { t } from '@company-os/i18n';
 import type { PublicUser } from '../api';
 import { navigate, navigatePath, type Route } from '../router';
-import { resolveNav, type AppNav, type NavPosition } from './appNav';
+import { navLabel, resolveNav, type AppNav, type NavPosition } from './appNav';
 import { FrameApps } from './FrameApps';
 import { useBrands, useCompanyIdentity, useSelectedBrand } from './useDirectory';
 import { useFrameChrome } from './useFrameChrome';
@@ -65,20 +65,20 @@ export function AppFrame({
   // 第二層模組頁頂欄嘅頁籤。由 nav 模型直接推，`onSelectPage` 同左側欄
   // 用同一個 key，所以兩邊點選結果一定一致。
   const modulePages = position.navModule.groups.flatMap((group) =>
-    group.pages.map((page) => ({ key: page.key, label: t(page.labelKey) })),
+    group.pages.map((page) => ({ key: page.key, label: navLabel(page) })),
   );
 
   const sidebarGroups: FrameSidebarGroup[] = position.navModule.groups.map((group) => ({
     ...(group.titleKey === undefined ? {} : { title: t(group.titleKey) }),
     items: group.pages.map((page) => ({
       key: page.key,
-      label: t(page.labelKey),
+      label: navLabel(page),
       ...(page.sections === undefined
         ? {}
         : {
             sections: page.sections.map((section) => ({
               key: section.key,
-              label: t(section.labelKey),
+              label: navLabel(section),
             })),
           }),
     })),
@@ -88,8 +88,8 @@ export function AppFrame({
   // `FrameApps` 補上。呢度只講「模組 / 頁 / 章節」。
   const breadcrumbs = [
     t(position.navModule.labelKey),
-    t(position.page.labelKey),
-    ...(position.section === null ? [] : [t(position.section.labelKey)]),
+    navLabel(position.page),
+    ...(position.section === null ? [] : [navLabel(position.section)]),
   ];
 
   const goToPage = (pageKey: string): void => {
