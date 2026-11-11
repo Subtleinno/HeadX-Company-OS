@@ -428,7 +428,7 @@ export function MembersScreen() {
         </p>
       ) : (
         <div className="boss-sites-card boss-members">
-          <table className="boss-sites">
+          <table className="boss-sites boss-members__table">
             <thead>
               <tr>
                 <th scope="col">{t('boss.members.col.member')}</th>
@@ -514,17 +514,21 @@ export function MembersScreen() {
                             {t('staff.disable')}
                           </button>
                         )}
-                        <button
-                          type="button"
-                          className="boss-link"
-                          aria-label={t('boss.members.resetLabel', { name: member.displayName })}
-                          disabled={actingId === member.id}
-                          onClick={() => {
-                            openPanel(member, 'reset');
-                          }}
-                        >
-                          {t('staff.reset')}
-                        </button>
+                        {/* 停用之後連重設都收起來：重設只會改一串用不到的密碼，
+                            畫面卻會講「下次登入要改」，等於應承一件不會發生的事。 */}
+                        {member.disabledAt === null && (
+                          <button
+                            type="button"
+                            className="boss-link"
+                            aria-label={t('boss.members.resetLabel', { name: member.displayName })}
+                            disabled={actingId === member.id}
+                            onClick={() => {
+                              openPanel(member, 'reset');
+                            }}
+                          >
+                            {t('staff.reset')}
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

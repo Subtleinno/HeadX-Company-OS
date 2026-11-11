@@ -191,7 +191,7 @@ describe('指派部門', () => {
     expect(departmentSelect().value).toBe('');
   });
 
-  it('已停用的帳戶唔可以再改部門：下拉鎖住', async () => {
+  it('已停用的帳戶唔可以再改部門：下拉鎖住，亦冇任何動作可做', async () => {
     openMembers({
       staff: () =>
         jsonResponse(200, {
@@ -204,6 +204,10 @@ describe('指派部門', () => {
 
     expect(departmentSelect().disabled).toBe(true);
     expect(document.body.textContent).toContain('已停用');
+
+    // 已停用的人登入不到：重設密碼只會改一串用不到的密碼，畫面卻應承
+    // 「下次登入要改」。與其畫一個做到一半的動作，不如不畫。
+    expect(document.querySelectorAll('[data-member-row] button').length).toBe(0);
   });
 });
 
