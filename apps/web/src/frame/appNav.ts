@@ -9,9 +9,11 @@ import type { MessageKey } from '@company-os/i18n';
  *   頁     = 模組之下的一張頁（品牌主頁、品牌設定）
  *   章節   = 頁之下的分段（品牌標誌、色彩、字體）
  *
- * 老闆 2026-11-10 定：**頁喺左側欄**，唔喺第二行。所以 `modulePages` 一律
- * 傳空、頁全部入 `sidebarGroups`；章節只喺被選中嗰頁之下展開（見
- * `FrameSidebarItem.sections`）。第二行留空就整條唔畫。
+ * 老闆 2026-11-11 定：**還原第二層模組頁頂欄**。頁同時出現喺第二行同
+ * 左側欄，兩邊都由呢份 `AppNav` 推出（見 `AppFrame.tsx`），唔各寫一份；
+ * 章節只喺被選中嗰頁之下展開（見 `FrameSidebarItem.sections`）。
+ * 非 app 畫面（首頁、帳戶、Needs 等）冇頁可列，傳空陣列，外殼照舊唔畫
+ * 一條空白 bar。
  *
  * 呢一份係純資料，冇 React、冇 fetch：加一個 app 唔應該要改外殼。
  */
@@ -73,14 +75,20 @@ export const BOSS_NAV: AppNav = {
             { key: 'approvals', labelKey: 'boss.page.approvals' },
           ],
         },
-        {
-          titleKey: 'boss.group.governance',
-          pages: [
-            { key: 'members', labelKey: 'boss.page.members' },
-            { key: 'actions', labelKey: 'boss.page.actions' },
-          ],
-        },
       ],
+    },
+    {
+      /**
+       * 人員獨立成一個模組（issue #13）。
+       *
+       * 之前「管理級成員」同時掛在「據點與機器 › 權限與稽核」同「存取紀錄 ›
+       * 權限與稽核」之下，同一頁在左側欄出現兩次、網址卻有兩個 —— 用戶點哪
+       * 一個都去到同一頁，但麵包屑會不同。指派的對象是人，不是機器，所以
+       * 它有自己的模組。
+       */
+      key: 'people',
+      labelKey: 'boss.module.people',
+      groups: [{ pages: [{ key: 'members', labelKey: 'boss.page.members' }] }],
     },
     {
       key: 'access',
@@ -88,10 +96,7 @@ export const BOSS_NAV: AppNav = {
       groups: [
         {
           titleKey: 'boss.group.governance',
-          pages: [
-            { key: 'members', labelKey: 'boss.page.members' },
-            { key: 'actions', labelKey: 'boss.page.actions' },
-          ],
+          pages: [{ key: 'actions', labelKey: 'boss.page.actions' }],
         },
       ],
     },

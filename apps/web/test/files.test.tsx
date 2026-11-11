@@ -38,6 +38,8 @@ const STAFF = {
   email: 'staff@example.com',
   displayName: '林慧',
   role: 'staff',
+  // 有部門才見得到首頁與主選單（issue #14）。
+  department: 'design',
   mustChangePassword: false,
 };
 

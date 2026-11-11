@@ -37,6 +37,14 @@ export type PublicUser = {
   email: string;
   displayName: string;
   role: Role;
+  /**
+   * 所屬部門（issue #12／#14）。`null` ＝ 未指派，唔係「等於老闆」。
+   *
+   * 前端要它才決定登入之後去邊，而這件事只可以由伺服器講：部門係資料庫的
+   * 事實，唔可以由畫面猜。老闆一律 `null`（Boss Portal 係公司範圍，唔屬
+   * 任何部門），所以判斷次序一定係先看 role，再看 department。
+   */
+  department: string | null;
   mustChangePassword: boolean;
 };
 
@@ -49,6 +57,7 @@ export function toPublicUser(row: UserRow): PublicUser {
     email: row.email,
     displayName: row.display_name,
     role: row.role,
+    department: row.department,
     mustChangePassword: row.must_change_password,
   };
 }
@@ -165,6 +174,9 @@ export async function createOwnerWithSession(
         email: row.email,
         displayName: row.display_name,
         role: row.role,
+        // 上面那句 insert 寫死 department = null（老闆不屬任何部門），
+        // 所以這裡寫 null 是同一個事實，不是猜的。
+        department: null,
         mustChangePassword: false,
       },
     };

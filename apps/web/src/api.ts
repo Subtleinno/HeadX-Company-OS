@@ -19,6 +19,14 @@ export type PublicUser = {
    * 所以缺席不會被當成 false 還是 true —— 它只會被當成「不知道」。
    */
   mustChangePassword?: boolean;
+  /**
+   * 所屬部門（issue #12／#14）。`null` ＝ 未指派。
+   *
+   * 同樣標成可選：舊測試夾具沒有這一欄。畫面一律用「明確有值才當有部門」，
+   * 缺席與 null 都當成「未指派」—— 兩者在分流上的結果一樣（擋住），
+   * 所以不需要分辨。
+   */
+  department?: string | null;
 };
 
 export type AuthState = {
@@ -359,6 +367,8 @@ export type StaffMember = {
   email: string;
   displayName: string;
   role: string;
+  /** 所屬部門（issue #12）。`null` ＝ 未指派。 */
+  department: string | null;
   mustChangePassword: boolean;
   disabledAt: string | null;
   createdAt: string;
@@ -417,8 +427,27 @@ export function resetStaffPassword(
   });
 }
 
-/* ── agent 身份與授權（issue 121） ───────────────────────────────── */
+/**
+ * 指派員工部門（issue #12）。
+ *
+ * `null` 代表取消指派，同「冇傳這個欄位」係兩件事：後端把兩者分開，
+ * 所以這裡一定要明確送 `null`，不可以靠省略。
+ *
+ * 部門清單不是前端自己寫的：呼叫端一律由 `GET /modules` 的 `department`
+ * 取得，否則總有一天會出現一個 registry 沒有、寫得進資料庫但登入時
+ * 找不到 app 的部門。
+ */
+export function assignStaffDepartment(
+  id: string,
+  department: string | null,
+): Promise<ApiResult<{ staff: StaffMember }>> {
+  return request<{ staff: StaffMember }>(`/api/staff/${encodeURIComponent(id)}/department`, {
+    method: 'PATCH',
+    body: JSON.stringify({ department }),
+  });
+}
 
+/* ── agent 身份與授權（issue 121） ───────────────────────────────── */
 /** 授權範圍。`all` 要明寫；空集合不是「全部」，後端會拒絕。 */
 export type UnitScope = { kind: 'all' } | { kind: 'units' | 'subtree'; unitIds: string[] };
 

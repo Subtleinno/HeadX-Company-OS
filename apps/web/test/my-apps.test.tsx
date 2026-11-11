@@ -18,7 +18,15 @@ import { installFakeApi, jsonResponse, resetBrowserState, type FakeHandlers } fr
  *   4. `available: false` 的 app 就算 access 回 allowed，都不可以顯示成可以入。
  */
 
-const WAI = { id: 'u-wai', email: 'wai@example.com', displayName: '林慧', role: 'staff' };
+// 這位員工屬於 design 部門（issue #14）：冇部門的人登入會落在「未獲指派部門」
+// 那一道閘，見不到首頁。這一頁測的是首頁本身，所以夾具一定要有部門。
+const WAI = {
+  id: 'u-wai',
+  email: 'wai@example.com',
+  displayName: '林慧',
+  role: 'staff',
+  department: 'design',
+};
 
 type Module = {
   id: string;
@@ -27,6 +35,8 @@ type Module = {
   department: string | null;
   order: number;
   available: boolean;
+  /** 入口路徑。登入落點要靠它才知去哪（issue #14）。 */
+  route: string;
 };
 
 const SALES: Module = {
@@ -36,6 +46,7 @@ const SALES: Module = {
   department: 'sales',
   order: 2,
   available: false,
+  route: '/sales',
 };
 
 const DESIGN: Module = {
@@ -45,6 +56,7 @@ const DESIGN: Module = {
   department: 'design',
   order: 3,
   available: true,
+  route: '/design',
 };
 
 function openHome(handlers: FakeHandlers = {}, user: typeof WAI = WAI) {

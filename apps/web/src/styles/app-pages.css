@@ -702,3 +702,59 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* ── Boss Portal：人員與部門（issue #13） ─────────────────────── */
+
+/* 工具列：左邊「共 N 人」、右邊新增。兩邊都係事實同動作，唔放裝飾。 */
+.boss-members__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--hx-space-3);
+  margin: 0 0 var(--hx-space-4);
+}
+
+.boss-members__count {
+  margin: 0;
+  color: var(--hx-frame-secondary);
+  font: var(--hx-frame-font-small);
+}
+
+/* 表單同表單之間要有距離；表單本身用返 .boss-form 的寬度與節奏。 */
+.boss-members__form {
+  margin: 0 0 var(--hx-space-6);
+  padding: var(--hx-space-5);
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-md);
+  background: var(--hx-chrome-white);
+}
+
+/* 下拉與 .boss-input 同高、同框，只補回 select 的原生箭頭與內距。 */
+.boss-select {
+  width: 100%;
+  min-width: 9rem;
+  padding-right: var(--hx-space-5);
+  cursor: pointer;
+}
+
+.boss-select:disabled {
+  cursor: not-allowed;
+  background: var(--hx-frame-surface);
+  color: var(--hx-frame-muted);
+}
+
+/* 每行的錯誤：貼在成員名下面，因為失敗的是「這個人的部門」，
+   不是整張表。放頁尾會令用戶要在兩個地方來回看。 */
+.boss-members__error {
+  display: block;
+  margin-top: var(--hx-space-1);
+  color: var(--hx-danger-text);
+  font: var(--hx-frame-font-small);
+}
+
+@media (max-width: 820px) {
+  .boss-members__bar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

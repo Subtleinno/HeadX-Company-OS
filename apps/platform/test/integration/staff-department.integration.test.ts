@@ -304,4 +304,36 @@ describe('PATCH /staff/:id/department', () => {
     expect(response.statusCode).toBe(404);
     expect(response.json()).toEqual({ error: 'not_found' });
   });
+
+  /**
+   * 指派部門是為了令那個人「登入之後直接去自己的部門」（issue #14）。
+   * 所以這一張要證明的不只是 database 有一欄，而是 `/auth/state` 真的
+   * 講得出它 —— 前端就是靠這一個欄位決定落點。
+   */
+  it('員工再讀 /auth/state 時，回應帶著他的部門（登入落點靠這個欄位）', async () => {
+    const owner = await setupOwner();
+    const session = await staffSession();
+
+    const patched = await app.inject({
+      method: 'PATCH',
+      url: `/staff/${session.id}/department`,
+      headers: owner,
+      payload: { department: 'design' },
+    });
+
+    expect(patched.statusCode).toBe(200);
+
+    const state = await app.inject({ method: 'GET', url: '/auth/state', headers: session });
+
+    expect(state.statusCode).toBe(200);
+    expect(state.json().user).toMatchObject({ role: 'staff', department: 'design' });
+  });
+
+  it('老闆自己的 department 永遠是 null（Boss Portal 唔屬任何部門）', async () => {
+    const owner = await setupOwner();
+
+    const state = await app.inject({ method: 'GET', url: '/auth/state', headers: owner });
+
+    expect(state.json().user).toMatchObject({ role: 'owner', department: null });
+  });
 });

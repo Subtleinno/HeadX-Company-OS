@@ -53,9 +53,22 @@ describe('resolveNav', () => {
     expect(position.page.key).toBe('home');
   });
 
-  it('Boss Portal 冇品牌範圍，模組係總覽／據點與機器／存取紀錄', () => {
+  it('Boss Portal 冇品牌範圍，模組係總覽／據點與機器／人員／存取紀錄', () => {
     expect(BOSS_NAV.scoped).toBe(false);
-    expect(BOSS_NAV.modules.map((item) => item.key)).toEqual(['overview', 'sites', 'access']);
+    expect(BOSS_NAV.modules.map((item) => item.key)).toEqual([
+      'overview',
+      'sites',
+      'people',
+      'access',
+    ]);
+  });
+
+  it('「人員與部門」只出現在人員模組一次，唔會喺兩處各寫一次', () => {
+    const pages = BOSS_NAV.modules.flatMap((item) =>
+      item.groups.flatMap((group) => group.pages.map((page) => `${item.key}/${page.key}`)),
+    );
+
+    expect(pages.filter((path) => path.endsWith('/members'))).toEqual(['people/members']);
   });
 
   it('Design 有品牌範圍，四個模組齊全', () => {
