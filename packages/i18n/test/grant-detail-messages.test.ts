@@ -96,6 +96,8 @@ const LATER_EXACT_KEYS = ['design.brand.ownerOnly'];
 
 const LATER_KEY_PREFIXES = [
   'boss.members.',
+  // 2026-11-11（issue #30）：恢復停用帳戶新增的鍵，不屬 #168 要守的既有鍵。
+  'staff.enable',
   'boss.module.people',
   'boss.page.people',
   'gate.noDepartment.',

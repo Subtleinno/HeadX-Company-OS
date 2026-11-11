@@ -75,6 +75,7 @@
 | GET | `/staff` | 員工列表（limit／offset） | ✅ 員工頁、授權頁 |
 | PATCH | `/staff/:id/department` | 指派／取消部門（值必須是 manifest 的部門 key；`null` ＝取消；老闆受保護） | ✅ `MembersScreen` |
 | POST | `/staff/:id/disable` | 停用員工（owner 受保護） | ✅ `MembersScreen` |
+| POST | `/staff/:id/enable` | 恢復停用（不改密碼、不開 session、不撤銷任何東西；審計記 `wasDisabledSince`） | ✅ `MembersScreen` |
 | POST | `/staff/:id/reset-password` | 重設臨時密碼（**須驗老闆自己密碼**、撤銷全部 session、唔寄信、唔復活停用） | ✅ `MembersScreen` |
 
 > 建立員工時可以**一併**帶 `department`（#28；缺席或 `null` ＝未指派）。建立之後仍然可以用 `PATCH` 改 —— 部門會變、人也會調。這是 C92「建立時就要選部門」的落地方式。
@@ -191,7 +192,7 @@
 | `StaffAgentsScreen` | 員工與 agent 名冊、重設密碼、agent 授權與存取檢查 | `/staff*`、`/agents*`、`/modules`、`/org-units` |
 | `AppGrantsScreen` | 申請／批准／生效／拒絕／撤銷／修改，人與 agent 兩視角 | `/app-grants*`、`/agents/:id/grants` 等 |
 | `WorkspacePrototype` | `#/app/*` 原型外殼，**唔叫任何真 API**、唔顯示業務數字 | 無（fixtures） |
-| `BossPortal`／`MembersScreen` | `#/boss/people/members`：員工名單、建立員工、指派部門、停用、重設密碼 | `/staff*`、`/modules` |
+| `BossPortal`／`MembersScreen` | `#/boss/people/members`：員工名單、建立員工、指派部門、停用、恢復、重設密碼 | `/staff*`、`/modules` |
 | `DesignApp` | `#/design`：品牌清單、新增品牌（只老闆）、記住上次品牌 | `/brands`、`/me/brand-focus` |
 | `NeedsScreen` | `#/needs`：需求列表與認領（**不可以新增**） | `/needs`、`/needs/:id/claim` |
 | `FilesScreen` | `#/files`：上傳、列表、下載、軟刪除 | `/files*` |

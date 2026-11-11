@@ -4,6 +4,7 @@ import {
   assignStaffDepartment,
   createStaff,
   disableStaff,
+  enableStaff,
   fetchModules,
   fetchStaff,
   resetStaffPassword,
@@ -38,6 +39,12 @@ import {
  * 一定先講後果再確認 —— 按下停用不會即刻生效，因為它會把一個正在工作的人
  * 踢出系統。重設密碼一定要老闆自己再打一次密碼：留在公共電腦上的 session
  * 不應該可以改掉另一個人的密碼（後端真的驗，前端沒有任何旗標可代替）。
+ *
+ * 恢復（issue #30）是停用的逆操作，所以它出現在**停用之後的那一行**，而且
+ * 只有它：一個停了的人身上可以做的就只有「讓他回來」，重設密碼與改部門都
+ * 要等他回來之後才有意義。恢復不需要確認面板（它不會踢人、可以再按一次停用
+ * 還原），但成功之後不可以只講「已恢復」—— 如果他仍然未指派部門、或者部門
+ * app 未開放，他登入一樣見不到任何畫面，這一句要同時講出來。
  */
 
 /** 未指派部門時下拉的值。用空字串代表「沒有」，不用 `null`： `<option value>` 只收字串。 */
@@ -68,6 +75,7 @@ function failureText(failure: ApiFailure, fallback: string): string {
     not_found: t('boss.members.staffMissing'),
     // 停用與重設（issue #24）：每個原因講自己的話，不互相借用。
     already_disabled: t('staff.disable.already'),
+    not_disabled: t('staff.enable.notDisabled'),
     invalid_owner_password: t('staff.reset.wrongOwnerPassword'),
     stale_credentials: t('staff.reset.staleCredentials'),
     too_many_attempts: t('boss.members.tooManyAttempts'),
@@ -226,6 +234,52 @@ export function MembersScreen() {
     replaceRow(result.data.staff);
     setPanel(null);
     setActionDone(t('staff.disable.done'));
+  }
+
+  /**
+   * 恢復停用帳戶（issue #30）。沒有確認面板：它不踢人，按錯了再按一次停用
+   * 就還原。但成功之後一定要講清楚「他是否真的入得到」—— 恢復只解開登入，
+   * 未指派部門或者部門未開放的話，他照樣見不到任何畫面。
+   */
+  async function handleEnable(member: StaffMember): Promise<void> {
+    if (actingId !== null) {
+      return;
+    }
+
+    setActingId(member.id);
+    setActionError(null);
+
+    const result = await enableStaff(member.id);
+
+    setActingId(null);
+
+    if (!result.ok) {
+      setActionError({
+        id: member.id,
+        message: failureText(result.failure, t('boss.members.actionFailed')),
+      });
+      return;
+    }
+
+    const restored = result.data.staff;
+
+    replaceRow(restored);
+
+    // 兩個後果取自**伺服器回來的**那一列，不是按下之前的畫面：部門可能
+    // 在停用期間被改過，用舊值會講錯話。
+    const department =
+      restored.department === null || state.kind !== 'ready'
+        ? undefined
+        : state.departments.find((item) => item.department === restored.department);
+
+    const warning =
+      restored.department === null
+        ? t('boss.members.enabledNoDepartment')
+        : department?.available === false
+          ? t('boss.members.enabledDepartmentClosed')
+          : '';
+
+    setActionDone(t('staff.enable.done', { name: restored.displayName }) + warning);
   }
 
   async function handleReset(member: StaffMember): Promise<void> {
@@ -517,6 +571,15 @@ export function MembersScreen() {
                           {rowError.message}
                         </span>
                       )}
+                      {/* 沒有面板的動作（恢復，issue #30）失敗時要有一個地方講；
+                          面板自己有位置，所以只在面板沒有開的時候放這裡。 */}
+                      {actionError !== null &&
+                        actionError.id === member.id &&
+                        panel?.id !== member.id && (
+                          <span className="boss-members__error" role="alert" data-member-error>
+                            {actionError.message}
+                          </span>
+                        )}
                     </td>
                     <td data-label={t('boss.members.col.department')}>
                       <select
@@ -561,32 +624,45 @@ export function MembersScreen() {
                     </td>
                     <td className="boss-members__actions" data-label={t('boss.members.col.actions')}>
                       <div className="boss-members__buttons">
-                        {member.disabledAt === null && (
+                        {member.disabledAt === null ? (
+                          <>
+                            <button
+                              type="button"
+                              className="boss-link"
+                              aria-label={t('boss.members.disableLabel', { name: member.displayName })}
+                              disabled={actingId === member.id}
+                              onClick={() => {
+                                openPanel(member, 'disable');
+                              }}
+                            >
+                              {t('staff.disable')}
+                            </button>
+                            <button
+                              type="button"
+                              className="boss-link"
+                              aria-label={t('boss.members.resetLabel', { name: member.displayName })}
+                              disabled={actingId === member.id}
+                              onClick={() => {
+                                openPanel(member, 'reset');
+                              }}
+                            >
+                              {t('staff.reset')}
+                            </button>
+                          </>
+                        ) : (
+                          /* 停用之後只剩一條路：讓他回來（issue #30）。
+                             重設密碼會改一串他用不到的密碼、畫面卻應承「下次
+                             登入要改」；改部門也一樣，都是等他回來才有意義的事。 */
                           <button
                             type="button"
                             className="boss-link"
-                            aria-label={t('boss.members.disableLabel', { name: member.displayName })}
+                            aria-label={t('boss.members.enableLabel', { name: member.displayName })}
                             disabled={actingId === member.id}
                             onClick={() => {
-                              openPanel(member, 'disable');
+                              void handleEnable(member);
                             }}
                           >
-                            {t('staff.disable')}
-                          </button>
-                        )}
-                        {/* 停用之後連重設都收起來：重設只會改一串用不到的密碼，
-                            畫面卻會講「下次登入要改」，等於應承一件不會發生的事。 */}
-                        {member.disabledAt === null && (
-                          <button
-                            type="button"
-                            className="boss-link"
-                            aria-label={t('boss.members.resetLabel', { name: member.displayName })}
-                            disabled={actingId === member.id}
-                            onClick={() => {
-                              openPanel(member, 'reset');
-                            }}
-                          >
-                            {t('staff.reset')}
+                            {t('staff.enable')}
                           </button>
                         )}
                       </div>

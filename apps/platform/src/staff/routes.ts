@@ -17,6 +17,7 @@ import {
 import {
   createStaffAccount,
   disableStaffAccount,
+  enableStaffAccount,
   listStaffAccounts,
   resetStaffPassword,
   setStaffDepartment,
@@ -28,12 +29,12 @@ import type { ModuleRegistry } from '../modules/registry/index.js';
 /**
  * 員工帳戶管理 API（issue #84）。只有已驗證的人類老闆可以用。
  *
- * 這一組路由刻意很窄：建立、列表、停用、指派部門（issue #12）。
+ * 這一組路由刻意很窄：建立、列表、停用、恢復、重設密碼、指派部門。
  * 仍然沒有改角色、沒有改 email、沒有刪除 —— 每一樣都可以之後再加，但一旦
  * 現在有了，就會有人用它繞過「不可以建立第二個 owner」這條線。
  *
- * 指派部門與建立帳戶刻意分開：建立時 department 一定是 null，把「新人先入
- * 系統、再由老闆放進部門」變成兩個可審計的動作，而不是一個大 body。
+ * 停用與恢復（issue #30）是一對，兩者都不動授權列：授權是歷史，
+ * 能不能用是身份問題，兩件事不應該互相刪除。
  */
 
 export type StaffDeps = {
@@ -202,6 +203,51 @@ export function registerStaff(app: FastifyInstance, deps: StaffDeps): void {
 
       if (result.status === 'already_disabled') {
         return reply.code(409).send({ error: 'already_disabled' });
+      }
+
+      return { staff: result.staff };
+    },
+  );
+
+  /**
+   * 恢復被停用的員工（issue #30）。
+   *
+   * 這是 `POST /staff/:id/disable` 的逆操作，刻意同樣窄：不接受任何 body，
+   * 不可以順便改部門或密碼。老闆要恢復一個人，就是「讓他可以再用原本的密碼
+   * 登入」這一件事；順便做的每一件事都會令審計紀錄講不清是誰做的。
+   *
+   * 不用 404 假裝不存在、也不用 409 講「狀態不對」以外的東西 —— 三種失敗
+   * 各有自己的原因，畫面才講得出真話。
+   */
+  app.post<{ Params: { id: string } }>(
+    '/staff/:id/enable',
+    { preHandler: app.requireOwner },
+    async (request, reply) => {
+      if (!isValidUuid(request.params.id)) {
+        return reply.code(422).send({ error: 'invalid_input', field: 'id' });
+      }
+
+      const actor = request.currentUser;
+
+      if (actor === null) {
+        return reply.code(401).send({ error: 'not_signed_in' });
+      }
+
+      const result = await enableStaffAccount(deps.pool, {
+        id: request.params.id,
+        actorId: actor.id,
+      });
+
+      if (result.status === 'not_found') {
+        return reply.code(404).send({ error: 'not_found' });
+      }
+
+      if (result.status === 'owner_protected') {
+        return reply.code(409).send({ error: 'owner_protected' });
+      }
+
+      if (result.status === 'not_disabled') {
+        return reply.code(409).send({ error: 'not_disabled' });
       }
 
       return { staff: result.staff };

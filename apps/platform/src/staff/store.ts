@@ -5,12 +5,13 @@ import { revokeAllSessions } from '../auth/store.js';
 /**
  * 員工帳戶的資料庫存取（issue #84）。
  *
- * 三個不變量，全部靠資料庫而不是靠呼叫者記得：
- *   1. 經 API 建立的帳戶一定是 role = 'staff'、department = null、
- *      must_change_password = true —— 這裡不提供任何參數去改這三樣。
+ * 四個不變量，全部靠資料庫而不是靠呼叫者記得：
+ *   1. 經 API 建立的帳戶一定是 role = 'staff'、must_change_password = true；
+ *      部門可以建立時就給（issue #28），但這裡沒有參數可以改角色。
  *   2. 停用與撤銷 session 在同一個交易，所以不存在「停了但舊 cookie 仍然入得」。
- *   3. 停用不動 app_grant：授權歷史要留下來（#83 的規矩），權限判斷本身會因為
- *      帳戶停用而拒絕，所以不需要刪任何授權列。
+ *   3. 停用與恢復（issue #30）都不動 app_grant：授權歷史要留下來（#83 的規矩），
+ *      權限判斷本身會因為帳戶停用而拒絕，所以不需要刪任何授權列。
+ *   4. 停用與恢復是一對；只有停用沒有恢復，等於把「按錯人」變成長期處罰。
  */
 
 export type StaffRow = {
@@ -241,6 +242,95 @@ export async function disableStaffAccount(
 
     if (staff === undefined) {
       throw new Error('停用員工之後沒有回傳列');
+    }
+
+    return { status: 'ok', staff: toStaffView(staff) };
+  } catch (error) {
+    await client.query('rollback').catch(() => undefined);
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+export type EnableResult =
+  | { status: 'ok'; staff: StaffView }
+  | { status: 'not_found' }
+  | { status: 'owner_protected' }
+  | { status: 'not_disabled' };
+
+/**
+ * 恢復被停用的員工（issue #30）。
+ *
+ * 停用是單程的產品是壞的：按錯人、或者同事放假回來，老闆只能另開一個新帳戶，
+ * 舊 email 仍然被佔用，審計也斷成兩截。所以停用一定要有一條回頭路。
+ *
+ * 幾個刻意的選擇：
+ *   1. **不開 session、不改密碼、不動 must_change_password。** 恢復只恢復
+ *      「可以用原本的密碼登入」這一件事。如果停用期間密碼被重設過，
+ *      must_change_password 本來就是 true，照樣生效。
+ *   2. **不撤銷 session。** 停用那一刻已經全部撤銷，帳戶停用期間簽發不到
+ *      session，所以這裡沒有東西可撤。多寫一個「已撤銷」只會是假話。
+ *   3. **鎖行之後才判斷是否真的停用。** 兩個恢復請求撞在一起時，第二個會
+ *      等到第一個提交，見到 disabled_at 已經是 null，回 not_disabled，
+ *      而不是再寫多一筆「已恢復」的審計。
+ */
+export async function enableStaffAccount(
+  pool: Pool,
+  input: { id: string; actorId: string },
+): Promise<EnableResult> {
+  const client = await pool.connect();
+
+  try {
+    await client.query('begin');
+
+    const locked = await client.query<{ id: string; role: string; disabled_at: Date | null }>(
+      'select id, role, disabled_at from app_user where id = $1 for update',
+      [input.id],
+    );
+
+    const row = locked.rows[0];
+
+    if (row === undefined) {
+      await client.query('rollback');
+      return { status: 'not_found' };
+    }
+
+    // 老闆帳戶根本不會停用（disable 那條已經擋住），所以這條路徑對他沒有意思。
+    if (row.role === 'owner') {
+      await client.query('rollback');
+      return { status: 'owner_protected' };
+    }
+
+    if (row.disabled_at === null) {
+      await client.query('rollback');
+      return { status: 'not_disabled' };
+    }
+
+    const updated = await client.query<StaffRow>(
+      `update app_user set disabled_at = null where id = $1 returning ${COLUMNS}`,
+      [input.id],
+    );
+
+    await writeAudit(
+      { query: (text, values) => client.query(text, values) },
+      {
+        actorType: 'human',
+        actorId: input.actorId,
+        action: 'staff.enable',
+        target: input.id,
+        // 記低「停了幾久」的起點。日後查「點解呢個人中途入唔到」，
+        // 這一筆與對應的 staff.disable 可以對得上。
+        detail: { wasDisabledSince: row.disabled_at.toISOString(), sessionsRevoked: false },
+      },
+    );
+
+    await client.query('commit');
+
+    const staff = updated.rows[0];
+
+    if (staff === undefined) {
+      throw new Error('恢復員工之後沒有回傳列');
     }
 
     return { status: 'ok', staff: toStaffView(staff) };
