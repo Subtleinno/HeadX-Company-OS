@@ -362,6 +362,9 @@ describe('建立員工', () => {
     await row();
     await userEvent.click(screen.getByRole('button', { name: '新增員工' }));
 
+    // 表單的說明句要與現實一致：建立時真的可以選部門，所以不可以寫「沒有部門」。
+    expect(document.body.textContent).toContain('部門可以即刻揀');
+
     await userEvent.type(screen.getByLabelText('名稱'), '黃小明');
     await userEvent.type(screen.getByLabelText('電郵'), 'ming@example.com');
     await userEvent.type(screen.getByLabelText('初始密碼'), 'temp-secret-2026');

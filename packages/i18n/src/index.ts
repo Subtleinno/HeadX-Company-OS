@@ -340,7 +340,7 @@ export const messages = {
 
   'staff.create': '新增員工',
   'staff.create.hint':
-    '建立時一律是員工、沒有部門，而且下次登入要改密碼。不會寄出任何邀請郵件。',
+    '建立時一律是員工。部門可以即刻揀，亦可以之後再改。下次登入一定要改密碼，不會寄出任何邀請郵件。',
   'staff.create.submit': '建立',
   'staff.create.busy': '建立中…',
   'staff.create.done': '已建立員工。',

@@ -79,7 +79,11 @@ const LOCALES: readonly string[] = [DEFAULT_LOCALE];
  * 值由 /tmp/company-os-loop-evidence/168/gen-baseline.mjs 以
  * typescript.transpileModule 轉譯 origin/main 版 index.ts 後計出。
  */
-const FROZEN_ALL_SHA256 = '7f83e9b90103908df960c395945dc1679757ca7bafb6e0af3a45136fee488b61';
+// 2026-11-11（#28）：凍結值因一條既有文案而更新 —— `staff.create.hint` 由
+// 「建立時一律是員工、沒有部門」改為「部門可以即刻揀，亦可以之後再改」。
+// 原因：建立員工時真的可以選部門了，舊句變成一句錯的說明。除此之外
+// 其餘既有鍵逐字不變（鍵數不變，只是那一條的值改了）。
+const FROZEN_ALL_SHA256 = '4af9f8e145020638a2b141f52026861eed7031250932204b5a38ab583a0ccdb4';
 
 /**
  * 呢張之後嘅施工張所新增嘅鍵前綴（#13／#14 起）。

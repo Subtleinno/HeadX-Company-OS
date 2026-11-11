@@ -160,7 +160,11 @@ const INTERPOLATED: Record<string, Record<string, string | number>> = {
  * 值由 /tmp/company-os-loop-evidence/163/gen-baseline.mjs 以
  * typescript.transpileModule 轉譯 origin/main 版 index.ts 後計出。
  */
-const FROZEN_ALL_SHA256 = '6e9316371598dad5ac57028d9a6dce94756eb8f86b37a43013aa22c32155b846';
+// 2026-11-11（#28）：凍結值因一條既有文案而更新 —— `staff.create.hint` 由
+// 「建立時一律是員工、沒有部門」改為「部門可以即刻揀，亦可以之後再改」。
+// 原因：建立員工時真的可以選部門了，舊句變成一句錯的說明。除此之外
+// 其餘既有鍵逐字不變（鍵數不變，只是那一條的值改了）。
+const FROZEN_ALL_SHA256 = 'fb6c35cf665b8ceeff9f842d1a05b25b77697ad4e1e7679f5bbf495a5e3577ac';
 
 /**
  * 同步改寫（issue 168）：issue 168 新增 5 個 grant.detail.* 鍵，唔屬 #163

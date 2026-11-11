@@ -126,7 +126,7 @@ curl -s https://hxd.subtle-inno.com/api/auth/state    # 應回 {"setupRequired":
 | `#/boss` | Boss Portal 總覽 | 可用，其餘數字未接 |
 | `#/boss/sites` | 據點目錄（三行） | 可用，可批准 |
 | `#/boss/sites/add` | 新增據點 | 第一、二步可用，第三步端點未存在 |
-| `#/boss/people/members` | 人員與部門：名單、建立員工、指派部門、停用、重設密碼 | 可用，全部真寫入 |
+| `#/boss/people/members` | 人員與部門：名單、建立員工（可一併選部門）、改部門、停用、重設密碼 | 可用，全部真寫入 |
 | `#/design` | 品牌首頁：清單、新增品牌（只老闆）、記住上次品牌 | 可用 |
 | `#/design/brand/settings/*` | 品牌設定之下四個章節（標誌／識別／色彩／字體） | 章節導覽可用，內容未接 |
 | `#/needs`、`#/files`、`#/account` | 需求、檔案、個人帳戶 | 可用 |

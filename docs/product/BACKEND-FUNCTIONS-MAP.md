@@ -77,7 +77,7 @@
 | POST | `/staff/:id/disable` | 停用員工（owner 受保護） | ✅ `MembersScreen` |
 | POST | `/staff/:id/reset-password` | 重設臨時密碼（**須驗老闆自己密碼**、撤銷全部 session、唔寄信、唔復活停用） | ✅ `MembersScreen` |
 
-> 建立員工時 `department` 一律是 `null`，指派是**另一個動作**（#12）。C92 原本寫「建立時就要選部門」—— 見 DECISIONS C94。
+> 建立員工時可以**一併**帶 `department`（#28；缺席或 `null` ＝未指派）。建立之後仍然可以用 `PATCH` 改 —— 部門會變、人也會調。這是 C92「建立時就要選部門」的落地方式。
 
 ### 1.4 Agent 身份與授權（`agents/routes.ts`）— 全組 `requireOwner`
 | Method | Path | 功能 | 前端 |
