@@ -8,7 +8,7 @@
 |---|---|---|
 | **記起這套東西是什麼**（設計真相） | [`CONCEPT.md`](CONCEPT.md) | 一頁十節 |
 | **今日做到哪、怎樣跑起來、下一個做什麼** | [`product/HANDOFF.md`](product/HANDOFF.md) | 一頁八節 |
-| **某個決定為甚麼這樣定** | [`product/DECISIONS.md`](product/DECISIONS.md) | C1–C85，後者優先 |
+| **某個決定為甚麼這樣定** | [`product/DECISIONS.md`](product/DECISIONS.md) | C1–C94，後者優先 |
 
 其餘全部文件都是這三份的**細節或歷史**，不需要順序讀。
 
@@ -19,14 +19,14 @@
 | 檔案 | 內容 |
 |---|---|
 | `CONCEPT.md` | **設計真相**：七個原則、十二物件、Needs 閉環、公司層／品牌層、對外可達性 |
-| `product/HANDOFF.md` | **今日交接**：程式碼在哪、五分鐘跑起來、現有畫面、下一頁隊列、九個坑 |
-| `product/DECISIONS.md` | **決策日誌** C1–C85，後者優先 |
+| `product/HANDOFF.md` | **今日交接**：程式碼在哪、五分鐘跑起來、現有畫面、下一頁隊列、十一個坑 |
+| `product/DECISIONS.md` | **決策日誌** C1–C94，後者優先 |
 | `product/FRAME-UIUX-HANDOFF.md` | 外殼行為規格 v1.4（四層導覽、據點目錄、權限門） |
 | `product/SCOPE-MODEL.md` | 範圍模型：公司／品牌、三種 app 模式、管寫 vs 管讀 |
 | `product/MULTI-MACHINE-ACCESS.md` | 跨機入口：總部＝登記／批准／入口中心，不是資料隧道 |
 | `product/BACKEND-FUNCTIONS-MAP.md` | 端點對照：邊啲後端功能仲未有畫面（**有時效**，真相在 `apps/platform/src/*/routes.ts`） |
-| `design/frame/frame-0*.png` | **介面唯一真相**（九張設計稿快照） |
-| `design/FRAME-DESIGN-INDEX.md` | 九張稿的 node ID、對應章節、施工狀態、開工卡 |
+| `design/frame/frame-0*.png` | 九張**歷史參考稿**。2026-11-11 老闆明確講過：**不是真相**，介面由他當面定 |
+| `design/FRAME-DESIGN-INDEX.md` | 九張稿的 node ID、對應章節、施工狀態（同樣是參考，不是規格） |
 
 ### 技術（施工時查）
 
@@ -105,6 +105,6 @@
 ## 開工與改文件的規矩
 
 1. 先讀 `CONCEPT.md`、`AGENTS.md`、`HANDOFF.md`，再讀你被指派的 issue。issue 是唯一授權；文件存在不等於批准施工。
-2. **改文件先改 `CONCEPT.md`**，再改下面。概念改了就同步 `DECISIONS.md` 記一條，否則兩處會各說各話。
+2. **改概念先改 `CONCEPT.md`**，再改下面。概念改了就同步 `DECISIONS.md` 記一條，否則兩處會各說各話。**但文件與程式碼不一致（純粹過時）時，直接改文件，不要等 issue**（C93）—— 過時的手冊比沒有手冊更貴。
 3. 一份文件只有一個責任。新文件之前先問：這件事是否已有主人？有就把舊的歸檔，不要留兩份。
 4. 歷史留在 `archive/`，不刪。但**不在歸檔文件裡找現行規則**。

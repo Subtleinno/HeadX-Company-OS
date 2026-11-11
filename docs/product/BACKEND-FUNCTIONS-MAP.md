@@ -1,6 +1,7 @@
 > **收入 repo 的來源**：原檔 `.workbuddy/design/BACKEND-FUNCTIONS-MAP.md`（2026-11-09，長期 gitignored）。2026-11-11 收入 `docs/product/`。
 >
-> **注意時效**：呢份係 2026-11-09 的端點盤點。之後已新增 `directory` 模組（`/brands`、`/sites`、`/company`）同 `needs` 模組，所以「端點總數」同「前端有無畫面」兩欄已經過時。**真相以 `apps/platform/src/*/routes.ts` 為準**；本檔保留價值係用語對照同「邊啲後端功能仲未有畫面」。
+> **注意時效**：2026-11-09 首次盤點，**2026-11-11 已同步**（補 `directory`、`needs`、`staff` 的部門與 `brand-focus`，資料實體補到 0012）。
+> **真相以 `apps/platform/src/*/routes.ts` 為準**；本檔的價值是用語對照與「邊啲後端功能仲未有畫面」。與程式碼不一致時，改這一頁，不要改程式碼去迎合它。
 
 # company-os 後端功能清單（UI/UX 重設計逐頁對照用）
 
@@ -44,13 +45,39 @@
 | POST | `/auth/change-password` | 改自己密碼（驗舊密碼、輪替 session） | 已登入；初始密碼期間可用 | ✅ `AccountScreen` |
 | GET | `/me` | 自己嘅公開資料 | 已登入；初始密碼期間可用 | ✅ `AccountScreen` |
 
+### 1.2b 品牌、據點與我的品牌（`directory/routes.ts`）
+| Method | Path | 功能 | 權限 | 前端 |
+|---|---|---|---|---|
+| GET | `/brands` | 品牌清單 | `requireUser`（品牌 selector 要用，任何登入者都讀） | ✅ `DesignApp`、Frame selector |
+| POST | `/brands` | 開新品牌 | **`requireOwner`** | ✅ 只有老闆見到表單（#19） |
+| GET | `/me/brand-focus` | 我上次工作的品牌，未揀過回 `null` | `requireUser` | ✅ `useDirectory` |
+| PUT | `/me/brand-focus` | 記住我這次的品牌（只寫自己那一行；品牌不存在 → `400 unknown_brand`） | `requireUser` | ✅ |
+| GET | `/company` | 頁尾要顯示的公司識別（本機公司・公司名・城市） | `requireUser` | ✅ `AppFrame` |
+| GET | `/sites` | 據點目錄 | **`requireOwner`** | ✅ `MembersScreen` 之外，`SitesScreen` |
+| POST | `/sites` | 新增據點，回一次性邀請憑證 | **`requireOwner`** | ✅ |
+| POST | `/sites/:id/approve` | 批准據點 | **`requireOwner`** | ✅ |
+
+> 據點要老闆專用，因為「據點＝一台可以讀全公司資料的機器」，那不是一個功能，是「邊幾台機入得到」。
+
+### 1.2c 需求（`needs/routes.ts`）
+| Method | Path | 功能 | 權限 | 前端 |
+|---|---|---|---|---|
+| GET | `/needs` | 需求列表 | `requireUser` | ✅ `#/needs` |
+| GET | `/needs/summary` | 需求摘要（Boss Portal 總覽用） | `requireUser` | ✅ |
+| POST | `/needs/:id/claim` | 認領一個需求 | `requireUser` | ✅ |
+
+> **開立需求仍然冇 API**（走 MCP 端），所以畫面上只可以看與認領，不可以新建。不要畫一個按落去冇反應的「新增」。
+
 ### 1.3 員工（`staff/routes.ts`）— 全組 `requireOwner`
 | Method | Path | 功能 | 前端 |
 |---|---|---|---|
 | POST | `/staff` | 建立員工（初始密碼、`must_change_password = true`） | ✅ `StaffAgentsScreen` |
 | GET | `/staff` | 員工列表（limit／offset） | ✅ 員工頁、授權頁 |
-| POST | `/staff/:id/disable` | 停用員工（owner 受保護） | ✅ |
-| POST | `/staff/:id/reset-password` | 重設臨時密碼（**須驗老闆自己密碼**、撤銷全部 session、唔寄信、唔復活停用） | ✅ |
+| PATCH | `/staff/:id/department` | 指派／取消部門（值必須是 manifest 的部門 key；`null` ＝取消；老闆受保護） | ✅ `MembersScreen` |
+| POST | `/staff/:id/disable` | 停用員工（owner 受保護） | ✅ `MembersScreen` |
+| POST | `/staff/:id/reset-password` | 重設臨時密碼（**須驗老闆自己密碼**、撤銷全部 session、唔寄信、唔復活停用） | ✅ `MembersScreen` |
+
+> 建立員工時 `department` 一律是 `null`，指派是**另一個動作**（#12）。C92 原本寫「建立時就要選部門」—— 見 DECISIONS C94。
 
 ### 1.4 Agent 身份與授權（`agents/routes.ts`）— 全組 `requireOwner`
 | Method | Path | 功能 | 前端 |
@@ -68,7 +95,8 @@
 |---|---|---|---|---|
 | GET | `/modules` | 可見 app 清單，白名單 6 欄；老闆見全部，員工只見自己部門 | `requireUser` | ✅ `MyApps`、員工頁、授權頁 |
 
-> `route`、`exposure`、`sensitive` 唔對外輸出。前端唔可以自建 app 清單。
+> 對外只輸出 `id`、`kind`、`title`、`department`、`order`、`available`、`route` 七欄。`exposure`、`sensitive` 唔對外輸出。
+> 前端唔可以自建 app 清單 —— 登入落點（`useLanding`）就是靠這條的 `route` 決定員工去哪一頁。
 
 ### 1.6 公司設定與政策（`settings/routes.ts`）— 全組 `requireOwner`
 | Method | Path | 功能 | 前端 |
@@ -136,14 +164,15 @@
 
 ## 2. 後端完備、但前端零畫面（重設計要新開嘅頁）
 
-| 功能群 | 端點數 | 現況 |
+| 功能群 | 端點數 | 現況（2026-11-11） |
 |---|---|---|
-| 政策規則 | 4 | `api.ts` 完全冇對應函式；`profiles/default/policy-rules.json` 實際係空陣列 `[]`，所以設計稿要顯示誠實空狀態，唔好放示例規則 |
-| 檔案層 | 5 | nginx 已為上傳放寬到 200 MiB，屬「後端已備、UI 未做」 |
+| 政策規則 | 4 | `api.ts` 有列表呼叫；`profiles/default/policy-rules.json` 實際係空陣列 `[]`，所以畫面要顯示誠實空狀態，唔好放示例規則 |
+| 檔案層 | 5 | `#/files` 已接（上傳、列表、下載、軟刪除）；nginx 為上傳放寬到 200 MiB |
 | 授權單筆詳情 | 1 | 後端有 `GET /app-grants/:id`，前端只有列表同 PATCH |
 | 儲存診斷 | 1 | 維運向，唔係用戶頁 |
+| **新增需求** | 0 | 後端**冇**這條路（走 MCP 端），所以畫面不可以有「新增需求」的按鈕 |
 
-共 10 條用戶向端點 + 1 條維運向。
+仍然缺畫面的用戶向端點集中在一條：`GET /app-grants/:id`（授權單筆詳情）。
 
 ---
 
@@ -162,10 +191,14 @@
 | `StaffAgentsScreen` | 員工與 agent 名冊、重設密碼、agent 授權與存取檢查 | `/staff*`、`/agents*`、`/modules`、`/org-units` |
 | `AppGrantsScreen` | 申請／批准／生效／拒絕／撤銷／修改，人與 agent 兩視角 | `/app-grants*`、`/agents/:id/grants` 等 |
 | `WorkspacePrototype` | `#/app/*` 原型外殼，**唔叫任何真 API**、唔顯示業務數字 | 無（fixtures） |
+| `BossPortal`／`MembersScreen` | `#/boss/people/members`：員工名單、建立員工、指派部門、停用、重設密碼 | `/staff*`、`/modules` |
+| `DesignApp` | `#/design`：品牌清單、新增品牌（只老闆）、記住上次品牌 | `/brands`、`/me/brand-focus` |
+| `NeedsScreen` | `#/needs`：需求列表與認領（**不可以新增**） | `/needs`、`/needs/:id/claim` |
+| `FilesScreen` | `#/files`：上傳、列表、下載、軟刪除 | `/files*` |
 
 ---
 
-## 4. 資料實體（`db/migrations/0001`–`0009`）
+## 4. 資料實體（`db/migrations/0001`–`0012`）
 
 | 實體 | 一句說明 |
 |---|---|
@@ -179,6 +212,9 @@
 | `app_grant` | **一列＝一個版本**；`requested→approved→active→rejected/revoked`，trigger 禁止原地擴權 |
 | `agent_identity` | AI agent 身份（冇密碼、冇部門、冇 token；MCP token 留待 S3-01） |
 | `job` | Postgres 背景工作隊列（至少一次、租約、退避、冪等鍵），唔用 Redis |
+| `need` | 需求（`deliverable`／`decision` 兩型、狀態、認領），0010 新增 |
+| `brand` / `site` | 品牌（`code` 唯一、`sort_order`）與據點目錄（一次性邀請憑證、批准狀態），0011 新增 |
+| `user_brand_focus` | 每位員工上次工作的品牌；`user_id` 做主鍵（一人一格），0012 新增 |
 
 ---
 

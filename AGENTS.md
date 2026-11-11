@@ -11,7 +11,7 @@ HeadX Company OS：一間公司運作的唯一底座，全部放在這個 repo�
 **這不是 ERP，也不是 SaaS。是老闆開公司用的基建。** 設計真相在 `docs/CONCEPT.md`，這裡只講施工紀律。
 
 - **agent 是主要執行者，人是判斷者與補位者。** 接口是一等公民；畫面是給人看結果與補位。
-- **Boss Portal 只讀。** 它只看各 app 交出的四個 shape（projects／needs／approvals／schedule），**不讀別人的資料表**；不在 Portal 內指派、改期、改狀態。
+- **Boss Portal 對業務只讀。** 它只看各 app 交出的四個 shape（projects／needs／approvals／schedule），**不讀別人的資料表**；不在 Portal 內指派、改期、改狀態。**唯一的例外是帳戶**：建立員工、指派部門、停用登入、重設密碼都在 Portal（C92）——帳戶是身份，屬於 platform，不是任何部門的業務資料。
 - 每個部門是一個獨立的 app 模組，有自己的資料與畫面：設計、銷售、營運、財務、人事、客服（日後再加）。清單對一間公司固定，老闆管註冊與升級。原始碼沒有的 app 由 **App Forge** 生成（`docs/concept/09-app-forge.md`），不是手寫。
 - 所有容器共用同一個 Postgres 與同一個 MinIO。身份、授權、Need、審計、設定與背景隊列屬於 platform，不屬於任何一個 app。
 - **AI 做不到的才變成 Need**——不是錯誤訊息，不是靜靜降級。Need 兩型：`deliverable`（交東西）與 `decision`（下判斷；agent 必須先做一次並附建議，不是原封把問題丟給人）。
@@ -28,7 +28,7 @@ HeadX Company OS：一間公司運作的唯一底座，全部放在這個 repo�
 5. issue 裡的驗收指令沒有全部通過，不要宣稱完成。
 6. 超出 issue 範圍的想法，開新 issue，不要順手做。
 7. 規格有空白或互相矛盾：停下，在 issue 留言提問，不要猜。
-8. 不要新增說明文件。`docs/` 與各 app 的 `DESIGN.md` 只在 issue 指定時才改。**`AGENTS.md` 可以改，但每次改動必須在 `docs/product/DECISIONS.md` 留一條**（C86）；改動任何一條「不變量」要老闆明確同意，不是你自己判斷。
+8. **不要新增說明文件，但要修現有的。** `docs/` 與各 app 的 `DESIGN.md` 如果與程式碼不一致，以程式碼為真相，**即刻改文件**——不要等 issue，也不要留著一份講錯的手冊（過時的手冊比沒有手冊更貴）。純粹「想加一份新文件」才要 issue。**`AGENTS.md` 可以改，但每次改動必須在 `docs/product/DECISIONS.md` 留一條**（C86、C93）；改動任何一條「不變量」要老闆明確同意，不是你自己判斷。
 9. 只改你被指派的 app 資料夾。要改 `packages/` 或 platform，必須有獨立的 issue。
 10. app 之間不可互相 import；只能用 `packages/` 與 platform 的介面。搬動檔案的 issue（R1 至 R6）不改行為，搬動前後同一組測試必須全過。
 
