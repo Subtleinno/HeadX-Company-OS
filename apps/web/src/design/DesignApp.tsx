@@ -5,6 +5,7 @@ import { AppFrame } from '../frame/AppFrame';
 import { DESIGN_NAV, resolveNav, type NavPosition } from '../frame/appNav';
 import { useBrands, useSelectedBrand } from '../frame/useDirectory';
 import { useHashPath } from '../router';
+import { BrandPageScreen } from './BrandPageScreen';
 
 /**
  * Design app（設計／內容／網站）。
@@ -185,7 +186,20 @@ export function DesignApp({ user, onSignedOut }: DesignAppProps) {
   const { brandId } = useSelectedBrand(brands.state);
   const selected = items.find((item) => item.id === brandId) ?? null;
 
+  // 品牌頁的網址是 `#/design/brand/page/<key>`；第三段才是哪一頁。
+  const pageKey = path[0] === 'brand' && path[1] === 'page' ? (path[2] ?? 'home') : null;
+
   function renderPage(current: NavPosition) {
+    if (current.page.key === 'page') {
+      return (
+        <BrandPageScreen
+          brandId={brandId}
+          pageKey={pageKey ?? 'home'}
+          canEdit={user.role === 'owner'}
+        />
+      );
+    }
+
     if (current.page.key === 'home') {
       return (
         <BrandHome
@@ -204,7 +218,9 @@ export function DesignApp({ user, onSignedOut }: DesignAppProps) {
   }
 
   const subtitle =
-    position.page.key === 'home'
+    position.page.key === 'page'
+      ? (selected === null ? undefined : selected.name)
+      : position.page.key === 'home'
       ? t('design.brand.homeLead')
       : selected === null
         ? undefined
