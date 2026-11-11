@@ -210,6 +210,7 @@
 | `BrandEditorsPanel` | `#/boss/people/members` 下半：誰可以改這個品牌的頁 | `/brands`、`/brands/:id/editors` |
 | `BrandColorEditor` | `#/design/brand/color` 的表身：九個角色／淺色與深色／HEX・RGB・CMYK／階／准用與不准／標誌可用角色。內容是版本內容的一段 JSON（C105），儲存仍然走 `BrandPageScreen` 那一個鍵 | 無（純前端計算：對比與 RGB 都即時算） |
 | `BrandTypeEditor` | `#/design/brand/type` 的表身：四個層級（家族・尺寸・行距・字重・最小尺寸・文字顏色）＋家族與授權（最多兩個）＋配對・備用字・行長・對齊・錯誤用法。內容是版本內容的一段 JSON（C106），儲存仍然走 `BrandPageScreen` 那一個鍵 | 無（文字顏色由 `brandColors.ts` 的角色名單來） |
+| `BrandLogoEditor` | `#/design/brand/logo` 的表身：五類資產（名稱／主檔向量／位圖預覽，同一類只一個）＋主標誌＋四種顏色模式（角色值由色彩頁讀，螢幕 px／印刷 mm）＋安全範圍・方向・背景・何時用・怎樣用・錯誤用法。內容是版本內容的一段 JSON（C107），儲存仍然走 `BrandPageScreen` 那一個鍵 | `/brands/:id/pages/color`、`/brands/:id/pages/type`（只讀，取角色值與家族名單） |
 | `NeedsScreen` | `#/needs`：需求列表與認領（**不可以新增**） | `/needs`、`/needs/:id/claim` |
 | `FilesScreen` | `#/files`：上傳、列表、下載、軟刪除 | `/files*` |
 

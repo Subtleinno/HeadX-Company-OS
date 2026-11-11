@@ -1489,3 +1489,196 @@
   font: var(--hx-frame-font-small);
   color: var(--hx-frame-secondary);
 }
+
+/* ── 標誌頁（issue #36） ───────────────────────────────────── */
+
+/*
+ * 這一頁的閱讀次序是「這個品牌有哪幾件資產、每一件在甚麼底上用哪一個色、
+ * 最小幾大」。色塊是顯示色彩頁的值，不是可以改的輸入 —— 所以它是 14px 的
+ * 方塊，不是 color input。
+ */
+.brand-logo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hx-space-5);
+}
+
+.brand-logo__missing {
+  margin: 0;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+}
+
+.brand-logo__missing--gap {
+  color: var(--hx-danger-text);
+}
+
+.brand-logo__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hx-space-2);
+}
+
+.brand-logo__asset {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hx-space-2);
+  padding: var(--hx-space-3) 0;
+  border-top: 1px solid var(--hx-frame-border);
+}
+
+.brand-logo__assetHead {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+  flex-wrap: wrap;
+}
+
+/* 刪除鍵推到最右：貼住類別名會令人以為那是類別狀態。 */
+.brand-logo__assetHead [data-logo-asset-remove] {
+  margin-left: auto;
+}
+
+.brand-logo__kind {
+  font: var(--hx-frame-font-ui);
+  color: var(--hx-frame-ink);
+}
+
+.brand-logo__key {
+  font-family: var(--hx-font-mono);
+  font-size: 13px;
+  color: var(--hx-frame-secondary);
+}
+
+.brand-logo__badge {
+  flex: none;
+  border-radius: var(--hx-radius-sm);
+  padding: 1px 6px;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-danger-text);
+  border: 1px solid var(--hx-danger-text);
+}
+
+/* 一件資產三個欄位：名稱、主檔、預覽。窄的時候自動落行。 */
+.brand-logo__fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--hx-space-2) var(--hx-space-3);
+}
+
+.brand-logo__field {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  flex: 1 1 200px;
+  min-width: 0;
+}
+
+.brand-logo__field--wide {
+  flex: 1 1 240px;
+}
+
+.brand-logo__field--full {
+  flex: 0 0 100%;
+}
+
+.brand-logo__field .design-input {
+  max-width: 100%;
+}
+
+.brand-logo__fieldLabel {
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-muted);
+}
+
+.brand-logo__adder {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--hx-space-2);
+  flex-wrap: wrap;
+}
+
+.brand-logo__adder .brand-logo__field {
+  flex: 0 0 200px;
+}
+
+/* 一個顏色模式一塊：類別與角色在上，色彩頁的值在下面，尺寸兩格並排。 */
+.brand-logo__mode {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--hx-space-2) var(--hx-space-3);
+  padding: var(--hx-space-3) 0;
+  border-top: 1px solid var(--hx-frame-border);
+}
+
+.brand-logo__modeHead,
+.brand-logo__modeValue,
+.brand-logo__mode [data-logo-unit-error] {
+  flex: 0 0 100%;
+}
+
+.brand-logo__modeHead {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+}
+
+.brand-logo__mode .brand-logo__field {
+  flex: 0 0 190px;
+}
+
+.brand-logo__modeValue {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 0;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+}
+
+.brand-logo__swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid var(--hx-frame-border);
+}
+
+.brand-logo__textarea {
+  min-height: 56px;
+}
+
+.brand-logo__misuseList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.brand-logo__misuseItem {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+}
+
+/* 版本列表的標誌頁：資產名，不印 JSON。 */
+.brand-page__assets {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.brand-page__assetChip {
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-sm);
+  padding: 1px 6px;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+}
+

@@ -104,6 +104,11 @@ describe('字串表', () => {
       'brand.type.missingLine',
       'brand.type.gapScripts',
       'brand.type.gapRoles',
+      'brand.logo.missingLine',
+      'brand.logo.assetLimit',
+      'brand.logo.modeValueMissing',
+      'brand.logo.gapAssets',
+      'brand.logo.gapModes',
     ]);
   });
 });

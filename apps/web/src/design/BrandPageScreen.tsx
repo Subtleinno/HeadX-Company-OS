@@ -12,8 +12,10 @@ import {
 } from '../api';
 import { failureMessage } from './apiFailure';
 import { BrandColorEditor } from './BrandColorEditor';
+import { BrandLogoEditor } from './BrandLogoEditor';
 import { BrandTypeEditor } from './BrandTypeEditor';
 import { hexesInText } from './brandColors';
+import { assetNamesInText } from './brandLogo';
 import { namesInText } from './brandType';
 
 /**
@@ -98,8 +100,31 @@ function TypeVersionPreview({ preview }: { preview: string }) {
   );
 }
 
-function formatTime(value: string): string {
-  const date = new Date(value);
+/**
+ * 標誌頁的版本預覽：資產名，不印 JSON。
+ *
+ * 版本列表只拿到 160 字元的截斷內容；資產名寫在 JSON 最前面，所以抽得到。
+ * 抽不到就講抽不到 —— 不會畫一個假標誌出來。
+ */
+function LogoVersionPreview({ preview }: { preview: string }) {
+  const names = assetNamesInText(preview).slice(0, 5);
+
+  if (names.length === 0) {
+    return <p className="brand-page__preview">{t('brand.logo.versionNoName')}</p>;
+  }
+
+  return (
+    <span className="brand-page__assets" data-logo-version-names>
+      {names.map((name) => (
+        <span className="brand-page__assetChip" key={name} data-logo-version-name={name}>
+          {name}
+        </span>
+      ))}
+    </span>
+  );
+}
+
+function formatTime(value: string): string {  const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {
     return value;
@@ -168,7 +193,9 @@ export function BrandPageScreen({
           ? t('brand.color.empty')
           : pageKey === 'type'
             ? t('brand.type.empty')
-            : t('brand.page.emptyContent'),
+            : pageKey === 'logo'
+              ? t('brand.logo.empty')
+              : t('brand.page.emptyContent'),
       );
       return;
     }
@@ -442,9 +469,9 @@ export function BrandPageScreen({
         </p>
       )}
 
-      {/* 色彩（#35）與字體（#38）用表，不用自由文字。三者共用同一個 draft
-          與同一個儲存鍵：在這裡分岔而不是另開一個畫面，版本列表、改名、
-          刪頁就只有一份。 */}
+      {/* 色彩（#35）、字體（#38）、標誌（#36）用表，不用自由文字。三者共用
+          同一個 draft 與同一個儲存鍵：在這裡分岔而不是另開一個畫面，版本
+          列表、改名、刪頁就只有一份。 */}
       {pageKey === 'color' ? (
         <div className="brand-page__body" data-brand-page-body="color">
           <BrandColorEditor content={draft} canEdit={canEdit} onChange={setDraft} />
@@ -453,6 +480,16 @@ export function BrandPageScreen({
       ) : pageKey === 'type' ? (
         <div className="brand-page__body" data-brand-page-body="type">
           <BrandTypeEditor content={draft} canEdit={canEdit} onChange={setDraft} />
+          {canEdit && <p className="design-field__hint">{t('brand.page.hint')}</p>}
+        </div>
+      ) : pageKey === 'logo' ? (
+        <div className="brand-page__body" data-brand-page-body="logo">
+          <BrandLogoEditor
+            brandId={brandId}
+            content={draft}
+            canEdit={canEdit}
+            onChange={setDraft}
+          />
           {canEdit && <p className="design-field__hint">{t('brand.page.hint')}</p>}
         </div>
       ) : (
@@ -529,6 +566,8 @@ export function BrandPageScreen({
                     <ColorVersionPreview preview={version.preview} />
                   ) : pageKey === 'type' ? (
                     <TypeVersionPreview preview={version.preview} />
+                  ) : pageKey === 'logo' ? (
+                    <LogoVersionPreview preview={version.preview} />
                   ) : (
                     version.preview !== '' && (
                       <p className="brand-page__preview">{version.preview}</p>
