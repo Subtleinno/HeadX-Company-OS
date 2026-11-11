@@ -340,6 +340,13 @@ export function BrandPageScreen({ brandId, pageKey, canEdit }: BrandPageScreenPr
                     <p className="brand-page__preview">{version.preview}</p>
                   )}
 
+                  {/* 這一版是照第幾版策略做的（#34）。未記錄就講未記錄。 */}
+                  <p className="brand-page__policy" data-brand-page-policy={version.versionNo}>
+                    {version.policyVersionNo == null
+                      ? t('brand.page.policyUnrecorded')
+                      : t('brand.page.policyVersionNo', { no: version.policyVersionNo })}
+                  </p>
+
                   {canEdit && !isCurrent && (
                     <div className="brand-page__actions">
                       <button

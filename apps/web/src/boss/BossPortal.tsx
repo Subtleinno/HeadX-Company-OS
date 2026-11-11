@@ -7,6 +7,7 @@ import { AddSiteScreen } from './AddSiteScreen';
 import { BossOverview } from './BossOverview';
 import { MembersScreen } from './MembersScreen';
 import { PermissionGate } from './PermissionGate';
+import { PolicyScreen } from './PolicyScreen';
 import { SitesScreen } from './SitesScreen';
 import { useSites } from './useSites';
 
@@ -16,7 +17,7 @@ import { useSites } from './useSites';
  * 佢喺 App selector 入面，但範圍係整間公司 —— 所以冇品牌 selector。
  * 換品牌對「邊幾台機入得到」呢個問題冇意義。
  *
- * 四條模組（總覽／據點與機器／人員／存取紀錄）之下嘅頁全部喺左側欄
+ * 五條模組（總覽／據點與機器／人員／策略／存取紀錄）之下嘅頁全部喺左側欄
  * （老闆 2026-11-10：頁放左側欄）。未做嘅頁顯示一句如實嘅說明，
  * 唔會放一個假表格。
  */
@@ -31,6 +32,7 @@ const SUBTITLE: Record<string, MessageKey> = {
   directory: 'boss.sites.lead',
   add: 'boss.add.lead',
   members: 'boss.members.lead',
+  brand: 'boss.policy.lead',
 };
 
 function BossStub() {
@@ -84,6 +86,10 @@ export function BossPortal({ user, onSignedOut }: BossPortalProps) {
 
     if (current.page.key === 'members') {
       return <MembersScreen />;
+    }
+
+    if (current.page.key === 'brand') {
+      return <PolicyScreen />;
     }
 
     return <BossStub />;

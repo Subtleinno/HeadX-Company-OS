@@ -1002,6 +1002,11 @@ export type BrandPageVersionSummary = {
   createdAt: string;
   note: string | null;
   preview: string;
+  /**
+   * 這一版當時用的是第幾版策略（#34）。`null`＝未記錄：策略功能之前的版本。
+   * 畫面要如實講「未記錄」，不要當成第 1 版。
+   */
+  policyVersionNo: number | null;
 };
 
 export type BrandPageVersionDetail = BrandPageVersionSummary & { content: string };
@@ -1068,6 +1073,42 @@ export function deleteBrandPageVersion(
   return request<{ deleted: boolean; versionNo: number }>(
     `/api/brands/${encodeURIComponent(brandId)}/pages/${encodeURIComponent(key)}/versions/${encodeURIComponent(versionId)}`,
     { method: 'DELETE' },
+  );
+}
+
+/**
+ * 品牌頁策略（issue #34）：一份策略、六個槽，只加不改。
+ *
+ * `current` 同樣由伺服器算（該槽最大版號），前端不推。`current === null` 代表
+ * 這個槽真的沒有內容 —— 畫面要講缺，不要畫一個空的第 1 版。
+ */
+export type PolicyVersionSummary = {
+  id: string;
+  versionNo: number;
+  createdAt: string;
+  note: string | null;
+  preview: string;
+};
+
+export type PolicyVersionDetail = PolicyVersionSummary & { content: string };
+
+export type PolicySlotView = {
+  slot: string;
+  current: PolicyVersionDetail | null;
+  versions: PolicyVersionSummary[];
+};
+
+export function fetchPolicy(): Promise<ApiResult<{ slots: PolicySlotView[] }>> {
+  return request<{ slots: PolicySlotView[] }>('/api/policy');
+}
+
+export function savePolicyVersion(
+  slot: string,
+  input: { content: string; note?: string },
+): Promise<ApiResult<{ version: PolicyVersionDetail }>> {
+  return request<{ version: PolicyVersionDetail }>(
+    `/api/policy/${encodeURIComponent(slot)}/versions`,
+    { method: 'POST', body: JSON.stringify(input) },
   );
 }
 

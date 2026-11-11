@@ -3,7 +3,7 @@
 > `docs/INDEX.md` 是文件地圖，`AGENTS.md` 是規則。這一頁只管四件事：
 > **現在有什麼、怎樣跑起來、下一步做什麼、哪幾個坑別踩。**
 
-最後更新：2026-11-11 深夜（品牌模組規格定稿：五頁、版本、策略；程式未動，夜間 loop 由 #33 開始）
+最後更新：2026-11-12 凌晨（夜間 loop 進行中：#33 頁版本、#34 策略已合併；下一張 #32）
 
 ## 開新 session 時，貼這一句就夠
 
@@ -131,6 +131,7 @@ curl -s https://hxd.subtle-inno.com/api/auth/state    # 應回 {"setupRequired":
 | `#/boss/sites` | 據點目錄（三行） | 可用，可批准 |
 | `#/boss/sites/add` | 新增據點 | 第一、二步可用，第三步端點未存在 |
 | `#/boss/people/members` | 人員與部門：名單、建立員工（可一併選部門）、改部門、停用、恢復、重設密碼 | 可用，全部真寫入 |
+| `#/boss/policy/brand` | 品牌頁策略：六個槽的標準全文、每次儲存新增一版 | 可用，全部真寫入 |
 | `#/design` | 品牌首頁：清單、新增品牌（只老闆）、記住上次品牌 | 可用 |
 | `#/design/brand/page/<key>` | 品牌頁：現行版本、版本列表、用回舊版、刪舊版 | 可用（五個固定頁；內容仍是手寫，各頁的生成見 #35–#39） |
 | `#/design/brand/settings/*` | 品牌設定之下四個章節（標誌／識別／色彩／字體） | 章節導覽可用，內容未接 |
@@ -140,8 +141,10 @@ curl -s https://hxd.subtle-inno.com/api/auth/state    # 應回 {"setupRequired":
 
 #33 已落地：頁與版本是真的（`brand_page`／`brand_page_version`，0013），現行用算的，版本只加不改由 trigger 強制。導覽仍然掛在「品牌頁」這一個臨時入口，真正的五頁清單由 #32 接手。
 
+#34 已落地：策略是真的（`brand_policy_version`，0014），六個槽各有第 1 版全文，只加不改由 trigger 強制。**一份策略、六個槽，不是逐品牌一份**（C102）—— 同一類頁的專業標準不因換品牌而變，品牌之間的分別住在各品牌自己的頁。每一版品牌頁記住它當時用的策略版本（`brand_page_version.policy_version_id`），所以改策略不會重寫已經做好的頁。
+
 員工直接開 `#/boss` 會見到全螢幕權限說明，沒有任何選單外流（2026-11-11 用真員工帳戶實測）。
-Boss Portal 的導覽是四組：總覽｜據點與機器｜人員｜存取紀錄。
+Boss Portal 的導覽是五組：總覽｜據點與機器｜人員｜策略｜存取紀錄。
 
 ## 4. 邊份文件管邊件事
 
@@ -164,7 +167,7 @@ Boss Portal 的導覽是四組：總覽｜據點與機器｜人員｜存取紀�
 外殼程式碼：`packages/app-shell/src/FrameShell.tsx`。
 前端接駁：`apps/web/src/frame/`（`AppFrame`、`appNav`、`FrameApps`）＋ `apps/web/src/boss/`、`apps/web/src/design/`。
 後端：`apps/platform/src/directory/`（品牌、據點、我的品牌）、`apps/platform/src/staff/`（帳戶與部門）、`apps/platform/src/needs/`、`apps/platform/src/modules/`。
-資料表：`db/migrations/0001`–`0013`，最近三支是 `0011_brands_sites.sql`、`0012_user_brand_focus.sql`、`0013_brand_pages.sql`。**真相以 `db/migrations/` 為準**，這一行只是指路。
+資料表：`db/migrations/0001`–`0014`，最近三支是 `0012_user_brand_focus.sql`、`0013_brand_pages.sql`、`0014_brand_policy.sql`。**真相以 `db/migrations/` 為準**，這一行只是指路。
 
 ## 5. 下一步：品牌模組（夜間 loop 的次序）
 
@@ -174,7 +177,7 @@ Boss Portal 的導覽是四組：總覽｜據點與機器｜人員｜存取紀�
 
 | 位 | issue | 這一張交付什麼 | 為什麼在這一位 | 狀態 |
 |---|---|---|---|---|
-| 1 | #33 | 品牌頁版本：只加不改，現行用算的 | 其餘八張都要版本 | 未開始 |
+| 1 | #33 | 品牌頁版本：只加不改，現行用算的 | 其餘八張都要版本 | 已完成（`297b9a3`） |
 | 2 | #34 | Boss Portal 策略：六槽全文，只有老闆可改 | #32 要六個槽都有全文 | 未開始 |
 | 3 | #32 | 品牌模組五頁、導覽；自定義頁的建立／改名／刪除 | 後面四頁要掛在這一張的導覽上 | 未開始 |
 | 4 | #35 | 色彩頁（角色名由它定） | 字體與標誌都要引用它的角色 | 未開始 |

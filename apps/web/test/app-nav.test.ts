@@ -53,12 +53,13 @@ describe('resolveNav', () => {
     expect(position.page.key).toBe('home');
   });
 
-  it('Boss Portal 冇品牌範圍，模組係總覽／據點與機器／人員／存取紀錄', () => {
+  it('Boss Portal 冇品牌範圍，模組係總覽／據點與機器／人員／策略／存取紀錄', () => {
     expect(BOSS_NAV.scoped).toBe(false);
     expect(BOSS_NAV.modules.map((item) => item.key)).toEqual([
       'overview',
       'sites',
       'people',
+      'policy',
       'access',
     ]);
   });

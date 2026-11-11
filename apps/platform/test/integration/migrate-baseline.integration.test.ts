@@ -36,9 +36,10 @@ const BASELINE = [
   ['0011_brands_sites.sql', '73c8d65270e8d36021901bedf11991d48fb1f1c626b5d979ed4f75246d62ce4c'],
   ['0012_user_brand_focus.sql', 'c4b3004f5dcbdd09cc9f9fb7bf44432c120bbe763d4f33ff50b068641f14ed6e'],
   ['0013_brand_pages.sql', '92be49ba9ed199afac4cd35333b9638bc70b4218d82773df8bb060b1de6ebe6a'],
+  ['0014_brand_policy.sql', 'ef17f61af119be69d522d8d9475f419db2b75db154dad8a4be3e83ce17b0db87'],
 ] as const;
 
-describe('基準線：現有執行器套用 0001 至 0013 之後的 ledger', () => {
+describe('基準線：現有執行器套用 0001 至 0014 之後的 ledger', () => {
   let db: TempDatabase;
 
   beforeAll(async () => {
