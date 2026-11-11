@@ -680,6 +680,10 @@ export const messages = {
 
   'boss.module.overview': '總覽',
   'boss.module.sites': '據點與機器',
+  // 人員獨立成一個模組，唔再掛在「據點與機器 › 權限與稽核」之下：
+  // 「邊個人屬於邊個部門」係老闆最常做的一件事，埋在機器設定之下
+  // 只會令佢每次都要想兩次。模組名講「人員」，頁名講「人員與部門」。
+  'boss.module.people': '人員',
   'boss.module.access': '存取紀錄',
   'boss.page.overview': '總覽',
   'boss.page.directory': '據點目錄',
@@ -687,6 +691,10 @@ export const messages = {
   'boss.page.credentials': '憑證與金鑰',
   'boss.page.approvals': '批准紀錄',
   'boss.page.members': '管理級成員',
+  // #13 起「管理級成員」變成「人員與部門」。既有鍵唔改：i18n 有一道
+  // 「已交付文案零改動」的凍結閘（frame/files/policy/grant 四張測試），
+  // 改一個字就會令四張一齊紅。所以新頁面用新鍵，舊鍵原封不動留低。
+  'boss.page.people': '人員與部門',
   'boss.page.actions': '操作紀錄',
   'boss.group.machines': '據點 MACHINES',
   'boss.group.governance': '權限與稽核',
@@ -757,11 +765,42 @@ export const messages = {
   'boss.stub.title': '呢頁仲未接內容',
   'boss.stub.body': '位置已經定咗，但內容未做。呢度唔會放一個假表格充場面。',
 
+  // 人員與部門（issue #13）。呢一頁係老闆唯一可以決定「邊個人去邊個部門」
+  // 的地方，所以每一句都要講清楚後果：部門決定登入落點，未指派就入唔到。
+  'boss.members.lead': '呢間公司有邊個，同每個人屬於邊個部門。部門決定佢登入之後直接去邊。',
+  'boss.members.col.member': '成員',
+  'boss.members.col.department': '部門',
+  'boss.members.col.state': '狀態',
+  'boss.members.unassigned': '未指派',
+  'boss.members.notOpen': '（未開放）',
+  'boss.members.notOpenNote': '呢個部門嘅 app 仲未開放。',
+  'boss.members.assignLabel': '指派 {name} 嘅部門',
+  'boss.members.saving': '儲存中…',
+  'boss.members.departmentFailed': '改唔到部門，仍然係原本嗰個。',
+  'boss.members.departmentUnknown': '呢個部門唔存在，請重新載入。',
+  'boss.members.departmentsFailed': '讀唔到部門清單，所以唔會顯示下拉。',
+  'boss.members.staffMissing': '搵唔到呢位員工，可能已經被移除。',
+  'boss.members.created': '已建立「{name}」。下一步：喺下面指派部門。',
+  'boss.members.createMissing': '名稱、電郵、初始密碼三格都要填。',
+  'boss.members.createFailed': '建立唔到員工。',
+  'boss.members.createClose': '取消',
+  'boss.members.empty': '呢間公司仲未有任何員工。用右上角「新增員工」建立第一個。',
+  'boss.members.passwordHint': '員工第一次登入用呢個密碼，然後一定要改。',
+  'boss.members.disabled': '已停用',
+  'boss.members.footnote': '名單只有員工，老闆帳戶唔會出現。停用帳戶唔可以再指派部門。',
+
   'gate.title': '你冇權限睇呢頁',
   'gate.body': '呢頁只有老闆同管理級可以開。你而家嘅身份係「{role}」。',
   'gate.back': '返去今日',
   'gate.role.staff': '員工',
   'gate.role.owner': '老闆',
+  'gate.noDepartment.title': '你未獲指派部門',
+  'gate.noDepartment.body':
+    '呢個帳戶可以登入，但老闆仲未指派你去邊個部門，所以未有可以開嘅畫面。請聯絡老闆。',
+  'gate.departmentClosed.title': '你嘅部門 app 仲未開放',
+  'gate.departmentClosed.body':
+    '你屬於「{department}」，但呢個部門嘅 app 未做好。做好之後，用同一個帳戶登入就會直接入到。',
+  'gate.signOut': '登出',
 
   'design.module.brand': '品牌',
   'design.module.material': '素材',

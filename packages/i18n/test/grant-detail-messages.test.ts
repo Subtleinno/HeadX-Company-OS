@@ -81,6 +81,22 @@ const LOCALES: readonly string[] = [DEFAULT_LOCALE];
  */
 const FROZEN_ALL_SHA256 = '7f83e9b90103908df960c395945dc1679757ca7bafb6e0af3a45136fee488b61';
 
+/**
+ * 呢張之後嘅施工張所新增嘅鍵前綴（#13／#14 起）。
+ *
+ * 同 files／policy／frame 三張同一個做法：後續新增鍵唔屬於 #168 要守嘅
+ * 既有鍵，唔排除嘅話「合法新增」會被當成「既有鍵被改」，令 npm test 假紅。
+ * 凍結值同守衛嘅既有鍵都唔變，唔係放寬門檻。
+ */
+const LATER_KEY_PREFIXES = [
+  'boss.members.',
+  'boss.module.people',
+  'boss.page.people',
+  'gate.noDepartment.',
+  'gate.departmentClosed.',
+  'gate.signOut',
+];
+
 function hashExcluding(msgs: Record<string, string>, excluded: ReadonlySet<string>): string {
   const entries = Object.entries(msgs)
     .filter(([key]) => !excluded.has(key))
@@ -247,6 +263,13 @@ describe('issue 168 授權單筆詳情文案鍵（grant.detail.*）', () => {
 
   it('既有鍵零改動：排除本張交付鍵後 SHA-256 同 origin/main 凍結值一致', () => {
     const excluded = new Set(Object.keys(GRANT_DETAIL_MESSAGES));
-    expect(hashExcluding(messages as Record<string, string>, excluded)).toBe(FROZEN_ALL_SHA256);
+    const later = new Set(
+      Object.keys(messages).filter((key) =>
+        LATER_KEY_PREFIXES.some((prefix) => key.startsWith(prefix)),
+      ),
+    );
+    expect(hashExcluding(messages as Record<string, string>, new Set([...excluded, ...later]))).toBe(
+      FROZEN_ALL_SHA256,
+    );
   });
 });

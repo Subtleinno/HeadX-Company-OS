@@ -13,6 +13,8 @@ import { navigate, useRoute } from './router';
 import { AdminArea } from './admin/AdminArea';
 import { BossPortal } from './boss/BossPortal';
 import { DesignApp } from './design/DesignApp';
+import { DepartmentClosedGate, NoDepartmentGate } from './screens/DepartmentGate';
+import { useLanding } from './frame/useLanding';
 import { AccountScreen } from './screens/AccountScreen';
 import { HomeScreen } from './screens/HomeScreen';
 import { LoginScreen } from './screens/LoginScreen';
@@ -55,6 +57,15 @@ export function App() {
   /** 登入／登出／已經設定過之後的本地狀態；null 代表「照伺服器最初的答案」。 */
   const [override, setOverride] = useState<AuthSnapshot<PublicUser> | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  /**
+   * 啱啱完成登入（或首次設定）。
+   *
+   * 落點只在這一刻生效一次：登入之後直接入自己嘅工作台。之後喺 app 內
+   * 行嚟行去、甚至重新載入，都唔會再被拉走 —— 用戶自己撳去邊就係邊。
+   * 唔用「網址係 / 就跳」嘅做法，因為咁會令首頁（我的 Apps）永遠去唔到，
+   * 亦會令用戶每次按上一頁都被彈走。
+   */
+  const [justSignedIn, setJustSignedIn] = useState(false);
 
   const route = useRoute();
   const effective: AuthLoad<PublicUser> = override === null ? state : { kind: 'ready', auth: override };
@@ -69,6 +80,15 @@ export function App() {
    */
   const mustChangePassword =
     effective.kind === 'ready' && effective.auth.user?.mustChangePassword === true;
+
+  /**
+   * 登入後的落點（issue #14）。老闆 → Boss Portal；員工 → 自己部門的 app；
+   * 未指派部門就唔入任何 app。判斷只由身份 + registry 決定，唔由歷史決定。
+   *
+   * 呢個 hook 一定要無條件呼叫（React 的規則），所以未登入時傳 undefined。
+   */
+  const currentUser = effective.kind === 'ready' ? effective.auth.user : undefined;
+  const landing = useLanding(currentUser);
 
   // 網址只是畫面的鏡子：畫面定了就把 hash 對齊，重新載入仍然停在同一個地方。
   // 比對原始 hash 而不是解析後的 route，空 hash 也要補成 #/。
@@ -100,16 +120,43 @@ export function App() {
       return;
     }
 
+    // 啱啱登入、仲在 '/':去自己嘅工作台（issue #14）。`deciding` 期間唔跳，
+    // 因為未知道答案之前跳去任何一頁都係猜；寧願多等一個 request。
+    if (screen === 'home' && justSignedIn) {
+      if (landing.kind !== 'route') {
+        return;
+      }
+
+      setJustSignedIn(false);
+
+      if (window.location.hash !== `#${landing.path}`) {
+        navigate(landing.path);
+      }
+
+      return;
+    }
+
+    // 已登入、但網址係空：首頁本身係合法的一頁（「我的 Apps」），只係要
+    // 把 hash 補成 `#/`，令重新載入與書籤講得通。
+    if (screen === 'home') {
+      if (window.location.hash !== '#/') {
+        navigate('/');
+      }
+
+      return;
+    }
+
     const target = ROUTE_OF[screen];
 
     if (window.location.hash !== `#${target}`) {
       navigate(target);
     }
-  }, [screen, route, mustChangePassword]);
+  }, [screen, route, mustChangePassword, landing, justSignedIn]);
 
   function signedIn(user: PublicUser): void {
     setNotice(null);
     setOverride({ setupRequired: false, signedIn: true, user });
+    setJustSignedIn(true);
   }
 
   function signedOut(): void {
@@ -152,6 +199,27 @@ export function App() {
           }}
         />
       );
+    }
+
+    /**
+     * 落點（issue #14）。**只喺啱啱登入嗰一刻把關**。
+     *
+     * 呢一刻之後，用戶自己撳去邊就係邊：`#/` 係「我的 Apps」，`/files`、
+     * `/needs`、`/account` 係外殼本身嘅功能，全部照開。把「未指派部門」
+     * 變成一個永遠鎖住的閘，會連改密碼、睇自己檔案都做唔到 —— 而呢兩件
+     * 事同「有冇部門」無關。真正唔准入 app 的把關在後端：`/modules` 對
+     * 未指派的人回空清單，前端冇任何方法自己補一個出來。
+     */
+    if (justSignedIn && landing.kind === 'deciding') {
+      return <LoadingScreen />;
+    }
+
+    if (justSignedIn && landing.kind === 'noDepartment') {
+      return <NoDepartmentGate onSignOut={signedOut} />;
+    }
+
+    if (justSignedIn && landing.kind === 'closed') {
+      return <DepartmentClosedGate department={landing.department} onSignOut={signedOut} />;
     }
 
     // `/app/*` 是原型外殼（issue 118 切片 C）。它標明是原型資料，不是正式 registry 的 app。

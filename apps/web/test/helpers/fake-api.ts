@@ -51,6 +51,7 @@ export type FakeHandlers = Partial<
     | 'staffCreate'
     | 'staffDisable'
     | 'staffReset'
+    | 'staffDepartment'
     | 'agents'
     | 'agentCreate'
     | 'agentDisable'
@@ -233,6 +234,11 @@ function routeKey(path: string, method: string): keyof FakeHandlers | null {
 
   if (/\/staff\/[^/]+\/reset-password$/.test(bare)) {
     return method === 'POST' ? 'staffReset' : null;
+  }
+
+  // 指派部門（issue #12／#13）。
+  if (/\/staff\/[^/]+\/department$/.test(bare)) {
+    return method === 'PATCH' ? 'staffDepartment' : null;
   }
 
   if (/\/staff\/[^/]+\/disable$/.test(bare)) {

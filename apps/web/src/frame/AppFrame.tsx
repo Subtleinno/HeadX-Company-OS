@@ -18,7 +18,8 @@ import { useFrameChrome } from './useFrameChrome';
  * 呢一層只做翻譯，唔做決定：
  *   - 邊個 app、邊個模組、邊一頁 → 由 `AppNav` 同網址講，呢度唔自己記。
  *   - 品牌 selector 有冇，由 `nav.scoped` 講（Boss Portal 係公司範圍，冇）。
- *   - 頁喺左側欄（老闆 2026-11-10 定），所以 `modulePages` 一律傳空。
+ *   - 第二層模組頁頂欄（老闆 2026-11-11 定：還原）列出目前模組嘅頁，
+ *     同左側欄共用同一份 `AppNav`，唔喺呢度另寫一份頁名。
  */
 
 export type AppFrameProps = {
@@ -60,6 +61,12 @@ export function AppFrame({
   const company = useCompanyIdentity(true);
 
   const base = toRoute(nav.base);
+
+  // 第二層模組頁頂欄嘅頁籤。由 nav 模型直接推，`onSelectPage` 同左側欄
+  // 用同一個 key，所以兩邊點選結果一定一致。
+  const modulePages = position.navModule.groups.flatMap((group) =>
+    group.pages.map((page) => ({ key: page.key, label: t(page.labelKey) })),
+  );
 
   const sidebarGroups: FrameSidebarGroup[] = position.navModule.groups.map((group) => ({
     ...(group.titleKey === undefined ? {} : { title: t(group.titleKey) }),
@@ -118,7 +125,7 @@ export function AppFrame({
             },
           }
         : {})}
-      modulePages={[]}
+      modulePages={modulePages}
       currentPageKey={position.page.key}
       onSelectPage={goToPage}
       currentSectionKey={position.section?.key ?? null}

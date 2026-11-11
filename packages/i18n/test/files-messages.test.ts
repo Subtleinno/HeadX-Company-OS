@@ -169,7 +169,7 @@ const FROZEN_ALL_SHA256 = '6e9316371598dad5ac57028d9a6dce94756eb8f86b37a43013aa2
  * 守衛嘅 596 個既有鍵唔變，唔係放寬門檻；issue 168 嘅完整鍵清單另由
  * grant-detail-messages.test.ts「冇清單以外嘅 grant.detail.* 鍵」守衛。
  */
-const LATER_KEY_PREFIXES = ['grant.detail.'];
+const LATER_KEY_PREFIXES = ['grant.detail.', 'boss.members.', 'boss.module.people', 'boss.page.people', 'gate.noDepartment.', 'gate.departmentClosed.', 'gate.signOut'];
 
 function hashExcluding(msgs: Record<string, string>, excluded: ReadonlySet<string>): string {
   const entries = Object.entries(msgs)
