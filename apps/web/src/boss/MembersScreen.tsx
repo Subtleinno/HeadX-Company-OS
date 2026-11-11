@@ -1,10 +1,12 @@
-import { useCallback, useEffect, useState } from 'react';
+import { Fragment, useCallback, useEffect, useState } from 'react';
 import { t } from '@company-os/i18n';
 import {
   assignStaffDepartment,
   createStaff,
+  disableStaff,
   fetchModules,
   fetchStaff,
+  resetStaffPassword,
   type ApiFailure,
   type PublicModule,
   type StaffMember,
@@ -28,6 +30,12 @@ import {
  * 3. **建立員工時不順便指派部門**。後端建立帳戶時 department 一定是
  *    `null`（issue #12 的決定），所以表單沒有部門欄位。員工建立之後會以
  *    「未指派」出現在表上，這一頁直接引導下一步，而不是假裝一步做完。
+ *
+ * 停用與重設密碼（issue #24）刻意放在同一張表的每一行：這兩件事都是
+ * 「這個人仲可不可以用這個身份進來」，跟部門是同一個問題的三面。停用之前
+ * 一定先講後果再確認 —— 按下停用不會即刻生效，因為它會把一個正在工作的人
+ * 踢出系統。重設密碼一定要老闆自己再打一次密碼：留在公共電腦上的 session
+ * 不應該可以改掉另一個人的密碼（後端真的驗，前端沒有任何旗標可代替）。
  */
 
 /** 未指派部門時下拉的值。用空字串代表「沒有」，不用 `null`： `<option value>` 只收字串。 */
@@ -56,6 +64,11 @@ function failureText(failure: ApiFailure, fallback: string): string {
     unknown_department: t('boss.members.departmentUnknown'),
     owner_protected: t('staff.reset.ownerProtected'),
     not_found: t('boss.members.staffMissing'),
+    // 停用與重設（issue #24）：每個原因講自己的話，不互相借用。
+    already_disabled: t('staff.disable.already'),
+    invalid_owner_password: t('staff.reset.wrongOwnerPassword'),
+    stale_credentials: t('staff.reset.staleCredentials'),
+    too_many_attempts: t('boss.members.tooManyAttempts'),
   };
 
   const mapped = failure.error === null ? undefined : known[failure.error];
@@ -75,6 +88,17 @@ export function MembersScreen() {
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
   const [created, setCreated] = useState<string | null>(null);
+
+  /**
+   * 停用與重設密碼（issue #24）的面板。一次只開一個：同一個人身上不會同時
+   * 發生兩件事，兩個面板一齊開只會令人不知道按哪個確認才算數。
+   */
+  const [panel, setPanel] = useState<{ id: string; kind: 'disable' | 'reset' } | null>(null);
+  const [actingId, setActingId] = useState<string | null>(null);
+  const [ownerPassword, setOwnerPassword] = useState('');
+  const [tempPassword, setTempPassword] = useState('');
+  const [actionError, setActionError] = useState<{ id: string; message: string } | null>(null);
+  const [actionDone, setActionDone] = useState<string | null>(null);
 
   const load = useCallback(async (): Promise<void> => {
     const [staffResult, modulesResult] = await Promise.all([
@@ -152,6 +176,84 @@ export function MembersScreen() {
     setState((current) => (current.kind === 'ready' ? { ...current, staff: [...current.staff] } : current));
   }
 
+  function openPanel(member: StaffMember, kind: 'disable' | 'reset'): void {
+    setPanel({ id: member.id, kind });
+    setOwnerPassword('');
+    setTempPassword('');
+    setActionError(null);
+    setActionDone(null);
+  }
+
+  /** 收起面板時把密碼清掉：留著只會令下一個開面板的人見到上一手打過的密碼。 */
+  function closePanel(): void {
+    setPanel(null);
+    setOwnerPassword('');
+    setTempPassword('');
+    setActionError(null);
+  }
+
+  async function handleDisable(member: StaffMember): Promise<void> {
+    if (actingId !== null) {
+      return;
+    }
+
+    setActingId(member.id);
+    setActionError(null);
+
+    const result = await disableStaff(member.id);
+
+    setActingId(null);
+
+    if (!result.ok) {
+      setActionError({
+        id: member.id,
+        message: failureText(result.failure, t('boss.members.actionFailed')),
+      });
+      return;
+    }
+
+    replaceRow(result.data.staff);
+    setPanel(null);
+    setActionDone(t('staff.disable.done'));
+  }
+
+  async function handleReset(member: StaffMember): Promise<void> {
+    if (actingId !== null) {
+      return;
+    }
+
+    if (ownerPassword === '' || tempPassword === '') {
+      setActionError({ id: member.id, message: t('boss.members.resetMissing') });
+      return;
+    }
+
+    setActingId(member.id);
+    setActionError(null);
+
+    const result = await resetStaffPassword(member.id, {
+      ownerPassword,
+      newTemporaryPassword: tempPassword,
+    });
+
+    setActingId(null);
+
+    if (!result.ok) {
+      // 失敗時密碼欄照留：叫老闆由頭打一次兩串密碼，只是無謂的懲罰。
+      setActionError({
+        id: member.id,
+        message: failureText(result.failure, t('boss.members.actionFailed')),
+      });
+      return;
+    }
+
+    // 這兩串密碼只活在剛才那一次請求裡：成功即刻清掉，面板亦收起。
+    setOwnerPassword('');
+    setTempPassword('');
+    setPanel(null);
+    replaceRow(result.data.staff);
+    setActionDone(t('staff.reset.done'));
+  }
+
   async function handleCreate(): Promise<void> {
     if (creating) {
       return;
@@ -207,6 +309,12 @@ export function MembersScreen() {
       {created !== null && (
         <p className="boss-note" role="status" data-member-created>
           {t('boss.members.created', { name: created })}
+        </p>
+      )}
+
+      {actionDone !== null && (
+        <p className="boss-note" role="status" data-member-action-done>
+          {actionDone}
         </p>
       )}
 
@@ -320,13 +428,14 @@ export function MembersScreen() {
         </p>
       ) : (
         <div className="boss-sites-card boss-members">
-          <table className="boss-sites">
+          <table className="boss-sites boss-members__table">
             <thead>
               <tr>
                 <th scope="col">{t('boss.members.col.member')}</th>
                 <th scope="col">{t('boss.members.col.department')}</th>
                 <th scope="col">{t('boss.members.col.state')}</th>
                 <th scope="col">{t('staff.field.createdAt')}</th>
+                <th scope="col">{t('boss.members.col.actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -338,7 +447,8 @@ export function MembersScreen() {
                         ?.available;
 
                 return (
-                  <tr key={member.id} data-member-row data-member-email={member.email}>
+                  <Fragment key={member.id}>
+                    <tr data-member-row data-member-email={member.email}>
                     <td>
                       <span className="boss-sites__name">{member.displayName}</span>
                       <span className="boss-sites__meta">{member.email}</span>
@@ -389,7 +499,155 @@ export function MembersScreen() {
                     <td className="boss-sites__fp" data-label={t('staff.field.createdAt')}>
                       {new Date(member.createdAt).toLocaleDateString('zh-HK')}
                     </td>
+                    <td className="boss-members__actions" data-label={t('boss.members.col.actions')}>
+                      <div className="boss-members__buttons">
+                        {member.disabledAt === null && (
+                          <button
+                            type="button"
+                            className="boss-link"
+                            aria-label={t('boss.members.disableLabel', { name: member.displayName })}
+                            disabled={actingId === member.id}
+                            onClick={() => {
+                              openPanel(member, 'disable');
+                            }}
+                          >
+                            {t('staff.disable')}
+                          </button>
+                        )}
+                        {/* 停用之後連重設都收起來：重設只會改一串用不到的密碼，
+                            畫面卻會講「下次登入要改」，等於應承一件不會發生的事。 */}
+                        {member.disabledAt === null && (
+                          <button
+                            type="button"
+                            className="boss-link"
+                            aria-label={t('boss.members.resetLabel', { name: member.displayName })}
+                            disabled={actingId === member.id}
+                            onClick={() => {
+                              openPanel(member, 'reset');
+                            }}
+                          >
+                            {t('staff.reset')}
+                          </button>
+                        )}
+                      </div>
+                    </td>
                   </tr>
+
+                  {/* 面板放在同一行的下面，而不是彈窗：彈窗會遮住名單，
+                      令人看不到「我正在對邊個做」。 */}
+                  {panel !== null && panel.id === member.id && (
+                    <tr className="boss-members__panel" data-member-panel={panel.kind}>
+                      <td colSpan={5}>
+                        {panel.kind === 'disable' ? (
+                          <div className="boss-members__panelbody">
+                            <p className="boss-field__hint">{t('staff.disable.body')}</p>
+                            <div className="boss-form__actions">
+                              <button
+                                type="button"
+                                className="boss-btn boss-btn--primary"
+                                disabled={actingId === member.id}
+                                onClick={() => {
+                                  void handleDisable(member);
+                                }}
+                              >
+                                {t('staff.disable.confirm')}
+                              </button>
+                              <button
+                                type="button"
+                                className="boss-btn"
+                                onClick={() => {
+                                  closePanel();
+                                }}
+                              >
+                                {t('boss.members.cancel')}
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <form
+                            className="boss-members__panelbody"
+                            onSubmit={(event) => {
+                              event.preventDefault();
+                              void handleReset(member);
+                            }}
+                          >
+                            <p className="boss-form__step">
+                              {t('staff.reset.title')}
+                            </p>
+
+                            <div className="boss-field">
+                              <label
+                                className="boss-field__label"
+                                htmlFor={`member-owner-password-${member.id}`}
+                              >
+                                {t('staff.reset.ownerPassword')}
+                              </label>
+                              <input
+                                id={`member-owner-password-${member.id}`}
+                                className="boss-input"
+                                type="password"
+                                autoComplete="current-password"
+                                value={ownerPassword}
+                                onChange={(event) => {
+                                  setOwnerPassword(event.target.value);
+                                }}
+                              />
+                            </div>
+
+                            <div className="boss-field">
+                              <label
+                                className="boss-field__label"
+                                htmlFor={`member-temp-password-${member.id}`}
+                              >
+                                {t('staff.reset.tempPassword')}
+                              </label>
+                              <input
+                                id={`member-temp-password-${member.id}`}
+                                className="boss-input"
+                                type="password"
+                                autoComplete="new-password"
+                                value={tempPassword}
+                                onChange={(event) => {
+                                  setTempPassword(event.target.value);
+                                }}
+                              />
+                              <span className="boss-field__hint">
+                                {t('staff.reset.noticeChange')}
+                                {t('staff.reset.noticeSession')}
+                                {t('staff.reset.noticeMail')}
+                              </span>
+                            </div>
+
+                            <div className="boss-form__actions">
+                              <button
+                                type="submit"
+                                className="boss-btn boss-btn--primary"
+                                disabled={actingId === member.id}
+                              >
+                                {t('staff.reset.confirm')}
+                              </button>
+                              <button
+                                type="button"
+                                className="boss-btn"
+                                onClick={() => {
+                                  closePanel();
+                                }}
+                              >
+                                {t('boss.members.cancel')}
+                              </button>
+                            </div>
+                          </form>
+                        )}
+
+                        {actionError !== null && actionError.id === member.id && (
+                          <p className="boss-members__error" role="alert" data-member-error>
+                            {actionError.message}
+                          </p>
+                        )}
+                      </td>
+                    </tr>
+                  )}
+                  </Fragment>
                 );
               })}
             </tbody>

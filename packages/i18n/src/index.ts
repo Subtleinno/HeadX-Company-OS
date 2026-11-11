@@ -789,6 +789,13 @@ export const messages = {
   'boss.members.passwordHint': '員工第一次登入用呢個密碼，然後一定要改。',
   'boss.members.disabled': '已停用',
   'boss.members.footnote': '名單只有員工，老闆帳戶唔會出現。停用帳戶唔可以再指派部門。',
+  'boss.members.col.actions': '操作',
+  'boss.members.disableLabel': '停用 {name} 嘅登入',
+  'boss.members.resetLabel': '重設 {name} 嘅密碼',
+  'boss.members.cancel': '取消',
+  'boss.members.actionFailed': '做唔到，請再試一次。',
+  'boss.members.resetMissing': '兩格都要填：你自己嘅密碼，同新嘅臨時密碼。',
+  'boss.members.tooManyAttempts': '試咗太多次，請等一陣再試。',
 
   'gate.title': '你冇權限睇呢頁',
   'gate.body': '呢頁只有老闆同管理級可以開。你而家嘅身份係「{role}」。',

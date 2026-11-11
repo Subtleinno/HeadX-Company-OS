@@ -752,6 +752,53 @@
   font: var(--hx-frame-font-small);
 }
 
+/* 操作欄用文字型動作：一行有兩個動作，用兩顆實心按鈕會令表格睇落似工具列。 */
+.boss-members__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--hx-space-3);
+}
+
+/* 停用／重設面板掛在該行下面：凹入去的底色代表「這是上面那一個人的事」，
+   而不是另一張卡。 */
+.boss-members__panel > td {
+  background: var(--hx-frame-surface);
+}
+
+.boss-members__panelbody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hx-space-3);
+  max-width: 34rem;
+}
+
+.boss-members__panelbody .boss-form__actions {
+  margin-top: 0;
+}
+
+/* 人員表有五欄（比據點表多一欄「操作」），不能沿用 46/16/20/18 那組百分比：
+   table-layout: fixed 之下四欄已經佔滿 100%，第五欄會被壓成 0 寬，
+   兩個動作就飛出卡外（實測寬度 0.03px）。這裡重新分配，操作欄留 16%。 */
+.boss-members__table th:nth-child(1) {
+  width: 32%;
+}
+
+.boss-members__table th:nth-child(2) {
+  width: 18%;
+}
+
+.boss-members__table th:nth-child(3) {
+  width: 18%;
+}
+
+.boss-members__table th:nth-child(4) {
+  width: 16%;
+}
+
+.boss-members__table th:nth-child(5) {
+  width: 16%;
+}
+
 @media (max-width: 820px) {
   .boss-members__bar {
     align-items: flex-start;
