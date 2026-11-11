@@ -3,7 +3,7 @@
 > `docs/INDEX.md` 是文件地圖，`AGENTS.md` 是規則。這一頁只管四件事：
 > **現在有什麼、怎樣跑起來、下一步做什麼、哪幾個坑別踩。**
 
-最後更新：2026-11-11（Always Use HTTPS 已開，實測 301）
+最後更新：2026-11-11（登入落點與帳戶已定，見 issue #13、#14）
 
 ## 開新 session 時，貼這一句就夠
 
@@ -15,6 +15,7 @@
 
 平台殼有真畫面，Boss Portal 的據點目錄可以真讀真寫，Design app 的品牌清單可以真讀真寫。
 Needs 能看、能認領，但**還不能在介面上開立**。其餘四個部門 app 仍然灰掉，並如實寫明未建。
+登入後仍然全部去 `#/`。下一刀先改這個，不要先做其他頁。
 
 ## 1. 程式碼在哪
 
@@ -104,8 +105,8 @@ curl -s https://hxd.subtle-inno.com/api/auth/state    # 應回 {"setupRequired":
 ## 3. 現在看得到什麼
 
 | 路由 | 畫面 | 狀態 |
-|---|---|---|
-| `#/` | 今日（Needs 列表、認領） | 可用 |
+|---|---|
+| `#/` | 今日（Needs 列表、認領） | 可用。登入落點仍停在這裡，要改，見 #14 |
 | `#/boss` | Boss Portal 總覽（四個事實） | 可用，其餘數字未接 |
 | `#/boss/sites` | 據點目錄（三行） | 可用，可批准 |
 | `#/boss/sites/add` | 新增據點 | 第一、二步可用，第三步端點未存在 |
@@ -119,11 +120,12 @@ curl -s https://hxd.subtle-inno.com/api/auth/state    # 應回 {"setupRequired":
 | 想知道 | 去邊 |
 |---|---|
 | **這套東西是什麼**（設計真相） | `docs/CONCEPT.md` |
+| **登入落點與帳戶（C91、C92）** | `docs/product/LOGIN-AND-ACCOUNT.md` |
 | 外殼版面、四層導覽、據點目錄規則 | `docs/product/FRAME-UIUX-HANDOFF.md`（v1.4 已按落地版本改） |
 | 介面長成什麼樣（唯一真相） | `docs/design/frame/frame-0*.png` |
 | **公司層／品牌層、三種 app 模式、Context 管寫 vs Lens 管讀** | `docs/product/SCOPE-MODEL.md` |
 | **對外公開 vs 只准內網／VPN、跨機入口** | `docs/product/MULTI-MACHINE-ACCESS.md`、`docs/trusted-entry.md` |
-| 為什麼這樣決定 | `docs/product/DECISIONS.md`（後者優先，現到 C90） |
+| 為什麼這樣決定 | `docs/product/DECISIONS.md`（後者優先，現到 C90；C91、C92 先見 `LOGIN-AND-ACCOUNT.md`） |
 | 目錄、分層、邊界 | `docs/architecture/CODE-MAP.md` |
 | 端口、容器 | `docs/architecture/REPO-MAP.md` |
 | 邊啲後端功能仲未有畫面 | `docs/product/BACKEND-FUNCTIONS-MAP.md` |
@@ -139,9 +141,17 @@ curl -s https://hxd.subtle-inno.com/api/auth/state    # 應回 {"setupRequired":
 ## 5. 下一步：頁面隊列
 
 工作方式是**老闆逐頁設計、AI 逐頁實作**。隊列在 GitHub issue，一頁一張，做完關掉。
-未開的頁寫在 issue「頁面隊列」內。
 
-優先次序（老闆 2026-11-11 定的方向：先把兩個 app 的頁面做齊，功能之後逐個做深）：
+老闆 2026-11-11 下午定的下一刀，先於其餘頁面：
+
+1. [issue #13](https://github.com/Subtleinno/HeadX-Company-OS/issues/13)：Boss Portal／設定／帳戶。建立、停用登入、重設密碼、所屬部門。現在不開 HR。
+2. [issue #14](https://github.com/Subtleinno/HeadX-Company-OS/issues/14)：登入後按身份落地。老闆去 Boss Portal，員工去所屬部門 app。現階段是 Marketing Design。
+
+#14 依賴 #13 與 #12。一次只做一張。先做 #13。
+
+現在不做：HR app、員工個人頁、Marketing Design 打開後第一眼的內容。#14 只負責送到該 app，不設計那一頁的內容。
+
+#13、#14 做完之後，才回到：
 
 1. Design app 其餘模組的頁（素材、知識、創作）
 2. Boss Portal 其餘頁（憑證與金鑰、批准紀錄、管理級成員、操作紀錄）
@@ -170,6 +180,7 @@ curl -s https://hxd.subtle-inno.com/api/auth/state    # 應回 {"setupRequired":
 
 ## 8. 誠實的未做清單
 
+- 登入落點仍是 `#/`（#14）。帳戶頁未做（#13）。
 - Needs：開立（MCP 端）、交貨、吸收、驗收、詳情頁、我負責分頁
 - Design：素材、知識、創作三個模組的頁
 - Boss Portal：憑證與金鑰、批准紀錄、管理級成員、操作紀錄
@@ -177,3 +188,4 @@ curl -s https://hxd.subtle-inno.com/api/auth/state    # 應回 {"setupRequired":
 - 備份從未做過一次真正的「刪庫再還原」實測
 - 6 個 app 之中仍然只有 2 個有畫面
 - 完全未部署到生產環境
+- HR app 現在不開。員工個人頁現在不設計。
