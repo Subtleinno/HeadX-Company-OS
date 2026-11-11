@@ -947,6 +947,23 @@ export function fetchBrands(): Promise<ApiResult<{ items: BrandItem[] }>> {
   return request<{ items: BrandItem[] }>('/api/brands');
 }
 
+/**
+ * 我上次做緊邊個品牌（issue #15）。
+ *
+ * 讀與寫分開兩條路：讀一定成功（冇記錄就 null），寫只可以寫自己那一行。
+ * 隨機「第一次揀邊個」由畫面決定，伺服器唔會替人揀 —— 見 `useDirectory`。
+ */
+export function fetchBrandFocus(): Promise<ApiResult<{ brandId: string | null }>> {
+  return request<{ brandId: string | null }>('/api/me/brand-focus');
+}
+
+export function saveBrandFocus(brandId: string): Promise<ApiResult<{ brandId: string }>> {
+  return request<{ brandId: string }>('/api/me/brand-focus', {
+    method: 'PUT',
+    body: JSON.stringify({ brandId }),
+  });
+}
+
 export function createBrand(input: { code: string; name: string }): Promise<ApiResult<{ item: BrandItem }>> {
   return request<{ item: BrandItem }>('/api/brands', {
     method: 'POST',

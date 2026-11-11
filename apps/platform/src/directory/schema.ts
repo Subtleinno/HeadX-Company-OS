@@ -17,7 +17,12 @@ export const INVITE_TTL_HOURS = 72;
 const SITE_CODE = /^[A-Z0-9]{1,8}-[A-Z0-9]{1,8}-[A-Z0-9]{1,4}$/;
 const BRAND_CODE = /^[a-z0-9][a-z0-9-]{1,15}$/;
 
+/** Postgres 的 uuid 型別接受的字面格式。版本位唔檢查：要唔要存在由資料庫講。 */
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export type BrandInput = { code: string; name: string };
+
+export type BrandFocusInput = { brandId: string };
 
 export type SiteInput = {
   code: string;
@@ -52,6 +57,25 @@ export function parseBrandInput(body: unknown): Validation<BrandInput> {
   }
 
   return { ok: true, value: { code, name } };
+}
+
+/**
+ * 「我而家做緊邊個品牌」（issue #15）。
+ *
+ * 只驗證形狀，唔驗證存在：一個格式正確但已經唔存在的品牌，
+ * 應該由資料庫回「寫唔到」，而唔係由正則表達式假裝知道。
+ * body 唔接受 user id —— 寫邊個人嘅 focus 由 session 決定，
+ * 唔可以由請求自己講。
+ */
+export function parseBrandFocusInput(body: unknown): Validation<BrandFocusInput> {
+  const source = (body ?? {}) as Record<string, unknown>;
+  const brandId = text(source.brandId);
+
+  if (!UUID.test(brandId)) {
+    return { ok: false, reason: 'brandId 要係一個 uuid' };
+  }
+
+  return { ok: true, value: { brandId: brandId.toLowerCase() } };
 }
 
 /**

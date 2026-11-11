@@ -33,7 +33,8 @@ const DESIGN_MODULE = [
     kind: 'department',
     department: 'design',
     order: 10,
-    available: false,
+    available: true,
+    route: '/design',
   },
 ];
 

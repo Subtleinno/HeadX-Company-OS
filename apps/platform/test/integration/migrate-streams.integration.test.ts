@@ -573,6 +573,9 @@ describe('舊資料庫升級', () => {
         '0007_identities.sql',
         '0008_jobs.sql',
         '0009_session_entry.sql',
+        '0010_needs.sql',
+        '0011_brands_sites.sql',
+        '0012_user_brand_focus.sql',
       ]);
 
       const after = await db.pool.query<{ name: string; checksum: string; applied_at: Date }>(
@@ -589,6 +592,9 @@ describe('舊資料庫升級', () => {
         '0007_identities.sql',
         '0008_jobs.sql',
         '0009_session_entry.sql',
+        '0010_needs.sql',
+        '0011_brands_sites.sql',
+        '0012_user_brand_focus.sql',
       ]);
 
       // 再跑一次才真的沒有待套用的，並且明講。
@@ -620,8 +626,9 @@ describe('舊資料庫升級', () => {
         'select name, checksum, applied_at from public.schema_migrations order by name',
       );
 
-      // 舊的九筆逐字不變（包含 applied_at），新串排在後面。
-      expect(final.rows.slice(0, 9)).toEqual(after.rows);
+      // 舊的每一筆逐字不變（包含 applied_at），新串排在後面。
+      // 用 `after.rows.length` 而唔寫死筆數：加 migration 唔應該要改呢一行。
+      expect(final.rows.slice(0, after.rows.length)).toEqual(after.rows);
       expect(final.rows.map((row) => row.name)).toEqual([
         '0001_audit_log.sql',
         '0002_users_sessions.sql',
@@ -632,6 +639,9 @@ describe('舊資料庫升級', () => {
         '0007_identities.sql',
         '0008_jobs.sql',
         '0009_session_entry.sql',
+        '0010_needs.sql',
+        '0011_brands_sites.sql',
+        '0012_user_brand_focus.sql',
         'app_alpha/0001_alpha_one.sql',
       ]);
 

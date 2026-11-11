@@ -164,7 +164,7 @@ export function DesignApp({ user, onSignedOut }: DesignAppProps) {
   const position = resolveNav(DESIGN_NAV, path);
   const brands = useBrands(true);
   const items = brands.state.kind === 'ready' ? brands.state.items : [];
-  const { brandId } = useSelectedBrand(items);
+  const { brandId } = useSelectedBrand(brands.state);
   const selected = items.find((item) => item.id === brandId) ?? null;
 
   function renderPage(current: NavPosition) {
