@@ -836,6 +836,7 @@ export const messages = {
   'design.brand.duplicate': '呢個品牌代碼已經存在。',
   'design.brand.invalid': '品牌代碼同品牌名都要填，代碼只可用小寫英文字母、數字同連字號。',
   'design.brand.empty': '仲未有任何品牌。新增第一個品牌之後，品牌 selector 同呢一頁就會有內容。',
+  'design.brand.ownerOnly': '只有老闆可以開新品牌。品牌一開就全公司都用得，所以入口只放喺老闆嗰邊。',
   'design.stub.title': '呢頁仲未接內容',
   'design.stub.body': '而家只接好外殼同導覽；內容喺對應模組做完之後出現。',
 

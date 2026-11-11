@@ -88,6 +88,8 @@ const FROZEN_ALL_SHA256 = '7f83e9b90103908df960c395945dc1679757ca7bafb6e0af3a451
  * 既有鍵，唔排除嘅話「合法新增」會被當成「既有鍵被改」，令 npm test 假紅。
  * 凍結值同守衛嘅既有鍵都唔變，唔係放寬門檻。
  */
+const LATER_EXACT_KEYS = ['design.brand.ownerOnly'];
+
 const LATER_KEY_PREFIXES = [
   'boss.members.',
   'boss.module.people',
@@ -263,11 +265,12 @@ describe('issue 168 授權單筆詳情文案鍵（grant.detail.*）', () => {
 
   it('既有鍵零改動：排除本張交付鍵後 SHA-256 同 origin/main 凍結值一致', () => {
     const excluded = new Set(Object.keys(GRANT_DETAIL_MESSAGES));
-    const later = new Set(
-      Object.keys(messages).filter((key) =>
+    const later = new Set([
+      ...LATER_EXACT_KEYS,
+      ...Object.keys(messages).filter((key) =>
         LATER_KEY_PREFIXES.some((prefix) => key.startsWith(prefix)),
       ),
-    );
+    ]);
     expect(hashExcluding(messages as Record<string, string>, new Set([...excluded, ...later]))).toBe(
       FROZEN_ALL_SHA256,
     );

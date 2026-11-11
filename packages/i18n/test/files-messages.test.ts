@@ -170,11 +170,19 @@ const FROZEN_ALL_SHA256 = '6e9316371598dad5ac57028d9a6dce94756eb8f86b37a43013aa2
  * grant-detail-messages.test.ts「冇清單以外嘅 grant.detail.* 鍵」守衛。
  */
 const LATER_KEY_PREFIXES = ['grant.detail.', 'boss.members.', 'boss.module.people', 'boss.page.people', 'gate.noDepartment.', 'gate.departmentClosed.', 'gate.signOut'];
+/**
+ * 精確到單一鍵的排除（issue #19）：`design.brand.` 前綴會連 #153 已交付的
+ * `design.brand.*` 一齊放走，所以唔可以用前綴。
+ */
+const LATER_EXACT_KEYS = ['design.brand.ownerOnly'];
 
 function hashExcluding(msgs: Record<string, string>, excluded: ReadonlySet<string>): string {
   const entries = Object.entries(msgs)
     .filter(
-      ([key]) => !excluded.has(key) && !LATER_KEY_PREFIXES.some((prefix) => key.startsWith(prefix)),
+      ([key]) =>
+        !excluded.has(key) &&
+        !LATER_EXACT_KEYS.includes(key) &&
+        !LATER_KEY_PREFIXES.some((prefix) => key.startsWith(prefix)),
     )
     .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
   return createHash('sha256').update(JSON.stringify(entries)).digest('hex');
