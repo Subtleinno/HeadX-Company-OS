@@ -53,8 +53,32 @@ function BrandList(props: { items: readonly BrandItem[]; currentId: string | nul
 function BrandHome(props: {
   items: readonly BrandItem[];
   currentId: string | null;
+  /** 只有老闆可以開新品牌（issue #19）。後端 `POST /brands` 已經係 requireOwner。 */
+  canCreate: boolean;
   onCreated: () => void;
 }) {
+  return (
+    <>
+      {props.items.length === 0 ? (
+        <p className="design-empty">{t('design.brand.empty')}</p>
+      ) : (
+        <BrandList items={props.items} currentId={props.currentId} />
+      )}
+
+      {props.canCreate ? (
+        <CreateBrandForm onCreated={props.onCreated} />
+      ) : (
+        // 唔畫一個按落去會 403 的表單：先假裝你可以做，再把拒絕講成
+        // 「代碼格式有問題」，係講錯原因。如實講邊個可以開。
+        <p className="design-note" data-brand-create="owner-only">
+          {t('design.brand.ownerOnly')}
+        </p>
+      )}
+    </>
+  );
+}
+
+function CreateBrandForm(props: { onCreated: () => void }) {
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
   const [busy, setBusy] = useState(false);
@@ -101,12 +125,6 @@ function BrandHome(props: {
 
   return (
     <>
-      {props.items.length === 0 ? (
-        <p className="design-empty">{t('design.brand.empty')}</p>
-      ) : (
-        <BrandList items={props.items} currentId={props.currentId} />
-      )}
-
       <h2 className="design-form__heading">{t('design.brand.add')}</h2>
 
       <form
@@ -173,6 +191,8 @@ export function DesignApp({ user, onSignedOut }: DesignAppProps) {
         <BrandHome
           items={items}
           currentId={brandId}
+          // 只看 role，不看 department：老闆唔屬任何部門，但仍然係唯一可以開品牌的人。
+          canCreate={user.role === 'owner'}
           onCreated={() => {
             brands.reload();
           }}

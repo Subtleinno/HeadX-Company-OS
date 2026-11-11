@@ -227,11 +227,16 @@ const FROZEN_ALL_SHA256 = '766cf0084737417cbc0d3336e6998f165889cae59a35103ea3f02
  * 加落同一排除清單；凍結值同守衛範圍唔變，唔係放寬門檻。
  */
 const LATER_KEY_PREFIXES = ['files.', 'grant.detail.', 'boss.members.', 'boss.module.people', 'boss.page.people', 'gate.noDepartment.', 'gate.departmentClosed.', 'gate.signOut'];
+/** 精確到單一鍵的排除（issue #19）：唔用 `design.brand.` 前綴，見 files-messages.test.ts。 */
+const LATER_EXACT_KEYS = ['design.brand.ownerOnly'];
 
 function hashExcluding(msgs: Record<string, string>, excluded: ReadonlySet<string>): string {
   const entries = Object.entries(msgs)
     .filter(
-      ([key]) => !excluded.has(key) && !LATER_KEY_PREFIXES.some((prefix) => key.startsWith(prefix)),
+      ([key]) =>
+        !excluded.has(key) &&
+        !LATER_EXACT_KEYS.includes(key) &&
+        !LATER_KEY_PREFIXES.some((prefix) => key.startsWith(prefix)),
     )
     .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
   return createHash('sha256').update(JSON.stringify(entries)).digest('hex');
