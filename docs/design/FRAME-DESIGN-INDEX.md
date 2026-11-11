@@ -65,5 +65,5 @@ Q1–Q9 同主色已由 #153 裁決（見 DECISIONS.md C53–C61），唔好重�
 - 頁 06–09 已由 #153 Q9 A 定為 Boss Portal 第一批據點管理畫面嘅**視覺／互動規格**，唔係施工授權；Boss Portal 完整業務頁未開始。`manifest.json` 嘅 `available: false` 維持不變（C50）。
 - 「總部主機」＝登記／批准／入口中心，**唔係即時跨機資料連線**。
 - 主色已由 #153 主色 A 裁決：chrome 黑灰白、內容區 `#0057FF`、`#B8F36B` 停用；`AGENTS.md` 色彩條目已由 #156 同步，唔好兩套並存（`DECISIONS.md` C53）。
-- 呢個目錄**唔係施工授權**。每頁仍然要一張獨立 issue、一個分支、一個 PR、一組先 fail 嘅測試（`AGENTS.md` 第 2、3 條、`docs/planning-loop.md`）。
+- 呢個目錄**唔係施工授權**。每頁仍然要一張獨立 issue、一個分支、一個 PR、一組先 fail 嘅測試（`AGENTS.md` 第 2、3 條；次序見 `docs/product/HANDOFF.md` §5）。
 - 唔好改 `apps/web`／`packages/*`／`apps/platform`／`db/*`／`AGENTS.md`，除非被指派嘅 issue 明確授權。

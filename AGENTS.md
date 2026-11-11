@@ -32,6 +32,22 @@ HeadX Company OS：一間公司運作的唯一底座，全部放在這個 repo�
 9. 只改你被指派的 app 資料夾。要改 `packages/` 或 platform，必須有獨立的 issue。
 10. app 之間不可互相 import；只能用 `packages/` 與 platform 的介面。搬動檔案的 issue（R1 至 R6）不改行為，搬動前後同一組測試必須全過。
 
+## Loop（無人值守）
+
+只有老闆書面授權某一輪時才適用。沒有一輪的授權，不要自己開 loop，也不要假設上一輪的授權還有效（上一次的授權已明確寫「不會延伸到之後任何一輪」）。
+
+1. **一次一張。** 前一張的 PR 已合併到 `main`，才開下一張。次序寫在 `docs/product/HANDOFF.md` §5，不要自己重排；每張 issue 頂部有 `Loop 位置 n／8`，那是同一份次序的鏡像。
+2. 開工前：`git status --porcelain` 要空 → `git switch main` → `git pull --ff-only` → 記 HEAD SHA → 開 `task/<issue>-<短英文>`。
+3. 先紅後綠：先寫會 fail 的測試，貼實際輸出與 exit code，再實作。
+4. **合併條件要全部齊**：CI 全綠、issue 驗收逐條有實際輸出、真瀏覽器走過、文件在同一個 PR 已同步、無範圍外檔案、無 TODO。缺一項就不合併。
+5. 紅了自己修，最多三輪。三輪仍紅：分支留住、在 issue 貼實際錯誤、標 `blocked`、跳去下一張可開工的，最後一次過交清單。**不要為了綠燈刪測試或放寬門檻。**
+6. **規格有空白或矛盾就停手，不要猜。** 在 issue 貼證據（哪一句、缺什麼）、標 `blocked`、跳下一張。loop 不會問人，但也不會自己補真相。
+7. 不改 issue 正文，只可以加留言做證據；不自己開新 issue；不手動 close issue。
+8. 不擴張：HR、員工個人頁、素材、知識、創作、MCP、生產部署、備份演練都不在 loop 內。
+9. 每張合併後即重建本機 Docker，並用真瀏覽器走一次。**測試綠不等於畫面正確。**
+10. 未跑過的指令如實寫「未執行」；截圖不入 repo。
+11. 跑完在最後一張 issue 貼 `Loop 報告`（每張的 PR 與 merge SHA、驗收摘要、blocked 與待裁決清單、截圖索引），並更新 `HANDOFF.md` §5 的狀態欄。
+
 ## 已定案的技術決定（要換請先開 issue 說明理由）
 
 - 語言：TypeScript（strict）。Node 用當日 LTS，版本同時寫在 .nvmrc 與 Dockerfile。
