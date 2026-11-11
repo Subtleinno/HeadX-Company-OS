@@ -355,6 +355,10 @@ export const messages = {
   'staff.disable.done': '已停用，session 已撤銷。',
   'staff.disable.already': '這個帳戶已經停用。',
 
+  'staff.enable': '恢復',
+  'staff.enable.done': '已恢復「{name}」嘅登入。',
+  'staff.enable.notDisabled': '這個帳戶本來就沒有停用。',
+
   'staff.reset': '重設密碼',
   'staff.reset.title': '重設員工密碼',
   'staff.reset.ownerPassword': '你自己的密碼',
@@ -792,10 +796,15 @@ export const messages = {
   'boss.members.createFirst': '建立第一個',
   'boss.members.passwordHint': '員工第一次登入用呢個密碼，然後一定要改。',
   'boss.members.disabled': '已停用',
-  'boss.members.footnote': '名單只有員工，老闆帳戶唔會出現。停用帳戶唔可以再指派部門。',
+  'boss.members.footnote': '名單只有員工，老闆帳戶唔會出現。停用帳戶要先恢復，才可以再指派部門。',
   'boss.members.col.actions': '操作',
   'boss.members.disableLabel': '停用 {name} 嘅登入',
+  'boss.members.enableLabel': '恢復 {name} 嘅登入',
   'boss.members.resetLabel': '重設 {name} 嘅密碼',
+  'boss.members.enabledNoDepartment':
+    '不過佢仲未有任何部門，所以登入仍然會被擋；喺上面揀一個部門就會即刻生效。',
+  'boss.members.enabledDepartmentClosed':
+    '不過佢所屬部門嘅 app 仲未開放，入到系統都未有畫面。',
   'boss.members.cancel': '取消',
   'boss.members.actionFailed': '做唔到，請再試一次。',
   'boss.members.resetMissing': '兩格都要填：你自己嘅密碼，同新嘅臨時密碼。',

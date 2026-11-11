@@ -192,7 +192,7 @@ describe('指派部門', () => {
     expect(departmentSelect().value).toBe('');
   });
 
-  it('已停用的帳戶唔可以再改部門：下拉鎖住，亦冇任何動作可做', async () => {
+  it('已停用的帳戶：部門下拉鎖住，只剩「恢復」一顆（issue #30）', async () => {
     openMembers({
       staff: () =>
         jsonResponse(200, {
@@ -206,9 +206,98 @@ describe('指派部門', () => {
     expect(departmentSelect().disabled).toBe(true);
     expect(document.body.textContent).toContain('已停用');
 
-    // 已停用的人登入不到：重設密碼只會改一串用不到的密碼，畫面卻應承
-    // 「下次登入要改」。與其畫一個做到一半的動作，不如不畫。
-    expect(document.querySelectorAll('[data-member-row] button').length).toBe(0);
+    // 停了的人身上可以做的只有「讓他回來」，所以只可以有恢復。
+    // 重設密碼會改一串他用不到的密碼，畫面卻應承「下次登入要改」；
+    // 改部門也一樣，都是等他回來才有意義的事。
+    expect(screen.getByRole('button', { name: '恢復 林慧 嘅登入' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: '停用 林慧 嘅登入' })).toBeNull();
+    expect(screen.queryByRole('button', { name: '重設 林慧 嘅密碼' })).toBeNull();
+  });
+});
+
+describe('恢復登入（issue #30）', () => {
+  const DISABLED_WAI = { ...WAI, disabledAt: '2026-11-05T10:00:00.000Z' };
+
+  it('按一下送 POST /staff/:id/enable，成功後真的變回可用狀態', async () => {
+    const api = openMembers({
+      staff: () => jsonResponse(200, { staff: [DISABLED_WAI], total: 1 }),
+      staffEnable: () => jsonResponse(200, { staff: { ...DISABLED_WAI, disabledAt: null } }),
+    });
+
+    await row();
+    await userEvent.click(screen.getByRole('button', { name: '恢復 林慧 嘅登入' }));
+
+    await waitFor(() => {
+      expect(api.count('staffEnable')).toBe(1);
+    });
+
+    const call = api.calls.find((item) => item.path.endsWith('/enable'));
+
+    expect(call?.method).toBe('POST');
+    expect(call?.path).toBe('/api/staff/s-wai/enable');
+    // 恢復不接受任何 body：不存在「順便改部門」這種事。
+    expect(call?.body).toBeNull();
+
+    // 畫面要真的變回「未停用」，而不是只彈一句提示、表仍然寫已停用。
+    await waitFor(() => {
+      expect(document.body.textContent).not.toContain('已停用');
+    });
+
+    expect(departmentSelect().disabled).toBe(false);
+    expect(screen.getByRole('button', { name: '停用 林慧 嘅登入' })).toBeTruthy();
+    expect(document.body.textContent).toContain('已恢復「林慧」嘅登入');
+  });
+
+  it('恢復了但仍然未指派部門：一併講「登入仍然會被擋」，不可以只講已恢復', async () => {
+    openMembers({
+      staff: () => jsonResponse(200, { staff: [DISABLED_WAI], total: 1 }),
+      staffEnable: () => jsonResponse(200, { staff: { ...DISABLED_WAI, disabledAt: null } }),
+    });
+
+    await row();
+    await userEvent.click(screen.getByRole('button', { name: '恢復 林慧 嘅登入' }));
+
+    await waitFor(() => {
+      expect(document.body.textContent).toContain('已恢復「林慧」嘅登入');
+    });
+
+    expect(document.body.textContent).toContain('仲未有任何部門');
+    expect(document.body.textContent).toContain('登入仍然會被擋');
+  });
+
+  it('部門 app 未開放：講明入到系統都未有畫面', async () => {
+    openMembers({
+      staff: () =>
+        jsonResponse(200, { staff: [{ ...DISABLED_WAI, department: 'sales' }], total: 1 }),
+      staffEnable: () =>
+        jsonResponse(200, { staff: { ...DISABLED_WAI, department: 'sales', disabledAt: null } }),
+    });
+
+    await row();
+    await userEvent.click(screen.getByRole('button', { name: '恢復 林慧 嘅登入' }));
+
+    await waitFor(() => {
+      expect(document.body.textContent).toContain('已恢復「林慧」嘅登入');
+    });
+
+    expect(document.body.textContent).toContain('仲未開放');
+    expect(document.body.textContent).not.toContain('登入仍然會被擋');
+  });
+
+  it('後端說本來就沒有停用：照它的原因講，不假裝成功', async () => {
+    openMembers({
+      staff: () => jsonResponse(200, { staff: [DISABLED_WAI], total: 1 }),
+      staffEnable: () => jsonResponse(409, { error: 'not_disabled' }),
+    });
+
+    await row();
+    await userEvent.click(screen.getByRole('button', { name: '恢復 林慧 嘅登入' }));
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-member-error]')?.textContent).toContain(
+        '本來就沒有停用',
+      );
+    });
   });
 });
 

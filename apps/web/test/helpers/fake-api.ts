@@ -50,6 +50,7 @@ export type FakeHandlers = Partial<
     | 'staff'
     | 'staffCreate'
     | 'staffDisable'
+    | 'staffEnable'
     | 'staffReset'
     | 'staffDepartment'
     | 'agents'
@@ -246,6 +247,11 @@ function routeKey(path: string, method: string): keyof FakeHandlers | null {
 
   if (/\/staff\/[^/]+\/disable$/.test(bare)) {
     return method === 'POST' ? 'staffDisable' : null;
+  }
+
+  // 恢復停用帳戶（issue #30）：停用的逆操作，同樣只有 POST。
+  if (/\/staff\/[^/]+\/enable$/.test(bare)) {
+    return method === 'POST' ? 'staffEnable' : null;
   }
 
   if (bare.endsWith('/staff')) {

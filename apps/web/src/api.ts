@@ -421,6 +421,18 @@ export function disableStaff(id: string): Promise<ApiResult<{ staff: StaffMember
 }
 
 /**
+ * 恢復被停用的員工（issue #30）。停用的逆操作，不帶任何 body。
+ *
+ * 恢復只是「可以再用原本的密碼登入」，不會開 session、不會改密碼，
+ * 也不會順便指派部門 —— 那些各有自己的入口。
+ */
+export function enableStaff(id: string): Promise<ApiResult<{ staff: StaffMember }>> {
+  return request<{ staff: StaffMember }>(`/api/staff/${encodeURIComponent(id)}/enable`, {
+    method: 'POST',
+  });
+}
+
+/**
  * 重設員工密碼。**一定要帶老闆自己的密碼**：後端真的驗，前端沒有任何旗標可以代替。
  * 這兩個字串只留在呼叫端那一次請求裡，不寫入任何全域狀態或紀錄。
  */
