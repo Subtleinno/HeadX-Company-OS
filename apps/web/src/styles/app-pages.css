@@ -1010,3 +1010,292 @@
 .brand-editors-panel {
   margin-top: var(--hx-space-6);
 }
+
+/* ── 色彩頁（issue #35） ───────────────────────────────────── */
+
+/*
+ * 一張有角色的色表。刻意不像「色票牆」：每一行先講角色名，再講值。
+ * 色塊只是輔助 —— 認色的是人，認得出這是哪一個角色的，是那個名。
+ */
+.brand-color {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hx-space-5);
+}
+
+.brand-page__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hx-space-3);
+}
+
+.brand-color__modes {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+  flex-wrap: wrap;
+}
+
+.brand-color__mode {
+  border: 1px solid var(--hx-frame-border);
+  background: transparent;
+  color: var(--hx-frame-secondary);
+  border-radius: var(--hx-radius-sm);
+  padding: 6px 14px;
+  font: var(--hx-frame-font-ui);
+  cursor: pointer;
+}
+
+.brand-color__mode[aria-pressed='true'] {
+  border-color: var(--hx-frame-ink);
+  color: var(--hx-frame-ink);
+  background: var(--hx-frame-surface);
+}
+
+.brand-color__missing {
+  margin: 0;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+}
+
+.brand-color__roles,
+.brand-color__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hx-space-2);
+}
+
+.brand-color__group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: var(--hx-space-2);
+  border-top: 1px solid var(--hx-frame-border);
+}
+
+.brand-color__groupTitle {
+  margin: 0;
+  font: var(--hx-frame-font-small);
+  font-weight: 600;
+  color: var(--hx-frame-secondary);
+}
+
+.brand-color__row {
+  display: grid;
+  grid-template-columns: minmax(190px, 230px) 140px 120px minmax(160px, 280px);
+  justify-content: start;
+  align-items: center;
+  gap: var(--hx-space-2);
+  padding: var(--hx-space-2) 0;
+}
+
+@media (max-width: 900px) {
+  .brand-color__row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.brand-color__roleHead {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+  min-width: 0;
+}
+
+.brand-color__swatch {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  border-radius: var(--hx-radius-sm);
+  border: 1px solid var(--hx-frame-border);
+}
+
+/* 冇 HEX 的角色：一個虛線空格，不是一個猜出來的顏色。 */
+.brand-color__swatch--empty {
+  background: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 3px,
+    var(--hx-frame-border) 3px,
+    var(--hx-frame-border) 6px
+  );
+}
+
+.brand-color__swatch--small {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+}
+
+.brand-color__name {
+  font-family: var(--hx-font-mono);
+  font-size: 13px;
+  color: var(--hx-frame-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.brand-color__badge {
+  flex: none;
+  border-radius: var(--hx-radius-sm);
+  padding: 1px 6px;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-danger-text);
+  border: 1px solid var(--hx-danger-text);
+}
+
+.brand-color__badge--quiet {
+  color: var(--hx-frame-muted);
+  border-color: var(--hx-frame-border);
+}
+
+.brand-color__field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.brand-color__field--wide {
+  min-width: 0;
+}
+
+.brand-color__fieldLabel {
+  flex: none;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-muted);
+}
+
+.brand-color__derived {
+  font-family: var(--hx-font-mono);
+  font-size: 12px;
+  color: var(--hx-frame-secondary);
+  white-space: nowrap;
+}
+
+.brand-color__rampList,
+.brand-color__pairList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.brand-color__ramp {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+  flex-wrap: wrap;
+  padding: 4px 0;
+}
+
+.brand-color__step {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-sm);
+  padding: 2px 8px;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+}
+
+.brand-color__iconButton {
+  border: 0;
+  background: transparent;
+  color: var(--hx-frame-muted);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0 2px;
+}
+
+.brand-color__adder {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+  flex-wrap: wrap;
+}
+
+.brand-color__adder .design-input {
+  max-width: 180px;
+}
+
+.brand-color__pair {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+  flex-wrap: wrap;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--hx-frame-border);
+}
+
+.brand-color__pairText {
+  font-family: var(--hx-font-mono);
+  font-size: 13px;
+  color: var(--hx-frame-ink);
+}
+
+.brand-color__pairNote {
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+}
+
+.brand-color__ratio {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+}
+
+.brand-color__ratioValue {
+  font-family: var(--hx-font-mono);
+  color: var(--hx-frame-ink);
+}
+
+.brand-color__check[data-color-body-pass='true'],
+.brand-color__check[data-color-large-pass='true'] {
+  color: var(--hx-frame-secondary);
+}
+
+/* 不過的門檻要看得見：同一個顏色用在不同地方，一個過一個不過是常態。 */
+.brand-color__check[data-color-body-pass='false'],
+.brand-color__check[data-color-large-pass='false'] {
+  color: var(--hx-danger-text);
+}
+
+.brand-color__logoRoles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--hx-space-2) var(--hx-space-4);
+}
+
+.brand-color__logoRole {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.brand-color__logoMark {
+  width: 14px;
+  text-align: center;
+  color: var(--hx-frame-secondary);
+}
+
+/* 版本列表的色彩頁：色點代表那一版有哪幾個色，不印 JSON。 */
+.brand-page__swatches {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.brand-page__swatch {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1px solid var(--hx-frame-border);
+}

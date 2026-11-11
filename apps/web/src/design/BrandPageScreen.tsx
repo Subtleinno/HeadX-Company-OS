@@ -11,6 +11,8 @@ import {
   type BrandPageVersionSummary,
 } from '../api';
 import { failureMessage } from './apiFailure';
+import { BrandColorEditor } from './BrandColorEditor';
+import { hexesInText } from './brandColors';
 
 /**
  * 一頁品牌頁的時間軸（issue #33），加上自定義頁的改名與刪除（issue #32）。
@@ -41,6 +43,34 @@ type BrandPageScreenProps = {
   /** 刪完之後回品牌主頁：留在一個已經不存在的網址上只會見到「找不到」。 */
   onRemoved: () => void;
 };
+
+/**
+ * 色彩頁的版本預覽：用色點代替原始 JSON。
+ *
+ * 版本列表只拿到 160 字元的截斷內容，解析不到，但仍然數得出那一版有幾個色。
+ * 直接印 JSON 等於叫人讀程式碼；一個點都抽不到就講「抽不到」，不畫假色。
+ */
+function ColorVersionPreview({ preview }: { preview: string }) {
+  const hexes = hexesInText(preview).slice(0, 12);
+
+  if (hexes.length === 0) {
+    return <p className="brand-page__preview">{t('brand.color.versionNoSwatch')}</p>;
+  }
+
+  return (
+    <span className="brand-page__swatches" data-color-version-swatches>
+      {hexes.map((hex) => (
+        <span
+          key={hex}
+          className="brand-page__swatch"
+          style={{ backgroundColor: hex }}
+          data-color-version-swatch={hex}
+          aria-hidden="true"
+        />
+      ))}
+    </span>
+  );
+}
 
 function formatTime(value: string): string {
   const date = new Date(value);
@@ -107,7 +137,9 @@ export function BrandPageScreen({
     }
 
     if (draft.trim() === '') {
-      setError(t('brand.page.emptyContent'));
+      setError(
+        pageKey === 'color' ? t('brand.color.empty') : t('brand.page.emptyContent'),
+      );
       return;
     }
 
@@ -380,22 +412,31 @@ export function BrandPageScreen({
         </p>
       )}
 
-      <label className="brand-page__editor">
-        <span className="design-field__label">{t('brand.page.editorLabel')}</span>
-        <textarea
-          className="brand-page__textarea"
-          value={draft}
-          readOnly={!canEdit}
-          rows={10}
-          spellCheck={false}
-          onChange={(event) => {
-            setDraft(event.target.value);
-          }}
-        />
-        {/* 只讀的人不應該讀到「每次儲存都會新增一版」—— 他儲存不了。
-            唯讀的說明在下面那一句，兩句一起出就變成同一件事講兩次。 */}
-        {canEdit && <span className="design-field__hint">{t('brand.page.hint')}</span>}
-      </label>
+      {/* 色彩頁（#35）用表，不用自由文字。兩者共用同一個 draft 與同一個儲存鍵：
+          在這裡分岔而不是另開一個畫面，版本列表、改名、刪頁就只有一份。 */}
+      {pageKey === 'color' ? (
+        <div className="brand-page__body" data-brand-page-body="color">
+          <BrandColorEditor content={draft} canEdit={canEdit} onChange={setDraft} />
+          {canEdit && <p className="design-field__hint">{t('brand.page.hint')}</p>}
+        </div>
+      ) : (
+        <label className="brand-page__editor">
+          <span className="design-field__label">{t('brand.page.editorLabel')}</span>
+          <textarea
+            className="brand-page__textarea"
+            value={draft}
+            readOnly={!canEdit}
+            rows={10}
+            spellCheck={false}
+            onChange={(event) => {
+              setDraft(event.target.value);
+            }}
+          />
+          {/* 只讀的人不應該讀到「每次儲存都會新增一版」—— 他儲存不了。
+              唯讀的說明在下面那一句，兩句一起出就變成同一件事講兩次。 */}
+          {canEdit && <span className="design-field__hint">{t('brand.page.hint')}</span>}
+        </label>
+      )}
 
       {canEdit ? (
         <div className="design-form__actions">
@@ -448,8 +489,12 @@ export function BrandPageScreen({
                     <p className="brand-page__note">{version.note}</p>
                   )}
 
-                  {version.preview !== '' && (
-                    <p className="brand-page__preview">{version.preview}</p>
+                  {pageKey === 'color' ? (
+                    <ColorVersionPreview preview={version.preview} />
+                  ) : (
+                    version.preview !== '' && (
+                      <p className="brand-page__preview">{version.preview}</p>
+                    )
                   )}
 
                   {/* 這一版是照第幾版策略做的（#34）。未記錄就講未記錄。 */}
