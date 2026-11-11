@@ -80,6 +80,11 @@ describe('字串表', () => {
       'files.size.kb',
       'files.size.mb',
       'files.size.gb',
+      'brand.page.versionNo',
+      'brand.page.saved',
+      'brand.page.restored',
+      'brand.page.deleted',
+      'brand.page.pinned',
     ]);
   });
 });

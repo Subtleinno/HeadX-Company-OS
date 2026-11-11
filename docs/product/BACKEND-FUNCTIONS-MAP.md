@@ -1,6 +1,6 @@
 > **收入 repo 的來源**：原檔 `.workbuddy/design/BACKEND-FUNCTIONS-MAP.md`（2026-11-09，長期 gitignored）。2026-11-11 收入 `docs/product/`。
 >
-> **注意時效**：2026-11-09 首次盤點，**2026-11-11 已同步**（補 `directory`、`needs`、`staff` 的部門與 `brand-focus`，資料實體補到 0012）。
+> **注意時效**：2026-11-09 首次盤點，**2026-11-11 已同步**（補 `directory`、`needs`、`staff` 的部門與 `brand-focus`，資料實體補到 0012；2026-11-12 補品牌頁版本，到 0013）。
 > **真相以 `apps/platform/src/*/routes.ts` 為準**；本檔的價值是用語對照與「邊啲後端功能仲未有畫面」。與程式碼不一致時，改這一頁，不要改程式碼去迎合它。
 
 # company-os 後端功能清單（UI/UX 重設計逐頁對照用）
@@ -52,6 +52,11 @@
 | POST | `/brands` | 開新品牌 | **`requireOwner`** | ✅ 只有老闆見到表單（#19） |
 | GET | `/me/brand-focus` | 我上次工作的品牌，未揀過回 `null` | `requireUser` | ✅ `useDirectory` |
 | PUT | `/me/brand-focus` | 記住我這次的品牌（只寫自己那一行；品牌不存在 → `400 unknown_brand`） | `requireUser` | ✅ |
+| GET | `/brands/:id/pages` | 品牌頁清單（順手確保五個固定頁存在） | `requireUser` | ✅ `BrandPageScreen` |
+| GET | `/brands/:id/pages/:key` | 一頁的現行版本＋版本列表 | `requireUser` | ✅ |
+| POST | `/brands/:id/pages/:key/versions` | 儲存＝新增一版（空內容 400） | **`requireOwner`**（品牌級授權見 #32） | ✅ |
+| POST | `/brands/:id/pages/:key/versions/:vid/restore` | 用回舊版：以舊內容新增一版，不改歷史 | **`requireOwner`** | ✅ |
+| DELETE | `/brands/:id/pages/:key/versions/:vid` | 軟刪除舊版；現行 409 `current_version`、被成品釘住 409 `version_pinned` | **`requireOwner`** | ✅ |
 | GET | `/company` | 頁尾要顯示的公司識別（本機公司・公司名・城市） | `requireUser` | ✅ `AppFrame` |
 | GET | `/sites` | 據點目錄 | **`requireOwner`** | ✅ `MembersScreen` 之外，`SitesScreen` |
 | POST | `/sites` | 新增據點，回一次性邀請憑證 | **`requireOwner`** | ✅ |
@@ -199,7 +204,7 @@
 
 ---
 
-## 4. 資料實體（`db/migrations/0001`–`0012`）
+## 4. 資料實體（`db/migrations/0001`–`0013`）
 
 | 實體 | 一句說明 |
 |---|---|
@@ -216,6 +221,9 @@
 | `need` | 需求（`deliverable`／`decision` 兩型、狀態、認領），0010 新增 |
 | `brand` / `site` | 品牌（`code` 唯一、`sort_order`）與據點目錄（一次性邀請憑證、批准狀態），0011 新增 |
 | `user_brand_focus` | 每位員工上次工作的品牌；`user_id` 做主鍵（一人一格），0012 新增 |
+| `brand_page` | 品牌的一頁：`kind`（fixed／custom）＋`key`（五個固定鍵或 slug）、名稱、brief、次序；部分唯一索引管「同品牌未刪的鍵唯一」，0013 新增 |
+| `brand_page_version` | 頁的版本快照：`version_no` 逐頁計、`content`、`note`、`created_by`；**只加不改**由 trigger 強制，軟刪除是唯一合法 UPDATE，0013 新增 |
+| `brand_page_version_pin` | 已出街成品釘住某一版；現時未有任何寫入者，但刪除檢查已讀它，0013 新增 |
 
 ---
 

@@ -205,6 +205,15 @@
   color: var(--hx-chrome-white);
 }
 
+.boss-btn--primary:disabled,
+.design-btn--primary:disabled {
+  /* 停用的主要按鈕仍然是藍底白字的話，看起來就像可以按 —— 那是一個假的可按。
+     改成淡底灰字：皮膚上說「現在不可以」，而不是等人按完才失敗。 */
+  background: var(--hx-chrome-selected);
+  border-color: var(--hx-frame-border);
+  color: var(--hx-frame-muted);
+}
+
 .boss-btn--primary:hover:not(:disabled),
 .design-btn--primary:hover:not(:disabled) {
   background: var(--hx-accent-hover);
@@ -804,4 +813,184 @@
     align-items: flex-start;
     flex-direction: column;
   }
+}
+
+/* ── 品牌頁版本（issue #33）──────────────────────────────────── */
+/* 版面對齊既有內容頁：細線分隔、不用卡片堆疊、不加裝飾色。 */
+.brand-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 880px;
+}
+
+.brand-page__picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  border-bottom: 1px solid var(--hx-frame-border);
+  padding-bottom: var(--hx-space-2);
+}
+
+.brand-page__tab {
+  border: 0;
+  background: none;
+  padding: 6px 10px;
+  font: var(--hx-frame-font-small-lg);
+  color: var(--hx-frame-secondary);
+  cursor: pointer;
+  border-radius: var(--hx-radius-sm);
+}
+
+.brand-page__tab:hover {
+  color: var(--hx-frame-ink);
+  background: var(--hx-chrome-selected);
+}
+
+/* 現行頁籤用底色與字重講清楚，不用藍色：整份外殼只有 accent 一個彩色，
+   分頁不是動作，不應該搶走畫面唯一的重點。 */
+.brand-page__tab--active {
+  color: var(--hx-frame-ink);
+  font-weight: 600;
+  box-shadow: inset 0 -2px 0 var(--hx-frame-ink);
+}
+
+.brand-page__head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.brand-page__title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.brand-page__meta {
+  margin: 0;
+  color: var(--hx-frame-secondary);
+  font: var(--hx-frame-font-small);
+}
+
+.brand-page__editor {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.brand-page__textarea {
+  width: 100%;
+  min-height: 180px;
+  resize: vertical;
+  padding: 10px 12px;
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-sm);
+  font: inherit;
+  line-height: 1.6;
+  background: var(--hx-chrome-white);
+  color: var(--hx-frame-ink);
+}
+
+/* 員工見到的是唯讀：底色凹入去，避免他以為可以打字而打了十分鐘才發現存不了。 */
+.brand-page__textarea:read-only {
+  background: var(--hx-frame-surface);
+  color: var(--hx-frame-secondary);
+}
+
+.brand-page__versions {
+  border-top: 1px solid var(--hx-frame-border);
+  padding-top: var(--hx-space-4);
+}
+
+.brand-page__versionsTitle {
+  margin: 0 0 10px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.brand-page__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.brand-page__version {
+  padding: var(--hx-space-3) 0;
+  border-bottom: 1px solid var(--hx-frame-border);
+}
+
+.brand-page__versionHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.brand-page__versionNo {
+  font-weight: 600;
+}
+
+/* 「現行」用 accent-soft 底：它是狀態，不是按鈕，所以不用實心 accent。 */
+.brand-page__tag {
+  font-size: 12px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--hx-frame-accent-soft);
+  color: var(--hx-frame-accent-fg);
+}
+
+.brand-page__time {
+  color: var(--hx-frame-muted);
+  font-size: 12px;
+}
+
+.brand-page__note {
+  margin: 6px 0 0;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+}
+
+.brand-page__preview {
+  margin: 4px 0 0;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+  white-space: pre-wrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.brand-page__actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.brand-page__action {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 13px;
+  color: var(--hx-frame-accent-fg);
+  cursor: pointer;
+}
+
+.brand-page__action:disabled {
+  color: var(--hx-frame-muted);
+  cursor: default;
+}
+
+.brand-page__action--danger {
+  color: var(--hx-danger-text);
+}
+
+.brand-page__currentNote {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--hx-frame-muted);
 }

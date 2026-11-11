@@ -175,12 +175,13 @@ const FROZEN_ALL_SHA256 = 'fb6c35cf665b8ceeff9f842d1a05b25b77697ad4e1e7679f5bbf4
  */
 // 2026-11-11（issue #30）：`staff.enable` 同 `staff.enable.*` 係新增鍵（恢復停用
 // 帳戶的路），唔屬 #163 要守嘅既有鍵；凍結值不變，只係明確排除新鍵。
-const LATER_KEY_PREFIXES = ['grant.detail.', 'boss.members.', 'staff.enable', 'boss.module.people', 'boss.page.people', 'gate.noDepartment.', 'gate.departmentClosed.', 'gate.signOut'];
+const LATER_KEY_PREFIXES = ['brand.page.', 'grant.detail.', 'boss.members.', 'staff.enable', 'boss.module.people', 'boss.page.people', 'gate.noDepartment.', 'gate.departmentClosed.', 'gate.signOut'];
 /**
  * 精確到單一鍵的排除（issue #19）：`design.brand.` 前綴會連 #153 已交付的
  * `design.brand.*` 一齊放走，所以唔可以用前綴。
  */
-const LATER_EXACT_KEYS = ['design.brand.ownerOnly'];
+const LATER_EXACT_KEYS = [
+  'design.page.brandPage','design.brand.ownerOnly'];
 
 function hashExcluding(msgs: Record<string, string>, excluded: ReadonlySet<string>): string {
   const entries = Object.entries(msgs)

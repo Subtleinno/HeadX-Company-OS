@@ -128,6 +128,14 @@ export const DESIGN_NAV: AppNav = {
                 { key: 'type', labelKey: 'design.section.type' },
               ],
             },
+            /**
+             * 品牌頁的版本入口（issue #33）。
+             *
+             * 這一頁是過渡的：真正的清單會由後端的品牌頁推出來（#32），
+             * 五頁加上自定義頁逐個列在左側。在此之前，這裡至少有一道門 ——
+             * 建好了版本鏈而沒有入口，等於沒有交付。
+             */
+            { key: 'page', labelKey: 'design.page.brandPage' },
             { key: 'channel', labelKey: 'design.page.channel' },
             { key: 'versions', labelKey: 'design.page.versions' },
           ],

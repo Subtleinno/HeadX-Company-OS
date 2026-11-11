@@ -78,7 +78,12 @@ export type FakeHandlers = Partial<
     | 'filesDelete'
     | 'brands'
     | 'brandCreate'
-    | 'brandFocus',
+    | 'brandFocus'
+    | 'brandPages'
+    | 'brandPage'
+    | 'brandPageSave'
+    | 'brandPageRestore'
+    | 'brandPageDelete',
     Handler
   >
 >;
@@ -318,6 +323,28 @@ function routeKey(path: string, method: string): keyof FakeHandlers | null {
   // `/me/brand-focus` 要放喺 `/me` 之前配對：兩者都係 GET。
   if (bare.endsWith('/me/brand-focus')) {
     return method === 'GET' || method === 'PUT' ? 'brandFocus' : null;
+  }
+
+  // ── 品牌頁版本（issue #33）。更具體的路徑先配對，否則 `/brands/:id/pages`
+  // 會被下面的 `/brands` 當成品牌清單。
+  if (/\/brands\/[^/]+\/pages\/[^/]+\/versions\/[^/]+\/restore$/.test(bare)) {
+    return method === 'POST' ? 'brandPageRestore' : null;
+  }
+
+  if (/\/brands\/[^/]+\/pages\/[^/]+\/versions\/[^/]+$/.test(bare)) {
+    return method === 'DELETE' ? 'brandPageDelete' : null;
+  }
+
+  if (/\/brands\/[^/]+\/pages\/[^/]+\/versions$/.test(bare)) {
+    return method === 'POST' ? 'brandPageSave' : null;
+  }
+
+  if (/\/brands\/[^/]+\/pages\/[^/]+$/.test(bare)) {
+    return method === 'GET' ? 'brandPage' : null;
+  }
+
+  if (/\/brands\/[^/]+\/pages$/.test(bare)) {
+    return method === 'GET' ? 'brandPages' : null;
   }
 
   if (bare.endsWith('/brands')) {

@@ -832,6 +832,7 @@ export const messages = {
   'design.page.brandSettings': '品牌設定',
   'design.page.channel': '渠道與策略',
   'design.page.versions': '版本紀錄',
+  'design.page.brandPage': '品牌頁',
   'design.section.logo': '品牌標誌',
   'design.section.identity': '品牌識別',
   'design.section.color': '色彩',
@@ -1016,6 +1017,35 @@ export const messages = {
   'grant.detail.notFound': '找不到這筆授權。',
   'grant.detail.loadFailed': '讀不到這筆授權，請重試。',
   'grant.detail.noValue': '未有',
+
+  // ── 品牌頁版本（issue #33）──────────────────────────────────────
+  // 只新增鍵。文案講「儲存＝新增一版」，因為那不是隱喻：舊版真的留在列表。
+  // 被拒絕的三種原因各有一句，唔合併成「唔可以刪」——合併之後人只會試另一個方法。
+  'brand.page.nav': '品牌頁',
+  'brand.page.loading': '正在讀這一頁…',
+  'brand.page.loadFailed': '讀唔到這一頁。',
+  'brand.page.missing': '這一頁不存在。可能已經改名或者刪除。',
+  'brand.page.picker': '呢個品牌嘅頁',
+  'brand.page.versions': '版本',
+  'brand.page.currentTag': '現行',
+  'brand.page.versionNo': '第 {no} 版',
+  'brand.page.noVersion': '這一頁仲未有任何版本。第一次儲存會建立第 1 版。',
+  'brand.page.editorLabel': '這一頁的內容',
+  'brand.page.save': '儲存（新增一版）',
+  'brand.page.saving': '儲存中…',
+  'brand.page.saved': '已儲存第 {no} 版。',
+  'brand.page.saveFailed': '儲存唔到，請再試。',
+  'brand.page.emptyContent': '未有內容。',
+  'brand.page.hint': '每次儲存都會新增一版，舊版仍然留喺版本列表。',
+  'brand.page.restore': '用這一版',
+  'brand.page.restored': '已用第 {source} 版建立第 {no} 版。',
+  'brand.page.delete': '刪除',
+  'brand.page.deleteConfirm': '再按一次確定刪除',
+  'brand.page.deleted': '已刪除第 {no} 版。',
+  'brand.page.currentBlocked': '這是現行版本，唔可以刪。先用另一版建立新版本。',
+  'brand.page.pinned': '呢一版被已出街成品釘住：{labels}。要斷開，先改嗰件成品。',
+  'brand.page.readOnly': '你只可以看這一頁。要改，請找老闆。',
+  'brand.page.actionFailed': '做唔到，請再試。',
 } as const;
 
 export type MessageKey = keyof typeof messages;

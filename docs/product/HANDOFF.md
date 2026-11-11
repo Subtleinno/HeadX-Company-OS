@@ -132,10 +132,13 @@ curl -s https://hxd.subtle-inno.com/api/auth/state    # 應回 {"setupRequired":
 | `#/boss/sites/add` | 新增據點 | 第一、二步可用，第三步端點未存在 |
 | `#/boss/people/members` | 人員與部門：名單、建立員工（可一併選部門）、改部門、停用、恢復、重設密碼 | 可用，全部真寫入 |
 | `#/design` | 品牌首頁：清單、新增品牌（只老闆）、記住上次品牌 | 可用 |
+| `#/design/brand/page/<key>` | 品牌頁：現行版本、版本列表、用回舊版、刪舊版 | 可用（五個固定頁；內容仍是手寫，各頁的生成見 #35–#39） |
 | `#/design/brand/settings/*` | 品牌設定之下四個章節（標誌／識別／色彩／字體） | 章節導覽可用，內容未接 |
 | `#/needs`、`#/files`、`#/account` | 需求、檔案、個人帳戶 | 可用 |
 
 品牌模組正按 #33 至 #39、#41 重做：五頁（品牌主頁／標誌／色彩／字體／語氣）加自定義頁，不再有儀表板、渠道、版本頁，「品牌識別」一併移走，品牌清單移入品牌切換。落地一張改一張 —— 上面每一行都是**今日真相**，不是計劃。
+
+#33 已落地：頁與版本是真的（`brand_page`／`brand_page_version`，0013），現行用算的，版本只加不改由 trigger 強制。導覽仍然掛在「品牌頁」這一個臨時入口，真正的五頁清單由 #32 接手。
 
 員工直接開 `#/boss` 會見到全螢幕權限說明，沒有任何選單外流（2026-11-11 用真員工帳戶實測）。
 Boss Portal 的導覽是四組：總覽｜據點與機器｜人員｜存取紀錄。
@@ -161,7 +164,7 @@ Boss Portal 的導覽是四組：總覽｜據點與機器｜人員｜存取紀�
 外殼程式碼：`packages/app-shell/src/FrameShell.tsx`。
 前端接駁：`apps/web/src/frame/`（`AppFrame`、`appNav`、`FrameApps`）＋ `apps/web/src/boss/`、`apps/web/src/design/`。
 後端：`apps/platform/src/directory/`（品牌、據點、我的品牌）、`apps/platform/src/staff/`（帳戶與部門）、`apps/platform/src/needs/`、`apps/platform/src/modules/`。
-資料表：`db/migrations/0001`–`0012`，最近三支是 `0010_needs.sql`、`0011_brands_sites.sql`、`0012_user_brand_focus.sql`。**真相以 `db/migrations/` 為準**，這一行只是指路。
+資料表：`db/migrations/0001`–`0013`，最近三支是 `0011_brands_sites.sql`、`0012_user_brand_focus.sql`、`0013_brand_pages.sql`。**真相以 `db/migrations/` 為準**，這一行只是指路。
 
 ## 5. 下一步：品牌模組（夜間 loop 的次序）
 

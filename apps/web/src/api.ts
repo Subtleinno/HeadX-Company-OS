@@ -990,6 +990,87 @@ export function createBrand(input: { code: string; name: string }): Promise<ApiR
   });
 }
 
+/**
+ * 品牌頁與頁版本（issue #33）。
+ *
+ * `current` 是**伺服器算出來的**最新未刪版本，不是前端從列表推的：前端推的話，
+ * 兩個分頁同時開著就會各自有一個「現行」。畫面只顯示伺服器說的那一個。
+ */
+export type BrandPageVersionSummary = {
+  id: string;
+  versionNo: number;
+  createdAt: string;
+  note: string | null;
+  preview: string;
+};
+
+export type BrandPageVersionDetail = BrandPageVersionSummary & { content: string };
+
+export type BrandPageSummary = {
+  id: string;
+  brandId: string;
+  kind: 'fixed' | 'custom';
+  key: string;
+  name: string;
+  brief: string | null;
+  sortOrder: number;
+  current: BrandPageVersionSummary | null;
+};
+
+export type BrandPageDetail = {
+  page: BrandPageSummary;
+  versions: BrandPageVersionSummary[];
+  current: BrandPageVersionDetail | null;
+};
+
+export function fetchBrandPages(
+  brandId: string,
+): Promise<ApiResult<{ items: BrandPageSummary[] }>> {
+  return request<{ items: BrandPageSummary[] }>(`/api/brands/${encodeURIComponent(brandId)}/pages`);
+}
+
+export function fetchBrandPage(
+  brandId: string,
+  key: string,
+): Promise<ApiResult<BrandPageDetail>> {
+  return request<BrandPageDetail>(
+    `/api/brands/${encodeURIComponent(brandId)}/pages/${encodeURIComponent(key)}`,
+  );
+}
+
+export function saveBrandPageVersion(
+  brandId: string,
+  key: string,
+  input: { content: string; note?: string },
+): Promise<ApiResult<{ version: BrandPageVersionDetail }>> {
+  return request<{ version: BrandPageVersionDetail }>(
+    `/api/brands/${encodeURIComponent(brandId)}/pages/${encodeURIComponent(key)}/versions`,
+    { method: 'POST', body: JSON.stringify(input) },
+  );
+}
+
+export function restoreBrandPageVersion(
+  brandId: string,
+  key: string,
+  versionId: string,
+): Promise<ApiResult<{ version: BrandPageVersionDetail }>> {
+  return request<{ version: BrandPageVersionDetail }>(
+    `/api/brands/${encodeURIComponent(brandId)}/pages/${encodeURIComponent(key)}/versions/${encodeURIComponent(versionId)}/restore`,
+    { method: 'POST' },
+  );
+}
+
+export function deleteBrandPageVersion(
+  brandId: string,
+  key: string,
+  versionId: string,
+): Promise<ApiResult<{ deleted: boolean; versionNo: number }>> {
+  return request<{ deleted: boolean; versionNo: number }>(
+    `/api/brands/${encodeURIComponent(brandId)}/pages/${encodeURIComponent(key)}/versions/${encodeURIComponent(versionId)}`,
+    { method: 'DELETE' },
+  );
+}
+
 export function fetchSites(): Promise<ApiResult<{ items: SiteItem[] }>> {
   return request<{ items: SiteItem[] }>('/api/sites');
 }

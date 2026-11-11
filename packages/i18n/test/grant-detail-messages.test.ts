@@ -92,9 +92,10 @@ const FROZEN_ALL_SHA256 = '4af9f8e145020638a2b141f52026861eed7031250932204b5a38a
  * 既有鍵，唔排除嘅話「合法新增」會被當成「既有鍵被改」，令 npm test 假紅。
  * 凍結值同守衛嘅既有鍵都唔變，唔係放寬門檻。
  */
-const LATER_EXACT_KEYS = ['design.brand.ownerOnly'];
+const LATER_EXACT_KEYS = [
+  'design.page.brandPage','design.brand.ownerOnly'];
 
-const LATER_KEY_PREFIXES = [
+const LATER_KEY_PREFIXES = ['brand.page.', 
   'boss.members.',
   // 2026-11-11（issue #30）：恢復停用帳戶新增的鍵，不屬 #168 要守的既有鍵。
   'staff.enable',
