@@ -125,7 +125,7 @@ describe('GET /modules', () => {
     ]);
   });
 
-  it('回應只有六個欄位，不含檔案路徑', async () => {
+  it('回應只有七個欄位（issue #14 加咗 route），不含檔案路徑', async () => {
     const owner = await setupOwner();
     const response = await app.inject({ method: 'GET', url: '/modules', headers: owner.cookie });
     const modules = response.json().modules as Record<string, unknown>[];
@@ -136,6 +136,7 @@ describe('GET /modules', () => {
       'id',
       'kind',
       'order',
+      'route',
       'title',
     ]);
 
@@ -158,7 +159,8 @@ describe('GET /modules', () => {
         kind: 'department',
         department: 'design',
         order: 10,
-        available: false,
+        available: true,
+        route: '/design',
       },
     ]);
   });

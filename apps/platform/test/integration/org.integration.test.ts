@@ -876,6 +876,9 @@ describe('舊資料庫升級（#80 的 0001–0004 → 0005 及之後）', () =>
         '0007_identities.sql',
         '0008_jobs.sql',
         '0009_session_entry.sql',
+        '0010_needs.sql',
+        '0011_brands_sites.sql',
+        '0012_user_brand_focus.sql',
       ]);
 
       // 4. 既有資料一個字都沒動。

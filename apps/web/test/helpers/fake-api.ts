@@ -74,7 +74,10 @@ export type FakeHandlers = Partial<
     | 'policyRuleDelete'
     | 'filesList'
     | 'filesUpload'
-    | 'filesDelete',
+    | 'filesDelete'
+    | 'brands'
+    | 'brandCreate'
+    | 'brandFocus',
     Handler
   >
 >;
@@ -303,6 +306,16 @@ function routeKey(path: string, method: string): keyof FakeHandlers | null {
 
   if (bare.endsWith('/files')) {
     return method === 'GET' ? 'filesList' : method === 'POST' ? 'filesUpload' : null;
+  }
+
+  // ── 品牌與「我上次做緊邊個品牌」（issue #15）。
+  // `/me/brand-focus` 要放喺 `/me` 之前配對：兩者都係 GET。
+  if (bare.endsWith('/me/brand-focus')) {
+    return method === 'GET' || method === 'PUT' ? 'brandFocus' : null;
+  }
+
+  if (bare.endsWith('/brands')) {
+    return method === 'GET' ? 'brands' : method === 'POST' ? 'brandCreate' : null;
   }
 
   // 逐 key 保存：`/api/settings/<key>`，只有 PUT。

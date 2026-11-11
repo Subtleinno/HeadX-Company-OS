@@ -1,27 +1,35 @@
 import type { FastifyInstance } from 'fastify';
 import type { Pool } from 'pg';
 import { writeAudit } from '../audit.js';
-import { parseBrandInput, parseSiteInput } from './schema.js';
+import { parseBrandFocusInput, parseBrandInput, parseSiteInput } from './schema.js';
 import {
   approveSite,
   createBrand,
   createSite,
   ensureLocalSite,
   findBrandByCode,
+  findBrandFocus,
   findSite,
   listBrands,
   listSites,
+  setBrandFocus,
 } from './store.js';
 
 /**
  * 品牌同據點的 API（Frame 品牌 selector、Boss Portal 據點目錄）。
  *
- * 四條路：
+ * 六條路：
  *   GET  /brands           品牌清單（任何登入者：selector 要用）
  *   POST /brands           開新品牌（老闆）
+ *   GET  /me/brand-focus   我上次做緊邊個品牌（任何登入者，只讀自己）
+ *   PUT  /me/brand-focus   記住我而家做緊邊個品牌（任何登入者，只寫自己）
  *   GET  /sites            據點目錄（老闆；設計稿 frame-06 講明只有管理級見到）
  *   POST /sites            新增據點，回一次性邀請憑證（老闆）
  *   POST /sites/:id/approve 批准（老闆）
+ *
+ * 為咩 brand-focus 唔係老闆專用：呢個係「我自己做緊邊個品牌」，
+ * 每個人都有自己的答案，而且寫的是自己那一行。請求裡面冇 user id，
+ * 寫邊個由 session 決定 —— 呢一點唔可以交俾呼叫者講。
  *
  * 為咩據點要老闆專用：據點 = 一台可以讀全公司資料的機器。呢個唔係「一個功能」，
  * 係「邊幾台機入得到」。員工就算知道網址，API 都會 403 —— 前端另外畫一個
@@ -71,6 +79,46 @@ export function registerDirectory(app: FastifyInstance, deps: DirectoryDeps): vo
     });
 
     return reply.code(201).send({ item: brand });
+  });
+
+  /**
+   * 我上次做緊邊個品牌（issue #15）。
+   *
+   * 冇記錄就回 null。前端拿到 null 會隨機揀一個並寫入 —— 隨機只發生一次，
+   * 之後就係「記住」。伺服器唔自己揀：GET 有副作用會令每次預取都改寫事實。
+   */
+  app.get('/me/brand-focus', { preHandler: app.requireUser }, async (request) => {
+    const user = request.currentUser;
+
+    if (user === null) {
+      throw new Error('directory 路由缺少 requireUser：request.currentUser 是空的');
+    }
+
+    return { brandId: await findBrandFocus(deps.pool, user.id) };
+  });
+
+  app.put('/me/brand-focus', { preHandler: app.requireUser }, async (request, reply) => {
+    const user = request.currentUser;
+
+    if (user === null) {
+      throw new Error('directory 路由缺少 requireUser：request.currentUser 是空的');
+    }
+
+    const parsed = parseBrandFocusInput(request.body);
+
+    if (!parsed.ok) {
+      return reply.code(400).send({ error: 'invalid_input', reason: parsed.reason });
+    }
+
+    const written = await setBrandFocus(deps.pool, user.id, parsed.value.brandId);
+
+    // 寫唔到只有一個原因：呢個 brand id 唔存在。如實講，唔好回 200 令前端
+    // 以為記住了 —— 下一次開機就會出現一個唔同的品牌，而冇人知點解。
+    if (!written) {
+      return reply.code(400).send({ error: 'unknown_brand', brandId: parsed.value.brandId });
+    }
+
+    return { brandId: parsed.value.brandId };
   });
 
   /**

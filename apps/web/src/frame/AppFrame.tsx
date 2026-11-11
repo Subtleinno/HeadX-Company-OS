@@ -57,7 +57,7 @@ export function AppFrame({
   const position = resolveNav(nav, path);
   const brands = useBrands(true);
   const brandItems = brands.state.kind === 'ready' ? brands.state.items : [];
-  const { brandId, selectBrand } = useSelectedBrand(brandItems);
+  const { brandId, selectBrand } = useSelectedBrand(brands.state);
   const company = useCompanyIdentity(true);
 
   const base = toRoute(nav.base);

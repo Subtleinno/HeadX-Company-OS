@@ -32,9 +32,12 @@ const BASELINE = [
   ['0007_identities.sql', '29a3a59352c86d04edba6a4ffedb8ff922b2a44598fcae1ca2104cb00221ff9c'],
   ['0008_jobs.sql', 'c5d47b075dd054ec66feee1053e5158cbf87eaf19f06c9e5c54d9c9d1e0348ac'],
   ['0009_session_entry.sql', '43f16b3b82533c4f6af6a137745dea97890c720b7e2ae5664255f488770feece'],
+  ['0010_needs.sql', '289060af6e20961f98ae0b12e7b278a921b9b0bb1862b7de3c19a78fa1d11d4a'],
+  ['0011_brands_sites.sql', '73c8d65270e8d36021901bedf11991d48fb1f1c626b5d979ed4f75246d62ce4c'],
+  ['0012_user_brand_focus.sql', 'c4b3004f5dcbdd09cc9f9fb7bf44432c120bbe763d4f33ff50b068641f14ed6e'],
 ] as const;
 
-describe('基準線：現有執行器套用 0001 至 0009 之後的 ledger', () => {
+describe('基準線：現有執行器套用 0001 至 0012 之後的 ledger', () => {
   let db: TempDatabase;
 
   beforeAll(async () => {

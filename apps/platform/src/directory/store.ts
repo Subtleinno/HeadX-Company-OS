@@ -90,6 +90,44 @@ export async function createBrand(db: Pool, code: string, name: string): Promise
   return row;
 }
 
+/**
+ * 我而家做緊邊個品牌（issue #15）。冇記錄就係 null，唔係「第一個品牌」：
+ * 「第一個」係清單的次序，係另一個事實，唔應該喺呢一層冒充。
+ */
+export async function findBrandFocus(db: Pool, userId: string): Promise<string | null> {
+  const result = await db.query<{ brand_id: string }>(
+    'select brand_id from user_brand_focus where user_id = $1',
+    [userId],
+  );
+
+  return result.rows[0]?.brand_id ?? null;
+}
+
+/**
+ * 寫入「我而家做緊邊個品牌」。
+ *
+ * 存在的檢查同寫入壓成同一句 `insert … select`：如果 brandId 唔存在，
+ * select 回 0 行，於是乜都唔寫。分兩步（先查再寫）中間會有窗口，
+ * 而呢個窗口的結果係寫入一個已經消失的品牌。
+ *
+ * 回 false ＝ 寫唔到（品牌唔存在）。呼叫者要如實回 400，唔可以靜靜接受。
+ */
+export async function setBrandFocus(
+  db: Pool,
+  userId: string,
+  brandId: string,
+): Promise<boolean> {
+  const result = await db.query(
+    `insert into user_brand_focus (user_id, brand_id)
+     select $1, id from brand where id = $2
+     on conflict (user_id) do update
+        set brand_id = excluded.brand_id, updated_at = now()`,
+    [userId, brandId],
+  );
+
+  return (result.rowCount ?? 0) > 0;
+}
+
 function toSiteView(row: SiteRow, now: Date): SiteView {
   const pendingInvite =
     row.invite_token_hash !== null &&
