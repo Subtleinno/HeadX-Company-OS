@@ -82,7 +82,9 @@ const LATER_EXACT_KEYS = [
   // 2026-11-12（issue #32）：品牌模組五頁的頁名。舊的 `design.page.brandPage`
   // 與 `design.section.*` 沒有刪，只是不再有人讀 —— 凍結閘本來就不准刪。
   'design.page.brandLogo', 'design.page.brandColor', 'design.page.brandType',
-  'design.page.brandTone','design.page.brandImage','design.page.brandExamples','admin.page.policy', 'design.brand.ownerOnly'];
+  'design.page.brandTone','design.page.brandImage','design.page.brandExamples','admin.page.policy', 'design.brand.ownerOnly',
+  // 2026-11-12（品牌 v2.1）：補上平台頁的名。新增鍵，不是改既有鍵。
+  'design.page.brandPlatform'];
 
 function hashNonFrame(msgs: Record<string, string>): string {
   const entries = Object.entries(msgs)

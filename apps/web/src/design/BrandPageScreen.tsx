@@ -69,6 +69,8 @@ type BrandPageScreenProps = {
   canEdit: boolean;
   /** 只有老闆可以改策略（#53）：策略段有沒有編輯鍵，看這一個。 */
   isOwner: boolean;
+  /** 品牌名，用於「給 agent」那一句指令。未讀到就是 null。 */
+  brandName?: string | null;
   /** 改名之後叫上層重讀清單：左側的名要跟著變。 */
   onPagesChanged: () => void;
   /** 刪完之後回品牌主頁：留在一個已經不存在的網址上只會見到「找不到」。 */
@@ -248,6 +250,7 @@ export function BrandPageScreen({
   pageKey,
   canEdit,
   isOwner,
+  brandName = null,
   onPagesChanged,
   onRemoved,
   newerPages = [],
@@ -541,6 +544,7 @@ export function BrandPageScreen({
         current={detail.current}
         gapCount={gapCount}
         isOwner={isOwner}
+        brandName={brandName}
       />
 
       {isCustom && page.brief !== null && (

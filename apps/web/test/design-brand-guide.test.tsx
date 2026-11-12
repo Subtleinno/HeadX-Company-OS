@@ -1,66 +1,36 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import './helpers/rtl';
-import { App } from '../src/App';
-import { resetDirectoryCache } from '../src/frame/useDirectory';
-import {
-  installFakeApi,
-  jsonResponse,
-  resetBrowserState,
-  type FakeHandlers,
-} from './helpers/fake-api';
 
 /**
- * 每頁頂部的「這一頁」（issue #53）。
+ * 每頁頂部的「這一頁」（issue #53，v2.1）。
  *
- * 要證明四件事：
- *   1. 三段都在，而且第一屏就有 —— 這正是老闆說「我係UI度唔係好見到D乜」的那一段。
- *   2. 策略只有老闆見到編輯鍵。員工見到同一份正文，但見到的是「只有老闆可以改」。
- *   3. 儲存策略打的是 `/api/policy/:slot/versions` —— 與 Boss Portal 同一條路，
- *      不是另一個副本。
- *   4. 缺口數字由表身上報：表身報 6，面板就寫 6；表身報 null，面板就不講數字。
+ * 這一版要證明五件事：
+ *   1. 三段都在，而且**預設收起** —— 一打開見到三行摘要，不是一屏說明文字。
+ *   2. 平台／圖像／範例有自己的名與自己的槽，不再被當成自定義頁。
+ *   3. 引用清單對稱：色彩頁講得出被標誌、字體、主頁、圖像用。
+ *   4. 策略只有老闆見到編輯鍵；員工見到同一份正文，但見到「只有老闆可以改」。
+ *   5. 給 agent 的是一句人話，**沒有 HTTP 方法、路徑與 JSON**。
  */
 
-const BOSS = {
-  id: 'u-boss',
-  email: 'boss@example.com',
-  displayName: '陳老闆',
-  role: 'owner',
-  department: null,
-  mustChangePassword: false,
-};
+const mocks = vi.hoisted(() => ({
+  fetchPolicy: vi.fn(),
+  savePolicyVersion: vi.fn(),
+}));
 
-const WAI = {
-  id: 'u-wai',
-  email: 'wai@example.com',
-  displayName: '林慧',
-  role: 'staff',
-  department: 'design',
-  mustChangePassword: false,
-};
+vi.mock('../src/api', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../src/api')>();
 
-const BRANDS = [{ id: 'b-moonic', code: 'moonic', name: 'Moonic' }];
+  return {
+    ...actual,
+    fetchPolicy: () => mocks.fetchPolicy(),
+    savePolicyVersion: (...args: unknown[]) => mocks.savePolicyVersion(...args),
+  };
+});
 
-const DESIGN = {
-  id: 'design',
-  title: 'Design',
-  kind: 'department',
-  department: 'design',
-  order: 10,
-  available: true,
-  route: '/design',
-};
-
-/** 五張固定頁，只有色彩頁有版本 —— 其餘四頁就是要驗「未有版本」那一句。 */
-const PAGES = [
-  { id: 'p-home', kind: 'fixed', key: 'home', name: '品牌主頁', brief: null, sortOrder: 10, current: null },
-  { id: 'p-logo', kind: 'fixed', key: 'logo', name: '標誌', brief: null, sortOrder: 20, current: null },
-  { id: 'p-color', kind: 'fixed', key: 'color', name: '色彩', brief: null, sortOrder: 30, current: null },
-  { id: 'p-type', kind: 'fixed', key: 'type', name: '字體', brief: null, sortOrder: 40, current: null },
-  { id: 'p-tone', kind: 'fixed', key: 'tone', name: '語氣', brief: null, sortOrder: 50, current: null },
-].map((page) => ({ ...page, brandId: 'b-moonic' }));
+const { BrandPageGuide } = await import('../src/design/BrandPageGuide');
 
 const COLOR_V3 = {
   id: 'v3',
@@ -80,255 +50,230 @@ const COLOR_POLICY = {
   content: '每一個色都要有角色。分品牌色、閱讀色、功能色，不准混用。',
 };
 
-const POLICY_SLOTS = [
-  { slot: 'home', current: null, versions: [] },
-  { slot: 'logo', current: null, versions: [] },
-  { slot: 'color', current: COLOR_POLICY, versions: [COLOR_POLICY] },
-  { slot: 'type', current: null, versions: [] },
-  { slot: 'tone', current: null, versions: [] },
-  { slot: 'custom', current: null, versions: [] },
-];
-
-function colorDetail(current: unknown = COLOR_V3) {
+function slotsFixture(): unknown {
   return {
-    page: PAGES.find((page) => page.key === 'color'),
-    versions: current === null ? [] : [current],
-    current:
-      current === null
-        ? null
-        : {
-            ...(current as typeof COLOR_V3),
-            // 空表：#62 之後缺口數只數「有規定的」—— 四個必要角色（各缺一項）
-            // 加上內文配對與大字配對各未指定，共 6 項。功能色未定不算缺。
-            content: JSON.stringify({ roles: [], pairs: { allowed: [], forbidden: [] } }),
-          },
+    slots: [
+      { slot: 'platform', current: null, versions: [] },
+      { slot: 'home', current: null, versions: [] },
+      { slot: 'logo', current: null, versions: [] },
+      { slot: 'color', current: COLOR_POLICY, versions: [COLOR_POLICY] },
+      { slot: 'type', current: null, versions: [] },
+      { slot: 'tone', current: null, versions: [] },
+      { slot: 'image', current: null, versions: [] },
+      { slot: 'apply', current: null, versions: [] },
+      { slot: 'custom', current: null, versions: [] },
+    ],
   };
 }
 
-function openColor(
-  user: typeof BOSS | typeof WAI,
-  overrides: FakeHandlers = {},
-  current: unknown = COLOR_V3,
-): ReturnType<typeof installFakeApi> {
-  window.history.replaceState(null, '', '/#/design/brand/color');
-
-  const api = installFakeApi({
-    state: () => jsonResponse(200, { setupRequired: false, signedIn: true, user }),
-    modules: () => jsonResponse(200, { modules: [DESIGN] }),
-    brands: () => jsonResponse(200, { items: BRANDS }),
-    brandFocus: () => jsonResponse(200, { brandId: 'b-moonic' }),
-    brandPages: () => jsonResponse(200, { items: PAGES, canEdit: user.role === 'owner' }),
-    brandPage: (request) => {
-      const key = request.path.split('/').pop();
-      const page = PAGES.find((item) => item.key === key);
-
-      return jsonResponse(200, {
-        page,
-        versions: key === 'color' && current !== null ? [current] : [],
-        current: key === 'color' ? colorDetail(current).current : null,
-      });
-    },
-    policy: () => jsonResponse(200, { slots: POLICY_SLOTS }),
-    ...overrides,
+beforeEach(() => {
+  mocks.fetchPolicy.mockResolvedValue({ ok: true, data: slotsFixture() });
+  mocks.savePolicyVersion.mockResolvedValue({
+    ok: true,
+    data: { version: { ...COLOR_POLICY, id: 'pv-4', versionNo: 4 } },
   });
-
-  render(<App />);
-
-  return api;
-}
-
-async function waitForGuide(): Promise<HTMLElement> {
-  await waitFor(() => {
-    expect(document.querySelector('[data-page-guide="color"]')).not.toBeNull();
-  });
-
-  return document.querySelector<HTMLElement>('[data-page-guide="color"]') as HTMLElement;
-}
+});
 
 afterEach(() => {
   cleanup();
-  resetBrowserState();
-  resetDirectoryCache();
+  vi.clearAllMocks();
 });
 
+async function open(
+  container: HTMLElement,
+  section: 'state' | 'policy' | 'agent',
+): Promise<void> {
+  const button = container.querySelector(`[data-guide-toggle="${section}"]`);
+
+  if (button === null) {
+    throw new Error(`找不到 ${section} 的展開鍵`);
+  }
+
+  await userEvent.setup().click(button as HTMLElement);
+}
+
+function renderGuide(overrides: Partial<Parameters<typeof BrandPageGuide>[0]> = {}) {
+  return render(
+    <BrandPageGuide
+      pageKey="color"
+      current={COLOR_V3}
+      gapCount={6}
+      isOwner
+      brandName="Moonic 滿月堂"
+      {...overrides}
+    />,
+  );
+}
+
 describe('「這一頁」面板', () => {
-  it('三段都在：現況、策略、給 AI Agent', async () => {
-    openColor(BOSS);
-    await waitForGuide();
+  it('三段都在，但預設收起：內容未展開時不畫', () => {
+    const { container } = renderGuide();
 
-    expect(document.querySelector('[data-guide-section="state"]')).not.toBeNull();
-    expect(document.querySelector('[data-guide-section="policy"]')).not.toBeNull();
-    expect(document.querySelector('[data-guide-section="agent"]')).not.toBeNull();
+    expect(container.querySelector('[data-guide-section="state"]')).not.toBeNull();
+    expect(container.querySelector('[data-guide-section="policy"]')).not.toBeNull();
+    expect(container.querySelector('[data-guide-section="agent"]')).not.toBeNull();
+
+    expect(container.querySelector('[data-guide-current]')).toBeNull();
+    expect(container.querySelector('[data-guide-policy-body]')).toBeNull();
+    expect(container.querySelector('[data-guide-instruction]')).toBeNull();
   });
 
-  it('現況第一句就是現行第幾版', async () => {
-    openColor(BOSS);
-    await waitForGuide();
+  it('三個展開鍵都在，按下去只開自己那一段', async () => {
+    const { container } = renderGuide();
 
-    await waitFor(() => {
-      expect(document.querySelector('[data-guide-current]')?.getAttribute('data-guide-current')).toBe(
-        '3',
-      );
-    });
+    expect(container.querySelectorAll('[data-guide-toggle]')).toHaveLength(3);
+
+    await open(container, 'state');
+
+    expect(container.querySelector('[data-guide-current]')).not.toBeNull();
+    expect(container.querySelector('[data-guide-instruction]')).toBeNull();
   });
 
-  it('第一句講明這一頁用來做甚麼，不是一句通用的「這一頁是甚麼」', async () => {
-    openColor(BOSS);
-    await waitForGuide();
+  it('現況：版本、缺口數、用哪一版策略', async () => {
+    const { container } = renderGuide();
+    await open(container, 'state');
 
-    expect(document.querySelector('.brand-guide__lead')?.textContent).toContain('每一個色的角色');
-  });
-
-  it('缺口數字由表身上報：四個必要角色加兩種配對，共六項', async () => {
-    openColor(BOSS);
-    await waitForGuide();
-
-    await waitFor(() => {
-      expect(document.querySelector('[data-guide-gaps]')?.getAttribute('data-guide-gaps')).toBe('6');
-    });
-
-    expect(screen.getByText('缺口 6 項，逐項在下面的表身。')).toBeTruthy();
-  });
-
-  it('未有版本時講「仲未有版本」，不畫一個假的第 0 版', async () => {
-    openColor(BOSS, {}, null);
-    await waitForGuide();
-
-    expect(document.querySelector('[data-guide-current]')?.getAttribute('data-guide-current')).toBe(
-      'none',
+    expect(container.querySelector('[data-guide-current]')?.getAttribute('data-guide-current')).toBe(
+      '3',
     );
-    expect(screen.getByText('這一頁仲未有版本。')).toBeTruthy();
+    expect(container.querySelector('[data-guide-gaps]')?.getAttribute('data-guide-gaps')).toBe('6');
+    expect(container.querySelector('[data-guide-policy-used]')?.textContent).toContain('第 3 版');
   });
 
-  it('引用關係：色彩頁講明被標誌、字體、主頁用', async () => {
-    openColor(BOSS);
-    await waitForGuide();
+  it('現況：色彩頁講明被標誌、字體、主頁、圖像與自定義頁用', async () => {
+    const { container } = renderGuide();
+    await open(container, 'state');
 
-    const usedBy = document.querySelector('[data-guide-used-by]')?.textContent ?? '';
+    const usedBy = container.querySelector('[data-guide-used-by]')?.textContent ?? '';
 
     expect(usedBy).toContain('標誌');
     expect(usedBy).toContain('字體');
     expect(usedBy).toContain('品牌主頁');
+    expect(usedBy).toContain('圖像');
+    expect(usedBy).toContain('自定義頁');
   });
 
-  it('老闆：見到策略正文，也有「改策略（新增一版）」', async () => {
-    openColor(BOSS);
-    await waitForGuide();
-
-    await waitFor(() => {
-      expect(document.querySelector('[data-guide-policy-body]')).not.toBeNull();
-    });
-
-    expect(document.querySelector('[data-guide-policy-body]')?.textContent).toContain(
-      '每一個色都要有角色。',
+  it('平台頁：有自己的槽與名，引用清單是「不引用其他頁」', async () => {
+    const { container } = renderGuide({ pageKey: 'platform', current: null, gapCount: 6 });
+    expect(container.querySelector('[data-guide-slot]')?.getAttribute('data-guide-slot')).toBe(
+      'platform',
     );
-    expect(document.querySelector('[data-guide-policy-edit]')).not.toBeNull();
+
+    await open(container, 'state');
+
+    expect(container.querySelector('[data-guide-uses]')?.textContent).toContain(
+      '這一頁不引用其他頁',
+    );
   });
 
-  it('員工：同一份策略讀得到，但沒有編輯鍵，改為講「只有老闆可以改」', async () => {
-    openColor(WAI);
-    await waitForGuide();
+  it('範例頁用 apply 槽，不被當成自定義頁', () => {
+    const { container } = renderGuide({ pageKey: 'examples', current: null, gapCount: 0 });
 
-    await waitFor(() => {
-      expect(document.querySelector('[data-guide-policy-body]')).not.toBeNull();
-    });
+    expect(container.querySelector('[data-guide-slot]')?.getAttribute('data-guide-slot')).toBe(
+      'apply',
+    );
+  });
 
-    expect(document.querySelector('[data-guide-policy-edit]')).toBeNull();
-    expect(document.querySelector('[data-guide-policy-owner-only]')?.textContent).toContain(
+  it('未有版本時講「還沒有版本」，不畫一個假的第 0 版', async () => {
+    const { container } = renderGuide({ current: null });
+    await open(container, 'state');
+
+    expect(container.querySelector('[data-guide-current]')?.getAttribute('data-guide-current')).toBe(
+      'none',
+    );
+    expect(container.querySelector('[data-guide-current]')?.textContent).toContain('還沒有版本');
+  });
+
+  it('老闆：見到策略正文與「改策略（新增一版）」', async () => {
+    const { container } = renderGuide();
+    await open(container, 'policy');
+
+    expect(container.querySelector('[data-guide-policy-body]')?.textContent).toContain(
+      '每一個色都要有角色',
+    );
+    expect(container.querySelector('[data-guide-policy-edit]')).not.toBeNull();
+  });
+
+  it('員工：讀到同一份正文，但沒有編輯鍵，改為講「只有老闆可以改」', async () => {
+    const { container } = renderGuide({ isOwner: false });
+    await open(container, 'policy');
+
+    expect(container.querySelector('[data-guide-policy-body]')?.textContent).toContain(
+      '每一個色都要有角色',
+    );
+    expect(container.querySelector('[data-guide-policy-edit]')).toBeNull();
+    expect(container.querySelector('[data-guide-policy-owner-only]')?.textContent).toContain(
       '只有老闆可以改',
     );
   });
 
-  it('這個槽未有策略：講缺，不畫一個空的第 1 版', async () => {
-    openColor(
-      BOSS,
-      {
-        policy: () =>
-          jsonResponse(200, {
-            slots: POLICY_SLOTS.map((slot) =>
-              slot.slot === 'color' ? { ...slot, current: null, versions: [] } : slot,
-            ),
-          }),
-      },
-    );
+  it('槽未有策略：講缺，不畫一個空的第 1 版', async () => {
+    const { container } = renderGuide({ pageKey: 'type' });
+    await open(container, 'policy');
 
-    await waitForGuide();
-
-    await waitFor(() => {
-      expect(document.querySelector('[data-guide-policy="none"]')).not.toBeNull();
-    });
+    expect(container.querySelector('[data-guide-policy-missing]')).not.toBeNull();
+    expect(container.querySelector('[data-guide-policy-body]')).toBeNull();
   });
 
-  it('儲存策略：打 /api/policy/color/versions，body 就是打的那段字', async () => {
-    const api = openColor(BOSS, {
-      policySave: (request) => {
-        const body = JSON.parse(request.body ?? '{}') as { content?: string };
+  it('儲存策略：打的就是這一個槽的版本端點', async () => {
+    const { container } = renderGuide();
+    await open(container, 'policy');
 
-        return jsonResponse(201, {
-          version: {
-            id: 'pv-color-4',
-            versionNo: 4,
-            createdAt: '2026-11-12T03:00:00.000Z',
-            note: null,
-            preview: '',
-            content: body.content ?? '',
-          },
-        });
-      },
-    });
+    await userEvent.setup().click(container.querySelector('[data-guide-policy-edit]') as HTMLElement);
 
-    await waitForGuide();
+    const box = container.querySelector('textarea') as HTMLTextAreaElement;
+    await userEvent.setup().clear(box);
+    await userEvent.setup().type(box, '新的色彩標準。');
 
-    const user = userEvent.setup();
-    const edit = await screen.findByText('改策略（新增一版）');
-    await user.click(edit);
+    await userEvent.setup().click(container.querySelector('[data-guide-policy-save]') as HTMLElement);
 
-    const box = document.querySelector<HTMLTextAreaElement>('[data-guide-policy-editor] textarea');
-    expect(box).not.toBeNull();
-
-    await user.clear(box as HTMLTextAreaElement);
-    await user.type(box as HTMLTextAreaElement, '新的色彩標準');
-
-    await user.click(document.querySelector('[data-guide-policy-save]') as HTMLElement);
-
-    await waitFor(() => {
-      expect(screen.getByText('已儲存策略第 4 版。')).toBeTruthy();
-    });
-
-    const saved = api.calls.filter((call) => call.path.endsWith('/policy/color/versions'));
-
-    expect(saved.length).toBe(1);
-    expect(JSON.parse(saved[0]?.body ?? '{}')).toEqual({ content: '新的色彩標準' });
+    expect(mocks.savePolicyVersion).toHaveBeenCalledWith('color', { content: '新的色彩標準。' });
   });
 
-  it('agent 段：三件可以、兩件不准，範例路徑真的是這一頁的版本路徑', async () => {
-    openColor(BOSS);
-    await waitForGuide();
+  it('agent 段：三件可以、兩件不可以，指令是沒有 HTTP 的人話', async () => {
+    const { container } = renderGuide();
+    await open(container, 'agent');
 
-    expect(document.querySelectorAll('[data-guide-agent="allowed"] [data-guide-ability]').length).toBe(
-      3,
+    const allowed = [...container.querySelectorAll('[data-guide-agent="allowed"] [data-guide-ability]')].map(
+      (node) => node.getAttribute('data-guide-ability'),
     );
-    expect(document.querySelectorAll('[data-guide-agent="blocked"] [data-guide-ability]').length).toBe(
-      2,
+    const blocked = [...container.querySelectorAll('[data-guide-agent="blocked"] [data-guide-ability]')].map(
+      (node) => node.getAttribute('data-guide-ability'),
     );
 
-    const example = document.querySelector('[data-guide-agent-example]')?.textContent ?? '';
+    expect(allowed.sort()).toEqual(['read', 'readPolicy', 'write']);
+    expect(blocked.sort()).toEqual(['noDelete', 'noPolicy']);
 
-    expect(example).toContain('POST /api/brands/{brandId}/pages/color/versions');
-    expect(example).toContain('content');
+    const instruction = container.querySelector('[data-guide-instruction]')?.textContent ?? '';
+
+    expect(instruction).toContain('Moonic 滿月堂');
+    expect(instruction).not.toContain('/api/');
+    expect(instruction).not.toContain('POST');
   });
 
-  it('收起之後三段一齊消失，再按一次回來', async () => {
-    openColor(BOSS);
-    await waitForGuide();
+  it('收起之後那一段的內容消失，再按一次回來', async () => {
+    const { container } = renderGuide();
+    await open(container, 'state');
 
-    const user = userEvent.setup();
-    await user.click(document.querySelector('[data-guide-toggle]') as HTMLElement);
+    expect(container.querySelector('[data-guide-current]')).not.toBeNull();
 
-    expect(document.querySelector('[data-guide-section="state"]')).toBeNull();
+    await open(container, 'state');
 
-    await user.click(document.querySelector('[data-guide-toggle]') as HTMLElement);
+    expect(container.querySelector('[data-guide-current]')).toBeNull();
+  });
 
-    expect(document.querySelector('[data-guide-section="state"]')).not.toBeNull();
+  it('策略段永遠有一句「要改標準，到 Boss Portal 的策略」', async () => {
+    const { container } = renderGuide();
+    await open(container, 'policy');
+
+    expect(container.querySelector('[data-guide-policy-portal]')?.textContent).toContain(
+      'Boss Portal',
+    );
+  });
+
+  it('頁名不是原樣印出鍵', () => {
+    renderGuide({ pageKey: 'image', current: null });
+
+    expect(screen.queryByText('image')).toBeNull();
   });
 });
