@@ -250,11 +250,16 @@ export async function brandExists(db: Pool, brandId: string): Promise<boolean> {
 }
 
 /**
- * 建立五個固定頁（如果還沒有）。
+ * 建立八個固定頁（如果還沒有）。
  *
  * 為什麼是「有就跳過」而不是在開品牌時一併建：品牌可以早在這個功能之前
  * 存在（#19 已經可以開品牌）。與其寫一次 backfill，不如每次讀之前確保 ——
  * 沒有那一列就建，有的話 `on conflict do nothing`，成本是一個 index lookup。
+ *
+ * **它補不到舊品牌的次序。** `do nothing` 令它永遠不會改已寫死的 `sort_order`；
+ * 由五頁變八頁那一次（0017）漏了 backfill，舊品牌因此停在舊次序（logo 20／
+ * tone 50），與新環境不一致。補次序的是 `0020_brand_fixed_pages_backfill.sql`，
+ * 只在 migration 跑一次 —— 這裡仍然保持唯讀語意，不要改成 `do update`。
  *
  * `where deleted_at is null` 一定要寫：唯一索引是部分的，衝突推論要對上同一個
  * 條件，否則 Postgres 會說找不到可以推論的索引。
@@ -869,7 +874,7 @@ export async function renamePage(
 export type DeletePageResult =
   | { status: 'deleted'; key: string; name: string; versions: number }
   | { status: 'not_found' }
-  /** 五個固定頁是網址的一部分，不可以刪（#32）。 */
+  /** 固定頁是網址的一部分，不可以刪（#32）。 */
   | { status: 'fixed'; key: string; name: string }
   /** 任何一版被已出街成品釘住：講明釘在哪一件（#32 第 10 點）。 */
   | { status: 'pinned'; key: string; name: string; labels: string[] };

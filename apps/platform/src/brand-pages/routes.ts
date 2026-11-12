@@ -62,8 +62,11 @@ type EditorParams = { brandId: string; userId: string };
 
 export function registerBrandPages(app: FastifyInstance, deps: BrandPagesDeps): void {
   /**
-   * 讀之前先確保五個固定頁存在。品牌可以在這個功能之前就開好（#19），
+   * 讀之前先確保八個固定頁存在。品牌可以在這個功能之前就開好（#19），
    * 沒有那一列就建 —— 不是 backfill 腳本，而是每次讀都便宜地對一次。
+   *
+   * 次序不歸這裡管：舊品牌的 `sort_order` 由
+   * `0020_brand_fixed_pages_backfill.sql` 對齊一次。
    */
   async function resolvePage(brandId: string, key: string) {
     if (!isUuid(brandId)) {
@@ -164,7 +167,7 @@ export function registerBrandPages(app: FastifyInstance, deps: BrandPagesDeps): 
       return reply.code(409).send({
         error: 'page_key_reserved',
         key: outcome.key,
-        message: `${outcome.key} 是五個固定頁之一，不可以用來做自定義頁。`,
+        message: `${outcome.key} 是固定頁之一，不可以用來做自定義頁。`,
       });
     }
 
@@ -233,7 +236,7 @@ export function registerBrandPages(app: FastifyInstance, deps: BrandPagesDeps): 
   );
 
   /**
-   * 軟刪除自定義頁。五個固定頁拒絕（它們是網址的一部分）；任何一版被成品釘住
+   * 軟刪除自定義頁。固定頁拒絕（它們是網址的一部分）；任何一版被成品釘住
    * 也拒絕，並講明釘在哪一件 —— 不是把頁刪掉令成品指向空的。
    */
   app.delete(
@@ -262,7 +265,7 @@ export function registerBrandPages(app: FastifyInstance, deps: BrandPagesDeps): 
         return reply.code(409).send({
           error: 'page_is_fixed',
           key,
-          message: `${outcome.name}是五個固定頁之一，網址的一部分，不可以刪。`,
+          message: `${outcome.name}是固定頁之一，網址的一部分，不可以刪。`,
         });
       }
 
