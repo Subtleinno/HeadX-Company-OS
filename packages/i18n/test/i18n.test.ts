@@ -146,6 +146,10 @@ describe('字串表', () => {
       'brand.gap.existing',
       'brand.gap.meta',
       'brand.gap.dialogLead',
+      // #59：摘要條的三個數字是算出來的，不是寫死的。
+      'brand.check.pass',
+      'brand.check.fail',
+      'brand.check.undetermined',
     ]);
   });
 });

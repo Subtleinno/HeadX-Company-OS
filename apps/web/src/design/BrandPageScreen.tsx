@@ -18,6 +18,8 @@ import { introInText } from './brandHome';
 import { BrandLogoEditor } from './BrandLogoEditor';
 import { BrandGapDialog } from './BrandGapDialog';
 import { BrandNeedsRail } from './BrandNeedsRail';
+import { BrandCheckBanner, BrandCheckBar } from './BrandCheckBar';
+import { useBrandCheck } from './useBrandCheck';
 import { BrandPageGuide } from './BrandPageGuide';
 import { BrandToneEditor } from './BrandToneEditor';
 import { BrandTypeEditor } from './BrandTypeEditor';
@@ -211,6 +213,11 @@ export function BrandPageScreen({
   const gaps = useBrandGaps(brandId, null);
   const [gapDialog, setGapDialog] = useState(false);
   const pageGaps = gaps.items.filter((item) => item.pageKey === pageKey);
+  /**
+   * 驗證規則（#59）：讀現行版本跑一次。不是存下來的狀態 —— 儲存完會再跑，
+   * 所以「上次檢查說合格」這種東西不存在。
+   */
+  const check = useBrandCheck(brandId, pageKey);
 
   /**
    * 讀這一頁。
@@ -295,6 +302,8 @@ export function BrandPageScreen({
 
     setNotice(t('brand.page.saved', { no: result.data.version.versionNo }));
     await load(true);
+    // 儲存之後即刻再檢查：檢查讀的是現行版本，不重跑就會顯示上一個版本的結果。
+    check.reload();
 
     return result.data.version.versionNo;
   }
@@ -324,6 +333,7 @@ export function BrandPageScreen({
       }),
     );
     await load(true);
+    check.reload();
   }
 
   async function handleDelete(version: BrandPageVersionSummary): Promise<void> {
@@ -556,6 +566,16 @@ export function BrandPageScreen({
           {error}
         </p>
       )}
+
+      {/* 檢查（#59）：摘要條在內容之前，不通過的橫幅緊貼內容上方。
+          只報告，不阻止儲存 —— 儲存是老闆與設計師的決定。 */}
+      <BrandCheckBar
+        check={check}
+        onOpenGaps={() => {
+          setGapDialog(true);
+        }}
+      />
+      <BrandCheckBanner check={check} />
 
       {/* 色彩（#35）、字體（#38）、標誌（#36）用表，不用自由文字。三者共用
           同一個 draft 與同一個儲存鍵：在這裡分岔而不是另開一個畫面，版本

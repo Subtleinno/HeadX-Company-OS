@@ -1595,6 +1595,25 @@ export const messages = {
   'brand.gap.needNone': '未建立',
   'brand.gap.close': '關閉',
   'brand.gap.noneYet': '尚未建立 Need。',
+  // #59 驗證規則：摘要條、不通過橫幅、明細。三態各有自己的叫法 ——
+  // 「無法判斷」不可以寫成「待補」，它不是一種缺，是一個未能量到的狀態。
+  'brand.check.pass': '通過 {count}',
+  'brand.check.fail': '不通過 {count}',
+  'brand.check.undetermined': '無法判斷 {count}',
+  'brand.check.title': '規則檢查',
+  'brand.check.details': '查看明細',
+  'brand.check.hideDetails': '收起明細',
+  'brand.check.state.pass': '通過',
+  'brand.check.state.fail': '不通過',
+  'brand.check.state.undetermined': '無法判斷',
+  'brand.check.fix': '怎樣改',
+  'brand.check.toGap': '去缺口',
+  'brand.check.loading': '正在檢查…',
+  'brand.check.failed': '檢查未跑到；這不代表合格。',
+  'brand.check.retry': '再檢查',
+  'brand.check.customNone': '這一頁沒有可以機械檢查的規則。',
+  'brand.check.bannerTag': '不通過',
+  'brand.check.reason': '檢查只報告，不阻止儲存。',
 } as const;
 
 export type MessageKey = keyof typeof messages;

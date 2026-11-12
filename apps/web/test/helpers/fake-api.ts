@@ -93,7 +93,8 @@ export type FakeHandlers = Partial<
     | 'policy'
     | 'policySave'
     | 'brandGaps'
-    | 'brandGapNeed',
+    | 'brandGapNeed'
+    | 'brandCheck',
     Handler
   >
 >;
@@ -339,6 +340,11 @@ function routeKey(path: string, method: string): keyof FakeHandlers | null {
     return method === 'GET' ? 'brandGaps' : null;
   }
 
+  // 驗證規則（issue #59）：POST，因為它要能檢查一份未儲存的文件。
+  if (/\/brands\/[^/]+\/check$/.test(bare)) {
+    return method === 'POST' ? 'brandCheck' : null;
+  }
+
   // ── 品牌與「我上次做緊邊個品牌」（issue #15）。
   // `/me/brand-focus` 要放喺 `/me` 之前配對：兩者都係 GET。
   if (bare.endsWith('/me/brand-focus')) {
@@ -458,6 +464,17 @@ export function installFakeApi(handlers: FakeHandlers): FakeApi {
         // 令每一個舊測試都要補一個 handler —— 那些測試驗的是別的東西。
         if (key === 'brandGaps') {
           return jsonResponse(200, { items: [], counts: { total: 0, file: 0, judgement: 0, open: 0 } });
+        }
+
+        // 檢查（#59）同理：每一頁都會跑一次。未有準備就回「沒有規則」那一組，
+        // 摘要條因此不出現 —— 舊測試驗的是別的東西，不應該被一條新橫條影響。
+        if (key === 'brandCheck') {
+          return jsonResponse(200, {
+            items: [],
+            summary: { pass: 0, fail: 0, undetermined: 0 },
+            headline: null,
+            pageKey: null,
+          });
         }
 
         throw new Error(`測試沒有為 ${key} 準備回應`);

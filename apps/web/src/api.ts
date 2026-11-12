@@ -1065,6 +1065,35 @@ export function createGapNeed(
   );
 }
 
+/** 一條檢查結果（#59）。三態：通過、不通過、無法判斷。缺資料回「無法判斷」，不是通過。 */
+export type BrandCheckItem = {
+  ruleId: string;
+  state: 'pass' | 'fail' | 'undetermined';
+  location: string;
+  detail: string;
+  fix: string;
+};
+
+export type BrandCheckReport = {
+  items: BrandCheckItem[];
+  summary: { pass: number; fail: number; undetermined: number };
+  headline: BrandCheckItem | null;
+  pageKey: string | null;
+};
+
+/**
+ * 跑檢查。`pageKey` 給定時只回那一頁的規則；自定義頁回空的一組（沒有專屬規則）。
+ *
+ * 用 POST 是因為它要能檢查一份未儲存的文件（`document`）—— 但前端只檢查現行
+ * 版本，帶一份草稿去檢查會令人以為草稿已經合規。
+ */
+export function runBrandCheck(brandId: string, pageKey?: string): Promise<ApiResult<BrandCheckReport>> {
+  return request<BrandCheckReport>(`/api/brands/${encodeURIComponent(brandId)}/check`, {
+    method: 'POST',
+    body: JSON.stringify(pageKey === undefined ? {} : { pageKey }),
+  });
+}
+
 /**
  * 這個品牌的頁清單，以及「我是不是可以改這個品牌的頁」。
  *
