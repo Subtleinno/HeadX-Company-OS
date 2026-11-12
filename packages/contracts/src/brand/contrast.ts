@@ -41,6 +41,16 @@ export function hexToRgb(input: string): Rgb | null {
   return { r, g, b };
 }
 
+/**
+ * 策略明講的對比下限：內文 4.5:1、大字 3:1。
+ *
+ * 寫在這裡而不是各頁各寫一次：checker（後端）、色彩頁（前端）、tokens 的
+ * 說明都用同一組數字。三個地方各寫一次，就會出現「檢查用 4.5、畫面寫 4.0」
+ * 這種沒有人會發現的分歧。
+ */
+export const BODY_FLOOR = 4.5;
+export const LARGE_FLOOR = 3;
+
 /** 是不是一個讀得明的色值。空字串、顏色名、函式寫法（`rgb`／`hsl`）一律不是。 */
 export function isHex(input: string): boolean {
   return hexToRgb(input) !== null;

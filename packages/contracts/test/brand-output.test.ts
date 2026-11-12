@@ -254,3 +254,116 @@ describe('兩個品牌的平台頁', () => {
     expect(b.indexOf('先做人，後做圖。')).toBeGreaterThan(b.indexOf('為誰'));
   });
 });
+
+/**
+ * 兩個品牌的色彩頁（issue #62 的驗收）：同一套 renderer，出來的頁要**實質不同**。
+ *
+ * 差異不是靠多一個模板，是靠兩份資料：立場句不同、用色順序不同、比例的重點
+ * 不同。這裡斷言三項，因為驗收寫明「至少兩項」—— 一項可以只是換了顏色。
+ */
+describe('兩個品牌的色彩頁', () => {
+  function colourPage(options: {
+    stance: string;
+    order: string;
+    roles: { id: string; group: 'brand' | 'reading'; hex: string }[];
+    focusRole: string;
+  }): ComposedPage {
+    const payload = {
+      stance: options.stance,
+      roles: options.roles.map((role) => ({
+        id: role.id,
+        group: role.group,
+        name: '',
+        hex: role.hex,
+        cmyk: '',
+        dark: '',
+        usage: '',
+        reason: '',
+      })),
+      order: { text: options.order, reason: '' },
+      ratios: [
+        { role: options.focusRole, percent: 70, reason: '' },
+        { role: 'paper', percent: 30, reason: '' },
+      ],
+      contrast_floor: 4.5,
+      large_floor: 3,
+      pairs: { allowed: [], forbidden: [] },
+      tints: [],
+    };
+
+    const schema = schemaForPage('color', 'fixed');
+
+    return {
+      key: 'color',
+      name: '色彩',
+      kind: 'fixed',
+      versionNo: 1,
+      policyVersionNo: 1,
+      document: {
+        ...emptyBrandDocument(schema.layout(schema.normalize(payload))),
+        stance: options.stance,
+        payload,
+      },
+    };
+  }
+
+  const moonic = colourPage({
+    stance: '先白，後墨，再藍。',
+    order: '紙佔七成，墨兩成，藍只點一下。',
+    roles: [
+      { id: 'paper', group: 'reading', hex: '#F6F3FE' },
+      { id: 'ink', group: 'reading', hex: '#1F1B2D' },
+      { id: 'brand.primary', group: 'brand', hex: '#0057FF' },
+    ],
+    focusRole: 'paper',
+  });
+
+  const other = colourPage({
+    stance: '先黑，後米，再赭。',
+    order: '黑是主角，米只是呼吸位。',
+    roles: [
+      { id: 'paper', group: 'reading', hex: '#EFE7D8' },
+      { id: 'ink', group: 'reading', hex: '#141210' },
+      { id: 'brand.primary', group: 'brand', hex: '#8C3B1E' },
+    ],
+    focusRole: 'ink',
+  });
+
+  function htmlOf(page: ComposedPage): string {
+    return renderBrandHtml(
+      { code: 'x', name: 'X', releaseNo: 1, pages: [page], gaps: [] },
+      { pageKey: 'color' },
+    );
+  }
+
+  it('立場句、用色順序、比例重點三項都不同', () => {
+    const a = htmlOf(moonic);
+    const b = htmlOf(other);
+
+    expect(a).not.toBe(b);
+    // 第一項：立場句。
+    expect(a).toContain('先白，後墨，再藍。');
+    expect(b).toContain('先黑，後米，再赭。');
+    // 第二項：用色順序（同一句 prompt 也會帶到）。
+    expect(a).toContain('紙佔七成，墨兩成，藍只點一下。');
+    expect(b).toContain('黑是主角，米只是呼吸位。');
+  });
+
+  it('tokens 帶的是自己的色，不是同一個模板換名字', () => {
+    const a = buildTokens({ code: 'a', name: 'A', releaseNo: 1, pages: [moonic], gaps: [] });
+    const b = buildTokens({ code: 'b', name: 'B', releaseNo: 1, pages: [other], gaps: [] });
+
+    expect(a.light['color']?.['brand.primary']?.$value).toBe('#0057FF');
+    expect(b.light['color']?.['brand.primary']?.$value).toBe('#8C3B1E');
+  });
+
+  it('prompt 包寫明各自的用色順序與比例', () => {
+    const a = buildPromptPack({ code: 'a', name: 'A', releaseNo: 1, pages: [moonic], gaps: [] });
+    const b = buildPromptPack({ code: 'b', name: 'B', releaseNo: 1, pages: [other], gaps: [] });
+
+    expect(a.markdown).toContain('紙佔七成');
+    expect(b.markdown).toContain('黑是主角');
+    expect(a.markdown).toContain('paper 70%');
+    expect(b.markdown).toContain('ink 70%');
+  });
+});

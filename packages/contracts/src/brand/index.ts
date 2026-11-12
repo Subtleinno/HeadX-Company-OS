@@ -70,6 +70,6 @@ export { buildPromptPack, buildTokens, renderBrandHtml } from './output.ts';
 
 export type { ComposedBrand, ComposedGap, ComposedPage, HtmlOptions, PromptPack, TokensOutput } from './output.ts';
 
-export { contrastRatio, hexToRgb, isHex, readableOn, relativeLuminance } from './contrast.ts';
+export { BODY_FLOOR, contrastRatio, hexToRgb, isHex, LARGE_FLOOR, readableOn, relativeLuminance } from './contrast.ts';
 
 export { documentFromStored } from './legacy.ts';

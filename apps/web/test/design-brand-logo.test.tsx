@@ -11,6 +11,7 @@ import {
   resetBrowserState,
   type FakeHandlers,
 } from './helpers/fake-api';
+import { colourDoc } from './fixtures/brandColour';
 
 /**
  * 標誌頁（issue #36）。
@@ -118,31 +119,23 @@ const DOC = {
 const DOC_TEXT = JSON.stringify(DOC);
 
 /** 色彩頁：四個模式各自對應的角色都有值。 */
-const COLOUR_DOC = JSON.stringify({
-  light: {
+const COLOUR_DOC = JSON.stringify(
+  colourDoc({
     'brand.primary': { hex: '#0057ff', cmyk: '100 90 0 0' },
     ink: { hex: '#191919', cmyk: '0 0 0 90' },
     paper: { hex: '#ffffff', cmyk: '0 0 0 0' },
-  },
-  dark: { surface: { hex: '#17171d', cmyk: '0 0 0 90' } },
-  ramps: {},
-  allowed: [],
-  denied: [],
-  logoRoles: ['brand.primary'],
-});
+    surface: { hex: '#17171d', cmyk: '0 0 0 90' },
+  }),
+);
 
 /** 色彩頁：單色正（ink）未定。 */
-const COLOUR_DOC_MISSING_INK = JSON.stringify({
-  light: {
+const COLOUR_DOC_MISSING_INK = JSON.stringify(
+  colourDoc({
     'brand.primary': { hex: '#0057ff', cmyk: '100 90 0 0' },
     paper: { hex: '#ffffff', cmyk: '0 0 0 0' },
-  },
-  dark: { surface: { hex: '#17171d', cmyk: '0 0 0 90' } },
-  ramps: {},
-  allowed: [],
-  denied: [],
-  logoRoles: [],
-});
+    surface: { hex: '#17171d', cmyk: '0 0 0 90' },
+  }),
+);
 
 const V1 = {
   id: 'v1',

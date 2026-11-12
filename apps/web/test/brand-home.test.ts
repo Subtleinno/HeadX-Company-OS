@@ -14,11 +14,11 @@ import {
   toneSample,
   typeRows,
 } from '../src/design/brandHome';
-import { EMPTY_DOC as EMPTY_COLOUR } from '../src/design/brandColors';
 import { emptyLogoDoc } from '../src/design/brandLogo';
 import { emptyToneDoc } from '../src/design/brandTone';
 import { emptyTypeDoc } from '../src/design/brandType';
 import type { BrandPageSummary } from '../src/api';
+import { colourDoc, withRoleHex } from './fixtures/brandColour';
 
 /**
  * 品牌主頁（issue #39）的純規則。
@@ -38,7 +38,15 @@ function page(overrides: Partial<BrandPageSummary> & { key: string }): BrandPage
     sortOrder: 10,
     // 分組由後端的固定頁表派生（#60）；測試只需要一個合法值。
     group: overrides.key === 'home' ? 'home' : overrides.key === 'examples' ? 'apply' : 'identity',
-    current: { id: 'v1', versionNo: 1, createdAt: '2026-11-11T10:00:00.000Z', note: null, preview: '', policyVersionNo: 1 },
+    current: {
+      id: 'v1',
+      versionNo: 1,
+      createdAt: '2026-11-11T10:00:00.000Z',
+      note: null,
+      preview: '',
+      policyVersionNo: 1,
+      changed: [],
+    },
     ...overrides,
   };
 }
@@ -54,14 +62,11 @@ const PAGES: BrandPageSummary[] = [
   page({ key: 'naming', name: '命名', kind: 'custom', sortOrder: 80 }),
 ];
 
-const COLOUR = {
-  ...EMPTY_COLOUR,
-  light: {
-    'brand.primary': { hex: '#0057ff', cmyk: '100 90 0 0' },
-    paper: { hex: '#ffffff', cmyk: '0 0 0 0' },
-  },
-  dark: { surface: { hex: '#17171d', cmyk: '0 0 0 90' } },
-};
+const COLOUR = colourDoc({
+  'brand.primary': { hex: '#0057ff', cmyk: '100 90 0 0' },
+  paper: { hex: '#ffffff', cmyk: '0 0 0 0' },
+  surface: { hex: '#17171d', cmyk: '0 0 0 90' },
+});
 
 const TYPE = {
   ...emptyTypeDoc(),
@@ -146,12 +151,18 @@ describe('色彩角色的可見樣本', () => {
   it('只畫色彩頁有 HEX 的角色，次序照角色表', () => {
     const swatches = colourSwatches(COLOUR, 'light');
 
-    expect(swatches.map((item) => item.role)).toEqual(['brand.primary', 'paper']);
+    expect(swatches.map((item) => item.role)).toEqual(['brand.primary', 'paper', 'surface']);
     expect(swatches[0]).toEqual({ role: 'brand.primary', hex: '#0057ff', cmyk: '100 90 0 0' });
   });
 
-  it('深色那套是另一組樣本，不會拿淺色的值充數', () => {
-    expect(colourSwatches(COLOUR, 'dark').map((item) => item.role)).toEqual(['surface']);
+  it('深色樣本：寫了深色值的用自己的，未寫的沿用淺色（與 tokens 一致）', () => {
+    const dark = colourSwatches(COLOUR, 'dark');
+
+    // 深色值寫明就用它：surface 不是拿淺色那個。
+    expect(dark.find((item) => item.role === 'surface')?.hex).toBe('#17171d');
+    // 未寫深色值的角色在 tokens 裡就是沿用淺色，所以樣本照樣畫同一個色 ——
+    // 畫面上見到的不會與 tokens 出來的東西不同。
+    expect(dark.find((item) => item.role === 'paper')?.hex).toBe('#ffffff');
   });
 
   it('沒有色彩頁就一個樣本都沒有，不畫假色', () => {
@@ -303,7 +314,7 @@ describe('缺什麼', () => {
   it('齊了就是零缺', () => {
     const gaps = homeGaps({
       doc: fullDoc,
-      colour: { ...COLOUR, light: { ...COLOUR.light, ink: { hex: '#111111', cmyk: '' } } },
+      colour: withRoleHex(COLOUR, 'ink', '#111111'),
       type: {
         ...TYPE,
         roles: {

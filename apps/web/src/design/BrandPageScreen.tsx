@@ -33,6 +33,7 @@ import { BrandTypeEditor } from './BrandTypeEditor';
 import { formatTime } from './brandGuide';
 import { useBrandGaps } from './useBrandGaps';
 import { hexesInText } from './brandColors';
+import { describeChanges } from './brandDiff';
 import { assetNamesInText } from './brandLogo';
 import { leadingLineInText } from './brandCustom';
 import { traitNamesInText } from './brandTone';
@@ -792,6 +793,24 @@ export function BrandPageScreen({
                       <p className="brand-page__preview">{version.preview}</p>
                     )
                   )}
+
+                  {/* 版本差異（#62）：講「改了哪一欄」，最多三句。
+                      第一版沒有上一版可以比，所以講「第一版」而不是「改了 0 項」。 */}
+                  <div className="brand-page__changed" data-brand-page-changed={version.versionNo}>
+                    <span className="brand-page__changedTitle">{t('brand.page.diff.title')}</span>
+
+                    {(version.changed ?? []).length === 0 ? (
+                      <span className="brand-page__changedNone">{t('brand.page.diff.none')}</span>
+                    ) : (
+                      <ul className="brand-page__changedList">
+                        {describeChanges(pageKey, version.changed ?? [], 3, page.kind).map((line) => (
+                          <li key={line} data-brand-page-changed-item>
+                            {line}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
 
                   {/* 這一版是照第幾版策略做的（#34）。未記錄就講未記錄。 */}
                   <p className="brand-page__policy" data-brand-page-policy={version.versionNo}>

@@ -1,196 +1,295 @@
 import { describe, expect, it } from 'vitest';
+import { colourDoc, fullColourDoc } from './fixtures/brandColour';
 import {
-  COLOR_ROLES,
   EMPTY_DOC,
-  contrastRatio,
-  hexToRgb,
+  MUST_HAVE_ROLES,
+  gapCountOf,
+  hasAnyValue,
   hexesInText,
-  isColorRole,
-  logoEligibleRoles,
-  missingMustHave,
   missingRoles,
-  normalizeHex,
+  normalizeHexInput,
   parseColorDoc,
   parsePair,
+  patchRole,
+  ratioTotal,
+  readPair,
   rgbChannels,
+  roleEntry,
   serializeColorDoc,
-  type ColorDoc,
+  suggestAlternative,
+  undecidedRoles,
+  valuesOf,
 } from '../src/design/brandColors';
 
 /**
- * 色彩頁的规则（issue #35）。
+ * 色彩頁的資料層（issue #62，取代 #35）。
  *
- * 畫面的測試在 `design-brand-colors.test.tsx`；這一支只管**算得對不對**：
- * 角色名是不是真正寫死、缺的判斷、對比門檻、以及「舊的自由文字不可以假裝
- * 成全部缺」。這些規則如果只寫在畫面裡，下一個引用角色名的頁面（標誌、字體）
- * 就要各自再實作一次，然後三邊慢慢分開。
+ * 這一支只管「表對不對」：讀得返、寫得出、缺的就是缺、不達標旁邊有可用的
+ * 替代值。畫面怎樣畫在 `design-brand-colors.test.tsx`。
+ *
+ * 要證明四件事，四件都可以逐個數：
+ *   1. 形狀認得就是認得 —— 舊形狀（`light`／`dark` 兩張表）不是新表，講讀不到。
+ *   2. 缺的四個角色數得出來，而且要與 `color.r1` 一字不差。
+ *   3. 對比三態：過、不過、算不到。算不到不是過。
+ *   4. 不達標時給得出替代值，而且替代值真的過線 —— 不是「建議」了事。
  */
 
-const DOC: ColorDoc = {
-  light: {
-    'brand.primary': { hex: '#0057ff', cmyk: '100 90 0 0' },
-    ink: { hex: '#000000', cmyk: '0 0 0 100' },
-    paper: { hex: '#ffffff', cmyk: '0 0 0 0' },
-  },
-  dark: {
-    ink: { hex: '#f5f5f7', cmyk: '' },
-    surface: { hex: '#17171d', cmyk: '' },
-  },
-  ramps: {},
-  allowed: [],
-  denied: [],
-  logoRoles: [],
-};
-
-describe('角色名', () => {
-  it('九個角色寫死，分三組，ink 與 paper 必須存在', () => {
-    expect(COLOR_ROLES.map((role) => role.key)).toEqual([
-      'brand.primary',
-      'brand.secondary',
-      'ink',
-      'paper',
-      'muted',
-      'surface',
-      'success',
-      'warning',
-      'danger',
-    ]);
-
-    const groups = new Set(COLOR_ROLES.map((role) => role.group));
-    expect([...groups].sort()).toEqual(['brand', 'function', 'reading']);
-
-    expect(isColorRole('ink')).toBe(true);
-    expect(isColorRole('paper')).toBe(true);
-    // 同義角色不存在：不可以用「主色」代替 brand.primary。
-    expect(isColorRole('主色')).toBe(false);
-    expect(isColorRole('light.ink')).toBe(false);
+describe('讀一份色彩表', () => {
+  it('空白就是空白，不是壞掉', () => {
+    expect(parseColorDoc('')).toEqual({ kind: 'empty' });
+    expect(parseColorDoc('   ')).toEqual({ kind: 'empty' });
   });
 
-  it('功能色不可以進標誌：可用清單裡一個都沒有', () => {
-    const eligible = logoEligibleRoles().map((role) => role.key);
-
-    expect(eligible).toContain('brand.primary');
-    expect(eligible).toContain('ink');
-    expect(eligible).not.toContain('success');
-    expect(eligible).not.toContain('warning');
-  });
-});
-
-describe('缺的判斷', () => {
-  it('淺色逐個列出未填的角色，而且按角色表的次序', () => {
-    expect(missingRoles(DOC, 'light')).toEqual([
-      'brand.secondary',
-      'muted',
-      'success',
-      'warning',
-      'danger',
-    ]);
-    // 淺色不要求 surface，所以它不會出現在這一串裡。
-    expect(missingRoles(DOC, 'light')).not.toContain('surface');
-  });
-
-  it('表面上看深色：有值的不是缺，沒有的才是', () => {
-    // dark 只有 ink 與 surface：所以缺的是其他，不是 surface。
-    expect(missingRoles(DOC, 'dark')).toContain('paper');
-    expect(missingRoles(DOC, 'dark')).toContain('brand.primary');
-    expect(missingRoles(DOC, 'dark')).not.toContain('surface');
-    expect(missingRoles(DOC, 'dark')).not.toContain('ink');
-  });
-
-  it('「最少要有」只算策略明講那幾個：brand.primary、ink、paper、深色 surface', () => {
-    // 淺色三個（brand.primary、ink、paper）都有，所以一個都不缺；
-    // brand.secondary 缺不是「最少要有」的問題 —— 不應該在這裡叫。
-    expect(missingMustHave(DOC, 'light')).toEqual([]);
-    expect(missingMustHave(DOC, 'dark')).toEqual(['brand.primary', 'paper']);
-  });
-});
-
-describe('讀與寫', () => {
-  it('空內容是 empty，不是「全部缺」', () => {
-    expect(parseColorDoc('').kind).toBe('empty');
-    expect(parseColorDoc('   ').kind).toBe('empty');
-  });
-
-  it('舊的自由文字讀不到就是讀不到', () => {
-    expect(parseColorDoc('品牌主色係藍色。').kind).toBe('invalid');
-  });
-
-  it('認得形狀的 JSON 才算色彩表', () => {
-    expect(parseColorDoc('{"note":"藍色"}').kind).toBe('invalid');
-
-    const parsed = parseColorDoc(serializeColorDoc(DOC));
-    expect(parsed.kind).toBe('ok');
-  });
-
-  it('寫出去再讀回來是同一個表', () => {
-    const parsed = parseColorDoc(serializeColorDoc(DOC));
-
-    if (parsed.kind !== 'ok') {
-      throw new Error('應該讀得返');
-    }
-
-    expect(parsed.doc).toEqual(DOC);
-  });
-
-  it('未知角色與功能色都不會留在標誌清單裡', () => {
+  it('新形狀讀得返：角色、順序、比例、配對、深淺', () => {
+    const doc = colourDoc({ ink: { hex: '#111111' } });
     const parsed = parseColorDoc(
-      JSON.stringify({ light: {}, logoRoles: ['ink', 'warning', '主色', 'not-a-role'] }),
+      JSON.stringify({ ...doc, order: { text: '先紙後墨', reason: '白是底' } }),
     );
 
-    if (parsed.kind !== 'ok') {
-      throw new Error('應該讀得返');
-    }
-
-    expect(parsed.doc.logoRoles).toEqual(['ink']);
-  });
-
-  it('只有 CMYK 的角色留得住（先打印刷值再打 HEX 是正常次序）', () => {
-    const parsed = parseColorDoc(JSON.stringify({ light: { ink: { hex: '', cmyk: '0 0 0 100' } } }));
+    expect(parsed.kind).toBe('ok');
 
     if (parsed.kind !== 'ok') {
-      throw new Error('應該讀得返');
+      return;
     }
 
-    expect(parsed.doc.light.ink).toEqual({ hex: '', cmyk: '0 0 0 100' });
+    expect(parsed.doc.roles).toHaveLength(1);
+    expect(parsed.doc.roles[0]?.id).toBe('ink');
+    expect(parsed.doc.order.text).toBe('先紙後墨');
+    expect(parsed.doc.contrast_floor).toBe(4.5);
   });
 
-  it('全空的表寫出來是空字串（不佔一版）', () => {
-    expect(serializeColorDoc(EMPTY_DOC)).toContain('"light"');
-    // 空表本身仍然序列化得到，但畫面那層會轉成空字串交上去；
-    // 這裡只確認空表是合法形狀，不會在讀回來時變成 invalid。
-    expect(parseColorDoc(serializeColorDoc(EMPTY_DOC)).kind).toBe('ok');
+  it('舊形狀（light／dark 兩張表）不是新表：講讀不到，不畫九行假的缺', () => {
+    const old = JSON.stringify({ light: { ink: { hex: '#111111' } }, dark: {}, ramps: {} });
+
+    expect(parseColorDoc(old)).toEqual({ kind: 'invalid' });
+  });
+
+  it('任意 JSON 與壞 JSON 都講讀不到', () => {
+    expect(parseColorDoc('品牌主色係藍色。')).toEqual({ kind: 'invalid' });
+    expect(parseColorDoc('{"note":"藍色"}')).toEqual({ kind: 'invalid' });
+    expect(parseColorDoc('[]')).toEqual({ kind: 'invalid' });
+  });
+
+  it('存出來是單行：版本預覽只有 160 字元', () => {
+    const text = serializeColorDoc(fullColourDoc());
+
+    expect(text).not.toContain('\n');
+    expect(JSON.parse(text)).toMatchObject({ contrast_floor: 4.5, large_floor: 3 });
+  });
+
+  it('全空不佔一版', () => {
+    expect(hasAnyValue(EMPTY_DOC)).toBe(false);
+    expect(hasAnyValue(fullColourDoc())).toBe(true);
+    // 只有 CMYK 沒有 HEX：仍然是未填，不當成有內容。
+    expect(hasAnyValue(colourDoc({ ink: { hex: '' } }))).toBe(false);
   });
 });
 
-describe('色值計算', () => {
-  it('三碼展開成六碼，不是 hex 就回 null', () => {
-    expect(normalizeHex('#abc')).toBe('#aabbcc');
-    expect(normalizeHex(' #ABC ')).toBe('#aabbcc');
-    expect(normalizeHex('#12345')).toBeNull();
-    expect(normalizeHex('blue')).toBeNull();
+describe('角色', () => {
+  it('缺的四個就是 color.r1 的四個', () => {
+    expect(MUST_HAVE_ROLES).toEqual(['brand.primary', 'ink', 'paper', 'surface']);
+    expect(missingRoles(EMPTY_DOC)).toEqual(['brand.primary', 'ink', 'paper', 'surface']);
   });
 
-  it('RGB 三個數字由 HEX 算出來', () => {
+  it('有 HEX 才算有值：只有 CMYK 仍然是缺', () => {
+    const doc = colourDoc({ ink: { hex: '', cmyk: '0 0 0 90' } });
+
+    expect(missingRoles(doc)).toContain('ink');
+  });
+
+  it('未定不是缺：功能色與次要色只算未決定', () => {
+    const doc = fullColourDoc();
+
+    expect(missingRoles(doc)).toEqual([]);
+    expect(undecidedRoles(doc)).toEqual([
+      'brand.secondary',
+      'muted',
+      'success',
+      'warning',
+      'danger',
+    ]);
+  });
+
+  it('改一格不影響其他角色', () => {
+    const doc = fullColourDoc();
+    const next = patchRole(doc, 'ink', { hex: '#222222' });
+
+    expect(roleEntry(next, 'ink').hex).toBe('#222222');
+    expect(roleEntry(next, 'paper').hex).toBe('#ffffff');
+    expect(next.roles).toHaveLength(doc.roles.length);
+  });
+
+  it('清空所有欄位就刪走那一行（不留空殼）', () => {
+    const doc = fullColourDoc();
+    const next = patchRole(doc, 'ink', { hex: '', cmyk: '' });
+
+    expect(next.roles.some((role) => role.id === 'ink')).toBe(false);
+    expect(missingRoles(next)).toContain('ink');
+  });
+
+  it('深色值未填就沿用淺色：與 tokens 的做法一致', () => {
+    const doc = colourDoc({
+      ink: { hex: '#111111' },
+      surface: { hex: '#222222', dark: '#333333' },
+    });
+
+    expect(valuesOf(doc, 'light')['ink']?.hex).toBe('#111111');
+    expect(valuesOf(doc, 'dark')['ink']?.hex).toBe('#111111');
+    expect(valuesOf(doc, 'dark')['surface']?.hex).toBe('#333333');
+  });
+
+  it('RGB 由 HEX 算，三碼先展開', () => {
     expect(rgbChannels('#0057ff')).toBe('0 87 255');
-    expect(hexToRgb('#abc')).toEqual({ r: 170, g: 187, b: 204 });
-    expect(rgbChannels('not-a-color')).toBeNull();
+    expect(normalizeHexInput('#abc')).toBe('#aabbcc');
+    expect(normalizeHexInput('藍色')).toBeNull();
+    expect(rgbChannels('')).toBeNull();
+  });
+});
+
+describe('對比', () => {
+  it('過、不過、算不到是三件事', () => {
+    const doc = colourDoc({
+      ink: { hex: '#000000' },
+      paper: { hex: '#ffffff' },
+      muted: { hex: '#999999' },
+      surface: { hex: '#222222' },
+    });
+
+    expect(readPair(doc, { fg: 'ink', bg: 'paper', use: 'body' }).state).toBe('pass');
+    expect(readPair(doc, { fg: 'muted', bg: 'paper', use: 'body' }).state).toBe('fail');
+    // 算不到不是過：沒有色值就沒有比值。
+    expect(readPair(doc, { fg: 'surface', bg: 'warning' }).ratio).toBeNull();
+    expect(readPair(doc, { fg: 'not-a-role', bg: 'paper' }).state).toBe('unknown');
   });
 
-  it('對比：黑白是 21，門檻 4.5 與 3', () => {
-    expect(contrastRatio('#000000', '#ffffff')).toBeCloseTo(21, 5);
-    expect(contrastRatio('#ffffff', '#ffffff')).toBeCloseTo(1, 5);
-    expect(contrastRatio('nope', '#ffffff')).toBeNull();
+  it('內文與大字用不同下限', () => {
+    const doc = colourDoc({ ink: { hex: '#949494' }, paper: { hex: '#ffffff' } });
+    const body = readPair(doc, { fg: 'ink', bg: 'paper', use: 'body' });
+    const large = readPair(doc, { fg: 'ink', bg: 'paper', use: 'large' });
+
+    expect(body.state).toBe('fail');
+    expect(large.state).toBe('pass');
+    expect(large.floor).toBe(3);
   });
 
-  it('組合寫法：前景 on 底色', () => {
+  it('下限可以調高：同一組色由過變不過', () => {
+    const doc = {
+      ...colourDoc({ ink: { hex: '#767676' }, paper: { hex: '#ffffff' } }),
+      contrast_floor: 6,
+    };
+
+    expect(readPair(doc, { fg: 'ink', bg: 'paper', use: 'body' }).state).toBe('fail');
+  });
+});
+
+describe('替代色', () => {
+  it('先找同組的現有角色，取剛好夠用的那個', () => {
+    const doc = colourDoc({
+      'brand.primary': { hex: '#dddddd' },
+      'brand.secondary': { hex: '#444444' },
+      ink: { hex: '#000000' },
+      paper: { hex: '#ffffff' },
+      surface: { hex: '#000000' },
+    });
+    const alternative = suggestAlternative(doc, 'brand.primary', 'paper', 4.5);
+
+    expect(alternative?.role).toBe('brand.secondary');
+    expect(alternative?.ratio).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it('同組沒有替換就調自己的明度，留住色相', () => {
+    const doc = colourDoc({ 'brand.primary': { hex: '#c8d2ff' }, paper: { hex: '#ffffff' } });
+    const alternative = suggestAlternative(doc, 'brand.primary', 'paper', 4.5);
+
+    expect(alternative?.role).toBeNull();
+    expect(alternative?.hex).toMatch(/^#[0-9a-f]{6}$/);
+    expect(alternative?.ratio).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it('建議值真的過線：用來改角色之後，同一組就達標', () => {
+    const doc = colourDoc({
+      'brand.primary': { hex: '#c8d2ff' },
+      ink: { hex: '#111111' },
+      paper: { hex: '#ffffff' },
+      surface: { hex: '#000000' },
+    });
+    const alternative = suggestAlternative(doc, 'brand.primary', 'paper', 4.5);
+
+    expect(alternative).not.toBeNull();
+
+    const fixed = patchRole(doc, 'brand.primary', { hex: alternative?.hex ?? '' });
+
+    expect(readPair(fixed, { fg: 'brand.primary', bg: 'paper', use: 'body' }).state).toBe('pass');
+  });
+
+  it('底色都未有就計不到，回 null 而不是猜一個', () => {
+    const doc = colourDoc({ 'brand.primary': { hex: '#c8d2ff' } });
+
+    expect(suggestAlternative(doc, 'brand.primary', 'paper', 4.5)).toBeNull();
+  });
+
+  it('達標的那一組不給建議', () => {
+    const doc = fullColourDoc();
+
+    expect(readPair(doc, { fg: 'ink', bg: 'paper', use: 'body' }).alternative).toBeNull();
+  });
+});
+
+describe('比例與缺口', () => {
+  it('比例合計要 100；未填任何比例不算 0', () => {
+    expect(ratioTotal(EMPTY_DOC)).toBeNull();
+
+    const doc = {
+      ...EMPTY_DOC,
+      roles: fullColourDoc().roles,
+      pairs: {
+        allowed: [
+          { fg: 'ink', bg: 'paper', use: 'body' as const, reason: '' },
+          { fg: 'ink', bg: 'surface', use: 'large' as const, reason: '' },
+        ],
+        forbidden: [],
+      },
+      ratios: [
+        { role: 'paper', percent: 70, reason: '' },
+        { role: 'ink', percent: 30, reason: '' },
+      ],
+    };
+
+    expect(ratioTotal(doc)).toBe(100);
+    expect(gapCountOf(doc)).toBe(0);
+  });
+
+  it('缺口數只數有規定的：四個必要角色、兩種配對、比例', () => {
+    // 全空：四個角色 + 內文配對 + 大字配對 = 6（比例未填不算缺）。
+    expect(gapCountOf(EMPTY_DOC)).toBe(6);
+
+    const doc = {
+      ...fullColourDoc(),
+      ratios: [{ role: 'paper', percent: 60, reason: '' }],
+      pairs: {
+        allowed: [
+          { fg: 'ink', bg: 'paper', use: 'body' as const, reason: '' },
+          { fg: 'ink', bg: 'surface', use: 'large' as const, reason: '' },
+        ],
+        forbidden: [],
+      },
+    };
+
+    // 比例加起來不是 100。
+    expect(gapCountOf(doc)).toBe(1);
+  });
+});
+
+describe('其他', () => {
+  it('配對寫法解析', () => {
     expect(parsePair('ink on paper')).toEqual({ foreground: 'ink', background: 'paper' });
-    expect(parsePair('  ink   on   paper ')).toEqual({ foreground: 'ink', background: 'paper' });
-    expect(parsePair('ink/paper')).toBeNull();
-    expect(parsePair('')).toBeNull();
+    expect(parsePair('ink paper')).toBeNull();
   });
 
-  it('版本預覽只抽得到色值，抽不到就空', () => {
-    expect(hexesInText('{"light":{"ink":{"hex":"#111111","x":"#111111"')).toEqual(['#111111']);
-    expect(hexesInText('品牌主色係藍色')).toEqual([]);
+  it('版本預覽抽色點：抽到幾多個就畫幾個', () => {
+    expect(
+      hexesInText('{"roles":[{"hex":"#0057FF"},{"hex":"#0057ff"},{"hex":"#111111"}]}'),
+    ).toEqual(['#0057ff', '#111111']);
+    expect(hexesInText('沒有色')).toEqual([]);
   });
 });

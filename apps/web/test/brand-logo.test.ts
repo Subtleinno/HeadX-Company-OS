@@ -21,6 +21,7 @@ import {
   type LogoAsset,
   type LogoDoc,
 } from '../src/design/brandLogo';
+import { fullColourDoc, withoutRole } from './fixtures/brandColour';
 
 /**
  * 標誌頁的規則（issue #36）。畫面的測試在 `design-brand-logo.test.tsx`。
@@ -64,18 +65,7 @@ const DOC: LogoDoc = {
   misuse: ['不拉長、不壓扁'],
 };
 
-const COLOUR: ColorDoc = {
-  light: {
-    'brand.primary': { hex: '#0057ff', cmyk: '100 90 0 0' },
-    ink: { hex: '#191919', cmyk: '0 0 0 90' },
-    paper: { hex: '#ffffff', cmyk: '0 0 0 0' },
-  },
-  dark: { surface: { hex: '#17171d', cmyk: '0 0 0 90' } },
-  ramps: {},
-  allowed: [],
-  denied: [],
-  logoRoles: ['brand.primary'],
-};
+const COLOUR: ColorDoc = fullColourDoc();
 
 describe('五類資產', () => {
   it('只有五類：App icon 與 favicon 合起來一類，不是六類', () => {
@@ -190,26 +180,11 @@ describe('顏色模式只引用色彩頁', () => {
 
     expect(modeRoleValue(null, 'brand')).toBeNull();
 
-    const lightNoInk: ColorDoc['light'] = {
-      'brand.primary': { hex: '#0057ff', cmyk: '100 90 0 0' },
-      paper: { hex: '#ffffff', cmyk: '0 0 0 0' },
-    };
-
-    expect(modeRoleValue({ ...COLOUR, light: lightNoInk }, 'mono')).toBeNull();
-    // 只有 CMYK、沒有 HEX：螢幕上仍然是缺。
-    expect(modeRoleValue({ ...COLOUR, light: { ...COLOUR.light, ink: { hex: '', cmyk: '0 0 0 90' } } }, 'mono')).toBeNull();
+    expect(modeRoleValue(withoutRole(COLOUR, 'ink'), 'mono')).toBeNull();
   });
 
   it('色彩頁未定角色，那個模式算缺 —— 即使尺寸已經填齊', () => {
-    const noInk: ColorDoc = {
-      ...COLOUR,
-      light: {
-        'brand.primary': COLOUR.light['brand.primary']!,
-        paper: COLOUR.light['paper']!,
-      },
-    };
-
-    expect(logoGaps(DOC, noInk).modes).toEqual(['mono']);
+    expect(logoGaps(DOC, withoutRole(COLOUR, 'ink')).modes).toEqual(['mono']);
   });
 });
 

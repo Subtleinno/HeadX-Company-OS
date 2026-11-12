@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ColorDoc } from '../src/design/brandColors';
+import { fullColourDoc, withoutRole } from './fixtures/brandColour';
 import type { TypeDoc } from '../src/design/brandType';
 import type { ToneDoc } from '../src/design/brandTone';
 import {
@@ -30,18 +31,7 @@ const POLICY = `先判斷這頁是不是其實屬於標誌、色彩、字體或�
 
 不准發明新色、新字、新標誌。文字遵循語氣策略。完成後必須能被品牌主頁讀到。不夠具體就標成缺。`;
 
-const COLOUR: ColorDoc = {
-  light: {
-    'brand.primary': { hex: '#0057ff', cmyk: '100 90 0 0' },
-    ink: { hex: '#191919', cmyk: '0 0 0 90' },
-    paper: { hex: '#ffffff', cmyk: '0 0 0 0' },
-  },
-  dark: { surface: { hex: '#17171d', cmyk: '0 0 0 90' } },
-  ramps: {},
-  allowed: [],
-  denied: [],
-  logoRoles: ['brand.primary'],
-};
+const COLOUR: ColorDoc = fullColourDoc();
 
 const LATIN = {
   id: 'f-latin',
@@ -158,7 +148,7 @@ describe('引用既有角色', () => {
   it('色彩角色在色彩頁有值才算數，未定的逐個講', () => {
     expect(customGaps(ok).colorRoles).toEqual([]);
 
-    const noInk = { ...COLOUR, light: { ...COLOUR.light, paper: undefined } } as unknown as ColorDoc;
+    const noInk = withoutRole(COLOUR, 'paper');
 
     expect(customGaps({ ...ok, colour: noInk }).colorRoles).toEqual(['paper']);
     expect(customGaps({ ...ok, colour: null }).colorRoles).toEqual(['brand.primary', 'paper']);

@@ -11,6 +11,7 @@ import {
   resetBrowserState,
   type FakeHandlers,
 } from './helpers/fake-api';
+import { colourDoc } from './fixtures/brandColour';
 
 /**
  * 品牌主頁（issue #39）。
@@ -85,17 +86,12 @@ const HOME_DOC = {
   logoMode: 'brand',
 };
 
-const COLOUR_DOC = JSON.stringify({
-  light: {
+const COLOUR_DOC = JSON.stringify(
+  colourDoc({
     'brand.primary': { hex: '#0057ff', cmyk: '100 90 0 0' },
     paper: { hex: '#ffffff', cmyk: '0 0 0 0' },
-  },
-  dark: {},
-  ramps: {},
-  allowed: [],
-  denied: [],
-  logoRoles: ['brand.primary'],
-});
+  }),
+);
 
 const LOGO_DOC = JSON.stringify({
   assets: [{ id: 'a-1', kind: 'logo', name: '主標誌（橫式）', master: 'logo.svg', preview: '' }],

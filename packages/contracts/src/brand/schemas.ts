@@ -5,6 +5,7 @@ import type {
   BrandPayload,
   BrandSlot,
 } from './document.ts';
+import { BODY_FLOOR, LARGE_FLOOR } from './contrast.ts';
 
 /**
  * 每一頁的 payload 形狀（issue #57 定外殼，各頁 issue 定自己的欄位）。
@@ -476,8 +477,8 @@ const color: PageSchema = {
       roles: [],
       order: { text: '', reason: '' },
       ratios: [],
-      contrast_floor: 4.5,
-      large_floor: 3,
+      contrast_floor: BODY_FLOOR,
+      large_floor: LARGE_FLOOR,
       pairs: { allowed: [], forbidden: [] },
       tints: [],
     } satisfies ColorPayload;
@@ -507,8 +508,8 @@ const color: PageSchema = {
         const value = rec(item);
         return { role: str(value.role), percent: num(value.percent), reason: str(value.reason) };
       }),
-      contrast_floor: num(source.contrast_floor, 4.5),
-      large_floor: num(source.large_floor, 3),
+      contrast_floor: num(source.contrast_floor, BODY_FLOOR),
+      large_floor: num(source.large_floor, LARGE_FLOOR),
       pairs: {
         allowed: list(pairs.allowed).map((item) => {
           const value = rec(item);
