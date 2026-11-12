@@ -232,7 +232,7 @@ const FROZEN_ALL_SHA256 = '5b8a937e18088bbf027671c89802841ca4986834a7eac010291a7
  */
 // 2026-11-11（issue #30）：`staff.enable` 同 `staff.enable.*` 係新增鍵，唔屬
 // #161 要守嘅既有鍵；凍結值不變，只係明確排除新鍵。
-const LATER_KEY_PREFIXES = ['brand.page.', 'brand.color.', 'brand.type.', 'brand.logo.', 'brand.tone.', 'brand.custom.', 'files.', 'grant.detail.', 'boss.members.', 'staff.enable', 'boss.module.people', 'boss.page.people',
+const LATER_KEY_PREFIXES = ['brand.page.', 'brand.color.', 'brand.type.', 'brand.logo.', 'brand.tone.', 'brand.custom.', 'brand.home.', 'files.', 'grant.detail.', 'boss.members.', 'staff.enable', 'boss.module.people', 'boss.page.people',
   // 2026-11-12（issue #34）：品牌頁策略是新增的介面，不屬本檔要守的既有鍵。
   'boss.policy.', 'boss.module.policy', 'boss.page.brandPolicy',
   'gate.noDepartment.', 'gate.departmentClosed.', 'gate.signOut'];

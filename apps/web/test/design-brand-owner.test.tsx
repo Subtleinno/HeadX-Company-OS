@@ -72,6 +72,12 @@ function openDesign(user: typeof BOSS | typeof WAI, brands = BRANDS): FakeApi {
   return api;
 }
 
+function railItems(): string[] {
+  return Array.from(document.querySelectorAll('[data-frame-rail] .frame-sidebar__item')).map(
+    (node) => node.textContent ?? '',
+  );
+}
+
 afterEach(() => {
   cleanup();
   resetBrowserState();
@@ -94,9 +100,10 @@ describe('只有老闆可以開新品牌', () => {
   it('員工：沒有「新增品牌」入口，也沒有表單', async () => {
     const api = openDesign(WAI);
 
-    // 等頁清單畫出來，證明這一頁真的渲染了，不是仍在載入。
+    // 等左側的頁清單畫出來，證明這一頁真的渲染了，不是仍在載入。
+    // （#39 之後主頁有真內容，從前那個「仲未做好」的佔位不再是標記。）
     await waitFor(() => {
-      expect(document.querySelector('[data-brand-home-pending]')).not.toBeNull();
+      expect(railItems()).toContain('品牌主頁');
     });
 
     expect(screen.queryByRole('button', { name: '新增品牌' })).toBeNull();
@@ -110,7 +117,7 @@ describe('只有老闆可以開新品牌', () => {
     const api = openDesign(WAI);
 
     await waitFor(() => {
-      expect(document.querySelector('[data-brand-home-pending]')).not.toBeNull();
+      expect(railItems()).toContain('品牌主頁');
     });
 
     expect(api.calls.some((call) => call.path.endsWith('/brands') && call.method === 'GET')).toBe(

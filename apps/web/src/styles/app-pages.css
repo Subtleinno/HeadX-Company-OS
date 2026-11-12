@@ -2008,3 +2008,198 @@
   border-radius: 3px;
   border: 1px solid var(--hx-frame-border);
 }
+
+/* ── 品牌主頁（#39）─────────────────────────────────────── */
+
+/* 主頁是集大成：一段自己的字，其餘四塊都是讀回來的樣本。所以四塊共用同一
+   個「卡片」外形，讀的人一眼看得出邊幾塊是引用、邊一段是自己寫。 */
+.brand-home {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hx-space-4);
+}
+
+.brand-home__missing {
+  margin: 0;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+}
+
+.brand-home__missing--gap {
+  color: var(--hx-danger-text);
+}
+
+.brand-home__missingLead {
+  margin: 0;
+}
+
+.brand-home__missingList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 4px 0 0;
+  padding-left: 1.1em;
+}
+
+.brand-home__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hx-space-2);
+  padding: var(--hx-space-3) var(--hx-space-4);
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-md);
+  background: var(--hx-frame-surface);
+}
+
+.brand-home__textarea {
+  min-height: 72px;
+}
+
+.brand-home__gap {
+  margin-left: var(--hx-space-2);
+  color: var(--hx-danger-text);
+  font: var(--hx-frame-font-small);
+}
+
+/* 標誌的預設用法：一件資產＋一個角色＋兩個最小尺寸。 */
+.brand-home__logo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.brand-home__logoAsset {
+  margin: 0;
+  font: var(--hx-frame-font-ui);
+  font-weight: 600;
+  color: var(--hx-frame-ink);
+}
+
+.brand-home__logoMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+  margin: 0;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+}
+
+.brand-home__swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid var(--hx-frame-border);
+}
+
+.brand-home__roleValue {
+  font-family: var(--hx-font-mono);
+  font-size: 12px;
+  color: var(--hx-frame-secondary);
+}
+
+/* 色彩樣本：一排色塊，掃一眼就見到整個色盤。 */
+.brand-home__swatches {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--hx-space-2) var(--hx-space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.brand-home__swatchItem {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+}
+
+.brand-home__swatchChip {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  border-radius: var(--hx-radius-sm);
+  border: 1px solid var(--hx-frame-border);
+}
+
+.brand-home__swatchName {
+  font-family: var(--hx-font-mono);
+  font-size: 12px;
+}
+
+/* 字體樣本：左邊規格、右邊同一句排出來。 */
+.brand-home__types {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hx-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.brand-home__typeRow {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-bottom: var(--hx-space-3);
+  border-bottom: 1px solid var(--hx-frame-border);
+}
+
+.brand-home__typeRow:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.brand-home__typeHead {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+}
+
+.brand-home__typeMeta {
+  color: var(--hx-frame-muted);
+}
+
+.brand-home__typeSample {
+  color: var(--hx-frame-ink);
+  line-height: 1.4;
+}
+
+/* 語氣短例：一句真的會講出口的話，用引言排。 */
+.brand-home__tone {
+  margin: 0;
+  padding-left: var(--hx-space-3);
+  border-left: 2px solid var(--hx-frame-border);
+  font: var(--hx-frame-font-ui);
+  color: var(--hx-frame-ink);
+  line-height: 1.7;
+}
+
+/* 每一頁的入口：一條一行，缺的標在名字後面。 */
+.brand-home__pages {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 4px var(--hx-space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.brand-home__page {
+  display: flex;
+  align-items: baseline;
+  gap: var(--hx-space-2);
+  font: var(--hx-frame-font-small);
+}
+
+.brand-home__pageLink {
+  color: var(--hx-frame-accent);
+  text-decoration: none;
+}
+
+.brand-home__pageLink:hover {
+  text-decoration: underline;
+}

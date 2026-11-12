@@ -230,15 +230,6 @@ export function DesignApp({ user, onSignedOut }: DesignAppProps) {
       );
     }
 
-    if (current.page.key === 'home') {
-      return (
-        <div className="design-empty" data-brand-home-pending>
-          <p className="design-empty__title">{t('brand.page.homePending')}</p>
-          <p className="design-empty__body">{t('brand.page.homePendingBody')}</p>
-        </div>
-      );
-    }
-
     return (
       <BrandPageScreen
         brandId={brandId}
