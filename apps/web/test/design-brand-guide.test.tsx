@@ -39,6 +39,7 @@ const COLOR_V3 = {
   note: null,
   preview: '九個角色',
   policyVersionNo: 3,
+  changed: [],
 };
 
 const COLOR_POLICY = {
