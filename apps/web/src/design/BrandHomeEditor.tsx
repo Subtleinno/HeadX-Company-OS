@@ -1,36 +1,64 @@
 import { useEffect, useState } from 'react';
-import { t } from '@company-os/i18n';
-import { fetchBrandPage, fetchBrandPages, fetchPolicy, type BrandPageSummary } from '../api';
+import { t, type MessageKey } from '@company-os/i18n';
+import {
+  brandOutputPath,
+  fetchBrandPage,
+  fetchBrandPages,
+  fetchBrandPromptPack,
+  fetchPolicy,
+  type BrandOutputKind,
+  type BrandPageSummary,
+} from '../api';
 import { parseColorDoc, type ColorDoc } from './brandColors';
 import { LOGO_MODES, parseLogoDoc, type LogoDoc, type LogoModeKey } from './brandLogo';
 import { parseTypeDoc, type TypeDoc, type TypeRoleKey } from './brandType';
 import { parseToneDoc, type ToneDoc } from './brandTone';
 import {
-  INTRO_MIN_CHARS,
+  KEYWORD_MAX,
+  KEYWORD_MIN,
+  LAYOUT_BLOCKS,
+  addKeyword,
+  addLayout,
+  addSystem,
+  addVoiceSample,
   colourSwatches,
   gapCount,
   hasAnyValue,
   homeGaps,
-  introState,
+  homeRefs,
   logoUsage,
+  moveLayout,
   pageRows,
   parseHomeDoc,
+  removeKeyword,
+  removeLayout,
+  removeSystem,
+  removeVoiceSample,
   serializeHomeDoc,
+  setEmphasis,
+  setLayout,
+  setSystem,
   toneSample,
   typeRows,
   type HomeDoc,
-  type LogoGap,
+  type HomeRef,
+  type RefPage,
 } from './brandHome';
 import { useGapCount } from './useGapCount';
 
 /**
- * 品牌主頁的表身（issue #39）。
+ * 品牌主頁的表身（issue #67，取代 #39）。
  *
- * 這一頁**不重寫**任何來源頁的規則：它只讀四頁的現行版本，砌出可見樣本，
- * 再加上自己那兩件事（這段是誰、標誌預設用哪個模式）。
+ * 這一頁**不重寫**任何來源頁的規則：它自己只擁有立場句、一句話說自己是誰、
+ * 關鍵詞、版面決定（用哪幾塊、先後、重點、為咩），以及四個引用（用色順序、
+ * 標誌預設、字體分工、語氣樣本）。其餘全部即時由來源頁砌出來。
  *
- * 缺就標缺：某頁未有現行版本、某個角色未定值、某個層級未有家族、標誌未揀
- * 預設模式 —— 逐項寫明缺什麼，不畫示意圖、假色、假字。
+ * 五個誠實位：
+ *   1. 每個引用都寫明來源頁與當時版本 —— 這是「追得回來源頁」的做法，不是註釋。
+ *   2. 引用追不到（頁未有版本、認不到、未定值）逐條標，不畫假色假字。
+ *   3. 版面每一塊都要有理由；冇理由的區塊在輸出時不會出現，所以當場講。
+ *   4. 現行內容是舊形狀（#39 的 `intro`／`logoMode`）就講讀不到，不當成空白主頁。
+ *   5. 「給 AI 用」讀的是伺服器真正會交出去的 prompt 包，不是在這裡再砌一份。
  */
 
 type BrandHomeEditorProps = {
@@ -43,6 +71,8 @@ type BrandHomeEditorProps = {
   /** 把缺口數上報給「這一頁」面板（#53）。解析不到就報 null。 */
   onGapCount?: (count: number | null) => void;
 };
+
+type PageSlice<T> = { doc: T | null; versionNo: number | null };
 
 function write(doc: HomeDoc): string {
   return hasAnyValue(doc) ? serializeHomeDoc(doc) : '';
@@ -59,6 +89,20 @@ function modeLabel(key: LogoModeKey): string {
       return t('brand.home.mode.reverse');
     default:
       return t('brand.home.mode.onDark');
+  }
+}
+
+/** 來源頁的名字。同上：`t()` 只認字面量 key。 */
+function refPageName(page: RefPage): string {
+  switch (page) {
+    case 'color':
+      return t('design.page.brandColor');
+    case 'logo':
+      return t('design.page.brandLogo');
+    case 'type':
+      return t('design.page.brandType');
+    default:
+      return t('design.page.brandTone');
   }
 }
 
@@ -81,6 +125,13 @@ function pxSize(value: string): string | undefined {
   return /^\d+(\.\d+)?px$/.test(value.trim()) ? value.trim() : undefined;
 }
 
+const OUTPUTS: readonly { kind: BrandOutputKind; label: MessageKey }[] = [
+  { kind: 'prompt', label: 'brand.home.ai.prompt' },
+  { kind: 'tokens', label: 'brand.home.ai.tokens' },
+  { kind: 'html', label: 'brand.home.ai.html' },
+  { kind: 'print', label: 'brand.home.ai.print' },
+];
+
 export function BrandHomeEditor({
   brandId,
   content,
@@ -90,25 +141,29 @@ export function BrandHomeEditor({
   onGapCount,
 }: BrandHomeEditorProps) {
   const [pages, setPages] = useState<BrandPageSummary[]>([]);
-  const [colour, setColour] = useState<ColorDoc | null>(null);
-  const [type, setType] = useState<TypeDoc | null>(null);
-  const [logo, setLogo] = useState<LogoDoc | null>(null);
-  const [tone, setTone] = useState<ToneDoc | null>(null);
+  const [colour, setColour] = useState<PageSlice<ColorDoc>>({ doc: null, versionNo: null });
+  const [type, setType] = useState<PageSlice<TypeDoc>>({ doc: null, versionNo: null });
+  const [logo, setLogo] = useState<PageSlice<LogoDoc>>({ doc: null, versionNo: null });
+  const [tone, setTone] = useState<PageSlice<ToneDoc>>({ doc: null, versionNo: null });
   const [policyText, setPolicyText] = useState('');
+  const [promptPack, setPromptPack] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [regenerated, setRegenerated] = useState<number | null>(null);
+  const [keywordDraft, setKeywordDraft] = useState('');
+  const [voiceDraft, setVoiceDraft] = useState('');
 
   useEffect(() => {
     let live = true;
 
     void (async () => {
-      const [list, colourPage, typePage, logoPage, tonePage, policy] = await Promise.all([
+      const [list, colourPage, typePage, logoPage, tonePage, policy, pack] = await Promise.all([
         fetchBrandPages(brandId),
         fetchBrandPage(brandId, 'color'),
         fetchBrandPage(brandId, 'type'),
         fetchBrandPage(brandId, 'logo'),
         fetchBrandPage(brandId, 'tone'),
         fetchPolicy(),
+        fetchBrandPromptPack(brandId),
       ]);
 
       if (!live) {
@@ -122,30 +177,45 @@ export function BrandHomeEditor({
       if (colourPage.ok) {
         const parsed = parseColorDoc(colourPage.data.current?.content ?? '');
 
-        setColour(parsed.kind === 'ok' ? parsed.doc : null);
+        setColour({
+          doc: parsed.kind === 'ok' ? parsed.doc : null,
+          versionNo: colourPage.data.current?.versionNo ?? null,
+        });
       }
 
       if (typePage.ok) {
         const parsed = parseTypeDoc(typePage.data.current?.content ?? '');
 
-        setType(parsed.kind === 'ok' ? parsed.doc : null);
+        setType({
+          doc: parsed.kind === 'ok' ? parsed.doc : null,
+          versionNo: typePage.data.current?.versionNo ?? null,
+        });
       }
 
       if (logoPage.ok) {
         const parsed = parseLogoDoc(logoPage.data.current?.content ?? '');
 
-        setLogo(parsed.kind === 'ok' ? parsed.doc : null);
+        setLogo({
+          doc: parsed.kind === 'ok' ? parsed.doc : null,
+          versionNo: logoPage.data.current?.versionNo ?? null,
+        });
       }
 
       if (tonePage.ok) {
         const parsed = parseToneDoc(tonePage.data.current?.content ?? '');
 
-        setTone(parsed.kind === 'ok' ? parsed.doc : null);
+        setTone({
+          doc: parsed.kind === 'ok' ? parsed.doc : null,
+          versionNo: tonePage.data.current?.versionNo ?? null,
+        });
       }
 
       if (policy.ok) {
         setPolicyText(policy.data.slots.find((slot) => slot.slot === 'home')?.current?.content ?? '');
       }
+
+      // 讀不到就講讀不到：`null` 與「空字串」在畫面上是兩件事。
+      setPromptPack(pack.ok ? pack.data : null);
     })();
 
     return () => {
@@ -155,24 +225,26 @@ export function BrandHomeEditor({
 
   const parsed = parseHomeDoc(content);
 
+  const refInput = {
+    colour: colour.doc,
+    colourVersion: colour.versionNo,
+    type: type.doc,
+    typeVersion: type.versionNo,
+    logo: logo.doc,
+    logoVersion: logo.versionNo,
+    tone: tone.doc,
+    toneVersion: tone.versionNo,
+  };
+
   // 在 early return 之前上報。四頁未讀到時 `homeGaps` 已經把相關項目標成缺。
   useGapCount(
     parsed.kind === 'invalid'
       ? null
-      : gapCount(
-          homeGaps({
-            doc: parsed.kind === 'ok' ? parsed.doc : { intro: '', logoMode: '' },
-            colour,
-            type,
-            logo,
-            tone,
-            pages,
-          }),
-        ),
+      : gapCount(homeGaps({ doc: parsed.kind === 'ok' ? parsed.doc : { ...EMPTY_FOR_GAPS }, pages, ...refInput })),
     onGapCount,
   );
 
-  // 舊的自由文字不是這份表：講明讀不到，不當成「空白主頁」靜靜蓋掉。
+  // 舊形狀不是這份表：講明讀不到，不當成「空白主頁」靜靜蓋掉。
   if (parsed.kind === 'invalid') {
     return (
       <div className="brand-home brand-home--invalid" data-home-invalid>
@@ -196,25 +268,13 @@ export function BrandHomeEditor({
     );
   }
 
-  const doc: HomeDoc = parsed.kind === 'ok' ? parsed.doc : { intro: '', logoMode: '' };
-  /** 那一頁有沒有現行版本。頁清單未讀到時當作未有，但不當成「有頁但缺」。 */
-  function hasCurrent(key: string): boolean {
-    return pages.some((item) => item.key === key && item.current !== null);
-  }
-
-  const computed = homeGaps({ doc, colour, type, logo, tone, pages });
-
-  // 空字串解出來是「零資產」的合法文件，所以「標誌頁未有版本」與「有頁但
-  // 冇主標誌」在解析結果上長得一樣。用頁清單改正它，免得叫設計師去補一個
-  // 他其實要先開頁的洞。
-  const gaps = {
-    ...computed,
-    logo: hasCurrent('logo') ? computed.logo : (['page'] as LogoGap[]),
-  };
-  const swatches = colourSwatches(colour, 'light');
-  const samples = typeRows(type, colour);
-  const usage = logoUsage(logo, doc.logoMode, colour);
-  const sentence = toneSample(tone);
+  const doc: HomeDoc = parsed.kind === 'ok' ? parsed.doc : { ...EMPTY_FOR_GAPS };
+  const gaps = homeGaps({ doc, pages, ...refInput });
+  const refs = homeRefs(doc, refInput);
+  const swatches = colourSwatches(colour.doc, 'light');
+  const samples = typeRows(type.doc, colour.doc);
+  const usage = logoUsage(logo.doc, doc.logo_default as '' | LogoModeKey, colour.doc);
+  const sentence = toneSample(tone.doc);
   const rows = pageRows(pages);
 
   function commit(next: HomeDoc): void {
@@ -230,8 +290,8 @@ export function BrandHomeEditor({
     setBusy(true);
     setRegenerated(null);
 
-    // 與自定義頁同一個道理：重編不改內容，只按現在的來源落一版。手改的那段
-    // 與標誌模式原封不動（issue #39 第 5 點）。
+    // 與自定義頁同一個道理：重編不改內容，只按現在的來源落一版。手改的欄位
+    // 與版面原封不動（issue #67 第 5 點）。
     const no = await onSaveNow(serializeHomeDoc(doc));
 
     setBusy(false);
@@ -241,40 +301,76 @@ export function BrandHomeEditor({
     }
   }
 
+  function refStateLabel(ref: HomeRef): string {
+    switch (ref.state) {
+      case 'missing-page':
+        return t('brand.home.refMissingPage', { page: refPageName(ref.page) });
+      case 'unknown':
+        return t('brand.home.refUnknown', { page: refPageName(ref.page) });
+      default:
+        return t('brand.home.refMissingValue', { page: refPageName(ref.page) });
+    }
+  }
+
   const summary: string[] = [];
 
-  if (gaps.intro === 'empty') {
-    summary.push(t('brand.home.gapIntroEmpty'));
+  if (gaps.stance) {
+    summary.push(t('brand.home.gapStance'));
   }
 
-  if (gaps.intro === 'short') {
-    summary.push(t('brand.home.gapIntroShort'));
+  if (gaps.who) {
+    summary.push(t('brand.home.gapWho'));
   }
 
-  if (gaps.logoMode) {
-    summary.push(t('brand.home.gapLogoMode'));
+  if (gaps.keywords === 'empty') {
+    summary.push(t('brand.home.gapKeywordsEmpty'));
   }
 
-  // 「整頁未有版本」與「頁有了但有幾項未填」是兩件事，但前者已經由下面
-  // 那一句「未有現行版本：…」講齊 —— 同一個缺講兩次，讀的人只會以為缺了
-  // 更多東西。所以整頁未有版本時這裡不再重複。
-  //
-  // 判斷「整頁未有版本」要看頁清單，不是看解析結果：空字串解出來是一份
-  // 「零資產」的合法文件，於是標誌頁明明未有版本，仍會被當成「有頁但冇
-  // 主標誌」。
-  if (hasCurrent('logo') && gaps.logo.length > 0) {
-    summary.push(t('brand.home.gapLogo'));
+  if (gaps.keywords === 'tooFew') {
+    summary.push(t('brand.home.gapKeywordsTooFew', { count: doc.keywords.length, min: KEYWORD_MIN }));
   }
 
-  if (hasCurrent('color') && gaps.colour.length > 0) {
-    summary.push(t('brand.home.gapColourSome'));
+  if (gaps.keywords === 'tooMany') {
+    summary.push(t('brand.home.gapKeywordsTooMany', { count: doc.keywords.length, max: KEYWORD_MAX }));
   }
 
-  if (hasCurrent('type') && gaps.type.length > 0) {
-    summary.push(t('brand.home.gapTypeSome'));
+  if (gaps.layout) {
+    summary.push(t('brand.home.gapLayoutEmpty'));
   }
 
-  if (voiceMissingPages(gaps.pages)) {
+  if (gaps.colorOrder) {
+    summary.push(t('brand.home.gapColorOrder'));
+  }
+
+  if (gaps.logoDefault) {
+    summary.push(t('brand.home.gapLogoDefault'));
+  }
+
+  if (gaps.typeSplit) {
+    summary.push(t('brand.home.gapTypeSplit'));
+  }
+
+  if (gaps.voiceSamples) {
+    summary.push(t('brand.home.gapVoiceSamples'));
+  }
+
+  if (gaps.layoutReasons.length > 0) {
+    summary.push(
+      t('brand.home.gapLayoutReason', {
+        items: gaps.layoutReasons.map((index) => `#${index + 1}`).join('、'),
+      }),
+    );
+  }
+
+  if (gaps.refs.length > 0) {
+    summary.push(t('brand.home.gapRefs', { count: gaps.refs.length }));
+  }
+
+  if (gaps.tone) {
+    summary.push(t('brand.home.gapTonePage'));
+  }
+
+  if (gaps.pages.length > 0) {
     summary.push(t('brand.home.gapPages', { items: gaps.pages.join('、') }));
   }
 
@@ -307,31 +403,315 @@ export function BrandHomeEditor({
         </div>
       )}
 
-      {/* 一、這個品牌是誰：主頁唯一自己擁有的內容。 */}
-      <section className="brand-home__section" data-home-section="intro">
-        <h3 className="brand-page__versionsTitle">{t('brand.home.intro')}</h3>
-        <p className="design-field__hint">{t('brand.home.introHint')}</p>
+      {/* 一、立場與是誰：主頁自己擁有的內容。 */}
+      <section className="brand-home__section" data-home-section="stance">
+        <h3 className="brand-page__versionsTitle">{t('brand.home.stance')}</h3>
+        <p className="design-field__hint">{t('brand.home.stanceHint')}</p>
         <textarea
           className="brand-page__textarea brand-home__textarea"
-          data-home-intro
-          value={doc.intro}
+          data-home-stance
+          value={doc.stance}
           readOnly={!canEdit}
-          rows={3}
+          rows={2}
+          placeholder={t('brand.home.stancePlaceholder')}
           onChange={(event) => {
-            commit({ ...doc, intro: event.target.value });
+            commit({ ...doc, stance: event.target.value });
           }}
         />
 
-        {introState(doc.intro) !== 'ok' && (
-          <p className="design-note design-note--error" data-home-intro-gap>
-            {introState(doc.intro) === 'empty'
-              ? t('brand.home.introEmpty')
-              : t('brand.home.introShort', { min: INTRO_MIN_CHARS })}
+        <h3 className="brand-page__versionsTitle">{t('brand.home.who')}</h3>
+        <p className="design-field__hint">{t('brand.home.whoHint')}</p>
+        <input
+          className="design-input"
+          data-home-who
+          value={doc.who}
+          readOnly={!canEdit}
+          autoComplete="off"
+          placeholder={t('brand.home.whoPlaceholder')}
+          onChange={(event) => {
+            commit({ ...doc, who: event.target.value });
+          }}
+        />
+      </section>
+
+      {/* 二、關鍵詞：三到五個，來自平台頁，不另創新詞。 */}
+      <section className="brand-home__section" data-home-section="keywords">
+        <h3 className="brand-page__versionsTitle">{t('brand.home.keywords')}</h3>
+        <p className="design-field__hint">{t('brand.home.keywordsHint', { min: KEYWORD_MIN, max: KEYWORD_MAX })}</p>
+
+        {doc.keywords.length === 0 ? (
+          <p className="design-empty">{t('brand.home.keywordsEmpty')}</p>
+        ) : (
+          <ul className="brand-home__chips">
+            {doc.keywords.map((word, index) => (
+              <li className="brand-home__chip" key={word} data-home-keyword={index}>
+                <span>{word}</span>
+                {canEdit && (
+                  <button
+                    type="button"
+                    className="brand-home__chipRemove"
+                    data-home-keyword-remove={index}
+                    aria-label={`${t('brand.home.keywordRemove')} ${word}`}
+                    onClick={() => {
+                      commit(removeKeyword(doc, index));
+                    }}
+                  >
+                    ×
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {canEdit && doc.keywords.length < KEYWORD_MAX && (
+          <div className="brand-home__adder">
+            <input
+              className="design-input"
+              data-home-keyword-input
+              value={keywordDraft}
+              autoComplete="off"
+              placeholder={t('brand.home.keywordPlaceholder')}
+              onChange={(event) => {
+                setKeywordDraft(event.target.value);
+              }}
+            />
+            <button
+              type="button"
+              className="design-btn"
+              data-home-keyword-add
+              onClick={() => {
+                commit(addKeyword(doc, keywordDraft));
+                setKeywordDraft('');
+              }}
+            >
+              {t('brand.home.keywordAdd')}
+            </button>
+          </div>
+        )}
+      </section>
+
+      {/* 三、版面：這一頁自己的判斷。次序可以改，但每一塊都要有理由。 */}
+      <section className="brand-home__section" data-home-section="layout">
+        <h3 className="brand-page__versionsTitle">{t('brand.home.layout')}</h3>
+        <p className="design-field__hint">{t('brand.home.layoutHint')}</p>
+
+        {doc.layout.length === 0 ? (
+          <p className="design-note design-note--error" data-home-layout-empty>
+            {t('brand.home.layoutEmpty')}
+          </p>
+        ) : (
+          <ol className="brand-home__layout">
+            {doc.layout.map((row, index) => (
+              <li
+                className="brand-home__layoutRow"
+                key={`layout-${index}`}
+                data-home-layout={index}
+                data-missing={row.reason.trim() === '' ? 'true' : 'false'}
+              >
+                <div className="brand-home__layoutHead">
+                  <span className="brand-home__layoutIndex">#{index + 1}</span>
+
+                  <select
+                    className="design-input brand-home__layoutBlock"
+                    data-home-layout-block={index}
+                    aria-label={t('brand.home.layoutBlock')}
+                    value={row.block}
+                    disabled={!canEdit}
+                    onChange={(event) => {
+                      commit(setLayout(doc, index, { block: event.target.value as HomeDoc['layout'][number]['block'] }));
+                    }}
+                  >
+                    {LAYOUT_BLOCKS.map((kind) => (
+                      <option key={kind} value={kind}>
+                        {kind}
+                      </option>
+                    ))}
+                  </select>
+
+                  <input
+                    className="design-input brand-home__layoutSource"
+                    data-home-layout-source={index}
+                    aria-label={t('brand.home.layoutSource')}
+                    value={row.source}
+                    readOnly={!canEdit}
+                    autoComplete="off"
+                    placeholder={t('brand.home.layoutSourcePlaceholder')}
+                    onChange={(event) => {
+                      commit(setLayout(doc, index, { source: event.target.value }));
+                    }}
+                  />
+
+                  <label className="brand-home__layoutEmphasis">
+                    <input
+                      type="radio"
+                      name="home-layout-lead"
+                      data-home-layout-emphasis={index}
+                      checked={row.emphasis === 'lead'}
+                      disabled={!canEdit}
+                      onChange={() => {
+                        commit(setEmphasis(doc, index));
+                      }}
+                    />
+                    <span>{t('brand.home.layoutLead')}</span>
+                  </label>
+
+                  {canEdit && (
+                    <span className="brand-home__layoutActions">
+                      <button
+                        type="button"
+                        className="brand-page__action"
+                        data-home-layout-up={index}
+                        disabled={index === 0}
+                        aria-label={t('brand.home.layoutUp')}
+                        onClick={() => {
+                          commit(moveLayout(doc, index, -1));
+                        }}
+                      >
+                        ↑
+                      </button>
+                      <button
+                        type="button"
+                        className="brand-page__action"
+                        data-home-layout-down={index}
+                        disabled={index === doc.layout.length - 1}
+                        aria-label={t('brand.home.layoutDown')}
+                        onClick={() => {
+                          commit(moveLayout(doc, index, 1));
+                        }}
+                      >
+                        ↓
+                      </button>
+                      <button
+                        type="button"
+                        className="brand-page__action brand-page__action--danger"
+                        data-home-layout-remove={index}
+                        onClick={() => {
+                          commit(removeLayout(doc, index));
+                        }}
+                      >
+                        {t('brand.home.layoutRemove')}
+                      </button>
+                    </span>
+                  )}
+                </div>
+
+                <input
+                  className="design-input"
+                  data-home-layout-reason={index}
+                  aria-label={t('brand.home.layoutReason')}
+                  value={row.reason}
+                  readOnly={!canEdit}
+                  autoComplete="off"
+                  placeholder={t('brand.home.layoutReasonPlaceholder')}
+                  onChange={(event) => {
+                    commit(setLayout(doc, index, { reason: event.target.value }));
+                  }}
+                />
+
+                {row.reason.trim() === '' && (
+                  <span className="brand-home__gap" data-home-layout-reason-gap={index}>
+                    {t('brand.home.layoutReasonMissing')}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ol>
+        )}
+
+        {canEdit && (
+          <div className="brand-home__adder">
+            <button
+              type="button"
+              className="design-btn"
+              data-home-layout-add
+              onClick={() => {
+                commit(addLayout(doc));
+              }}
+            >
+              {t('brand.home.layoutAdd')}
+            </button>
+          </div>
+        )}
+      </section>
+
+      {/* 四、引用與來源：每一條都寫明來源頁與版本 —— 驗收第一條的做法。 */}
+      <section className="brand-home__section" data-home-section="refs">
+        <h3 className="brand-page__versionsTitle">{t('brand.home.refs')}</h3>
+        <p className="design-field__hint">{t('brand.home.refsHint')}</p>
+
+        {refs.length === 0 ? (
+          <p className="design-empty">{t('brand.home.refsEmpty')}</p>
+        ) : (
+          <ul className="brand-home__refs">
+            {refs.map((ref) => (
+              <li
+                className="brand-home__ref"
+                key={`${ref.page}-${ref.item}`}
+                data-home-ref={ref.item}
+                data-home-ref-state={ref.state}
+              >
+                <span className="brand-home__refItem">{ref.label}</span>
+                <span className="brand-home__refSource">
+                  {ref.version === null
+                    ? t('brand.home.refNoVersion', { page: refPageName(ref.page) })
+                    : t('brand.home.refSource', { page: refPageName(ref.page), version: ref.version })}
+                </span>
+                {ref.state !== 'ok' && <span className="brand-home__gap">{refStateLabel(ref)}</span>}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      {/* 五、用色順序：只寫角色名，色值住在色彩頁。 */}
+      <section className="brand-home__section" data-home-section="colour">
+        <h3 className="brand-page__versionsTitle">{t('brand.home.colour')}</h3>
+        <p className="design-field__hint">{t('brand.home.colourHint')}</p>
+
+        {swatches.length === 0 ? (
+          <p className="design-note design-note--error" data-home-colour-missing>
+            {t('brand.home.colourMissing')}
+          </p>
+        ) : (
+          <ul className="brand-home__swatches">
+            {swatches.map((swatch) => (
+              <li className="brand-home__swatchItem" key={swatch.role} data-home-swatch={swatch.role}>
+                <span
+                  className="brand-home__swatchChip"
+                  style={{ backgroundColor: swatch.hex }}
+                  aria-hidden="true"
+                />
+                <span className="brand-home__swatchName">{swatch.role}</span>
+                <code className="brand-home__roleValue">{swatch.hex}</code>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <label className="design-field">
+          <span className="design-field__label">{t('brand.home.colourNote')}</span>
+          <input
+            className="design-input"
+            data-home-colour-note
+            value={doc.color_order.note}
+            readOnly={!canEdit}
+            autoComplete="off"
+            placeholder={t('brand.home.colourNotePlaceholder')}
+            onChange={(event) => {
+              commit({ ...doc, color_order: { ...doc.color_order, note: event.target.value } });
+            }}
+          />
+        </label>
+
+        {doc.color_order.roles.length === 0 && (
+          <p className="design-note design-note--error" data-home-colour-empty>
+            {t('brand.home.colourOrderEmpty')}
           </p>
         )}
       </section>
 
-      {/* 二、標誌的預設用法：只引用 #36 的模式與色彩頁的角色。 */}
+      {/* 六、標誌預設：引用標誌頁的模式，色值仍然在色彩頁。 */}
       <section className="brand-home__section" data-home-section="logo">
         <h3 className="brand-page__versionsTitle">{t('brand.home.logo')}</h3>
         <p className="design-field__hint">{t('brand.home.logoHint')}</p>
@@ -341,10 +721,10 @@ export function BrandHomeEditor({
           <select
             className="design-input"
             data-home-logo-mode
-            value={doc.logoMode}
+            value={doc.logo_default}
             disabled={!canEdit}
             onChange={(event) => {
-              commit({ ...doc, logoMode: event.target.value as '' | LogoModeKey });
+              commit({ ...doc, logo_default: event.target.value });
             }}
           >
             <option value="">{t('brand.home.logoModeNone')}</option>
@@ -358,9 +738,7 @@ export function BrandHomeEditor({
 
         {usage === null ? (
           <p className="design-note design-note--error" data-home-logo-missing>
-            {gaps.logo.includes('page')
-              ? t('brand.home.logoPageMissing')
-              : t('brand.home.logoModeMissing')}
+            {logo.doc === null ? t('brand.home.logoPageMissing') : t('brand.home.logoModeMissing')}
           </p>
         ) : (
           <div className="brand-home__logo" data-home-logo>
@@ -394,48 +772,61 @@ export function BrandHomeEditor({
         )}
       </section>
 
-      {/* 三、色彩角色的可見樣本：只畫色彩頁真的有值的角色。 */}
-      <section className="brand-home__section" data-home-section="colour">
-        <h3 className="brand-page__versionsTitle">{t('brand.home.colour')}</h3>
-        <p className="design-field__hint">{t('brand.home.colourHint')}</p>
-
-        {swatches.length === 0 ? (
-          <p className="design-note design-note--error" data-home-colour-missing>
-            {t('brand.home.colourMissing')}
-          </p>
-        ) : (
-          <>
-            <ul className="brand-home__swatches">
-              {swatches.map((swatch) => (
-                <li className="brand-home__swatchItem" key={swatch.role} data-home-swatch={swatch.role}>
-                  <span
-                    className="brand-home__swatchChip"
-                    style={{ backgroundColor: swatch.hex }}
-                    aria-hidden="true"
-                  />
-                  <span className="brand-home__swatchName">{swatch.role}</span>
-                  <code className="brand-home__roleValue">{swatch.hex}</code>
-                </li>
-              ))}
-            </ul>
-
-            {gaps.colour.length > 0 && (
-              <p className="brand-home__gap" data-home-colour-some-missing>
-                {t('brand.home.colourSomeMissing', { count: gaps.colour.length })}
-              </p>
-            )}
-          </>
-        )}
-      </section>
-
-      {/* 四、字體層級的可見樣本。家族只記名與授權，所以樣本用系統字渲染。 */}
+      {/* 七、字體分工：只寫家族名；字階住在字體頁。 */}
       <section className="brand-home__section" data-home-section="type">
         <h3 className="brand-page__versionsTitle">{t('brand.home.type')}</h3>
         <p className="design-field__hint">{t('brand.home.typeHint')}</p>
 
-        {type === null ? (
+        <div className="brand-home__split">
+          <label className="design-field">
+            <span className="design-field__label">{t('brand.home.typeSerif')}</span>
+            <input
+              className="design-input"
+              data-home-type-serif
+              value={doc.type_split.serif}
+              readOnly={!canEdit}
+              autoComplete="off"
+              placeholder={t('brand.home.typeSerifPlaceholder')}
+              onChange={(event) => {
+                commit({ ...doc, type_split: { ...doc.type_split, serif: event.target.value } });
+              }}
+            />
+          </label>
+
+          <label className="design-field">
+            <span className="design-field__label">{t('brand.home.typeSans')}</span>
+            <input
+              className="design-input"
+              data-home-type-sans
+              value={doc.type_split.sans}
+              readOnly={!canEdit}
+              autoComplete="off"
+              placeholder={t('brand.home.typeSansPlaceholder')}
+              onChange={(event) => {
+                commit({ ...doc, type_split: { ...doc.type_split, sans: event.target.value } });
+              }}
+            />
+          </label>
+        </div>
+
+        <label className="design-field">
+          <span className="design-field__label">{t('brand.home.typeNote')}</span>
+          <input
+            className="design-input"
+            data-home-type-note
+            value={doc.type_split.note}
+            readOnly={!canEdit}
+            autoComplete="off"
+            placeholder={t('brand.home.typeNotePlaceholder')}
+            onChange={(event) => {
+              commit({ ...doc, type_split: { ...doc.type_split, note: event.target.value } });
+            }}
+          />
+        </label>
+
+        {type.doc === null ? (
           <p className="design-note design-note--error" data-home-type-missing>
-            {t('brand.home.typeMissing')}
+            {t('brand.home.typePageMissing')}
           </p>
         ) : (
           <ul className="brand-home__types">
@@ -463,13 +854,9 @@ export function BrandHomeEditor({
             ))}
           </ul>
         )}
-
-        <p className="design-field__hint" data-home-type-note>
-          {t('brand.home.typeNote')}
-        </p>
       </section>
 
-      {/* 五、語氣短例：拿句子，不拿形容詞。 */}
+      {/* 八、語氣樣本：引用語氣頁的句子，不在這裡另寫。 */}
       <section className="brand-home__section" data-home-section="tone">
         <h3 className="brand-page__versionsTitle">{t('brand.home.tone')}</h3>
         <p className="design-field__hint">{t('brand.home.toneHint')}</p>
@@ -483,9 +870,132 @@ export function BrandHomeEditor({
             {sentence}
           </blockquote>
         )}
+
+        {doc.voice_samples.length > 0 && (
+          <ul className="brand-home__quotes">
+            {doc.voice_samples.map((line, index) => (
+              <li className="brand-home__quote" key={line} data-home-voice={index}>
+                <span>{line}</span>
+                {canEdit && (
+                  <button
+                    type="button"
+                    className="brand-home__chipRemove"
+                    data-home-voice-remove={index}
+                    aria-label={`${t('brand.home.voiceRemove')} ${line}`}
+                    onClick={() => {
+                      commit(removeVoiceSample(doc, index));
+                    }}
+                  >
+                    ×
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {canEdit && (
+          <div className="brand-home__adder">
+            <input
+              className="design-input"
+              data-home-voice-input
+              value={voiceDraft}
+              autoComplete="off"
+              placeholder={t('brand.home.voicePlaceholder')}
+              onChange={(event) => {
+                setVoiceDraft(event.target.value);
+              }}
+            />
+            <button
+              type="button"
+              className="design-btn"
+              data-home-voice-add
+              onClick={() => {
+                commit(addVoiceSample(doc, voiceDraft));
+                setVoiceDraft('');
+              }}
+            >
+              {t('brand.home.voiceAdd')}
+            </button>
+          </div>
+        )}
       </section>
 
-      {/* 六、每一頁的入口：清單由後端來，自定義頁各自一條。 */}
+      {/* 九、品牌專屬系統：自定義頁的精華，只放入口不放副本。 */}
+      <section className="brand-home__section" data-home-section="systems">
+        <h3 className="brand-page__versionsTitle">{t('brand.home.systems')}</h3>
+        <p className="design-field__hint">{t('brand.home.systemsHint')}</p>
+
+        {doc.systems.length === 0 ? (
+          <p className="design-empty">{t('brand.home.systemsEmpty')}</p>
+        ) : (
+          <div className="brand-home__systems">
+            {doc.systems.map((system, index) => (
+              <div className="brand-home__system" key={`system-${index}`} data-home-system={index}>
+                <div className="brand-home__split">
+                  <label className="design-field">
+                    <span className="design-field__label">{t('brand.home.systemName')}</span>
+                    <input
+                      className="design-input"
+                      data-home-system-name={index}
+                      value={system.name}
+                      readOnly={!canEdit}
+                      autoComplete="off"
+                      onChange={(event) => {
+                        commit(setSystem(doc, index, { name: event.target.value }));
+                      }}
+                    />
+                  </label>
+
+                  <label className="design-field">
+                    <span className="design-field__label">{t('brand.home.systemNote')}</span>
+                    <input
+                      className="design-input"
+                      data-home-system-note={index}
+                      value={system.note}
+                      readOnly={!canEdit}
+                      autoComplete="off"
+                      onChange={(event) => {
+                        commit(setSystem(doc, index, { note: event.target.value }));
+                      }}
+                    />
+                  </label>
+                </div>
+
+                {canEdit && (
+                  <button
+                    type="button"
+                    className="brand-page__action brand-page__action--danger"
+                    data-home-system-remove={index}
+                    onClick={() => {
+                      commit(removeSystem(doc, index));
+                    }}
+                  >
+                    {t('brand.home.systemRemove')}
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {canEdit && (
+          <div className="brand-home__adder">
+            <button
+              type="button"
+              className="design-btn"
+              data-home-system-add
+              onClick={() => {
+                commit(addSystem(doc));
+              }}
+            >
+              {t('brand.home.systemAdd')}
+            </button>
+          </div>
+        )}
+      </section>
+
+      {/* 十、每一頁的入口：清單由後端來，自定義頁各自一條。 */}
       <section className="brand-home__section" data-home-section="pages">
         <h3 className="brand-page__versionsTitle">{t('brand.home.pages')}</h3>
         <p className="design-field__hint">{t('brand.home.pagesHint')}</p>
@@ -496,12 +1006,59 @@ export function BrandHomeEditor({
               <a className="brand-home__pageLink" href={row.href}>
                 {row.name}
               </a>
-              {!row.hasCurrent && (
+              {row.versionNo === null ? (
                 <span className="brand-home__gap">{t('brand.home.pageMissing')}</span>
+              ) : (
+                <span className="brand-home__pageVersion" data-home-page-version={row.key}>
+                  {t('brand.home.pageVersion', { no: row.versionNo })}
+                </span>
               )}
             </li>
           ))}
         </ul>
+      </section>
+
+      {/* 十一、給 AI 用：讀的是伺服器真正會交出去的那一份，不是這裡再砌一份。 */}
+      <section className="brand-home__section" data-home-section="for-ai">
+        <h3 className="brand-page__versionsTitle">{t('brand.home.ai.title')}</h3>
+        <p className="design-field__hint">{t('brand.home.ai.hint')}</p>
+
+        <ul className="brand-home__outputs">
+          {OUTPUTS.map((output) => (
+            <li key={output.kind} data-home-ai-output={output.kind}>
+              <a className="brand-home__pageLink" href={brandOutputPath(brandId, output.kind)}>
+                {t(output.label)}
+              </a>
+            </li>
+          ))}
+        </ul>
+
+        <div data-home-ai-composed>
+          <h4 className="brand-home__aiHead">{t('brand.home.ai.composed')}</h4>
+          <ul className="brand-home__pages">
+            {rows.map((row) => (
+              <li className="brand-home__page" key={`composed-${row.key}`}>
+                <span className="brand-home__swatchName">{row.name}</span>
+                <span className="brand-home__pageVersion">
+                  {row.versionNo === null
+                    ? t('brand.home.pageMissing')
+                    : t('brand.home.pageVersion', { no: row.versionNo })}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <h4 className="brand-home__aiHead">{t('brand.home.ai.promptTitle')}</h4>
+        {promptPack === null || promptPack.trim() === '' ? (
+          <p className="design-note design-note--error" data-home-ai-prompt-missing>
+            {t('brand.home.ai.promptMissing')}
+          </p>
+        ) : (
+          <pre className="brand-home__prompt" data-home-ai-prompt>
+            {promptPack}
+          </pre>
+        )}
       </section>
 
       {/* 重編是把**現有**內容重新落一版：第一版都未有的時候，那一塊只是一粒
@@ -534,7 +1091,15 @@ export function BrandHomeEditor({
   );
 }
 
-/** 頁清單本身可能是空的（後端未回），那就不是「有頁未有版本」，而是未讀到。 */
-function voiceMissingPages(names: string[]): boolean {
-  return names.length > 0;
-}
+/** 缺口計算用的空表：只在內容未有一版時用，不寫入任何地方。 */
+const EMPTY_FOR_GAPS: HomeDoc = {
+  stance: '',
+  who: '',
+  keywords: [],
+  color_order: { roles: [], note: '' },
+  logo_default: '',
+  type_split: { serif: '', sans: '', note: '' },
+  voice_samples: [],
+  systems: [],
+  layout: [],
+};

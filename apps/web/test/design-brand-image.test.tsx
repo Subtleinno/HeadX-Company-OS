@@ -193,8 +193,11 @@ describe('圖像頁', () => {
   it('看到的是六格攝影、真範例、要與不要、顏色引用', async () => {
     openImage(BOSS);
 
+    // 六格永遠都在（欄位固定），所以「元素存在」不代表內容已讀到；要等值。
     await waitFor(() => {
-      expect(document.querySelector('[data-image-photo="subject"]')).not.toBeNull();
+      expect(
+        (document.querySelector('[data-image-photo="light"]') as HTMLTextAreaElement | null)?.value,
+      ).toContain('窗光');
     });
 
     // 六格，每格都有值。

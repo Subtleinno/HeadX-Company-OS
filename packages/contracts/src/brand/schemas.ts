@@ -5,6 +5,7 @@ import type {
   BrandPayload,
   BrandSlot,
 } from './document.ts';
+import { BRAND_BLOCK_KINDS } from './document.ts';
 import { BODY_FLOOR, LARGE_FLOOR } from './contrast.ts';
 
 /**
@@ -1671,6 +1672,25 @@ const image: PageSchema = {
 
 /* ── 品牌主頁 ─────────────────────────────────────────────────── */
 
+/**
+ * 主頁的一個版面區塊（issue #67）。
+ *
+ * 主頁不是索引：它決定「用哪幾塊、先後如何、重點在哪」，而且要寫出理由。
+ * 所以次序存在 payload 裡，不是寫死在程式的 `layout()` —— 寫死的話，每一間
+ * 公司的品牌手冊都會是同一個模板。
+ *
+ * `emphasis` 只有 `lead`／`normal` 兩級：一個 layout 最多一個 `lead`，否則
+ * 全部都是重點，等於沒有重點。
+ */
+export type HomeLayoutBlock = {
+  block: BrandBlock['kind'];
+  /** 這一塊的來源：schema 的 section id（`color_order`）或者頁 key（`tone`）。 */
+  source: string;
+  emphasis: 'lead' | 'normal';
+  /** 為咩要有這一塊、為咩排在這個位置。空白理由＝這一塊不會出現（共通規則 8）。 */
+  reason: string;
+};
+
 export type HomePayload = {
   stance: string;
   who: string;
@@ -1680,6 +1700,7 @@ export type HomePayload = {
   type_split: { serif: string; sans: string; note: string };
   voice_samples: string[];
   systems: { name: string; note: string; refs: string[] }[];
+  layout: HomeLayoutBlock[];
 };
 
 const home: PageSchema = {
@@ -1736,6 +1757,19 @@ const home: PageSchema = {
       path: 'voice_samples',
       hint: '引用語氣頁的樣本，不在這裡另寫。',
     },
+    {
+      id: 'layout',
+      label: '版面',
+      kind: 'records',
+      path: 'layout',
+      hint: '每一塊用哪一種、由哪一頁來、重點在哪、為咩排這個位置。沒有理由的區塊不會出現。',
+      columns: [
+        { path: 'block', label: '區塊', kind: 'text' },
+        { path: 'source', label: '來源', kind: 'text' },
+        { path: 'emphasis', label: '重點', kind: 'text' },
+        { path: 'reason', label: '為咩', kind: 'long' },
+      ],
+    },
   ],
   empty() {
     return {
@@ -1747,6 +1781,7 @@ const home: PageSchema = {
       type_split: { serif: '', sans: '', note: '' },
       voice_samples: [],
       systems: [],
+      layout: [],
     } satisfies HomePayload;
   },
   normalize(raw) {
@@ -1765,6 +1800,20 @@ const home: PageSchema = {
       systems: list(source.systems).map((item) => {
         const value = rec(item);
         return { name: str(value.name), note: str(value.note), refs: strs(value.refs) };
+      }),
+      layout: list(source.layout).map((item) => {
+        const value = rec(item);
+        const kind = str(value.block);
+
+        return {
+          // 認不到的區塊種類退回 `section`：畫得出來，而理由仍然留著。
+          block: (BRAND_BLOCK_KINDS as readonly string[]).includes(kind)
+            ? (kind as BrandBlock['kind'])
+            : 'section',
+          source: str(value.source),
+          emphasis: str(value.emphasis) === 'lead' ? 'lead' : 'normal',
+          reason: str(value.reason),
+        };
       }),
     } satisfies HomePayload;
   },
@@ -1785,9 +1834,52 @@ const home: PageSchema = {
       gaps.push({ item: 'keywords', what: '品牌關鍵詞', type: 'judgement', reason: '沒有關鍵詞的主頁只是一份目錄。' });
     }
 
+    // 版面是這一頁自己的判斷（#67）：沒有 layout 就等於用回模板。
+    if (typed.layout.length === 0) {
+      gaps.push({
+        item: 'layout',
+        what: '版面次序與理由',
+        type: 'judgement',
+        reason: '沒有寫理由的版面就是模板；每一間公司的品牌手冊會一模一樣。',
+      });
+    }
+
+    for (const [index, row] of typed.layout.entries()) {
+      if (row.reason.trim() === '') {
+        gaps.push({
+          item: `layout.${index}.reason`,
+          what: `第 ${index + 1} 塊的為咩`,
+          type: 'judgement',
+          reason: '沒有理由的區塊在輸出時不會出現；等於白寫了一次次序。',
+        });
+      }
+    }
+
     return gaps;
   },
-  layout() {
+  layout(payload) {
+    const typed = payload as HomePayload;
+    const authored = typed.layout.filter((row) => row.reason.trim() !== '');
+
+    // 有人寫過版面：照它排。區塊本身的畫法仍然由 renderer 決定。
+    if (authored.length > 0) {
+      return {
+        blocks: authored.map((row) => {
+          const item: BrandBlock = {
+            kind: row.block,
+            reason: row.reason,
+            emphasis: row.emphasis,
+          };
+
+          if (row.source !== '') {
+            item.source = row.source;
+          }
+
+          return item;
+        }),
+      };
+    }
+
     return {
       blocks: [
         block('stance', '第一屏是立場句，不是頁面索引（C112 明講）。'),
@@ -1803,8 +1895,57 @@ const home: PageSchema = {
     return null;
   },
   tokensNote: '主頁是彙整，不產生 token：它引用其他頁的現行版本（C112）。',
-  prompt() {
-    return [];
+  prompt(payload) {
+    const typed = payload as HomePayload;
+    const lines: string[] = [];
+
+    if (typed.stance !== '') {
+      lines.push(`立場：${typed.stance}`);
+    }
+
+    if (typed.who !== '') {
+      lines.push(`是誰：${typed.who}`);
+    }
+
+    if (typed.keywords.length > 0) {
+      lines.push(`關鍵詞：${typed.keywords.join('、')}`);
+    }
+
+    if (typed.color_order.roles.length > 0) {
+      lines.push(`用色順序：${typed.color_order.roles.join(' → ')}`);
+    }
+
+    if (typed.type_split.serif !== '' || typed.type_split.sans !== '') {
+      lines.push(
+        `字體分工：Serif 負責${typed.type_split.serif === '' ? '未寫' : typed.type_split.serif}；Sans 負責${typed.type_split.sans === '' ? '未寫' : typed.type_split.sans}`,
+      );
+    }
+
+    if (typed.logo_default !== '') {
+      lines.push(`標誌預設：${typed.logo_default}`);
+    }
+
+    for (const system of typed.systems) {
+      if (system.name !== '') {
+        lines.push(`品牌系統「${system.name}」：${system.note === '' ? '未寫一句' : system.note}`);
+      }
+    }
+
+    // 版面是主頁自己的判斷，所以要進 prompt：唔講次序，agent 會用回模板。
+    const authored = typed.layout.filter((row) => row.reason.trim() !== '');
+
+    if (authored.length > 0) {
+      lines.push(
+        `版面次序：${authored
+          .map(
+            (row, index) =>
+              `${index + 1}. ${row.block}${row.source === '' ? '' : `（${row.source}）`}${row.emphasis === 'lead' ? '【重點】' : ''} —— ${row.reason}`,
+          )
+          .join('；')}`,
+      );
+    }
+
+    return lines.length === 0 ? [] : [{ title: '品牌主頁', lines }];
   },
 };
 
