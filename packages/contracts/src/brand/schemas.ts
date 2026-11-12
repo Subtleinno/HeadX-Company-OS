@@ -671,8 +671,35 @@ const color: PageSchema = {
 export type TypePayload = {
   stance: string;
   philosophy: string;
-  families: { id: string; name: string; script: string; license_web: string; license_print: string; file_ref: string }[];
-  roles: { role: string; family: string; weight: string; size: string; leading: string; min: number; measure: string; reason: string }[];
+  families: {
+    id: string;
+    name: string;
+    script: string;
+    /**
+     * 四個授權渠道，逐一寫明（issue #63）：網頁、印刷、應用程式、桌面。
+     * 空＝未寫明，不是「沒有授權」。`type.r3` 只要求有寫明一種，
+     * 其餘是「有就要講清楚」的部分 —— 一套字只用於網頁時，
+     * 應用程式那一格本來就應該空著，而不是填「不適用」。
+     */
+    license_web: string;
+    license_print: string;
+    license_app: string;
+    license_desktop: string;
+    file_ref: string;
+  }[];
+  roles: {
+    role: string;
+    family: string;
+    weight: string;
+    size: string;
+    leading: string;
+    /** 最小尺寸（px）。0 ＝未寫，`type.r2` 就是不通過。 */
+    min: number;
+    measure: string;
+    /** 文字顏色只可以引用色彩頁的角色名，不可以在這裡發明色。 */
+    color_role: string;
+    reason: string;
+  }[];
   pairing: string;
   sentence_anatomy: string;
   print_matrix: { item: string; spec: string }[];
@@ -705,6 +732,8 @@ const type: PageSchema = {
         { path: 'script', label: '字種', kind: 'text' },
         { path: 'license_web', label: '網頁授權', kind: 'text' },
         { path: 'license_print', label: '印刷授權', kind: 'text' },
+        { path: 'license_app', label: '應用程式授權', kind: 'text' },
+        { path: 'license_desktop', label: '桌面授權', kind: 'text' },
         { path: 'file_ref', label: '可嵌入檔', kind: 'text' },
       ],
     },
@@ -722,6 +751,7 @@ const type: PageSchema = {
         { path: 'leading', label: '行高', kind: 'text' },
         { path: 'min', label: '最小 px', kind: 'number' },
         { path: 'measure', label: '每行字數', kind: 'text' },
+        { path: 'color_role', label: '文字色角色', kind: 'text' },
         { path: 'reason', label: '理由', kind: 'long' },
       ],
     },
@@ -787,6 +817,8 @@ const type: PageSchema = {
           script: str(value.script),
           license_web: str(value.license_web),
           license_print: str(value.license_print),
+          license_app: str(value.license_app),
+          license_desktop: str(value.license_desktop),
           file_ref: str(value.file_ref),
         };
       }),
@@ -800,6 +832,7 @@ const type: PageSchema = {
           leading: str(value.leading),
           min: num(value.min),
           measure: str(value.measure),
+          color_role: str(value.color_role),
           reason: str(value.reason),
         };
       }),

@@ -1347,7 +1347,7 @@
   border: 1px solid var(--hx-frame-border);
 }
 
-/* ── 字體頁（issue #38） ───────────────────────────────────── */
+/* ── 字體頁（issue #63） ───────────────────────────────────── */
 
 /*
  * 四個層級 × 兩個家族的表。左邊永遠是角色名（寫死的鍵），數值在右邊。
@@ -1462,10 +1462,20 @@
   max-width: 260px;
 }
 
-/* 一個層級一行。窄的時候兩欄，數值仍然跟在角色名後面。 */
+/*
+ * 一個層級一行：角色名、家族、字級、行高、字重、最小 px、每行字數、文字色、
+ * 理由。九欄。窄過 1100px 就換成四欄，角色名與徽章自己佔一行 —— 硬壓成
+ * 一行只會令「最小 px」與「文字色」互相蓋住。
+ */
 .brand-type__row {
   display: grid;
-  grid-template-columns: 92px minmax(150px, 200px) 104px 104px 100px 108px 148px;
+  grid-template-columns:
+    78px
+    minmax(120px, 1.4fr)
+    repeat(3, minmax(68px, 0.9fr))
+    minmax(86px, 0.9fr)
+    minmax(92px, 1fr)
+    minmax(140px, 1.6fr);
   align-items: center;
   gap: var(--hx-space-2);
   padding: var(--hx-space-2) 0;
@@ -1492,6 +1502,10 @@
   .brand-type__row {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
+
+  .brand-type__roleHead {
+    grid-column: 1 / -1;
+  }
 }
 
 .brand-type__roleHead {
@@ -1503,9 +1517,25 @@
 
 .brand-type__textarea {
   min-height: 72px;
+  width: 100%;
+  max-width: 620px;
 }
 
-.brand-type__misuseList {
+/* 配對那一節：標籤、說明、長文框由上而下，不是橫排。 */
+.brand-type__field--stack {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+}
+
+.brand-type__stanceText {
+  margin: 0;
+  font: var(--hx-frame-font-ui);
+  color: var(--hx-frame-ink);
+}
+
+/* 印刷矩陣與錯誤用法：一行一個記錄，左邊是項目，右邊是規格。 */
+.brand-type__recordList {
   margin: 0;
   padding: 0;
   list-style: none;
@@ -1514,12 +1544,20 @@
   gap: 4px;
 }
 
-.brand-type__misuseItem {
+.brand-type__record {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: var(--hx-space-2);
+  padding: 4px 0;
+  border-top: 1px solid var(--hx-frame-border);
   font: var(--hx-frame-font-small);
   color: var(--hx-frame-secondary);
+}
+
+.brand-type__recordSpec {
+  flex: 1;
+  min-width: 0;
+  color: var(--hx-frame-ink);
 }
 
 /* 版本列表的字體頁：家族名，不印 JSON。 */

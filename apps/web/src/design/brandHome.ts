@@ -17,7 +17,7 @@
 import type { BrandPageSummary } from '../api';
 import { COLOR_ROLES, valuesOf, type ColorDoc } from './brandColors';
 import { LOGO_MODES, modeRoleValue, primaryAsset, type LogoDoc, type LogoModeKey } from './brandLogo';
-import { TYPE_ROLES, type TypeDoc, type TypeRoleKey } from './brandType';
+import { TYPE_ROLES, familyUsable, type TypeDoc, type TypeRoleKey } from './brandType';
 import type { ToneDoc } from './brandTone';
 
 /** 「這個品牌是誰」少於這個字數就當寫得太短：一段講得清自己是誰，通常過二十字。 */
@@ -115,18 +115,19 @@ export type TypeRow = {
 
 export type TypeSample = { rows: TypeRow[]; gaps: TypeRoleKey[] };
 
-/** 四個層級逐個列出：家族名、尺寸、字重；未指定家族的層級列進 gaps。 */
+/** 四個層級逐個列出：家族名、尺寸、字重；未指定（或家族不齊）的層級列進 gaps。 */
 export function typeRows(type: TypeDoc | null, colour: ColorDoc | null): TypeSample {
   const light = colour === null ? {} : valuesOf(colour, 'light');
 
   const rows = TYPE_ROLES.map((role) => {
-    const spec = type?.roles[role];
-    const family = type?.families.find((item) => item.id === (spec?.familyId ?? ''));
-    const colourRole = spec?.colorRole ?? '';
+    const spec = (type?.roles ?? []).find((row) => row.role === role);
+    const family = type?.families.find((item) => item.id === (spec?.family ?? '')) ?? null;
+    const colourRole = spec?.color_role ?? '';
 
     return {
       role,
-      familyName: family?.name ?? '',
+      // 家族存在但缺授權或缺可嵌入檔，一樣不算有字 —— 否則樣本就排不出真字。
+      familyName: family !== null && familyUsable(family) ? family.name : '',
       size: spec?.size ?? '',
       weight: spec?.weight ?? '',
       leading: spec?.leading ?? '',

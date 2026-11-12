@@ -16,7 +16,7 @@ import {
 } from '../src/design/brandHome';
 import { emptyLogoDoc } from '../src/design/brandLogo';
 import { emptyToneDoc } from '../src/design/brandTone';
-import { emptyTypeDoc } from '../src/design/brandType';
+import { fullFamily, typeDoc } from './fixtures/brandTypeface';
 import type { BrandPageSummary } from '../src/api';
 import { colourDoc, withRoleHex } from './fixtures/brandColour';
 
@@ -69,14 +69,10 @@ const COLOUR = colourDoc({
 });
 
 const TYPE = {
-  ...emptyTypeDoc(),
-  families: [
-    { id: 'f-latin', script: 'latin' as const, name: 'Inter', licence: '網頁嵌入', webEmbeddable: true },
-  ],
-  roles: {
-    ...emptyTypeDoc().roles,
-    heading: { familyId: 'f-latin', size: '28px', leading: '1.3', weight: '600', minSize: '20px', colorRole: 'ink' },
-  },
+  ...typeDoc({
+    heading: { family: 'f-latin', size: '28px', leading: '1.3', weight: '600', min: 20, color_role: 'ink' },
+  }),
+  families: [fullFamily('f-latin', 'Inter', 'latin')],
 };
 
 const LOGO = {
@@ -316,13 +312,13 @@ describe('缺什麼', () => {
       doc: fullDoc,
       colour: withRoleHex(COLOUR, 'ink', '#111111'),
       type: {
-        ...TYPE,
-        roles: {
-          display: { ...TYPE.roles.display, familyId: 'f-latin' },
-          heading: TYPE.roles.heading,
-          body: { ...TYPE.roles.body, familyId: 'f-latin' },
-          caption: { ...TYPE.roles.caption, familyId: 'f-latin' },
-        },
+        ...typeDoc({
+          display: { family: 'f-latin' },
+          heading: { family: 'f-latin' },
+          body: { family: 'f-latin' },
+          caption: { family: 'f-latin' },
+        }),
+        families: [fullFamily('f-latin', 'Inter', 'latin')],
       },
       logo: LOGO,
       tone: TONE,
