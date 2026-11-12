@@ -94,21 +94,16 @@ const COLOUR_DOC = JSON.stringify(
 );
 
 const LOGO_DOC = JSON.stringify({
-  assets: [{ id: 'a-1', kind: 'logo', name: '主標誌（橫式）', master: 'logo.svg', preview: '' }],
-  primaryId: 'a-1',
-  modes: {
-    brand: { screen: '24px', print: '12mm' },
-    mono: { screen: '', print: '' },
-    reverse: { screen: '', print: '' },
-    onDark: { screen: '', print: '' },
-  },
-  safeArea: '1X',
-  orientation: '',
+  assets: [{ class: 'logo', label: '主標誌（橫式）', file_ref: 'logo.svg', version: 'v1' }],
+  modes: [{ mode: 'brand', color_role: 'brand.primary', note: '' }],
+  min_size: { screen_px: 24, print_mm: 12 },
+  logic_line: '一個印章。',
+  clear_space_x: { x: '字標高度', multiples: '1x', note: '' },
   backgrounds: '',
-  whenToUse: '',
-  howToUse: '',
-  wordmarkFamilyId: '',
+  lockups: [],
+  construction: '',
   misuse: [],
+  master_vector: '',
 });
 
 const TYPE_DOC = JSON.stringify({

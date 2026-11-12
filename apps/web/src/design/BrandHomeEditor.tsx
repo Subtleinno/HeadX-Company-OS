@@ -349,8 +349,8 @@ export function BrandHomeEditor({
           >
             <option value="">{t('brand.home.logoModeNone')}</option>
             {LOGO_MODES.map((mode) => (
-              <option key={mode.key} value={mode.key}>
-                {modeLabel(mode.key)}
+              <option key={mode} value={mode}>
+                {modeLabel(mode)}
               </option>
             ))}
           </select>

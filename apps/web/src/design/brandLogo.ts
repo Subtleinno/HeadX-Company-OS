@@ -1,24 +1,29 @@
 /**
- * 品牌標誌的**結構**（issue #36）。
+ * 品牌標誌頁的**資料層**（issue #64，取代 #36 的形狀）。
  *
- * 這一頁不是「上載一個 logo」，是這個品牌的標誌系統：五類資產、四種顏色模式、
- * 分模式的最小尺寸、安全範圍、方向與組合、背景、錯誤用法。約束來自
- * `brand_policy_version` 標誌槽的原文：
+ * 和色彩頁、字體頁一樣，這一支是 `@company-os/contracts` 標誌 payload 的
+ * **編輯器轉接層**：存的是同一個 `LogoPayload`，所以 tokens.json、prompt 包、
+ * HTML 與這一頁看到的必然是同一份。舊版（#36）自己的形狀（`primaryId`、
+ * 每個模式的 px／mm、`safeArea` 一句字）要靠 legacy 換算才可以餵 renderer，
+ * 換算一日存在就有一日不同步。
  *
+ * 約束（策略標誌槽原文）：
  *   - 資產只分五類：Logo、Wordmark、Mark、Monogram，以及 App icon 與 favicon
- *     合起來一類。**不是六類**。
- *   - 色值只引用色彩頁的角色：品牌單色 `brand.primary`、單色正 `ink`、
- *     反白 `paper`、深底用深色 `surface`。色彩頁未定那個角色就標成缺，
- *     **不在這一頁補一個色**。
- *   - 最小尺寸由這一頁定、分模式，而且要寫單位：螢幕 px、印刷 mm。
+ *     合起來一類。**不是六類**。一類一件，所以類別本身就是身份。
+ *   - 色值只引用色彩頁的角色名；**功能色不可用於標誌**（`color.r4`）。
+ *     色彩頁未定那個角色就標缺，**不在這一頁補一個色**。
+ *   - 最小尺寸分螢幕 px 與印刷 mm，兩者不是同一個數（`logo.r2`）。
+ *   - 淨空間以 x 定義，而且 x 要講明是甚麼（`logo.r1`）。
  *   - 主檔要是向量。位圖只作預覽。
- *   - 不重畫已定稿字標、不決定字體家族（家族在字體頁；這一頁只可以引用）。
- *
- * 這四種顏色模式是**標誌的用法**，不是色彩頁的淺色／深色主題切換 —— 兩者
- * 不要混：`onDark` 講的是「把標誌放在深色底上」，引用深色那套的 `surface`。
+ *   - 四種顏色模式（品牌單色／單色正／反白／深底）是策略固定的，缺一種
+ *     就是缺（`logo.r3`），但**用哪一個角色由這一頁指定** —— 那正是 #62
+ *     從色彩頁搬過來的 `logoRoles`。
  */
 
-import { valuesOf, type ColorDoc } from './brandColors';
+import { schemaForPage, type LogoPayload } from '@company-os/contracts';
+import { COLOR_ROLES, valuesOf, type ColorDoc } from './brandColors';
+
+export type LogoDoc = LogoPayload;
 
 export type LogoAssetKind = 'logo' | 'wordmark' | 'mark' | 'monogram' | 'appicon';
 
@@ -33,227 +38,55 @@ export const ASSET_KINDS: readonly LogoAssetKind[] = [
 
 export const MAX_ASSETS = ASSET_KINDS.length;
 
-export type LogoAsset = {
-  id: string;
-  kind: LogoAssetKind;
-  name: string;
-  /** 主檔：一定要向量。 */
-  master: string;
-  /** 位圖預覽，可以空。 */
-  preview: string;
-};
-
 export type LogoModeKey = 'brand' | 'mono' | 'reverse' | 'onDark';
 
-/**
- * 四種顏色模式與其角色。**角色寫死**：這是策略的對應，不是每頁可以另作主張
- * 的選擇。色彩頁負責「那個角色是什麼色」，這一頁負責「標誌在甚麼底上用
- * 哪一個角色」。
- */
-export const LOGO_MODES: readonly {
-  key: LogoModeKey;
-  role: string;
-  /** 由色彩頁哪一套取值：深底用深色那一套。 */
-  surface: 'light' | 'dark';
-}[] = [
-  { key: 'brand', role: 'brand.primary', surface: 'light' },
-  { key: 'mono', role: 'ink', surface: 'light' },
-  { key: 'reverse', role: 'paper', surface: 'light' },
-  { key: 'onDark', role: 'surface', surface: 'dark' },
-];
+/** 四種模式，次序固定。用哪一個色彩角色由這一頁決定，不是寫死。 */
+export const LOGO_MODES: readonly LogoModeKey[] = ['brand', 'mono', 'reverse', 'onDark'];
 
-export type ModeSpec = {
-  /** 螢幕最小尺寸，帶 px。 */
-  screen: string;
-  /** 印刷最小尺寸，帶 mm。 */
-  print: string;
+export type LogoAsset = LogoPayload['assets'][number];
+export type LogoModeRow = LogoPayload['modes'][number];
+export type LogoLockup = LogoPayload['lockups'][number];
+export type LogoMisuse = LogoPayload['misuse'][number];
+
+const LOGO_SCHEMA = schemaForPage('logo', 'fixed');
+
+export const EMPTY_DOC: LogoDoc = {
+  stance: '',
+  logic_line: '',
+  assets: [],
+  lockups: [],
+  construction: '',
+  clear_space_x: { x: '', multiples: '', note: '' },
+  min_size: { screen_px: 0, print_mm: 0 },
+  modes: [],
+  backgrounds: '',
+  misuse: [],
+  master_vector: '',
 };
-
-export type LogoDoc = {
-  assets: LogoAsset[];
-  /** 主標誌：資產清單裡的其中一個。 */
-  primaryId: string;
-  modes: Record<LogoModeKey, ModeSpec>;
-  /** 安全範圍 X。 */
-  safeArea: string;
-  orientation: string;
-  backgrounds: string;
-  whenToUse: string;
-  howToUse: string;
-  /** 字標用了哪一個家族（引用字體頁的 id）。不決定家族，只引用。 */
-  wordmarkFamilyId: string;
-  misuse: string[];
-};
-
-export function emptyMode(): ModeSpec {
-  return { screen: '', print: '' };
-}
 
 export function emptyLogoDoc(): LogoDoc {
   return {
+    ...EMPTY_DOC,
     assets: [],
-    primaryId: '',
-    modes: {
-      brand: emptyMode(),
-      mono: emptyMode(),
-      reverse: emptyMode(),
-      onDark: emptyMode(),
-    },
-    safeArea: '',
-    orientation: '',
-    backgrounds: '',
-    whenToUse: '',
-    howToUse: '',
-    wordmarkFamilyId: '',
+    lockups: [],
+    modes: [],
     misuse: [],
+    clear_space_x: { x: '', multiples: '', note: '' },
+    min_size: { screen_px: 0, print_mm: 0 },
   };
 }
 
-export function hasAnyValue(doc: LogoDoc): boolean {
-  return (
-    doc.assets.length > 0 ||
-    doc.primaryId !== '' ||
-    doc.safeArea.trim() !== '' ||
-    doc.orientation.trim() !== '' ||
-    doc.backgrounds.trim() !== '' ||
-    doc.whenToUse.trim() !== '' ||
-    doc.howToUse.trim() !== '' ||
-    doc.misuse.length > 0 ||
-    LOGO_MODES.some((mode) => {
-      const spec = doc.modes[mode.key];
-
-      return spec.screen !== '' || spec.print !== '';
-    })
-  );
+export function emptyAsset(kind: LogoAssetKind): LogoAsset {
+  return { class: kind, label: '', file_ref: '', version: '' };
 }
 
-/** 主檔要是向量。副檔名認得的就是向量，其他一律當位圖（．png／．jpg）。 */
-export function isVectorFile(path: string): boolean {
-  return /\.(svg|ai|eps|pdf)$/i.test(path.trim());
-}
-
-export function usedKinds(doc: LogoDoc): LogoAssetKind[] {
-  return doc.assets.map((asset) => asset.kind);
-}
-
-/** 還可以加的類別。已經有一類就不再列 —— 不是變灰，是不存在。 */
-export function availableKinds(doc: LogoDoc): LogoAssetKind[] {
-  const used = new Set(usedKinds(doc));
-
-  return ASSET_KINDS.filter((kind) => !used.has(kind));
-}
-
-export type AssetGap = 'name' | 'master' | 'vector';
-
-export function assetGaps(asset: LogoAsset): AssetGap[] {
-  const gaps: AssetGap[] = [];
-
-  if (asset.name.trim() === '') {
-    gaps.push('name');
-  }
-
-  if (asset.master.trim() === '') {
-    gaps.push('master');
-  } else if (!isVectorFile(asset.master)) {
-    gaps.push('vector');
-  }
-
-  return gaps;
-}
-
-/** 螢幕最小尺寸：數字加 px。寫 `24` 或 `24mm` 都不算。 */
-export function screenSizeOk(value: string): boolean {
-  return /^\d+(\.\d+)?px$/.test(value.trim());
-}
-
-/** 印刷最小尺寸：數字加 mm。 */
-export function printSizeOk(value: string): boolean {
-  return /^\d+(\.\d+)?mm$/.test(value.trim());
-}
-
-/**
- * 這個模式在色彩頁有沒有值。
- *
- * 深底（`onDark`）取深色那一套的 `surface` —— 標誌放在深色底上，用的是
- * 深色主題的值，不是淺色主題的同名角色。
- */
-export function modeRoleValue(colour: ColorDoc | null, key: LogoModeKey): string | null {
-  if (colour === null) {
-    return null;
-  }
-
-  const mode = LOGO_MODES.find((item) => item.key === key);
-
-  if (mode === undefined) {
-    return null;
-  }
-
-  const hex = valuesOf(colour, mode.surface)[mode.role]?.hex ?? '';
-
-  return hex === '' ? null : hex;
-}
-
-export function primaryAsset(doc: LogoDoc): LogoAsset | null {
-  return doc.assets.find((asset) => asset.id === doc.primaryId) ?? null;
-}
-
-export type LogoGaps = {
-  /** 主標誌未指定（或者指去一個已經不存在的資產）。 */
-  primary: boolean;
-  /** 有缺的資產 id。 */
-  assets: string[];
-  /** 尺寸不足或色彩頁未定角色的模式。 */
-  modes: LogoModeKey[];
-  safeArea: boolean;
-  orientation: boolean;
-  backgrounds: boolean;
-  whenToUse: boolean;
-  howToUse: boolean;
-  misuse: boolean;
-};
-
-export function logoGaps(doc: LogoDoc, colour: ColorDoc | null): LogoGaps {
-  return {
-    primary: primaryAsset(doc) === null,
-    assets: doc.assets.filter((asset) => assetGaps(asset).length > 0).map((asset) => asset.id),
-    modes: LOGO_MODES.filter((mode) => {
-      const spec = doc.modes[mode.key];
-
-      return (
-        !screenSizeOk(spec.screen) ||
-        !printSizeOk(spec.print) ||
-        modeRoleValue(colour, mode.key) === null
-      );
-    }).map((mode) => mode.key),
-    safeArea: doc.safeArea.trim() === '',
-    orientation: doc.orientation.trim() === '',
-    backgrounds: doc.backgrounds.trim() === '',
-    whenToUse: doc.whenToUse.trim() === '',
-    howToUse: doc.howToUse.trim() === '',
-    misuse: doc.misuse.length === 0,
-  };
-}
-
-export function gapCount(gaps: LogoGaps): number {
-  return (
-    gaps.assets.length +
-    gaps.modes.length +
-    (gaps.primary ? 1 : 0) +
-    (gaps.safeArea ? 1 : 0) +
-    (gaps.orientation ? 1 : 0) +
-    (gaps.backgrounds ? 1 : 0) +
-    (gaps.whenToUse ? 1 : 0) +
-    (gaps.howToUse ? 1 : 0) +
-    (gaps.misuse ? 1 : 0)
-  );
+export function emptyModeRow(mode: LogoModeKey): LogoModeRow {
+  return { mode, color_role: '', note: '' };
 }
 
 /* ── 讀與寫 ───────────────────────────────────────────────── */
 
-export type ParseLogoResult =
-  | { kind: 'ok'; doc: LogoDoc }
-  | { kind: 'empty' }
-  | { kind: 'invalid' };
+export type ParseLogoResult = { kind: 'ok'; doc: LogoDoc } | { kind: 'empty' } | { kind: 'invalid' };
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -261,55 +94,12 @@ function asRecord(value: unknown): Record<string, unknown> | null {
     : null;
 }
 
-function text(value: unknown): string {
-  return typeof value === 'string' ? value.trim() : '';
-}
-
-function readAssets(raw: unknown): LogoAsset[] {
-  if (!Array.isArray(raw)) {
-    return [];
-  }
-
-  const assets: LogoAsset[] = [];
-  const used = new Set<LogoAssetKind>();
-
-  for (const item of raw) {
-    const entry = asRecord(item);
-
-    if (entry === null) {
-      continue;
-    }
-
-    const kind = ASSET_KINDS.find((candidate) => candidate === entry.kind);
-    const id = text(entry.id);
-
-    if (kind === undefined || id === '' || used.has(kind)) {
-      continue;
-    }
-
-    used.add(kind);
-    assets.push({
-      id,
-      kind,
-      name: text(entry.name),
-      master: text(entry.master),
-      preview: text(entry.preview),
-    });
-  }
-
-  return assets.slice(0, MAX_ASSETS);
-}
-
-function readMode(raw: unknown): ModeSpec {
-  const entry = asRecord(raw);
-
-  if (entry === null) {
-    return emptyMode();
-  }
-
-  return { screen: text(entry.screen), print: text(entry.print) };
-}
-
+/**
+ * 認得這份 JSON 是不是一張標誌表。
+ *
+ * 舊形狀（`modes` 是一個以模式為鍵的物件、`primaryId` 指資產 id）硬讀會
+ * 畫出四行「每個模式都缺」的假表，所以形狀不對就講讀不到。
+ */
 export function parseLogoDoc(value: string): ParseLogoResult {
   if (value.trim() === '') {
     return { kind: 'empty' };
@@ -329,62 +119,237 @@ export function parseLogoDoc(value: string): ParseLogoResult {
     return { kind: 'invalid' };
   }
 
-  // 認得形狀才算標誌表；任意 JSON 硬當成空表就會畫出五個假的「缺」。
-  if (!('assets' in record) && !('modes' in record)) {
+  const looksLikeLogo =
+    Array.isArray(record['assets']) ||
+    Array.isArray(record['modes']) ||
+    'logic_line' in record ||
+    'clear_space_x' in record ||
+    'min_size' in record;
+
+  // 舊形狀的 modes 是一個物件，新形狀是陣列：留著它只會畫出四行假的缺。
+  const modesAreNew = record['modes'] === undefined || Array.isArray(record['modes']);
+
+  if (!looksLikeLogo || !modesAreNew) {
     return { kind: 'invalid' };
   }
 
-  const modesRaw = asRecord(record.modes);
-  const modes = {} as Record<LogoModeKey, ModeSpec>;
+  const doc = LOGO_SCHEMA.normalize(raw) as LogoDoc;
 
-  for (const mode of LOGO_MODES) {
-    modes[mode.key] = readMode(modesRaw?.[mode.key]);
+  // 一類一件：同類出現兩次不是「兩個主標誌」，是沒有決定。
+  const seen = new Set<string>();
+  const assets = doc.assets.filter((asset) => {
+    if (seen.has(asset.class)) {
+      return false;
+    }
+
+    seen.add(asset.class);
+
+    return true;
+  });
+
+  return { kind: 'ok', doc: { ...doc, assets: assets.slice(0, MAX_ASSETS) } };
+}
+
+/** 存進版本的內容：單行，因為版本預覽只有頭 160 字元。 */
+export function serializeLogoDoc(doc: LogoDoc): string {
+  return JSON.stringify(LOGO_SCHEMA.normalize(doc));
+}
+
+export function hasAnyValue(doc: LogoDoc): boolean {
+  return (
+    doc.logic_line.trim() !== '' ||
+    doc.master_vector.trim() !== '' ||
+    doc.assets.length > 0 ||
+    doc.lockups.length > 0 ||
+    doc.construction.trim() !== '' ||
+    doc.clear_space_x.x.trim() !== '' ||
+    doc.clear_space_x.multiples.trim() !== '' ||
+    doc.min_size.screen_px > 0 ||
+    doc.min_size.print_mm > 0 ||
+    doc.modes.some((mode) => mode.color_role.trim() !== '' || mode.note.trim() !== '') ||
+    doc.backgrounds.trim() !== '' ||
+    doc.misuse.length > 0
+  );
+}
+
+/* ── 資產 ─────────────────────────────────────────────────── */
+
+/** 主檔要是向量。副檔名認得的就是向量，其他一律當位圖（．png／．jpg）。 */
+export function isVectorFile(path: string): boolean {
+  return /\.(svg|ai|eps|pdf)$/i.test(path.trim());
+}
+
+export function usedKinds(doc: LogoDoc): string[] {
+  return doc.assets.map((asset) => asset.class);
+}
+
+/** 還可以加的類別。已經有一類就不再列 —— 不是變灰，是不存在。 */
+export function availableKinds(doc: LogoDoc): LogoAssetKind[] {
+  const used = new Set(usedKinds(doc));
+
+  return ASSET_KINDS.filter((kind) => !used.has(kind));
+}
+
+export type AssetGap = 'label' | 'file' | 'vector';
+
+export function assetGaps(asset: LogoAsset): AssetGap[] {
+  const gaps: AssetGap[] = [];
+
+  if (asset.label.trim() === '') {
+    gaps.push('label');
   }
 
-  const assets = readAssets(record.assets);
-  const primaryId = text(record.primaryId);
+  if (asset.file_ref.trim() === '') {
+    gaps.push('file');
+  } else if (!isVectorFile(asset.file_ref)) {
+    gaps.push('vector');
+  }
+
+  return gaps;
+}
+
+/** 主標誌＝類別為 `logo` 的那一件。不再另存一個 `primaryId`（那是第二份真相）。 */
+export function primaryAsset(doc: LogoDoc | null): LogoAsset | null {
+  return doc?.assets.find((asset) => asset.class === 'logo') ?? null;
+}
+
+/* ── 顏色模式 ─────────────────────────────────────────────── */
+
+export function modeRow(doc: LogoDoc | null, key: LogoModeKey): LogoModeRow {
+  return doc?.modes.find((mode) => mode.mode === key) ?? emptyModeRow(key);
+}
+
+/** 改一個模式；整行都空了就刪走，不留空殼。 */
+export function setMode(
+  doc: LogoDoc,
+  key: LogoModeKey,
+  patch: Partial<Omit<LogoModeRow, 'mode'>>,
+): LogoDoc {
+  const next = { ...modeRow(doc, key), ...patch };
+  const others = doc.modes.filter((mode) => mode.mode !== key);
+  const blank = next.color_role.trim() === '' && next.note.trim() === '';
+
+  return { ...doc, modes: blank ? others : [...others, next] };
+}
+
+/** 角色是否可用於標誌：一定要是色彩頁的角色，而且不是功能色。 */
+export type RoleState = 'ok' | 'unknown' | 'function';
+
+export function roleState(role: string): RoleState {
+  const entry = COLOR_ROLES.find((item) => item.key === role);
+
+  if (entry === undefined) {
+    return 'unknown';
+  }
+
+  // 功能色是「系統在講話」的顏色，不是品牌的聲音（color.r4）。
+  return entry.group === 'function' ? 'function' : 'ok';
+}
+
+/**
+ * 這個模式在色彩頁有沒有值。
+ *
+ * 深底（`onDark`）取深色那一套 —— 標誌放在深色底上，用的是深色主題的值，
+ * 不是淺色主題的同名角色。
+ */
+export function modeRoleValue(
+  colour: ColorDoc | null,
+  key: LogoModeKey,
+  doc: LogoDoc | null,
+): string | null {
+  if (colour === null) {
+    return null;
+  }
+
+  const role = modeRow(doc, key).color_role;
+
+  if (role === '') {
+    return null;
+  }
+
+  const hex = valuesOf(colour, key === 'onDark' ? 'dark' : 'light')[role]?.hex ?? '';
+
+  return hex === '' ? null : hex;
+}
+
+/* ── 最小尺寸 ─────────────────────────────────────────────── */
+
+/** 螢幕最小尺寸：數字加 px。寫 `24` 或 `24mm` 都不算。 */
+export function screenSizeOk(value: string): boolean {
+  return /^\d+(\.\d+)?px$/.test(value.trim());
+}
+
+/** 印刷最小尺寸：數字加 mm。 */
+export function printSizeOk(value: string): boolean {
+  return /^\d+(\.\d+)?mm$/.test(value.trim());
+}
+
+/* ── 缺口 ─────────────────────────────────────────────────── */
+
+export type LogoGaps = {
+  /** 有缺的資產類別。 */
+  assets: LogoAssetKind[];
+  /** 沒有一件類別是 logo 的資產：主標誌不存在。 */
+  primary: boolean;
+  /** 缺少、或者引用了不存在／功能色的模式。 */
+  modes: LogoModeKey[];
+  /** 淨空間未寫齊（倍數或 x 未定義）。 */
+  space: boolean;
+  /** 螢幕與印刷兩個下限未寫齊，或者寫了同一個數。 */
+  size: boolean;
+  backgrounds: boolean;
+  logic: boolean;
+};
+
+export function logoGaps(doc: LogoDoc): LogoGaps {
+  const space = doc.clear_space_x.multiples.trim() === '' || doc.clear_space_x.x.trim() === '';
+
+  const size =
+    doc.min_size.screen_px <= 0 ||
+    doc.min_size.print_mm <= 0 ||
+    doc.min_size.screen_px === doc.min_size.print_mm;
 
   return {
-    kind: 'ok',
-    doc: {
-      assets,
-      // 指去一個已經不存在的資產：當作未指定，不靜靜指去第一個。
-      primaryId: assets.some((asset) => asset.id === primaryId) ? primaryId : '',
-      modes,
-      safeArea: text(record.safeArea),
-      orientation: text(record.orientation),
-      backgrounds: text(record.backgrounds),
-      whenToUse: text(record.whenToUse),
-      howToUse: text(record.howToUse),
-      wordmarkFamilyId: text(record.wordmarkFamilyId),
-      misuse: Array.isArray(record.misuse)
-        ? record.misuse.map((item) => text(item)).filter((item) => item !== '')
-        : [],
-    },
+    assets: ASSET_KINDS.filter((kind) => {
+      const asset = doc.assets.find((item) => item.class === kind);
+
+      return asset !== undefined && assetGaps(asset).length > 0;
+    }),
+    primary: primaryAsset(doc) === null,
+    modes: LOGO_MODES.filter((key) => {
+      const role = modeRow(doc, key).color_role;
+
+      return role === '' || roleState(role) !== 'ok';
+    }),
+    space,
+    size,
+    backgrounds: doc.backgrounds.trim() === '',
+    logic: doc.logic_line.trim() === '',
   };
 }
 
-/** 單行，資產排第一：版本列表只拿得到頭 160 字元做預覽。 */
-export function serializeLogoDoc(doc: LogoDoc): string {
-  return JSON.stringify({
-    assets: doc.assets,
-    primaryId: doc.primaryId,
-    modes: doc.modes,
-    safeArea: doc.safeArea,
-    orientation: doc.orientation,
-    backgrounds: doc.backgrounds,
-    whenToUse: doc.whenToUse,
-    howToUse: doc.howToUse,
-    wordmarkFamilyId: doc.wordmarkFamilyId,
-    misuse: doc.misuse,
-  });
+export function gapCount(gaps: LogoGaps): number {
+  return (
+    gaps.assets.length +
+    gaps.modes.length +
+    (gaps.primary ? 1 : 0) +
+    (gaps.space ? 1 : 0) +
+    (gaps.size ? 1 : 0) +
+    (gaps.backgrounds ? 1 : 0) +
+    (gaps.logic ? 1 : 0)
+  );
 }
 
-/** 版本預覽：資產名。抽不到就空 —— 不會假裝有。 */
-export function assetNamesInText(value: string): string[] {
-  const found = value.matchAll(/"name":"([^"]{1,40})"/g);
+/**
+ * 版本預覽抽資產名：那一版有哪幾件。
+ *
+ * 用 `new RegExp` 而不用字面量：模式裡的引號數目是單數，寫成字面量會令
+ * i18n 守門的字元掃描器以為字串未收尾。
+ */
+const LABEL_PATTERN = new RegExp('"label":"([^"]{1,40})"', 'g');
 
-  return Array.from(
-    new Set(Array.from(found, (match) => match[1] ?? '').filter((name) => name !== '')),
-  );
+export function assetNamesInText(value: string): string[] {
+  const found = value.matchAll(LABEL_PATTERN);
+
+  return Array.from(new Set(Array.from(found, (match) => match[1] ?? '').filter((name) => name !== '')));
 }
