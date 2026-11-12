@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { t } from '@company-os/i18n';
 import {
   EMPTY_PLATFORM_DOC,
@@ -145,6 +145,22 @@ function emptyItems(doc: PlatformDoc): BrandEmptyItem[] {
   ];
 }
 
+/**
+ * 缺口上報：只有一個來源（`platformGapCount(doc)`），每次文件變就報一次。
+ *
+ * 為甚麼是一個子元件而不是在 `update()` 裡報：全空狀態根本沒有 `update()`，
+ * 缺口會永遠是 null，「這一頁」那一段就少了「缺口 6 項」。而且 `update()` 只在
+ * 有人打字時才跑，一打開頁面不報 —— 開啟時的缺口與改完之後的缺口是同一件事，
+ * 不應該只有後者算數。
+ */
+function GapReporter({ count, onCount }: { count: number; onCount?: (count: number | null) => void }) {
+  useEffect(() => {
+    onCount?.(count);
+  }, [count, onCount]);
+
+  return null;
+}
+
 export type BrandPlatformEditorProps = {
   brandId: string;
   /** 現行版本的內容（JSON 字串，或者是舊的自由文字）。 */
@@ -176,7 +192,6 @@ export function BrandPlatformEditor(props: BrandPlatformEditorProps) {
           data-brand-platform-reset
           onClick={() => {
             props.onChange(write(EMPTY_PLATFORM_DOC));
-            props.onGapCount?.(platformGapCount(EMPTY_PLATFORM_DOC));
           }}
         >
           {t('brand.page.manage.new')}
@@ -186,10 +201,10 @@ export function BrandPlatformEditor(props: BrandPlatformEditorProps) {
   }
 
   const doc = parsed.doc;
+  const gapCount = platformGapCount(doc);
 
   function update(next: PlatformDoc): void {
     props.onChange(write(next));
-    props.onGapCount?.(platformGapCount(next));
   }
 
   function patch(change: Partial<PlatformDoc>): void {
@@ -207,6 +222,7 @@ export function BrandPlatformEditor(props: BrandPlatformEditorProps) {
   if (isBlank(doc)) {
     return (
       <div className="brand-platform" data-brand-platform="empty">
+        <GapReporter count={gapCount} onCount={props.onGapCount} />
         <BrandPageEmpty
           pageKey="platform"
           titleKey="brand.platform.emptyTitle"
@@ -247,6 +263,7 @@ export function BrandPlatformEditor(props: BrandPlatformEditorProps) {
 
   return (
     <div className="brand-platform" data-brand-platform="ready">
+      <GapReporter count={gapCount} onCount={props.onGapCount} />
       {/* 第一屏：立場句。一句，不是一段。 */}
       <section className="brand-platform__stance" data-brand-platform-stance>
         <div className="brand-platform__stanceHead">

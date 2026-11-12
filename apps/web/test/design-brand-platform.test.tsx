@@ -211,8 +211,25 @@ describe('平台頁的形狀', () => {
     );
   });
 
-  it('全空：只做一件事（選一句立場）＋「這一頁要寫的」清單，不是八個空表', async () => {
+  it('全空都要報缺口：Moonic 現況＝6 項（立場 1＋三檢 3＋關鍵詞 1＋候選 1）', async () => {
     open({
+      overrides: {
+        brandPage: () => jsonResponse(200, { page: { ...PAGE, current: null }, versions: [], current: null }),
+      },
+    });
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-brand-platform="empty"]')).not.toBeNull();
+    });
+
+    await userEvent.click(document.querySelector('[data-guide-toggle="state"]') as HTMLElement);
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-guide-gaps]')?.getAttribute('data-guide-gaps')).toBe('6');
+    });
+  });
+
+  it('全空：只做一件事（選一句立場）＋「這一頁要寫的」清單，不是八個空表', async () => {    open({
       overrides: {
         brandPage: () => jsonResponse(200, { page: { ...PAGE, current: null }, versions: [], current: null }),
       },

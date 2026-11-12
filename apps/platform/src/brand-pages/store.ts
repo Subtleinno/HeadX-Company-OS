@@ -1072,16 +1072,20 @@ export async function composePages(db: Pool, brandId: string): Promise<
 
     if (row.version_no === null) {
       const schema = schemaForPage(row.key, row.kind);
+      const empty = schema.normalize({});
 
       return {
         ...base,
         document: {
           schema: 2 as const,
           stance: null,
-          payload: schema.normalize({}),
-          layout: schema.layout(schema.normalize({})),
+          payload: empty,
+          layout: schema.layout(empty),
           rationale: {},
-          gaps: [],
+          // 未有一版的頁一樣有缺口：缺口是「這個品牌的這一頁還未有甚麼」，
+          // 不是「這一版漏了甚麼」。留空就會出現「Needs 0，但畫面說缺 6 項」
+          // 這種兩個真相 —— 而 0 是錯的那一個。
+          gaps: schema.gaps(empty),
           refs: [],
         },
       };
