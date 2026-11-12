@@ -70,3 +70,20 @@ Frame v1.5 §2.9 的三種闊度（1440／1024／768）套用在品牌頁：
 ## 6. 前面各 issue 的驗收是否仍通過
 
 `npm test` 2127 條（含 #55–#68 的每一張）全綠；`lint`／`lint:boundaries`／`build` 全綠。
+
+## 7. #55 的十二條共通規則：逐條自檢
+
+| # | 規則 | 落實在哪裡 | 狀態 |
+| --- | --- | --- | --- |
+| 1 | 內容是 payload，HTML 是輸出 | `brand_page_version.content` 只存 payload JSON；`renderBrandHtml()` 由 payload 渲染四種輸出 | 是 |
+| 2 | 版面由 payload 的 layout 控制 | 主頁 `layout[]`（#67，每塊帶 reason／emphasis）；其他頁由 `schema.layout()` 派生 | 是 |
+| 3 | 色值只住色彩頁 | 其他頁只存角色名；`image`／`home`／`logo` 都只引用；`gates.test.ts` 咬「色值只在色彩頁」 | 是 |
+| 4 | 重做不是疊加 | 七頁舊形狀一律判 invalid 並重寫表身（`brandTone`／`brandImage`／`brandHome` 整支換） | 是 |
+| 5 | 策略正文只住 #56 | 策略在 `brand_policy` 槽；各頁只引用槽名與規則 id | 是 |
+| 6 | 可量化規則有 id | `rules.ts` 12 條；`color.r2` 這類 id 寫在策略句尾，由 checker 對應 | 是 |
+| 7 | 缺就標缺，缺口一律以 Needs 呈現 | 每頁 `gaps()` → 右側 Needs 欄 → 一鍵建立 Need；冇另造缺口頁 | 是 |
+| 8 | 每個決定附理由；有真實示範與反例 | `layout.reason`、色彩 `reason`、標誌 `reason`；圖像頁「要與不要」、語氣頁「像／不像」、範例頁真成品 | 是 |
+| 9 | 每頁 schema ＋ tokens 映射 ＋ prompt 映射 | `schemas.ts` 一頁一個 `PageSchema`。**這一條之前破了**：`buildPromptPack()` 跳過 `home`／`examples`，兩頁的 `prompt()` 是死碼 —— #69 修好（C126） | 已修 |
+| 10 | 畫面照設計稿；衝突停下回報；1024／768 依 §2.9 | 第 1 節的對照表與第 4 節的衝突表；斷點 1024／768 已對齊；截圖未做（第 5 節） | 部分 |
+| 11 | 只有老闆改策略與開新品牌；設計師與老闆編輯頁；員工只讀 | 後端 `canEdit` 決定；七頁都有「員工只讀」測試 | 是 |
+| 12 | Frame 硬規則：無搜尋、無深色 UI、藍只主按鈕、畫面只有產品文案 | 無搜尋框、無深色 UI；藍色只在主要按鈕與連結。**部分**：各頁有 `design-field__hint` 說明句（例如「這一頁不存色值」），屬解釋性文字，與「只有產品文案」有張力 —— 保留是因為唔講就會有人以為可以在這裡改色值 | 部分 |
