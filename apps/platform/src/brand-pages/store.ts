@@ -1,4 +1,12 @@
 import type { Pool, PoolClient } from 'pg';
+import {
+  BRAND_FIXED_PAGES,
+  documentFromStored,
+  parseBrandDocument,
+  schemaForPage,
+  type BrandDocument,
+  type BrandSlot,
+} from '@company-os/contracts';
 import { currentPolicyVersion, slotForPageKey } from '../brand-policy/store.js';
 
 /**
@@ -35,7 +43,14 @@ export type VersionSummary = {
   policyVersionNo: number | null;
 };
 
-export type VersionDetail = VersionSummary & { content: string };
+export type VersionDetail = VersionSummary & {
+  content: string;
+  /**
+   * v2 文件（issue #57）。舊版內容（自由文字／舊形狀 JSON）在讀取時單向轉換，
+   * 所以每一個呼叫者都拿到同一個形狀，不必自己判斷「這一版是新是舊」。
+   */
+  document: BrandDocument;
+};
 
 export type BrandPageView = {
   id: string;
@@ -65,34 +80,91 @@ type VersionRow = {
   note: string | null;
   preview?: string;
   content?: string;
+  document?: unknown;
+  page_key?: string;
+  page_kind?: PageKind;
   policy_version_no?: number | null;
 };
 
 /**
- * 五個固定頁。鍵與次序都是對外承諾（網址 `/design/brand/<key>`）：
+ * 八個固定頁（C112）。鍵與次序都是對外承諾（網址 `/design/brand/<key>`）：
  * 改一個字就會令所有舊書籤 404。次序用 10 的倍數，自定義頁接在後面。
+ *
+ * 名單住在 `@company-os/contracts`：前端左側欄、renderer、prompt 包都要用
+ * 同一份，寫兩次就會有一日不同步。
  */
-export const FIXED_PAGES: readonly { key: string; name: string; order: number }[] = [
-  { key: 'home', name: '品牌主頁', order: 10 },
-  { key: 'logo', name: '標誌', order: 20 },
-  { key: 'color', name: '色彩', order: 30 },
-  { key: 'type', name: '字體', order: 40 },
-  { key: 'tone', name: '語氣', order: 50 },
-];
+export const FIXED_PAGES: readonly { key: string; name: string; order: number; slot: BrandSlot }[] =
+  BRAND_FIXED_PAGES.map((page) => ({
+    key: page.key,
+    name: page.name,
+    order: page.order,
+    slot: page.slot,
+  }));
+
+/**
+ * 版本列表的一行字。
+ *
+ * v2 的 `content` 是一份 JSON，直接截 160 字元等於叫人讀程式碼。所以有新格式
+ * 就由文件抽一句（立場／決定／標誌邏輯），抽不到才退回舊的截字。
+ */
+function previewOf(document: BrandDocument | null, fallback: string): string {
+  if (document === null) {
+    return fallback;
+  }
+
+  const payload = document.payload;
+  const candidates = [
+    document.stance,
+    typeof payload['decided'] === 'string' ? payload['decided'] : '',
+    typeof payload['logic_line'] === 'string' ? payload['logic_line'] : '',
+    typeof payload['philosophy'] === 'string' ? payload['philosophy'] : '',
+    typeof payload['who'] === 'string' ? payload['who'] : '',
+  ];
+
+  for (const candidate of candidates) {
+    if (typeof candidate === 'string' && candidate.trim() !== '') {
+      return candidate.slice(0, 160);
+    }
+  }
+
+  return fallback;
+}
+
+function documentOf(row: {
+  document?: unknown;
+  page_key?: string;
+  page_kind?: PageKind;
+  content?: string;
+  content_null?: never;
+}): BrandDocument {
+  if (row.document !== undefined && row.document !== null) {
+    const parsed = parseBrandDocument(row.document);
+
+    // 資料庫裡的文件應該一定合格（寫入前驗證過）。真的不合格時退回舊版轉換，
+    // 把原文讀得返 —— 總好過整頁 500。
+    if (parsed.ok) {
+      return parsed.value;
+    }
+  }
+
+  return documentFromStored(row.page_key ?? '', row.page_kind ?? 'fixed', row.content ?? '');
+}
 
 function toSummary(row: VersionRow): VersionSummary {
+  const document = row.document === undefined || row.document === null ? null : documentOf(row);
+
   return {
     id: row.id,
     versionNo: row.version_no,
     createdAt: row.created_at.toISOString(),
     note: row.note,
-    preview: row.preview ?? '',
+    preview: previewOf(document, row.preview ?? ''),
     policyVersionNo: row.policy_version_no ?? null,
   };
 }
 
 function toDetail(row: VersionRow): VersionDetail {
-  return { ...toSummary(row), content: row.content ?? '' };
+  return { ...toSummary(row), content: row.content ?? '', document: documentOf(row) };
 }
 
 export async function brandExists(db: Pool, brandId: string): Promise<boolean> {
@@ -131,6 +203,9 @@ export async function listPages(db: Pool, brandId: string): Promise<BrandPageVie
        left join lateral (
          select vv.id, vv.version_no, vv.created_at, vv.note,
                 left(vv.content, 160) as preview,
+                vv.document,
+                p.key as page_key,
+                p.kind as page_kind,
                 pv.version_no as policy_version_no
            from brand_page_version vv
            left join brand_policy_version pv on pv.id = vv.policy_version_id
@@ -178,8 +253,10 @@ export async function findPage(
 export async function listVersions(db: Pool, pageId: string): Promise<VersionSummary[]> {
   const result = await db.query<VersionRow>(
     `select v.id, v.version_no, v.created_at, v.note, left(v.content, 160) as preview,
+            v.document, p.key as page_key, p.kind as page_kind,
             pv.version_no as policy_version_no
        from brand_page_version v
+       join brand_page p on p.id = v.page_id
        left join brand_policy_version pv on pv.id = v.policy_version_id
       where v.page_id = $1 and v.deleted_at is null
       order by v.version_no desc`,
@@ -195,8 +272,10 @@ export async function findCurrentVersion(
 ): Promise<VersionDetail | null> {
   const result = await db.query<VersionRow>(
     `select v.id, v.version_no, v.created_at, v.note, left(v.content, 160) as preview,
-            v.content, pv.version_no as policy_version_no
+            v.content, v.document, p.key as page_key, p.kind as page_kind,
+            pv.version_no as policy_version_no
        from brand_page_version v
+       join brand_page p on p.id = v.page_id
        left join brand_policy_version pv on pv.id = v.policy_version_id
       where v.page_id = $1 and v.deleted_at is null
       order by v.version_no desc
@@ -214,13 +293,70 @@ export async function findCurrentVersion(
  * 鍵用來找對應的策略槽（第 6 個是自定義頁通用），所以同一個鎖要一併交回，
  * 不要為了拿鍵再查一次 —— 兩次查詢之間有人改頁的鍵，就會記錯槽。
  */
-async function lockPage(client: PoolClient, pageId: string): Promise<string | null> {
-  const result = await client.query<{ key: string }>(
-    'select key from brand_page where id = $1 for update',
+/**
+ * 鎖住這一頁並取回它的鍵與品牌。
+ *
+ * 鍵用來找對應的策略槽（自定義頁用通用槽）；品牌用來在同一個交易內寫一列
+ * `brand_release`（品牌版本＝當時每一頁的版號）。同一個鎖一併交回，不要為了
+ * 拿品牌再查一次 —— 兩次查詢之間有人搬家，release 就會記錯品牌。
+ */
+async function lockPage(
+  client: PoolClient,
+  pageId: string,
+): Promise<{ key: string; brandId: string; kind: PageKind } | null> {
+  const result = await client.query<{ key: string; brand_id: string; kind: PageKind }>(
+    'select key, brand_id, kind from brand_page where id = $1 for update',
     [pageId],
   );
 
-  return result.rows[0]?.key ?? null;
+  const row = result.rows[0];
+
+  return row === undefined ? null : { key: row.key, brandId: row.brand_id, kind: row.kind };
+}
+
+/**
+ * 追加一個品牌版本。
+ *
+ * `pages` 是「此刻每一頁的現行版號」的快照。容許跳號、不容許重複：號碼由
+ * 品牌級鎖之後的 `max + 1` 計，而 `brand_release` 沒有 unique 約束 —— 兩個
+ * 並行儲存寧願出 13 缺號，也不要其中一個失敗（失敗的那一下是使用者按的
+ * 儲存）。
+ */
+async function appendRelease(
+  client: PoolClient,
+  input: { brandId: string; actorId: string },
+): Promise<number> {
+  const snapshot = await client.query<{ pages: { key: string; versionNo: number }[] }>(
+    `select coalesce(
+              jsonb_agg(
+                jsonb_build_object('key', p.key, 'versionNo', v.version_no)
+                order by p.sort_order, p.key
+              ),
+              '[]'::jsonb
+            ) as pages
+       from brand_page p
+       join lateral (
+         select max(vv.version_no) as version_no
+           from brand_page_version vv
+          where vv.page_id = p.id and vv.deleted_at is null
+       ) v on v.version_no is not null
+      where p.brand_id = $1 and p.deleted_at is null`,
+    [input.brandId],
+  );
+
+  const next = await client.query<{ next: number }>(
+    'select coalesce(max(release_no), 0) + 1 as next from brand_release where brand_id = $1',
+    [input.brandId],
+  );
+
+  const releaseNo = next.rows[0]?.next ?? 1;
+
+  await client.query(
+    'insert into brand_release (brand_id, release_no, pages, created_by) values ($1, $2, $3::jsonb, $4)',
+    [input.brandId, releaseNo, JSON.stringify(snapshot.rows[0]?.pages ?? []), input.actorId],
+  );
+
+  return releaseNo;
 }
 
 async function nextVersionNo(client: PoolClient, pageId: string): Promise<number> {
@@ -242,6 +378,9 @@ async function nextVersionNo(client: PoolClient, pageId: string): Promise<number
 
 export type NewVersion = {
   pageId: string;
+  /** v2 文件。有新格式時 `content` 由它產生，呼叫者不必自己序列化。 */
+  document: BrandDocument | null;
+  /** 舊格式的原文（只有在沒有文件時使用）。 */
   content: string;
   note: string | null;
   actorId: string;
@@ -259,9 +398,9 @@ export async function createVersion(db: Pool, input: NewVersion): Promise<Versio
   try {
     await client.query('begin');
 
-    const pageKey = await lockPage(client, input.pageId);
+    const locked = await lockPage(client, input.pageId);
 
-    if (pageKey === null) {
+    if (locked === null) {
       await client.query('rollback');
       throw new Error(`頁不存在：${input.pageId}`);
     }
@@ -270,22 +409,27 @@ export async function createVersion(db: Pool, input: NewVersion): Promise<Versio
 
     // 記住這一版是照第幾版策略做的（#34）。策略之後改了，這一版仍然指著
     // 當時那一版 —— 已經做好的頁不會被靜靜重寫。
-    const policy = await currentPolicyVersion(client, slotForPageKey(pageKey));
+    const policy = await currentPolicyVersion(client, slotForPageKey(locked.key));
+
+    const content = input.document === null ? input.content : JSON.stringify(input.document);
 
     const inserted = await client.query<VersionRow>(
       `insert into brand_page_version
-         (page_id, version_no, content, note, created_by, policy_version_id)
-       values ($1, $2, $3, $4, $5, $6)
-       returning id, version_no, created_at, note, left(content, 160) as preview, content`,
+         (page_id, version_no, content, document, note, created_by, policy_version_id)
+       values ($1, $2, $3, $4::jsonb, $5, $6, $7)
+       returning id, version_no, created_at, note, left(content, 160) as preview, content, document`,
       [
         input.pageId,
         versionNo,
-        input.content,
+        content,
+        input.document === null ? null : JSON.stringify(input.document),
         input.note,
         input.actorId,
         policy?.id ?? null,
       ],
     );
+
+    await appendRelease(client, { brandId: locked.brandId, actorId: input.actorId });
 
     await client.query('commit');
 
@@ -295,7 +439,12 @@ export async function createVersion(db: Pool, input: NewVersion): Promise<Versio
       throw new Error('新增版本之後沒有回傳列');
     }
 
-    return toDetail({ ...row, policy_version_no: policy?.versionNo ?? null });
+    return toDetail({
+      ...row,
+      page_key: locked.key,
+      page_kind: locked.kind,
+      policy_version_no: policy?.versionNo ?? null,
+    });
   } catch (error) {
     await client.query('rollback').catch(() => undefined);
     throw error;
@@ -323,7 +472,9 @@ export async function restoreVersion(
   try {
     await client.query('begin');
 
-    if ((await lockPage(client, input.pageId)) === null) {
+    const locked = await lockPage(client, input.pageId);
+
+    if (locked === null) {
       await client.query('rollback');
       return { status: 'not_found' };
     }
@@ -331,10 +482,11 @@ export async function restoreVersion(
     const source = await client.query<{
       version_no: number;
       content: string;
+      document: unknown;
       policy_version_id: string | null;
       policy_version_no: number | null;
     }>(
-      `select v.version_no, v.content, v.policy_version_id, pv.version_no as policy_version_no
+      `select v.version_no, v.content, v.document, v.policy_version_id, pv.version_no as policy_version_no
          from brand_page_version v
          left join brand_policy_version pv on pv.id = v.policy_version_id
         where v.id = $1 and v.page_id = $2 and v.deleted_at is null`,
@@ -354,18 +506,21 @@ export async function restoreVersion(
     // 就不應該同時聲稱自己用的是今天的策略。
     const inserted = await client.query<VersionRow>(
       `insert into brand_page_version
-         (page_id, version_no, content, note, created_by, policy_version_id)
-       values ($1, $2, $3, $4, $5, $6)
-       returning id, version_no, created_at, note, left(content, 160) as preview, content`,
+         (page_id, version_no, content, document, note, created_by, policy_version_id)
+       values ($1, $2, $3, $4::jsonb, $5, $6, $7)
+       returning id, version_no, created_at, note, left(content, 160) as preview, content, document`,
       [
         input.pageId,
         versionNo,
         row.content,
+        row.document === null || row.document === undefined ? null : JSON.stringify(row.document),
         `用回第 ${row.version_no} 版`,
         input.actorId,
         row.policy_version_id,
       ],
     );
+
+    await appendRelease(client, { brandId: locked.brandId, actorId: input.actorId });
 
     await client.query('commit');
 
@@ -377,7 +532,12 @@ export async function restoreVersion(
 
     return {
       status: 'ok',
-      version: toDetail({ ...created, policy_version_no: row.policy_version_no }),
+      version: toDetail({
+        ...created,
+        page_key: locked.key,
+        page_kind: locked.kind,
+        policy_version_no: row.policy_version_no,
+      }),
     };
   } catch (error) {
     await client.query('rollback').catch(() => undefined);
@@ -744,4 +904,114 @@ export async function setEditor(
   );
 
   return result.rowCount !== null;
+}
+
+/* ── 組成（issue #57 的四種輸出用） ───────────────────────────── */
+
+/**
+ * 這個品牌每一頁的現行版本（連文件），左側次序。
+ *
+ * **沒有版本的頁也會回**（`versionNo: 0`、空白文件）：輸出要知道「這一頁
+ * 存在但未做」，才可以講「缺」。只回有版本的頁，主頁就會看起來很完整。
+ */
+export async function composePages(db: Pool, brandId: string): Promise<
+  {
+    key: string;
+    name: string;
+    kind: PageKind;
+    versionNo: number;
+    policyVersionNo: number | null;
+    document: BrandDocument;
+  }[]
+> {
+  const result = await db.query<{
+    key: string;
+    name: string;
+    kind: PageKind;
+    version_no: number | null;
+    content: string | null;
+    document: unknown;
+    policy_version_no: number | null;
+  }>(
+    `select p.key, p.name, p.kind,
+            v.version_no, v.content, v.document, pv.version_no as policy_version_no
+       from brand_page p
+       left join lateral (
+         select vv.version_no, vv.content, vv.document, vv.policy_version_id
+           from brand_page_version vv
+          where vv.page_id = p.id and vv.deleted_at is null
+          order by vv.version_no desc
+          limit 1
+       ) v on true
+       left join brand_policy_version pv on pv.id = v.policy_version_id
+      where p.brand_id = $1 and p.deleted_at is null
+      order by p.sort_order, p.key`,
+    [brandId],
+  );
+
+  return result.rows.map((row) => {
+    const base = {
+      key: row.key,
+      name: row.name,
+      kind: row.kind,
+      versionNo: row.version_no ?? 0,
+      policyVersionNo: row.policy_version_no,
+    };
+
+    if (row.version_no === null) {
+      const schema = schemaForPage(row.key, row.kind);
+
+      return {
+        ...base,
+        document: {
+          schema: 2 as const,
+          stance: null,
+          payload: schema.normalize({}),
+          layout: schema.layout(schema.normalize({})),
+          rationale: {},
+          gaps: [],
+          refs: [],
+        },
+      };
+    }
+
+    return { ...base, document: documentOf({ ...row, page_key: row.key, page_kind: row.kind, content: row.content ?? '' }) };
+  });
+}
+
+/** 品牌代碼、名、最新版本號。輸出檔的標題與 folio 用。 */
+export async function brandHeader(
+  db: Pool,
+  brandId: string,
+): Promise<{ code: string; name: string; releaseNo: number } | null> {
+  const result = await db.query<{ code: string; name: string; release_no: number | null }>(
+    `select b.code, b.name, r.release_no
+       from brand b
+       left join lateral (
+         select release_no from brand_release where brand_id = b.id order by release_no desc limit 1
+       ) r on true
+      where b.id = $1`,
+    [brandId],
+  );
+
+  const row = result.rows[0];
+
+  return row === undefined ? null : { code: row.code, name: row.name, releaseNo: row.release_no ?? 0 };
+}
+
+/** 頁現行版本的文件；沒有版本回 `null`（不是空白文件：呼叫者要分得出）。 */
+export async function currentDocument(
+  db: Pool,
+  brandId: string,
+  pageKey: string,
+): Promise<BrandDocument | null> {
+  const page = await findPage(db, brandId, pageKey);
+
+  if (page === null) {
+    return null;
+  }
+
+  const version = await findCurrentVersion(db, page.id);
+
+  return version === null ? null : version.document;
 }

@@ -327,3 +327,9 @@ export type AppModule<TApp = unknown> = {
  * apps/platform/test/modules/packages-raw-ts.test.ts 會盯着這件事。
  */
 export * from './identity.ts';
+
+/**
+ * 品牌模型（issue #57）。web 的唯讀畫面與 platform 的驗證／輸出讀同一份
+ * 定義，所以「這一頁有哪些欄位」只有一個答案。
+ */
+export * from './brand/index.ts';

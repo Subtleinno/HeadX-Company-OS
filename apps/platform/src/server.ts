@@ -9,6 +9,7 @@ import { createHashLimiter, parseHashLimits, type HashLimitsConfig } from './aut
 import { registerAuth } from './auth/routes.js';
 import { registerAgents } from './agents/index.js';
 import { registerBrandPages } from './brand-pages/index.js';
+import { registerBrandOutput } from './brand-output/index.js';
 import { registerBrandPolicy } from './brand-policy/index.js';
 import { registerStaff } from './staff/index.js';
 import { attachPoolErrorHandler, createDbCheck } from './db.js';
@@ -265,6 +266,10 @@ async function main(): Promise<void> {
 
   // 品牌頁與頁版本（issue #33）：讀要登入，寫只有老闆（品牌級授權見 #32）。
   registerBrandPages(app, { pool });
+
+  // 品牌輸出（issue #57）：HTML、tokens、prompt 包、A4 印刷版。四者只讀，
+  // 由同一份現行版本計算 —— 所以不會有一份手寫的副本。
+  registerBrandOutput(app, { pool });
 
   // 品牌頁策略（issue #34）：六個槽，只加不改，寫只有老闆。
   registerBrandPolicy(app, { pool });

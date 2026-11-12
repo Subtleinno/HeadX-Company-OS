@@ -25,7 +25,7 @@ describe('migration 執行器', () => {
     await db.drop();
   });
 
-  it('空資料庫套用全部 migration，schema_migrations 有 0001 至 0015', async () => {
+  it('空資料庫套用全部 migration，schema_migrations 有 0001 至 0017', async () => {
     const applied = await migrate({ pool: db.pool, dir: migrationsDir, log: silent });
 
     expect(applied).toEqual([
@@ -44,6 +44,10 @@ describe('migration 執行器', () => {
       '0013_brand_pages.sql',
       '0014_brand_policy.sql',
       '0015_brand_editor.sql',
+
+      '0016_brand_policy_v2.sql',
+
+      '0017_brand_document.sql',
     ]);
 
     const rows = await db.pool.query<{ name: string; checksum: string }>(
@@ -66,6 +70,10 @@ describe('migration 執行器', () => {
       '0013_brand_pages.sql',
       '0014_brand_policy.sql',
       '0015_brand_editor.sql',
+
+      '0016_brand_policy_v2.sql',
+
+      '0017_brand_document.sql',
     ]);
     expect(rows.rows[0]?.checksum).toMatch(/^[0-9a-f]{64}$/);
 
@@ -112,6 +120,10 @@ describe('migration 執行器', () => {
         '0013_brand_pages.sql',
         '0014_brand_policy.sql',
       '0015_brand_editor.sql',
+
+      '0016_brand_policy_v2.sql',
+
+      '0017_brand_document.sql',
       ]);
 
       const rows = await fresh.pool.query('select count(*)::int as n from schema_migrations');

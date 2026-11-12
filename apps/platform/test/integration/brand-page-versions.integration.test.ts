@@ -141,7 +141,7 @@ describe('品牌頁版本', () => {
     });
   }
 
-  it('讀頁清單會建立五個固定頁，第二次不會重複', async () => {
+  it('讀頁清單會建立八個固定頁（C112），第二次不會重複', async () => {
     const owner = await setupOwner();
     const brandId = await createBrandRow('moonic', 'Moonic');
 
@@ -153,7 +153,7 @@ describe('品牌頁版本', () => {
 
     expect(first.statusCode).toBe(200);
     const keys = (first.json() as { items: { key: string }[] }).items.map((item) => item.key);
-    expect(keys).toEqual(['home', 'logo', 'color', 'type', 'tone']);
+    expect(keys).toEqual(['home', 'platform', 'color', 'type', 'logo', 'tone', 'image', 'examples']);
 
     const second = await app.inject({
       method: 'GET',
@@ -161,7 +161,7 @@ describe('品牌頁版本', () => {
       headers: { cookie: owner.cookie },
     });
 
-    expect((second.json() as { items: unknown[] }).items).toHaveLength(5);
+    expect((second.json() as { items: unknown[] }).items).toHaveLength(8);
   });
 
   it('未有任何版本時，現行是 null（不是一個空版本）', async () => {

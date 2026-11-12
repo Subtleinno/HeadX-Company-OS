@@ -507,3 +507,12 @@
   - **圖像、主頁、應用、自定義頁刻意零規則。** 這四頁沒有一句可以機械驗證。不為它們發明 id —— 一個永遠通過的 checker 比沒有 checker 更貴，因為它會令人以為檢查過了。
 
   頁清單與九槽同步（C112）；左側欄的頁與槽一一對應，唯一例外是自定義頁共用一個槽。
+
+## C114　品牌內容是一份帶型別的文件，四種輸出由它算出來
+
+- **一份文件：** `brand_page_version.document`（jsonb）＝ `payload`（各頁欄位）＋ `layout`（區塊、次序、重點、**每個區塊一句理由**）＋ `rationale`（欄位理由）＋ `gaps`（缺什麼）＋ `refs`（引用哪一頁哪一版）。`content` 同步寫入同一份 JSON 字串，只為版本預覽與舊查詢。
+- **HTML 不是內容：** HTML、tokens.json、prompt 包、A4 印刷版都由 payload 算出來。四者不可能各說各話，因為只有一份輸入。
+- **舊版是讀的時候轉換，不是改寫歷史：** 舊格式（自由文字／舊形狀 JSON）經 `documentFromStored` 單向轉成 v2；自由文字原文放 `legacy_text`，如實顯示，不猜它屬於哪個欄位。
+- **品牌版本是一張表：** `brand_release`（`release_no` ＋ 當時每一頁的版號快照）。每次儲存任何一頁就追加一列。成品要釘住的「品牌版本」因此查得返，而不是用時間或主頁版號冒充。號碼容許跳號，不容許重複指向兩個不同組成。
+- **色值紀律擴到後端：** `brand-output-hex` 測試掃 `apps/platform/src/brand-output` 與 `packages/contracts/src/brand`，不准出現 hex／`rgb()`／`hsl()`。連 CSS fallback 都用系統色（`Canvas`／`GrayText`），因為那不是品牌色。
+- **八個固定頁：** `home`、`platform`、`color`、`type`、`logo`、`tone`、`image`、`examples`（C112 的九頁減自定義頁）。migration 0017 放寬 check 約束；自定義頁仍然不可以佔用這八個鍵。
