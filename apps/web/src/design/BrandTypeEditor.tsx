@@ -86,7 +86,12 @@ export function BrandTypeEditor({ content, canEdit, onChange, onGapCount }: Bran
   const parsed = parseTypeDoc(content);
 
   // 在 early return 之前上報：內容壞了要報 null（面板閉嘴），不是報 0。
-  useGapCount(parsed.kind === 'ok' ? gapCount(typeGaps(parsed.doc)) : null, onGapCount);
+  useGapCount(
+    parsed.kind === 'invalid'
+      ? null
+      : gapCount(typeGaps(parsed.kind === 'ok' ? parsed.doc : emptyTypeDoc())),
+    onGapCount,
+  );
 
   if (parsed.kind === 'invalid') {
     return (

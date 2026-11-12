@@ -89,7 +89,12 @@ export function BrandToneEditor({ content, canEdit, onChange, onGapCount }: Bran
   const parsed = parseToneDoc(content);
 
   // 在 early return 之前上報：內容壞了要報 null（面板閉嘴），不是報 0。
-  useGapCount(parsed.kind === 'ok' ? gapCount(toneGaps(parsed.doc)) : null, onGapCount);
+  useGapCount(
+    parsed.kind === 'invalid'
+      ? null
+      : gapCount(toneGaps(parsed.kind === 'ok' ? parsed.doc : emptyToneDoc())),
+    onGapCount,
+  );
 
   if (parsed.kind === 'invalid') {
     return (
