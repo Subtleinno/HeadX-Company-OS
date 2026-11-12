@@ -101,7 +101,7 @@ const LATER_EXACT_KEYS = [
   // 2026-11-12（issue #87 之後）：品牌 v2.1 補上平台頁的名。新增鍵，不是改既有鍵。
   'design.page.brandPlatform'];
 
-const LATER_KEY_PREFIXES = ['brand.page.', 'brand.color.', 'brand.type.', 'brand.logo.', 'brand.image.', 'brand.examples.', 'brand.tone.', 'brand.custom.', 'brand.home.', 'brand.gap.', 'brand.check.', 'brand.platform.', 'brand.guide.', 'brand.suggest.', 'brand.nav.', 'design.group.', 
+const LATER_KEY_PREFIXES = ['brand.page.', 'brand.color.', 'brand.type.', 'brand.logo.', 'brand.image.', 'brand.examples.', 'brand.tone.', 'brand.custom.', 'brand.home.', 'brand.gap.', 'brand.check.', 'brand.platform.', 'brand.empty.', 'brand.guide.', 'brand.suggest.', 'brand.nav.', 'design.group.', 
   'boss.members.',
   // 2026-11-11（issue #30）：恢復停用帳戶新增的鍵，不屬 #168 要守的既有鍵。
   'staff.enable',

@@ -1,16 +1,23 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { t } from '@company-os/i18n';
 import {
   EMPTY_PLATFORM_DOC,
+  KEYWORD_MAX,
+  KEYWORD_MIN,
   POSITIONING_FIELDS,
   TESTS,
+  addKeyword,
   hasAnyValue,
+  isBlank,
+  keywordsOverLimit,
   missingTests,
   parsePlatformDoc,
   platformGapCount,
+  removeKeyword,
   serializePlatformDoc,
   type PlatformDoc,
 } from './brandPlatform';
+import { BrandPageEmpty, type BrandEmptyItem } from './BrandPageEmpty';
 import { StancePicker } from './BrandStancePicker';
 
 /**
@@ -28,6 +35,131 @@ import { StancePicker } from './BrandStancePicker';
  *   2. 三檢缺證據顯示「缺」，不是變灰 —— 它是一個缺口，可以在立場對話框裡
  *      直接建立 Need（判斷型，只有老闆補）。
  */
+
+/**
+ * 標籤輸入：一個一個加，不用逗號分隔文字（v2.1）。
+ *
+ * 為甚麼不用一個 `a、b、c` 的文字框：分開、去重、刪走一個都要人自己按逗號，
+ * 而逗號可以是全形半形、可以漏、可以多。標籤輸入把這件事變成按鍵。
+ */
+function TagInput(props: {
+  values: readonly string[];
+  canEdit: boolean;
+  placeholder: string;
+  dataName: string;
+  onAdd: (value: string) => void;
+  onRemove: (value: string) => void;
+}) {
+  const [draft, setDraft] = useState('');
+
+  function commit(): void {
+    const value = draft.trim();
+
+    if (value === '') {
+      return;
+    }
+
+    props.onAdd(value);
+    setDraft('');
+  }
+
+  return (
+    <div className="brand-platform__tags">
+      <ul className="brand-platform__tagList">
+        {props.values.map((value) => (
+          <li className="brand-platform__tag" key={value} data-brand-platform-chip={value}>
+            <span>{value}</span>
+            {props.canEdit && (
+              <button
+                type="button"
+                className="brand-platform__tagRemove"
+                aria-label={t('brand.platform.removeTag', { value })}
+                data-brand-platform-tag-remove={value}
+                onClick={() => {
+                  props.onRemove(value);
+                }}
+              >
+                ×
+              </button>
+            )}
+          </li>
+        ))}
+      </ul>
+
+      {props.canEdit && (
+        <input
+          className="design-input brand-platform__tagInput"
+          value={draft}
+          placeholder={props.placeholder}
+          autoComplete="off"
+          data-brand-platform-tag-input={props.dataName}
+          onChange={(event) => {
+            setDraft(event.target.value);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              event.preventDefault();
+              commit();
+            }
+          }}
+          onBlur={commit}
+        />
+      )}
+    </div>
+  );
+}
+
+/**
+ * 「這一頁要寫的」八項，次序照畫面（立場 → 關鍵詞 → 本質 → 定位 → 價值 →
+ * 個性 → 受眾 → 三檢）。每一項的「已有」門檻與缺口規則**不是同一件事**：
+ * 這裡答「寫了沒有」，缺口答「有沒有規則 id」，兩者故意分開。
+ */
+function emptyItems(doc: PlatformDoc): BrandEmptyItem[] {
+  return [
+    { key: 'stance', labelKey: 'brand.platform.stanceTitle', filled: doc.stance.trim() !== '' },
+    {
+      key: 'keywords',
+      labelKey: 'brand.platform.keywords',
+      filled: doc.keywords.length >= KEYWORD_MIN,
+    },
+    {
+      key: 'essence',
+      labelKey: 'brand.platform.essenceSection',
+      filled: doc.essence.trim() !== '' && doc.purpose.trim() !== '',
+    },
+    {
+      key: 'positioning',
+      labelKey: 'brand.platform.positioning',
+      filled: POSITIONING_FIELDS.every((field) => doc.positioning[field.key].trim() !== ''),
+    },
+    {
+      key: 'values',
+      labelKey: 'brand.platform.values',
+      filled:
+        doc.values.length > 0 &&
+        doc.values.every((value) => value.name.trim() !== '' && value.do.trim() !== '' && value.dont.trim() !== ''),
+    },
+    { key: 'traits', labelKey: 'brand.platform.traits', filled: doc.traits.length > 0 },
+    { key: 'audience', labelKey: 'brand.platform.audience', filled: doc.audience.trim() !== '' },
+    { key: 'tests', labelKey: 'brand.platform.tests', filled: missingTests(doc).length === 0 },
+  ];
+}
+
+/**
+ * 缺口上報：只有一個來源（`platformGapCount(doc)`），每次文件變就報一次。
+ *
+ * 為甚麼是一個子元件而不是在 `update()` 裡報：全空狀態根本沒有 `update()`，
+ * 缺口會永遠是 null，「這一頁」那一段就少了「缺口 6 項」。而且 `update()` 只在
+ * 有人打字時才跑，一打開頁面不報 —— 開啟時的缺口與改完之後的缺口是同一件事，
+ * 不應該只有後者算數。
+ */
+function GapReporter({ count, onCount }: { count: number; onCount?: (count: number | null) => void }) {
+  useEffect(() => {
+    onCount?.(count);
+  }, [count, onCount]);
+
+  return null;
+}
 
 export type BrandPlatformEditorProps = {
   brandId: string;
@@ -60,7 +192,6 @@ export function BrandPlatformEditor(props: BrandPlatformEditorProps) {
           data-brand-platform-reset
           onClick={() => {
             props.onChange(write(EMPTY_PLATFORM_DOC));
-            props.onGapCount?.(platformGapCount(EMPTY_PLATFORM_DOC));
           }}
         >
           {t('brand.page.manage.new')}
@@ -70,10 +201,10 @@ export function BrandPlatformEditor(props: BrandPlatformEditorProps) {
   }
 
   const doc = parsed.doc;
+  const gapCount = platformGapCount(doc);
 
   function update(next: PlatformDoc): void {
     props.onChange(write(next));
-    props.onGapCount?.(platformGapCount(next));
   }
 
   function patch(change: Partial<PlatformDoc>): void {
@@ -86,8 +217,53 @@ export function BrandPlatformEditor(props: BrandPlatformEditorProps) {
 
   const missing = missingTests(doc);
 
+  // 全空（v2.1）：只做一件事 —— 選一句立場。下面是「這一頁要寫的」清單，
+  // 不是八個空表。八個空格等於叫人在白紙上自己找起點。
+  if (isBlank(doc)) {
+    return (
+      <div className="brand-platform" data-brand-platform="empty">
+        <GapReporter count={gapCount} onCount={props.onGapCount} />
+        <BrandPageEmpty
+          pageKey="platform"
+          titleKey="brand.platform.emptyTitle"
+          leadKey="brand.platform.emptyLead"
+          primary={
+            props.canEdit
+              ? {
+                  labelKey: 'brand.platform.pick',
+                  dataName: 'stance',
+                  onSelect: () => {
+                    setPicking(true);
+                  },
+                }
+              : null
+          }
+          items={emptyItems(doc)}
+        />
+
+        {picking && (
+          <StancePicker
+            brandId={props.brandId}
+            pageKey="platform"
+            doc={doc}
+            canEdit={props.canEdit}
+            isOwner={props.isOwner}
+            onConfirm={(stance) => {
+              update({ ...doc, stance });
+              setPicking(false);
+            }}
+            onClose={() => {
+              setPicking(false);
+            }}
+          />
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="brand-platform" data-brand-platform="ready">
+      <GapReporter count={gapCount} onCount={props.onGapCount} />
       {/* 第一屏：立場句。一句，不是一段。 */}
       <section className="brand-platform__stance" data-brand-platform-stance>
         <div className="brand-platform__stanceHead">
@@ -115,6 +291,75 @@ export function BrandPlatformEditor(props: BrandPlatformEditorProps) {
         )}
 
         <p className="design-field__hint">{t('brand.platform.stanceHint')}</p>
+      </section>
+
+      {/* 關鍵詞（v2.1）：三到五個，標籤輸入，一個一個加。 */}
+      <section className="brand-platform__section" data-brand-platform-keywords>
+        <h3 className="brand-page__versionsTitle">
+          {t('brand.platform.keywords')}
+          <span className="brand-platform__count" data-brand-platform-keyword-count>
+            {doc.keywords.length}／{KEYWORD_MAX}
+          </span>
+        </h3>
+        <p className="design-field__hint">{t('brand.platform.keywordsHint')}</p>
+
+        <TagInput
+          values={doc.keywords}
+          canEdit={props.canEdit}
+          placeholder={t('brand.platform.keywordPlaceholder')}
+          dataName="keyword"
+          onAdd={(value) => {
+            patch(addKeyword(doc, value));
+          }}
+          onRemove={(value) => {
+            patch(removeKeyword(doc, value));
+          }}
+        />
+
+        {doc.keywords.length < KEYWORD_MIN && (
+          <p className="brand-platform__missing" data-brand-platform-keyword-short>
+            {t('brand.platform.keywordsShort', { min: KEYWORD_MIN })}
+          </p>
+        )}
+        {keywordsOverLimit(doc) && (
+          <p className="brand-platform__missing" data-brand-platform-keyword-over>
+            {t('brand.platform.keywordsOver', { max: KEYWORD_MAX })}
+          </p>
+        )}
+      </section>
+
+      {/* 品牌本質與目的：拿掉所有形容詞之後仍然成立的那一句。 */}
+      <section className="brand-platform__section" data-brand-platform-essence>
+        <h3 className="brand-page__versionsTitle">{t('brand.platform.essenceSection')}</h3>
+
+        <div className="brand-platform__grid">
+          <label className="brand-platform__field">
+            <span className="design-field__label">{t('brand.platform.essence')}</span>
+            <input
+              className="design-input"
+              value={doc.essence}
+              readOnly={!props.canEdit}
+              data-brand-platform-field="essence"
+              onChange={(event) => {
+                patch({ essence: event.target.value });
+              }}
+            />
+          </label>
+
+          <label className="brand-platform__field">
+            <span className="design-field__label">{t('brand.platform.purpose')}</span>
+            <textarea
+              className="design-input"
+              value={doc.purpose}
+              readOnly={!props.canEdit}
+              rows={2}
+              data-brand-platform-field="purpose"
+              onChange={(event) => {
+                patch({ purpose: event.target.value });
+              }}
+            />
+          </label>
+        </div>
       </section>
 
       {/* 定位六格：立場的拆解。 */}
@@ -221,6 +466,66 @@ export function BrandPlatformEditor(props: BrandPlatformEditorProps) {
         )}
       </section>
 
+      {/* 個性：標籤輸入，一個一個加（v2.1）。 */}
+      <section className="brand-platform__section" data-brand-platform-traits>
+        <h3 className="brand-page__versionsTitle">{t('brand.platform.traits')}</h3>
+        <p className="design-field__hint">{t('brand.platform.traitsHint')}</p>
+
+        <TagInput
+          values={doc.traits}
+          canEdit={props.canEdit}
+          placeholder={t('brand.platform.traitPlaceholder')}
+          dataName="trait"
+          onAdd={(value) => {
+            patch({ traits: [...doc.traits, value] });
+          }}
+          onRemove={(value) => {
+            patch({ traits: doc.traits.filter((item) => item !== value) });
+          }}
+        />
+      </section>
+
+      {/* 受眾與參考對象：參考對象不是模仿，是「寫給誰」的旁證。 */}
+      <section className="brand-platform__section" data-brand-platform-audience>
+        <h3 className="brand-page__versionsTitle">{t('brand.platform.audienceSection')}</h3>
+
+        <div className="brand-platform__grid">
+          <label className="brand-platform__field">
+            <span className="design-field__label">{t('brand.platform.audience')}</span>
+            <textarea
+              className="design-input"
+              value={doc.audience}
+              readOnly={!props.canEdit}
+              rows={2}
+              data-brand-platform-field="audience"
+              onChange={(event) => {
+                patch({ audience: event.target.value });
+              }}
+            />
+          </label>
+
+          <label className="brand-platform__field">
+            <span className="design-field__label">{t('brand.platform.references')}</span>
+            <textarea
+              className="design-input"
+              value={doc.references.join('\n')}
+              readOnly={!props.canEdit}
+              rows={3}
+              data-brand-platform-field="references"
+              onChange={(event) => {
+                patch({
+                  references: event.target.value
+                    .split('\n')
+                    .map((item) => item.trim())
+                    .filter((item) => item !== ''),
+                });
+              }}
+            />
+            <span className="design-field__hint">{t('brand.platform.referencesHint')}</span>
+          </label>
+        </div>
+      </section>
+
       {/* 三檢：證據。缺就是缺，不是待填。 */}
       <section className="brand-platform__section" data-brand-platform-tests>
         <h3 className="brand-page__versionsTitle">{t('brand.platform.tests')}</h3>
@@ -251,93 +556,6 @@ export function BrandPlatformEditor(props: BrandPlatformEditorProps) {
               />
             </label>
           ))}
-        </div>
-      </section>
-
-      {/* 其餘四格：受眾、本質、為咩存在、特質、參考。 */}
-      <section className="brand-platform__section" data-brand-platform-rest>
-        <h3 className="brand-page__versionsTitle">{t('brand.platform.audience')}</h3>
-
-        <div className="brand-platform__grid">
-          <label className="brand-platform__field">
-            <span className="design-field__label">{t('brand.platform.essence')}</span>
-            <input
-              className="design-input"
-              value={doc.essence}
-              readOnly={!props.canEdit}
-              data-brand-platform-field="essence"
-              onChange={(event) => {
-                patch({ essence: event.target.value });
-              }}
-            />
-          </label>
-
-          <label className="brand-platform__field">
-            <span className="design-field__label">{t('brand.platform.audience')}</span>
-            <textarea
-              className="design-input"
-              value={doc.audience}
-              readOnly={!props.canEdit}
-              rows={2}
-              data-brand-platform-field="audience"
-              onChange={(event) => {
-                patch({ audience: event.target.value });
-              }}
-            />
-          </label>
-
-          <label className="brand-platform__field">
-            <span className="design-field__label">{t('brand.platform.purpose')}</span>
-            <textarea
-              className="design-input"
-              value={doc.purpose}
-              readOnly={!props.canEdit}
-              rows={2}
-              data-brand-platform-field="purpose"
-              onChange={(event) => {
-                patch({ purpose: event.target.value });
-              }}
-            />
-          </label>
-
-          <label className="brand-platform__field">
-            <span className="design-field__label">{t('brand.platform.traits')}</span>
-            <input
-              className="design-input"
-              value={doc.traits.join('、')}
-              readOnly={!props.canEdit}
-              data-brand-platform-field="traits"
-              onChange={(event) => {
-                patch({
-                  traits: event.target.value
-                    .split(/[、,，\n]/)
-                    .map((item) => item.trim())
-                    .filter((item) => item !== ''),
-                });
-              }}
-            />
-            <span className="design-field__hint">{t('brand.platform.traitsHint')}</span>
-          </label>
-
-          <label className="brand-platform__field">
-            <span className="design-field__label">{t('brand.platform.references')}</span>
-            <textarea
-              className="design-input"
-              value={doc.references.join('\n')}
-              readOnly={!props.canEdit}
-              rows={3}
-              data-brand-platform-field="references"
-              onChange={(event) => {
-                patch({
-                  references: event.target.value
-                    .split('\n')
-                    .map((item) => item.trim())
-                    .filter((item) => item !== ''),
-                });
-              }}
-            />
-            <span className="design-field__hint">{t('brand.platform.referencesHint')}</span>
-          </label>
         </div>
       </section>
 

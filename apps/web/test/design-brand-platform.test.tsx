@@ -70,6 +70,7 @@ const PAGE = {
 
 const CONTENT = JSON.stringify({
   stance: '',
+  keywords: ['安靜', '克制', '屬於你的時間'],
   positioning: {
     for: '想被認真看待的人',
     who: '一間做臨床與品牌的公司',
@@ -141,6 +142,143 @@ describe('平台頁的形狀', () => {
     expect(document.querySelector('[data-brand-platform-test="relevant"]')?.getAttribute('data-state')).toBe('missing');
     expect(document.querySelector('[data-brand-platform-test="real"]')?.getAttribute('data-state')).toBe('ok');
     expect(screen.getAllByText(/缺$/).length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('關鍵詞是標籤，不是逗號分隔的文字框', async () => {
+    open();
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-brand-platform="ready"]')).not.toBeNull();
+    });
+
+    const keywords = document.querySelector('[data-brand-platform-keywords]') as HTMLElement;
+    expect(keywords.querySelectorAll('[data-brand-platform-chip]')).toHaveLength(3);
+    expect(document.querySelector('[data-brand-platform-keyword-count]')?.textContent).toBe('3／5');
+    expect(keywords.querySelector('[data-brand-platform-chip="安靜"]')?.textContent).toContain('安靜');
+  });
+
+  it('關鍵詞：Enter 加一個，按 × 移除一個', async () => {
+    open();
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-brand-platform-tag-input="keyword"]')).not.toBeNull();
+    });
+
+    const input = document.querySelector(
+      '[data-brand-platform-tag-input="keyword"]',
+    ) as HTMLInputElement;
+
+    await userEvent.type(input, '窗光{Enter}');
+
+    const keywords = () => document.querySelector('[data-brand-platform-keywords]') as HTMLElement;
+
+    await waitFor(() => {
+      expect(keywords().querySelectorAll('[data-brand-platform-chip]')).toHaveLength(4);
+    });
+    expect(keywords().querySelector('[data-brand-platform-chip="窗光"]')).not.toBeNull();
+
+    await userEvent.click(
+      document.querySelector('[data-brand-platform-tag-remove="安靜"]') as HTMLElement,
+    );
+
+    await waitFor(() => {
+      expect(keywords().querySelectorAll('[data-brand-platform-chip]')).toHaveLength(3);
+    });
+    expect(keywords().querySelector('[data-brand-platform-chip="安靜"]')).toBeNull();
+  });
+
+  it('關鍵詞不足三個時講清楚，不是靜靜留白', async () => {
+    open({
+      overrides: {
+        brandPage: () =>
+          jsonResponse(200, {
+            page: PAGE,
+            versions: [],
+            current: {
+              ...VERSION,
+              content: JSON.stringify({ ...JSON.parse(CONTENT), keywords: ['安靜'] }),
+            },
+          }),
+      },
+    });
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-brand-platform-keyword-short]')).not.toBeNull();
+    });
+
+    expect(document.querySelector('[data-brand-platform-keyword-short]')?.textContent).toContain(
+      '3',
+    );
+  });
+
+  it('全空都要報缺口：Moonic 現況＝6 項（立場 1＋三檢 3＋關鍵詞 1＋候選 1）', async () => {
+    open({
+      overrides: {
+        brandPage: () => jsonResponse(200, { page: { ...PAGE, current: null }, versions: [], current: null }),
+      },
+    });
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-brand-platform="empty"]')).not.toBeNull();
+    });
+
+    await userEvent.click(document.querySelector('[data-guide-toggle="state"]') as HTMLElement);
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-guide-gaps]')?.getAttribute('data-guide-gaps')).toBe('6');
+    });
+  });
+
+  it('全空：只做一件事（選一句立場）＋「這一頁要寫的」清單，不是八個空表', async () => {    open({
+      overrides: {
+        brandPage: () => jsonResponse(200, { page: { ...PAGE, current: null }, versions: [], current: null }),
+      },
+    });
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-brand-platform="empty"]')).not.toBeNull();
+    });
+
+    const primary = document.querySelectorAll('[data-brand-empty-action]');
+    expect(primary).toHaveLength(1);
+    expect(primary[0]?.getAttribute('data-brand-empty-action')).toBe('stance');
+
+    const items = document.querySelectorAll('[data-brand-empty-item]');
+    expect(items).toHaveLength(8);
+    expect(Array.from(items).every((item) => item.getAttribute('data-filled') === 'no')).toBe(true);
+
+    // 清單是清單，不是一堆可以填的空格：這一屏沒有欄位。
+    expect(document.querySelectorAll('[data-brand-platform-field]')).toHaveLength(0);
+  });
+
+  it('全空時按下去就開立場對話框，不是一個死鍵', async () => {
+    // 只有候選、其他一個字都未填：仍然算全空（候選不是這一頁的內容）。
+    open({
+      overrides: {
+        brandPage: () =>
+          jsonResponse(200, {
+            page: PAGE,
+            versions: [],
+            current: {
+              ...VERSION,
+              content: JSON.stringify({
+                stance: '',
+                stance_candidates: JSON.parse(CONTENT).stance_candidates,
+              }),
+            },
+          }),
+      },
+    });
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-brand-empty-action="stance"]')).not.toBeNull();
+    });
+
+    await userEvent.click(document.querySelector('[data-brand-empty-action="stance"]') as HTMLElement);
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-stance-candidate="1"]')).not.toBeNull();
+    });
   });
 
   it('老闆：缺證據有「建立 Need」；設計師：沒有那個鍵', async () => {

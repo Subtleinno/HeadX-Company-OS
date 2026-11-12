@@ -130,6 +130,13 @@ function block(kind: BrandBlock['kind'], reason: string, source?: string, title?
 /* ── 平台頁 ───────────────────────────────────────────────────── */
 
 export type PlatformPayload = {
+  /**
+   * 關鍵詞三到五個（v2.1）。原本寫在主頁，但「這個品牌是哪幾個字」是定位的
+   * 一部分，擁有者是平台頁；主頁只引用。
+   *
+   * 超過五個不截斷：截斷等於靜靜丟資料。多出來的在檢查摘要講，由人刪。
+   */
+  keywords: string[];
   positioning: { for: string; who: string; category: string; benefit: string; unlike: string; because: string };
   purpose: string;
   values: { name: string; do: string; dont: string }[];
@@ -153,6 +160,27 @@ const platform: PageSchema = {
       kind: 'stance',
       path: 'stance',
       hint: '一句話。之後每一頁第一屏都是這一句。',
+    },
+    {
+      // v2.1：關鍵詞由主頁搬過來。它是定位的一部分，不是主頁的裝飾。
+      id: 'keywords',
+      label: '關鍵詞',
+      kind: 'tags',
+      path: 'keywords',
+      hint: '三到五個。多過五個就不是關鍵詞，是清單。',
+    },
+    {
+      // 本質與目的是「這個品牌為什麼存在」，一區兩欄。
+      // 舊版把 essence 塞在「受眾」裡，令人以為本質是寫給誰看的。
+      id: 'essence',
+      label: '品牌本質與目的',
+      kind: 'fields',
+      path: '',
+      hint: '一句本質、一段目的。本質不是標語，是拿掉所有形容詞之後仍然成立的那一句。',
+      fields: [
+        { path: 'essence', label: '一句本質', kind: 'text' },
+        { path: 'purpose', label: '為甚麼存在', kind: 'long' },
+      ],
     },
     {
       id: 'positioning',
@@ -181,6 +209,23 @@ const platform: PageSchema = {
         { path: 'dont', label: '所以我們不會', kind: 'long' },
       ],
     },
+
+
+    {
+      id: 'traits',
+      label: '特質',
+      kind: 'tags',
+      path: 'traits',
+      hint: '三到五個。多過五個就不是特質，是清單。',
+    },
+    {
+      id: 'audience',
+      label: '受眾與參考對象',
+      kind: 'fields',
+      path: '',
+      hint: '受眾寫給誰看；參考對象寫明參考它哪一點，不是模仿它。',
+      fields: [{ path: 'audience', label: '寫給誰看', kind: 'long' }],
+    },
     {
       id: 'tests',
       label: '定位三檢',
@@ -193,35 +238,11 @@ const platform: PageSchema = {
         { path: 'unique', label: '獨特', kind: 'long' },
       ],
     },
-    {
-      id: 'audience',
-      label: '受眾',
-      kind: 'fields',
-      path: '',
-      fields: [
-        { path: 'audience', label: '寫給誰看', kind: 'long' },
-        { path: 'essence', label: '一句本質', kind: 'text' },
-        { path: 'purpose', label: '為咩存在', kind: 'long' },
-      ],
-    },
-    {
-      id: 'traits',
-      label: '特質',
-      kind: 'tags',
-      path: 'traits',
-      hint: '三到五個。多過五個就不是特質，是清單。',
-    },
-    {
-      id: 'references',
-      label: '參考',
-      kind: 'list',
-      path: 'references',
-      hint: '參考不是模仿：寫明參考它哪一點。',
-    },
   ],
   empty() {
     return {
       stance: '',
+      keywords: [],
       positioning: { for: '', who: '', category: '', benefit: '', unlike: '', because: '' },
       purpose: '',
       values: [],
@@ -240,6 +261,8 @@ const platform: PageSchema = {
 
     return {
       stance: str(source.stance),
+      // 去重但保留全部：超過五個由檢查摘要講，不在這裡丟。
+      keywords: [...new Set(strs(source.keywords))],
       positioning: {
         for: str(positioning.for),
         who: str(positioning.who),
@@ -295,9 +318,23 @@ const platform: PageSchema = {
       }
     }
 
+    // 關鍵詞不足三個（v2.1）。它是判斷型：寫哪三個字是老闆的定位決定，
+    // 不是外判交得出來的檔案。
+    if (typed.keywords.length < 3) {
+      gaps.push({
+        item: 'keywords',
+        what: '三到五個關鍵詞',
+        type: 'judgement',
+        reason: '關鍵詞是定位的一部分，要老闆自己揀，不能由外判代寫。',
+      });
+    }
+
     // 三個候選由 agent 讀完品牌資料後提出（#61）。少過三個就是缺一個交付：
     // 檔案型，不是判斷型 —— agent 交得，老闆只需要揀。
-    if (typed.stance_candidates.filter((candidate) => candidate.text !== '').length < 3) {
+    //
+    // v2.1：**只在立場句還是空的時候才算。** 立場已經選定，候選就不再重要 ——
+    // 繼續把「候選不夠」算成缺口，等於叫 agent 交一份沒有人會再讀的稿。
+    if (typed.stance.trim() === '' && typed.stance_candidates.filter((candidate) => candidate.text !== '').length < 3) {
       gaps.push({
         item: 'stance_candidates',
         what: '三個立場句候選（各附一句理由）',
@@ -312,6 +349,7 @@ const platform: PageSchema = {
     return {
       blocks: [
         block('stance', '立場句是這一頁的唯一重點：先講自己是誰，其餘六格都是支撐。'),
+        block('section', '關鍵詞緊貼立場：它們是同一句話的幾個字，分開兩屏就對不上。', 'keywords'),
         block('section', '定位六格是立場的拆解，讀的人要在同一屏內對得上立場句。', 'positioning'),
         block(
           'section',
@@ -331,8 +369,24 @@ const platform: PageSchema = {
     const typed = payload as PlatformPayload;
     const lines: string[] = [];
 
-    if (typed.stance !== '') {
-      lines.push(`立場：${typed.stance}`);
+    // 立場句是這一頁的根。它缺的時候，其餘欄位都只是碎片 —— 輸出整段
+    // 「缺」，不把定位、價值、特質當成半份立場交出去。
+    if (typed.stance === '') {
+      return [{ title: '立場', lines: ['缺'] }];
+    }
+
+    lines.push(`立場：${typed.stance}`);
+
+    if (typed.keywords.length > 0) {
+      lines.push(`關鍵詞：${typed.keywords.join('、')}`);
+    }
+
+    if (typed.essence !== '') {
+      lines.push(`品牌本質：${typed.essence}`);
+    }
+
+    if (typed.purpose !== '') {
+      lines.push(`為甚麼存在：${typed.purpose}`);
     }
 
     const positioning = typed.positioning;
