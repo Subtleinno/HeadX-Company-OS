@@ -14,7 +14,7 @@ import { failureMessage } from './apiFailure';
 import { BrandColorEditor } from './BrandColorEditor';
 import { BrandCustomEditor } from './BrandCustomEditor';
 import { BrandHomeEditor } from './BrandHomeEditor';
-import { introInText } from './brandHome';
+import { whoInText } from './brandHome';
 import { BrandImageEditor } from './BrandImageEditor';
 import { BrandLogoEditor } from './BrandLogoEditor';
 import { BrandPlatformEditor } from './BrandPlatformEditor';
@@ -211,7 +211,7 @@ function ImageVersionPreview({ preview }: { preview: string }) {
  * 抽不到就講抽不到。
  */
 function HomeVersionPreview({ preview }: { preview: string }) {
-  const line = introInText(preview);
+  const line = whoInText(preview);
 
   return (
     <p className="brand-page__preview" data-home-version-line={line === '' ? undefined : line}>

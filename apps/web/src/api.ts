@@ -139,6 +139,58 @@ export function fetchAuthState(): Promise<ApiResult<AuthState>> {
   return request<AuthState>('/api/auth/state');
 }
 
+/**
+ * 讀一份**文字**回應（品牌四種輸出：tokens.json／prompt.md／HTML／印刷版，issue #57）。
+ *
+ * 這四條路回的不是 JSON，用 `request()` 會把 body 讀成 null 然後當成功 ——
+ * 一個「下載成功但內容是空」的假象。所以另開一條，錯了照樣講錯在哪。
+ */
+async function requestText(path: string): Promise<ApiResult<string>> {
+  let response: Response;
+
+  try {
+    response = await fetch(path, { headers: { accept: 'text/plain, text/html, */*' }, credentials: 'same-origin' });
+  } catch {
+    return { ok: false, failure: { kind: 'network' } };
+  }
+
+  if (!response.ok) {
+    // 錯的時候回應可能是 JSON（後端的錯誤物件），也可能是一頁純文字 / HTML。
+    // 讀不到就當沒有 body —— 但絕對不會當成成功。
+    const body: unknown = await response.json().catch(() => null);
+    const record = asRecord(body);
+
+    return {
+      ok: false,
+      failure: {
+        kind: 'http',
+        status: response.status,
+        error: typeof record.error === 'string' ? record.error : null,
+        field: null,
+        retryAfterSeconds: parseRetryAfter(response.headers.get('retry-after')),
+        reasons: [],
+        message: typeof record.message === 'string' && record.message !== '' ? record.message : null,
+      },
+    };
+  }
+
+  return { ok: true, data: await response.text() };
+}
+
+export type BrandOutputKind = 'tokens' | 'prompt' | 'html' | 'print';
+
+/** 品牌輸出的路徑：下載連結與預覽讀同一條，不會有一邊新一邊舊。 */
+export function brandOutputPath(brandId: string, kind: BrandOutputKind): string {
+  const tail = kind === 'tokens' ? 'tokens.json' : kind === 'prompt' ? 'prompt.md' : kind;
+
+  return `/api/brands/${encodeURIComponent(brandId)}/output/${tail}`;
+}
+
+/** 讀 prompt 包的文字（給「給 AI 用」區預覽）。 */
+export function fetchBrandPromptPack(brandId: string): Promise<ApiResult<string>> {
+  return requestText(brandOutputPath(brandId, 'prompt'));
+}
+
 export function submitSetup(input: {
   displayName: string;
   email: string;

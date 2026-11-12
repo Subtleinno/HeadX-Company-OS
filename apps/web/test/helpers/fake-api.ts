@@ -23,6 +23,8 @@ export type FakeResponse = {
   status: number;
   headers: { get: (name: string) => string | null };
   json: () => Promise<unknown>;
+  /** 文字回應（品牌四種輸出：#57 的 tokens.json／prompt.md／HTML／印刷版）。 */
+  text: () => Promise<string>;
 };
 
 export type Handler = (request: RecordedRequest) => FakeResponse | Promise<FakeResponse>;
@@ -87,6 +89,7 @@ export type FakeHandlers = Partial<
     | 'brandEditors'
     | 'brandEditorGrant'
     | 'brandEditorRevoke'
+    | 'brandOutput'
     | 'brandPageSave'
     | 'brandPageRestore'
     | 'brandPageDelete'
@@ -114,6 +117,7 @@ export function jsonResponse(
     status,
     headers: { get: (name) => lower.get(name.toLowerCase()) ?? null },
     json: async () => body,
+    text: async () => (typeof body === 'string' ? body : JSON.stringify(body)),
   };
 }
 
@@ -382,6 +386,12 @@ function routeKey(path: string, method: string): keyof FakeHandlers | null {
   }
 
   // 一頁本身（issue #32）：讀、改顯示名、軟刪除。
+  // 四種輸出（#57／#67）：tokens.json、prompt.md、html、print。回的是文字，
+  // 不是 JSON，所以 handler 要用 jsonResponse 之外的方式準備（見 `brandOutput`）。
+  if (/\/brands\/[^/]+\/output\/[^/]+$/.test(bare)) {
+    return method === 'GET' ? 'brandOutput' : null;
+  }
+
   if (/\/brands\/[^/]+\/pages\/[^/]+$/.test(bare)) {
     if (method === 'GET') {
       return 'brandPage';

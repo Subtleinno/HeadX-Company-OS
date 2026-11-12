@@ -2222,7 +2222,7 @@
   border: 1px solid var(--hx-frame-border);
 }
 
-/* ── 品牌主頁（#39）─────────────────────────────────────── */
+/* ── 品牌主頁（#67，取代 #39）────────────────────────────── */
 
 /* 主頁是集大成：一段自己的字，其餘四塊都是讀回來的樣本。所以四塊共用同一
    個「卡片」外形，讀的人一眼看得出邊幾塊是引用、邊一段是自己寫。 */
@@ -2415,6 +2415,261 @@
 
 .brand-home__pageLink:hover {
   text-decoration: underline;
+}
+
+/* 關鍵詞：短而少（三到五個），所以是 chip 行，不是清單。 */
+.brand-home__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--hx-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.brand-home__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 4px 2px 10px;
+  border: 1px solid var(--hx-frame-border);
+  border-radius: 999px;
+  background: var(--hx-frame-raised);
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-ink);
+}
+
+.brand-home__chipRemove {
+  padding: 0 4px;
+  border: none;
+  background: none;
+  color: var(--hx-frame-muted);
+  font: inherit;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.brand-home__chipRemove:hover {
+  color: var(--hx-danger-text);
+}
+
+/* 加一個：輸入與按鈕同一行，讀的人一眼見到「未滿五個所以可以再加」。 */
+.brand-home__adder {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+}
+
+.brand-home__adder .design-input {
+  flex: 1;
+  min-width: 0;
+}
+
+/* 版面次序：一塊一行，四件事（種類、來源、重點、理由）都在同一行內講完。 */
+.brand-home__layout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hx-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: none;
+}
+
+.brand-home__layoutRow {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--hx-space-2) var(--hx-space-3);
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-sm);
+  background: var(--hx-frame-raised);
+}
+
+.brand-home__layoutRow[data-missing='true'] {
+  border-color: var(--hx-danger-border, var(--hx-frame-border));
+}
+
+.brand-home__layoutHead {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+  flex-wrap: wrap;
+}
+
+.brand-home__layoutIndex {
+  font-family: var(--hx-font-mono);
+  font-size: 12px;
+  color: var(--hx-frame-muted);
+}
+
+.brand-home__layoutBlock {
+  flex: none;
+  width: auto;
+}
+
+.brand-home__layoutSource {
+  flex: 1;
+  min-width: 120px;
+}
+
+.brand-home__layoutEmphasis {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+  white-space: nowrap;
+}
+
+.brand-home__layoutActions {
+  display: inline-flex;
+  gap: 4px;
+  margin-left: auto;
+}
+
+/* 引用：左邊是被引用的東西、右邊是來源頁與版本 —— 這是「追得回去」的長相。 */
+.brand-home__refs {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.brand-home__ref {
+  display: flex;
+  align-items: baseline;
+  gap: var(--hx-space-2);
+  padding: 2px 0;
+  border-bottom: 1px solid var(--hx-frame-border);
+  font: var(--hx-frame-font-small);
+}
+
+.brand-home__ref:last-child {
+  border-bottom: none;
+}
+
+.brand-home__refItem {
+  color: var(--hx-frame-ink);
+}
+
+.brand-home__refSource {
+  margin-left: auto;
+  font-family: var(--hx-font-mono);
+  font-size: 12px;
+  color: var(--hx-frame-muted);
+}
+
+/* 兩格並排：襯線／無襯線、名稱／解釋。900px 以下疊成一欄。 */
+.brand-home__split {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--hx-space-3);
+}
+
+/* 語氣樣本：一句一句，與語氣頁逐字對應，所以用引言排而不是 chip。 */
+.brand-home__quotes {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.brand-home__quote {
+  display: flex;
+  align-items: baseline;
+  gap: var(--hx-space-2);
+  padding-left: var(--hx-space-3);
+  border-left: 2px solid var(--hx-frame-border);
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+}
+
+/* 品牌專屬系統：一個一行，名與解釋並排。 */
+.brand-home__systems {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hx-space-2);
+}
+
+.brand-home__system {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--hx-space-2) var(--hx-space-3);
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-sm);
+}
+
+.brand-home__system .design-field {
+  flex: 1;
+  min-width: 0;
+}
+
+.brand-home__pageVersion {
+  font-family: var(--hx-font-mono);
+  font-size: 12px;
+  color: var(--hx-frame-muted);
+}
+
+/* 給 AI 用：四個輸出入口一排，prompt 包逐字顯示（換行要保留）。 */
+.brand-home__outputs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--hx-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font: var(--hx-frame-font-small);
+}
+
+.brand-home__aiHead {
+  margin: var(--hx-space-2) 0 0;
+  font: var(--hx-frame-font-small);
+  font-weight: 600;
+  color: var(--hx-frame-secondary);
+}
+
+.brand-home__prompt {
+  max-height: 320px;
+  margin: 0;
+  padding: var(--hx-space-3);
+  overflow: auto;
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-sm);
+  background: var(--hx-frame-raised);
+  font-family: var(--hx-font-mono);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--hx-frame-ink);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+@media (max-width: 900px) {
+  .brand-home__split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .brand-home__layoutHead {
+    align-items: flex-start;
+  }
+
+  .brand-home__layoutSource {
+    flex-basis: 100%;
+  }
+
+  .brand-home__ref {
+    flex-wrap: wrap;
+  }
+
+  .brand-home__refSource {
+    margin-left: 0;
+  }
 }
 
 /* 「這一頁」面板（#53）：現況、策略、給 agent 的接口。
