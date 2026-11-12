@@ -1,4 +1,4 @@
-import { t } from '@company-os/i18n';
+import { t, type MessageKey } from '@company-os/i18n';
 
 /**
  * 全空狀態（v2.1，九頁共用）。
@@ -18,13 +18,13 @@ export type BrandEmptyItem = {
   /** 穩定鍵，測試與截圖用。 */
   key: string;
   /** i18n 鍵，不是字面文字：介面文字一律住 i18n。 */
-  labelKey: string;
+  labelKey: MessageKey;
   /** 這一項現在有沒有內容。 */
   filled: boolean;
 };
 
 export type BrandEmptyAction = {
-  labelKey: string;
+  labelKey: MessageKey;
   /** `data-brand-empty-action` 的值，測試用。 */
   dataName: string;
   onSelect: () => void;
@@ -32,8 +32,8 @@ export type BrandEmptyAction = {
 
 type BrandPageEmptyProps = {
   pageKey: string;
-  titleKey: string;
-  leadKey: string;
+  titleKey: MessageKey;
+  leadKey: MessageKey;
   /** 一件現在就可以做的事。沒有編輯權限就不傳。 */
   primary?: BrandEmptyAction | null;
   items: readonly BrandEmptyItem[];
