@@ -163,6 +163,14 @@ describe('字串表', () => {
       'brand.custom.conflictNoPolicy',
       'brand.custom.roleGap',
       'brand.custom.regenerated',
+      // #68：範例逐項標缺、版本換了、重用時的版本差。
+      'brand.examples.gapRow',
+      'brand.examples.gapPromptRow',
+      'brand.examples.exampleRefStale',
+      'brand.examples.reuseNow',
+      'brand.examples.reuseMoved',
+      'brand.examples.reuseGone',
+      'brand.examples.regenerated',
       // #67：主頁的插值全部是「幾個」「第幾版」「來源頁」，次序跟 messages 一致。
       'brand.home.gapKeywordsTooFew',
       'brand.home.gapKeywordsTooMany',

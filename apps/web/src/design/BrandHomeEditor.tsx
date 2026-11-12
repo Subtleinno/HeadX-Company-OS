@@ -13,6 +13,7 @@ import { parseColorDoc, type ColorDoc } from './brandColors';
 import { LOGO_MODES, parseLogoDoc, type LogoDoc, type LogoModeKey } from './brandLogo';
 import { parseTypeDoc, type TypeDoc, type TypeRoleKey } from './brandType';
 import { parseToneDoc, type ToneDoc } from './brandTone';
+import { parseExampleDoc, rowStale, rowVersions, type ExampleDoc } from './brandExamples';
 import {
   KEYWORD_MAX,
   KEYWORD_MIN,
@@ -145,6 +146,7 @@ export function BrandHomeEditor({
   const [type, setType] = useState<PageSlice<TypeDoc>>({ doc: null, versionNo: null });
   const [logo, setLogo] = useState<PageSlice<LogoDoc>>({ doc: null, versionNo: null });
   const [tone, setTone] = useState<PageSlice<ToneDoc>>({ doc: null, versionNo: null });
+  const [examples, setExamples] = useState<PageSlice<ExampleDoc>>({ doc: null, versionNo: null });
   const [policyText, setPolicyText] = useState('');
   const [promptPack, setPromptPack] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -156,15 +158,17 @@ export function BrandHomeEditor({
     let live = true;
 
     void (async () => {
-      const [list, colourPage, typePage, logoPage, tonePage, policy, pack] = await Promise.all([
-        fetchBrandPages(brandId),
-        fetchBrandPage(brandId, 'color'),
-        fetchBrandPage(brandId, 'type'),
-        fetchBrandPage(brandId, 'logo'),
-        fetchBrandPage(brandId, 'tone'),
-        fetchPolicy(),
-        fetchBrandPromptPack(brandId),
-      ]);
+      const [list, colourPage, typePage, logoPage, tonePage, examplesPage, policy, pack] =
+        await Promise.all([
+          fetchBrandPages(brandId),
+          fetchBrandPage(brandId, 'color'),
+          fetchBrandPage(brandId, 'type'),
+          fetchBrandPage(brandId, 'logo'),
+          fetchBrandPage(brandId, 'tone'),
+          fetchBrandPage(brandId, 'examples'),
+          fetchPolicy(),
+          fetchBrandPromptPack(brandId),
+        ]);
 
       if (!live) {
         return;
@@ -207,6 +211,15 @@ export function BrandHomeEditor({
         setTone({
           doc: parsed.kind === 'ok' ? parsed.doc : null,
           versionNo: tonePage.data.current?.versionNo ?? null,
+        });
+      }
+
+      if (examplesPage.ok) {
+        const parsed = parseExampleDoc(examplesPage.data.current?.content ?? '');
+
+        setExamples({
+          doc: parsed.kind === 'ok' ? parsed.doc : null,
+          versionNo: examplesPage.data.current?.versionNo ?? null,
         });
       }
 
@@ -276,6 +289,7 @@ export function BrandHomeEditor({
   const usage = logoUsage(logo.doc, doc.logo_default as '' | LogoModeKey, colour.doc);
   const sentence = toneSample(tone.doc);
   const rows = pageRows(pages);
+  const exampleRows = examples.doc?.examples ?? [];
 
   function commit(next: HomeDoc): void {
     setRegenerated(null);
@@ -993,6 +1007,45 @@ export function BrandHomeEditor({
             </button>
           </div>
         )}
+      </section>
+
+      {/* 十、已核准範例：只引用名稱與當時版本，內容住在應用層那一頁。 */}
+      <section className="brand-home__section" data-home-section="examples">
+        <h3 className="brand-page__versionsTitle">{t('brand.home.examples')}</h3>
+        <p className="design-field__hint">{t('brand.home.examplesHint')}</p>
+
+        {exampleRows.length === 0 ? (
+          <p className="design-empty" data-home-examples-empty>
+            {t('brand.home.examplesEmpty')}
+          </p>
+        ) : (
+          <ul className="brand-home__refs">
+            {exampleRows.map((row, index) => (
+              <li
+                className="brand-home__ref"
+                key={`example-${index}`}
+                data-home-example={index}
+                data-home-example-stale={rowStale(row, pages) ? 'true' : 'false'}
+              >
+                <span className="brand-home__refItem">
+                  {row.title === '' ? t('brand.home.exampleUntitled') : row.title}
+                </span>
+                <span className="brand-home__refSource" data-home-example-versions={index}>
+                  {row.page_refs.length === 0
+                    ? t('brand.home.exampleNoVersion')
+                    : rowVersions(row, pages)}
+                </span>
+                {rowStale(row, pages) && (
+                  <span className="brand-home__gap">{t('brand.home.exampleStale')}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <a className="brand-home__pageLink" href="#/design/brand/examples" data-home-examples-link>
+          {t('brand.home.examplesLink')}
+        </a>
       </section>
 
       {/* 十、每一頁的入口：清單由後端來，自定義頁各自一條。 */}

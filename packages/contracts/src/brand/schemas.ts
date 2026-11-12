@@ -2032,6 +2032,88 @@ const examples: PageSchema = {
       });
     }
 
+    // 逐個範例標缺，不是一句「有範例未齊」：每一格要做的動作不同（補檔、
+    // 揀格式、寫一句為咩），合併成一句就等於叫人在迷霧裡猜。
+    typed.examples.forEach((example, index) => {
+      const at = index + 1;
+
+      if (example.title.trim() === '') {
+        gaps.push({
+          item: `examples.${index}.title`,
+          what: `第 ${at} 個範例的名稱`,
+          type: 'judgement',
+          reason: '冇名，日後引用不到這一個。',
+        });
+      }
+
+      if (example.file_ref.trim() === '') {
+        gaps.push({
+          item: `examples.${index}.file_ref`,
+          what: `第 ${at} 個範例的檔案`,
+          type: 'file',
+          reason: '冇檔案就只是一句形容；過兩年冇人知係邊一張。',
+        });
+      }
+
+      if (example.format.trim() === '') {
+        gaps.push({
+          item: `examples.${index}.format`,
+          what: `第 ${at} 個範例的格式`,
+          type: 'judgement',
+          reason: '社交與印刷 A2 的安全區、字階都不同，唔講格式就重用不到。',
+        });
+      }
+
+      if (example.why.trim() === '') {
+        gaps.push({
+          item: `examples.${index}.why`,
+          what: `第 ${at} 個範例「為咩好」`,
+          type: 'judgement',
+          reason: '唔講為咩好，下一次只會抄到表面，抄不到判斷。',
+        });
+      }
+
+      if (example.page_refs.length === 0) {
+        gaps.push({
+          item: `examples.${index}.page_refs`,
+          what: `第 ${at} 個範例用了哪幾頁版本`,
+          type: 'judgement',
+          reason: '唔記版本，品牌一改就分不清「做得對」還是「用舊版」。',
+        });
+      }
+    });
+
+    typed.prompts.forEach((row, index) => {
+      const at = index + 1;
+
+      if (row.prompt.trim() === '') {
+        gaps.push({
+          item: `prompts.${index}.prompt`,
+          what: `第 ${at} 個成功 prompt 的內容`,
+          type: 'judgement',
+          reason: '冇 prompt 就重用不到；成品只可以看，不可以再做一次。',
+        });
+      }
+
+      if (row.output_ref.trim() === '') {
+        gaps.push({
+          item: `prompts.${index}.output_ref`,
+          what: `第 ${at} 個成功 prompt 的成品`,
+          type: 'file',
+          reason: '冇成品就唔知這個 prompt 真的做過甚麼。',
+        });
+      }
+
+      if (row.brand_ref.trim() === '') {
+        gaps.push({
+          item: `prompts.${index}.brand_ref`,
+          what: `第 ${at} 個成功 prompt 當時的品牌版本`,
+          type: 'judgement',
+          reason: '冇當時的版本，重用時唔知要對哪一版，也講不出差在哪。',
+        });
+      }
+    });
+
     return gaps;
   },
   layout() {
@@ -2047,8 +2129,39 @@ const examples: PageSchema = {
     return null;
   },
   tokensNote: '範例是引用，不是 token 來源；它以 refs 進 prompt 包。',
-  prompt() {
-    return [];
+  prompt(payload) {
+    const typed = payload as ExamplePayload;
+    const lines: string[] = [];
+
+    // 引用，不是複製：寫出「用了哪一頁的哪一版」，agent 才知道要去讀哪一份。
+    typed.examples.forEach((example) => {
+      const used = example.page_refs.map((ref) => `${ref.page} v${ref.version}`).join('、');
+      const parts = [
+        `範例《${example.title === '' ? '未命名' : example.title}》${example.format === '' ? '' : `（${example.format}）`}`,
+      ];
+
+      if (example.why !== '') {
+        parts.push(`為咩好：${example.why}`);
+      }
+
+      if (used !== '') {
+        parts.push(`用了：${used}`);
+      }
+
+      if (example.file_ref !== '') {
+        parts.push(`檔案：${example.file_ref}`);
+      }
+
+      lines.push(parts.join(' —— '));
+    });
+
+    typed.prompts.forEach((row) => {
+      lines.push(
+        `成功 prompt${row.brand_ref === '' ? '' : `（品牌版本 ${row.brand_ref}）`}：${row.prompt}${row.output_ref === '' ? '' : ` —— 成品：${row.output_ref}`}`,
+      );
+    });
+
+    return lines.length === 0 ? [] : [{ title: '已核准範例', lines }];
   },
 };
 

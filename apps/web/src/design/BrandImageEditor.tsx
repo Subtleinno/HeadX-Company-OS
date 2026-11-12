@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { t } from '@company-os/i18n';
-import { fetchBrandPage } from '../api';
+import { fetchBrandPage, fetchBrandPages, type BrandPageSummary } from '../api';
 import { COLOR_ROLES, parseColorDoc, type ColorDoc } from './brandColors';
+import { parseExampleDoc, rowStale, rowVersions, type ExampleDoc } from './brandExamples';
 import {
   IMAGE_LISTS,
   PHOTO_FIELDS,
@@ -120,6 +121,8 @@ export function BrandImageEditor({
   onGapCount,
 }: BrandImageEditorProps) {
   const [colour, setColour] = useState<ColorDoc | null>(null);
+  const [examples, setExamples] = useState<ExampleDoc | null>(null);
+  const [pages, setPages] = useState<BrandPageSummary[]>([]);
   const [drafts, setDrafts] = useState<Record<ImageListKey, string>>({ like: '', unlike: '' });
   const [bannedDraft, setBannedDraft] = useState({ term: '', reason: '' });
   const [bannedError, setBannedError] = useState<string | null>(null);
@@ -128,15 +131,33 @@ export function BrandImageEditor({
     let live = true;
 
     void (async () => {
-      const page = await fetchBrandPage(brandId, 'color');
+      // 三樣一齊讀：色彩頁（顏色引用）、範例頁（已核准範例）、頁清單
+      // （每個範例用它自己當時的版本，要對得上現行版本才知是否舊版）。
+      const [page, examplesPage, list] = await Promise.all([
+        fetchBrandPage(brandId, 'color'),
+        fetchBrandPage(brandId, 'examples'),
+        fetchBrandPages(brandId),
+      ]);
 
-      if (!live || !page.ok) {
+      if (!live) {
         return;
       }
 
-      const parsed = parseColorDoc(page.data.current?.content ?? '');
+      if (page.ok) {
+        const parsed = parseColorDoc(page.data.current?.content ?? '');
 
-      setColour(parsed.kind === 'ok' ? parsed.doc : null);
+        setColour(parsed.kind === 'ok' ? parsed.doc : null);
+      }
+
+      if (examplesPage.ok) {
+        const parsed = parseExampleDoc(examplesPage.data.current?.content ?? '');
+
+        setExamples(parsed.kind === 'ok' ? parsed.doc : null);
+      }
+
+      if (list.ok) {
+        setPages(list.data.items);
+      }
     })();
 
     return () => {
@@ -622,6 +643,41 @@ export function BrandImageEditor({
             commit({ ...doc, rights: event.target.value });
           }}
         />
+      </section>
+
+      {/* 已核准範例（#68）：只引用名稱與當時版本 —— 內容住在應用層那一頁。 */}
+      <section className="brand-image__section" data-image-approved-section>
+        <h3 className="brand-page__versionsTitle">{t('brand.image.approved')}</h3>
+        <p className="design-field__hint">{t('brand.image.approvedHint')}</p>
+
+        {examples === null || examples.examples.length === 0 ? (
+          <p className="design-empty" data-image-approved-empty>
+            {t('brand.image.approvedEmpty')}
+          </p>
+        ) : (
+          <ul className="brand-image__approved">
+            {examples.examples.map((row, index) => (
+              <li
+                className="brand-image__approvedRow"
+                key={`approved-${index}`}
+                data-image-approved={index}
+                data-image-approved-stale={rowStale(row, pages) ? 'true' : 'false'}
+              >
+                <span className="brand-image__approvedName">
+                  {row.title === '' ? t('brand.image.approvedUntitled') : row.title}
+                </span>
+                <span className="brand-image__approvedVersion" data-image-approved-version={index}>
+                  {row.page_refs.length === 0
+                    ? t('brand.image.approvedNoVersion')
+                    : rowVersions(row, pages)}
+                </span>
+                {rowStale(row, pages) && (
+                  <span className="brand-image__gap">{t('brand.image.approvedStale')}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       <section className="brand-image__section" data-image-banned-section>

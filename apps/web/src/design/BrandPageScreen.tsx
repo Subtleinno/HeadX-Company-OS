@@ -15,6 +15,8 @@ import { BrandColorEditor } from './BrandColorEditor';
 import { BrandCustomEditor } from './BrandCustomEditor';
 import { BrandHomeEditor } from './BrandHomeEditor';
 import { whoInText } from './brandHome';
+import { examplePreview } from './brandExamples';
+import { BrandExamplesEditor } from './BrandExamplesEditor';
 import { BrandImageEditor } from './BrandImageEditor';
 import { BrandLogoEditor } from './BrandLogoEditor';
 import { BrandPlatformEditor } from './BrandPlatformEditor';
@@ -210,6 +212,17 @@ function ImageVersionPreview({ preview }: { preview: string }) {
  * 每一張自定義頁的內容都不同，所以預覽不畫 chip，直接畫那一版開頭那一句 ——
  * 抽不到就講抽不到。
  */
+/** 已核准範例的版本預覽：第一件範例的名稱。 */
+function ExamplesVersionPreview({ preview }: { preview: string }) {
+  const line = examplePreview(preview);
+
+  return (
+    <p className="brand-page__preview" data-examples-version-line={line === '' ? undefined : line}>
+      {line === '' ? t('brand.examples.versionNoName') : line}
+    </p>
+  );
+}
+
 function HomeVersionPreview({ preview }: { preview: string }) {
   const line = whoInText(preview);
 
@@ -325,6 +338,8 @@ export function BrandPageScreen({
                 ? t('brand.tone.empty')
                 : pageKey === 'image'
                   ? t('brand.image.empty')
+                  : pageKey === 'examples'
+                    ? t('brand.examples.empty')
                 : detail?.page.kind === 'custom'
                   ? t('brand.custom.empty')
                   : pageKey === 'home'
@@ -745,6 +760,18 @@ export function BrandPageScreen({
           />
           {canEdit && <p className="design-field__hint">{t('brand.page.hint')}</p>}
         </div>
+      ) : pageKey === 'examples' ? (
+        <div className="brand-page__body" data-brand-page-body="examples">
+          <BrandExamplesEditor
+            brandId={brandId}
+            content={draft}
+            canEdit={canEdit}
+            onChange={setDraft}
+            onSaveNow={handleSave}
+            onGapCount={setGapCount}
+          />
+          {canEdit && <p className="design-field__hint">{t('brand.page.hint')}</p>}
+        </div>
       ) : (
         <label className="brand-page__editor">
           <span className="design-field__label">{t('brand.page.editorLabel')}</span>
@@ -829,6 +856,8 @@ export function BrandPageScreen({
                     <ToneVersionPreview preview={version.preview} />
                   ) : pageKey === 'image' ? (
                     <ImageVersionPreview preview={version.preview} />
+                  ) : pageKey === 'examples' ? (
+                    <ExamplesVersionPreview preview={version.preview} />
                   ) : (
                     version.preview !== '' && (
                       <p className="brand-page__preview">{version.preview}</p>
