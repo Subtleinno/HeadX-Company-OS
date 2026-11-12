@@ -74,7 +74,7 @@ const FROZEN_NON_FRAME_SHA256 =
 // 凍結值 a48ab… 同守衛嘅 489 個既有鍵唔變，唔係放寬門檻。
 // 2026-11-11（issue #30）：`staff.enable` 同 `staff.enable.*` 係新增鍵（恢復停用
 // 帳戶的路），唔屬 #155 要守嘅既有鍵；凍結值不變，只係明確排除新鍵。
-const LATER_KEY_PREFIXES = ['brand.page.', 'brand.color.', 'brand.type.', 'brand.logo.', 'brand.tone.', 'brand.custom.', 'brand.home.', 'brand.guide.', 'policy.', 'files.', 'grant.detail.', 'boss.members.', 'staff.enable', 'boss.module.people', 'boss.page.people', 'gate.noDepartment.', 'gate.departmentClosed.', 'gate.signOut',
+const LATER_KEY_PREFIXES = ['brand.page.', 'brand.color.', 'brand.type.', 'brand.logo.', 'brand.tone.', 'brand.custom.', 'brand.home.', 'brand.gap.', 'brand.guide.', 'policy.', 'files.', 'grant.detail.', 'boss.members.', 'staff.enable', 'boss.module.people', 'boss.page.people', 'gate.noDepartment.', 'gate.departmentClosed.', 'gate.signOut',
   // 2026-11-12（issue #34）：品牌頁策略是新增的介面，不屬本檔要守的既有鍵。
   'boss.policy.', 'boss.module.policy', 'boss.page.brandPolicy'];
 const LATER_EXACT_KEYS = [

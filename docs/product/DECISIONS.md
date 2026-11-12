@@ -516,3 +516,11 @@
 - **品牌版本是一張表：** `brand_release`（`release_no` ＋ 當時每一頁的版號快照）。每次儲存任何一頁就追加一列。成品要釘住的「品牌版本」因此查得返，而不是用時間或主頁版號冒充。號碼容許跳號，不容許重複指向兩個不同組成。
 - **色值紀律擴到後端：** `brand-output-hex` 測試掃 `apps/platform/src/brand-output` 與 `packages/contracts/src/brand`，不准出現 hex／`rgb()`／`hsl()`。連 CSS fallback 都用系統色（`Canvas`／`GrayText`），因為那不是品牌色。
 - **八個固定頁：** `home`、`platform`、`color`、`type`、`logo`、`tone`、`image`、`examples`（C112 的九頁減自定義頁）。migration 0017 放寬 check 約束；自定義頁仍然不可以佔用這八個鍵。
+
+## C115　缺口住在文件裡，`brand_gap` 只記「交了給誰跟」
+
+- **缺什麼由文件講**：`document.gaps` 是缺口的唯一來源；`brand_gap` 不存一份副本，只記 (page, item) 對應哪一張 Need。所以不會出現「文件話缺、表話唔缺」。
+- **一個位置一張工單**：`unique (page_id, item)`。重複按「建立 Need」讀返同一張，回 `created:false` —— 使用者的意思是「建立一個」，不是「建立第二個」。
+- **關閉是算出來的**：Need 驗收（`accepted_at`）之後缺口就關閉，不另存 `closed` 欄位（沿用 C06 的推導）。
+- **兩型各有規矩**：檔案型外判可交付，Need 不預設指派；判斷型只有老闆可以開單，Need 預設指派老闆（一張「等老闆決定」的工單指派給外判，只會永遠停在 open）。
+- **外判角色未存在**：現時以「老闆 vs 非老闆」實現「外判不能替公司決定」。`app_user.role` 未有 `contractor`（已知缺口），加入時這一條要改為看角色。
