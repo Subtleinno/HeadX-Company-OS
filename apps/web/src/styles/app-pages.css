@@ -3007,3 +3007,183 @@
     grid-column: 3 / -1;
   }
 }
+
+/* 專屬系統建議（#60）。640px，一張卡＋三項判斷＋邊界。
+
+   三項判斷用文字「是」＋理由，不用三個綠色勾：勾只講「通過了」，理由才
+   講「為咩這是一個系統」。 */
+
+.suggest-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, CanvasText 32%, transparent);
+  padding: 32px;
+}
+
+.suggest {
+  width: min(640px, 100%);
+  max-height: calc(100vh - 64px);
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+  border: 1px solid var(--hx-frame-line);
+  border-radius: 14px;
+  background: var(--hx-frame-paper);
+}
+
+.suggest__head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.suggest__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--hx-frame-ink);
+}
+
+.suggest__lead {
+  margin: 0;
+  font-size: 14px;
+  color: var(--hx-frame-secondary);
+}
+
+.suggest__checks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.suggest__check {
+  display: grid;
+  grid-template-columns: 28px 96px 1fr;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.suggest__yes {
+  color: var(--hx-frame-success);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.suggest__checkLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--hx-frame-ink);
+}
+
+.suggest__reason {
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+}
+
+.suggest__boundary {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 1px solid var(--hx-frame-line);
+  border-radius: 10px;
+  background: var(--hx-frame-surface);
+  padding: 12px 16px;
+}
+
+.suggest__boundaryTitle {
+  margin: 0;
+  font: var(--hx-frame-font-small);
+  font-weight: 600;
+  color: var(--hx-frame-secondary);
+}
+
+.suggest__boundaryBody,
+.suggest__refsNone {
+  margin: 0;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+}
+
+.suggest__refs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+}
+
+.suggest__ref {
+  border-radius: 999px;
+  border: 1px solid var(--hx-frame-line);
+  background: var(--hx-frame-paper);
+  padding: 2px 10px;
+  font-family: var(--hx-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 12px;
+  color: var(--hx-frame-ink);
+}
+
+.suggest__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.suggest__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* 主頁上的那張卡：一行字，不是一個彈窗。 */
+
+.suggest-card {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--hx-frame-accent);
+  border-radius: 12px;
+  background: var(--hx-frame-accent-soft);
+  padding: 12px 16px;
+  cursor: pointer;
+}
+
+.suggest-card__tag {
+  flex: none;
+  border-radius: 999px;
+  background: var(--hx-frame-paper);
+  color: var(--hx-frame-accent);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 10px;
+}
+
+.suggest-card__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--hx-frame-ink);
+}
+
+.suggest-card__brief {
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+}
+
+@media (max-width: 1024px) {
+  .suggest__check {
+    grid-template-columns: 24px 1fr;
+  }
+
+  .suggest__reason {
+    grid-column: 2 / -1;
+  }
+}

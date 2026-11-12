@@ -36,6 +36,8 @@ function page(overrides: Partial<BrandPageSummary> & { key: string }): BrandPage
     name: overrides.key,
     brief: null,
     sortOrder: 10,
+    // 分組由後端的固定頁表派生（#60）；測試只需要一個合法值。
+    group: overrides.key === 'home' ? 'home' : overrides.key === 'examples' ? 'apply' : 'identity',
     current: { id: 'v1', versionNo: 1, createdAt: '2026-11-11T10:00:00.000Z', note: null, preview: '', policyVersionNo: 1 },
     ...overrides,
   };

@@ -45,6 +45,14 @@ export type FrameApp = ShellNavItem & {
  */
 export type FrameSidebarItem = ShellNavItem & {
   sections?: readonly ShellNavItem[];
+  /**
+   * 名稱右側的狀態小字（issue #60 的「缺」）。
+   *
+   * 它是**文字**，不是顏色：一個只有橙點的標記，在黑白列印與色弱的人都讀不到。
+   * `warning` 用於「這頁未有內容」，`muted` 用於「未開始但不算缺」。
+   */
+  badge?: string;
+  badgeTone?: 'warning' | 'muted';
 };
 
 /** 左側子頁導覽嘅一個分組。分組標題同子頁文字都由呼叫端傳入。 */
@@ -450,6 +458,14 @@ export function FrameShell({
                         }}
                       >
                         {item.label}
+                        {item.badge !== undefined && (
+                          <span
+                            className="frame-sidebar__badge"
+                            data-badge-tone={item.badgeTone ?? 'muted'}
+                          >
+                            {item.badge}
+                          </span>
+                        )}
                       </button>
 
                       {item.key === currentPageKey &&

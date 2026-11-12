@@ -176,7 +176,28 @@ export function DesignApp({ user, onSignedOut }: DesignAppProps) {
   const selected = items.find((item) => item.id === brandId) ?? null;
   const pages = useBrandPages(brandId);
 
-  const nav = withBrandPages(DESIGN_NAV, pages.items);
+  const nav = withBrandPages(
+    DESIGN_NAV,
+    pages.items.map((page) => ({
+      key: page.key,
+      name: page.name,
+      kind: page.kind,
+      group: page.group,
+      missing: page.current === null,
+    })),
+  );
+
+  /**
+   * 品牌主頁過時之頁（#60）：主頁之後改過的頁。算出來，不存 flag。
+   *
+   * 主頁冇有版本而其他頁有＝一樣是過時：主頁由其他頁砌出來，它未有版本就
+   * 代表從未反映過任何一頁。
+   */
+  const homeCurrent = pages.items.find((page) => page.key === 'home')?.current?.createdAt ?? null;
+  const newerPages = pages.items
+    .filter((page) => page.key !== 'home' && page.current !== null)
+    .filter((page) => homeCurrent === null || page.current !== null && page.current.createdAt > homeCurrent)
+    .map((page) => page.name);
   const position = resolveNav(nav, path);
   const inBrand = position.navModule.key === 'brand';
 
@@ -237,6 +258,7 @@ export function DesignApp({ user, onSignedOut }: DesignAppProps) {
         canEdit={pages.canEdit}
         isOwner={user.role === 'owner'}
         onPagesChanged={pages.reload}
+        newerPages={newerPages}
         onRemoved={() => {
           pages.reload();
           navigatePath('/design', 'brand', 'home');
