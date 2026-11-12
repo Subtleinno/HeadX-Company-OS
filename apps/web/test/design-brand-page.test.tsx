@@ -11,6 +11,7 @@ import {
   resetBrowserState,
   type FakeHandlers,
 } from './helpers/fake-api';
+import { enterEditMode, whenEditable } from './helpers/brand-page';
 
 /**
  * 品牌頁版本（issue #33）。
@@ -170,7 +171,7 @@ describe('品牌頁版本', () => {
     });
 
     expect(
-      await screen.findAllByText('這一頁仲未有任何版本。第一次儲存會建立第 1 版。'),
+      await screen.findAllByText('這一頁還沒有任何版本。第一次儲存會建立第 1 版。'),
     ).toBeTruthy();
     expect(document.querySelectorAll('[data-brand-page-version]').length).toBe(0);
   });
@@ -193,9 +194,12 @@ describe('品牌頁版本', () => {
       throw new Error('找不到輸入框');
     }
 
+    await whenEditable();
+    await enterEditMode();
+
     await userEvent.clear(editor);
     await userEvent.type(editor, '第三版內容');
-    await userEvent.click(screen.getByRole('button', { name: '儲存（新增一版）' }));
+    await userEvent.click(screen.getByRole('button', { name: '儲存為新版本' }));
 
     await waitFor(() => {
       expect(screen.getByText('已儲存第 3 版。')).toBeTruthy();
@@ -221,8 +225,11 @@ describe('品牌頁版本', () => {
       throw new Error('找不到輸入框');
     }
 
+    await whenEditable();
+    await enterEditMode();
+
     await userEvent.clear(editor);
-    await userEvent.click(screen.getByRole('button', { name: '儲存（新增一版）' }));
+    await userEvent.click(screen.getByRole('button', { name: '儲存為新版本' }));
 
     expect(api.count('brandPageSave')).toBe(0);
     expect(document.querySelector('[data-brand-page-save]')?.hasAttribute('disabled')).toBe(true);
@@ -312,7 +319,7 @@ describe('品牌頁版本', () => {
       brandPage: () => jsonResponse(500, { error: 'boom' }),
     });
 
-    expect(await screen.findByText('讀唔到這一頁。')).toBeTruthy();
+    expect(await screen.findByText('讀不到這一頁。')).toBeTruthy();
     expect(screen.getByRole('button', { name: '重試' })).toBeTruthy();
   });
 

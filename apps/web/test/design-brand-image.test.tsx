@@ -14,6 +14,7 @@ import {
 } from './helpers/fake-api';
 import { colourDoc } from './fixtures/brandColour';
 import { fullImageDoc } from './fixtures/brandImage';
+import { enterEditMode, whenEditable } from './helpers/brand-page';
 
 /**
  * 圖像頁（issue #66）。
@@ -296,6 +297,9 @@ describe('圖像頁', () => {
   it('新增一句「要的樣子」：入了版本鏈，差異指出改了哪一欄', async () => {
     const { api } = openImage(BOSS);
 
+    await whenEditable();
+    await enterEditMode();
+
     await waitFor(() => {
       expect(document.querySelector('[data-image-line-input="like"]')).not.toBeNull();
     });
@@ -307,7 +311,7 @@ describe('圖像頁', () => {
 
     expect(document.querySelectorAll('[data-image-line^="like-"]').length).toBe(4);
 
-    await userEvent.click(screen.getByRole('button', { name: '儲存（新增一版）' }));
+    await userEvent.click(screen.getByRole('button', { name: '儲存為新版本' }));
 
     await waitFor(() => {
       expect(api.count('brandPageSave')).toBe(1);

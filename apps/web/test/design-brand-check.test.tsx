@@ -6,6 +6,7 @@ import './helpers/rtl';
 import { App } from '../src/App';
 import { resetDirectoryCache } from '../src/frame/useDirectory';
 import { installFakeApi, jsonResponse, resetBrowserState, type FakeHandlers } from './helpers/fake-api';
+import { enterEditMode, whenEditable } from './helpers/brand-page';
 
 /**
  * 驗證規則的畫面（issue #59）。
@@ -159,6 +160,9 @@ describe('檢查摘要條', () => {
   it('有不通過就有橫幅：規則 id、位置、怎樣改，而且不擋儲存', async () => {
     openPage();
 
+    await whenEditable();
+    await enterEditMode();
+
     await waitFor(() => {
       expect(screen.getByText('通過 1')).toBeTruthy();
     });
@@ -170,7 +174,7 @@ describe('檢查摘要條', () => {
     expect(banner?.textContent).toContain('換成一件可以查證的事');
 
     // 儲存鍵仍然可用：檢查只報告。
-    expect((screen.getByRole('button', { name: '儲存（新增一版）' }) as HTMLButtonElement).disabled).toBe(false);
+    expect((screen.getByRole('button', { name: '儲存為新版本' }) as HTMLButtonElement).disabled).toBe(false);
   });
 
   it('全部通過就沒有橫幅', async () => {
@@ -222,13 +226,16 @@ describe('檢查摘要條', () => {
         }),
     });
 
+    await whenEditable();
+    await enterEditMode();
+
     await waitFor(() => {
       expect(screen.getByText('通過 1')).toBeTruthy();
     });
 
     const before = api.count('brandCheck');
 
-    await userEvent.click(screen.getByRole('button', { name: '儲存（新增一版）' }));
+    await userEvent.click(screen.getByRole('button', { name: '儲存為新版本' }));
 
     await waitFor(() => {
       expect(api.count('brandCheck')).toBeGreaterThan(before);

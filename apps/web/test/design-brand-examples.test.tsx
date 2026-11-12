@@ -13,6 +13,7 @@ import {
 } from './helpers/fake-api';
 import { colourDoc } from './fixtures/brandColour';
 import { fullExampleDoc, thinExampleDoc } from './fixtures/brandExamples';
+import { enterEditMode, whenEditable } from './helpers/brand-page';
 
 /**
  * 已核准範例（issue #68）。
@@ -299,6 +300,9 @@ describe('已核准範例：登記與版本', () => {
   it('加一件範例、勾一頁版本，儲存之後兩樣都在', async () => {
     const { api } = open(BOSS, 'examples');
 
+    await whenEditable();
+    await enterEditMode();
+
     await waitFor(() => {
       expect(document.querySelector('[data-example-add]')).not.toBeNull();
     });
@@ -315,7 +319,7 @@ describe('已核准範例：登記與版本', () => {
     );
     await userEvent.click(document.querySelector('[data-example-ref="2-color"]') as HTMLElement);
 
-    await userEvent.click(screen.getByRole('button', { name: '儲存（新增一版）' }));
+    await userEvent.click(screen.getByRole('button', { name: '儲存為新版本' }));
 
     await waitFor(() => {
       expect(api.count('brandPageSave')).toBe(1);
@@ -331,6 +335,9 @@ describe('已核准範例：登記與版本', () => {
 
   it('任意 JSON 判 invalid，講讀不到並給重設', async () => {
     open(BOSS, 'examples', { doc: '{"intro":"舊形狀"}' });
+
+    await whenEditable();
+    await enterEditMode();
 
     await waitFor(() => {
       expect(document.querySelector('[data-examples-invalid]')).not.toBeNull();
@@ -366,12 +373,15 @@ describe('已核准範例：重用', () => {
   it('「填入現行版本」把各頁現行版本寫成一組', async () => {
     const { api } = open(BOSS, 'examples');
 
+    await whenEditable();
+    await enterEditMode();
+
     await waitFor(() => {
       expect(document.querySelector('[data-prompt-brand-fill="0"]')).not.toBeNull();
     });
 
     await userEvent.click(document.querySelector('[data-prompt-brand-fill="0"]') as HTMLElement);
-    await userEvent.click(screen.getByRole('button', { name: '儲存（新增一版）' }));
+    await userEvent.click(screen.getByRole('button', { name: '儲存為新版本' }));
 
     await waitFor(() => {
       expect(api.count('brandPageSave')).toBe(1);

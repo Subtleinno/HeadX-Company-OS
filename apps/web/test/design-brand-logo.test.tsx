@@ -12,6 +12,7 @@ import {
   type FakeHandlers,
 } from './helpers/fake-api';
 import { colourDoc } from './fixtures/brandColour';
+import { enterEditMode, whenEditable } from './helpers/brand-page';
 
 /**
  * 標誌頁（issue #64，取代 #36 的畫面）。
@@ -343,6 +344,9 @@ describe('標誌頁', () => {
   it('五類封頂：同一類不可以有第二個，加滿之後沒有新增鍵', async () => {
     openLogo(BOSS);
 
+    await whenEditable();
+    await enterEditMode();
+
     await waitFor(() => {
       expect(document.querySelector('[data-logo-asset-add="mark"]')).not.toBeNull();
     });
@@ -400,6 +404,9 @@ describe('標誌頁', () => {
   it('有編輯權的人改完：入了版本鏈，重新載入仍然是改過的', async () => {
     const { api } = openLogo(BOSS);
 
+    await whenEditable();
+    await enterEditMode();
+
     await waitFor(() => {
       expect(input('[data-logo-space-multiples]')).not.toBeNull();
     });
@@ -408,7 +415,7 @@ describe('標誌頁', () => {
 
     await userEvent.clear(multiples);
     await userEvent.type(multiples, '1x');
-    await userEvent.click(screen.getByRole('button', { name: '儲存（新增一版）' }));
+    await userEvent.click(screen.getByRole('button', { name: '儲存為新版本' }));
 
     await waitFor(() => {
       expect(api.count('brandPageSave')).toBe(1);

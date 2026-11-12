@@ -13,6 +13,7 @@ import {
   type FakeHandlers,
 } from './helpers/fake-api';
 import { adjectiveTrait, fullToneDoc } from './fixtures/brandTone';
+import { enterEditMode, whenEditable } from './helpers/brand-page';
 
 /**
  * 語氣頁（issue #65，取代 #37）。
@@ -252,6 +253,9 @@ describe('語氣頁', () => {
       doc: JSON.stringify({ ...DOC, samples: { ...DOC.samples, unlike: DOC.samples.unlike.slice(0, 3) } }),
     });
 
+    await whenEditable();
+    await enterEditMode();
+
     await waitFor(() => {
       expect(document.querySelector('[data-tone-missing]')).not.toBeNull();
     });
@@ -279,6 +283,9 @@ describe('語氣頁', () => {
 
   it('特質上限五個：加滿之後沒有「新增特質」', async () => {
     openTone(BOSS);
+
+    await whenEditable();
+    await enterEditMode();
 
     await waitFor(() => {
       expect(document.querySelector('[data-tone-trait-add]')).not.toBeNull();
@@ -308,6 +315,9 @@ describe('語氣頁', () => {
   it('改一個欄位：入了版本鏈，差異指出改了哪一欄', async () => {
     const { api } = openTone(BOSS);
 
+    await whenEditable();
+    await enterEditMode();
+
     await waitFor(() => {
       expect(document.querySelector('[data-tone-context="decline"]')).not.toBeNull();
     });
@@ -316,7 +326,7 @@ describe('語氣頁', () => {
 
     await userEvent.clear(decline);
     await userEvent.type(decline, '呢個我們做唔到。');
-    await userEvent.click(screen.getByRole('button', { name: '儲存（新增一版）' }));
+    await userEvent.click(screen.getByRole('button', { name: '儲存為新版本' }));
 
     await waitFor(() => {
       expect(api.count('brandPageSave')).toBe(1);
