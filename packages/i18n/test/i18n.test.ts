@@ -100,6 +100,10 @@ describe('字串表', () => {
       'brand.guide.uses',
       'brand.guide.usedBy',
       'brand.guide.link',
+      // v2.1：策略摘要講槽名與版號；給 agent 的是一句人話（品牌名＋頁名）。
+      'brand.guide.policySummary',
+      'brand.guide.policySummaryNoVersion',
+      'brand.guide.agentInstruction',
       'brand.guide.policyOwnerOnly',
       'brand.guide.policySaved',
       'brand.page.manage.created',

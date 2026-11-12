@@ -3034,11 +3034,43 @@
   background: var(--hx-frame-surface);
 }
 
-.brand-guide__head {
+/*
+ * 三段各一行、各自收起（v2.1）。預設見到三行：
+ *   現況 / 這一頁的標準 / 給 agent
+ * 每一行右邊一個「展開」。一打開不是一屏說明文字。
+ */
+.brand-guide__row {
   display: grid;
   grid-template-columns: 1fr auto;
-  gap: 4px var(--hx-space-3);
-  align-items: start;
+  gap: 2px var(--hx-space-3);
+  align-items: center;
+}
+
+.brand-guide__rowText {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.brand-guide__rowLead {
+  margin: 0;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+}
+
+.brand-guide__body {
+  display: grid;
+  gap: 6px;
+  padding-top: 8px;
+}
+
+.brand-guide__instruction {
+  margin: 0;
+  padding: 10px 12px;
+  border-left: 2px solid var(--hx-frame-border);
+  background: var(--hx-frame-sunken);
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-ink);
 }
 
 .brand-guide__title {
@@ -3047,19 +3079,10 @@
   font-weight: 600;
 }
 
-.brand-guide__lead {
-  grid-column: 1;
-  margin: 0;
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-secondary);
-}
-
 .brand-guide__toggle {
-  grid-column: 2;
-  grid-row: 1 / span 2;
-  width: 28px;
-  height: 28px;
-  padding: 0;
+  justify-self: end;
+  height: 26px;
+  padding: 0 10px;
   border: 1px solid var(--hx-frame-border);
   border-radius: var(--hx-radius-sm);
   background: transparent;

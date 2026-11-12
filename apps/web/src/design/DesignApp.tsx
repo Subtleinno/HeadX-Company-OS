@@ -257,6 +257,7 @@ export function DesignApp({ user, onSignedOut }: DesignAppProps) {
         pageKey={pageApiKey(current.page.key)}
         canEdit={pages.canEdit}
         isOwner={user.role === 'owner'}
+        brandName={selected?.name ?? null}
         onPagesChanged={pages.reload}
         newerPages={newerPages}
         onRemoved={() => {
