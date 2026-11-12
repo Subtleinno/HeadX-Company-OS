@@ -87,11 +87,16 @@ const COLOUR_DOC = JSON.stringify(
 );
 
 const TONE_DOC = JSON.stringify({
+  stance: '我們賣的是可以講清楚的療程。',
   traits: [],
-  banned: ['賦能', '閉環'],
-  bilingual: 'zhFirst',
-  bilingualNote: '',
-  situations: { explain: '句', invite: '句', refuse: '句', apologise: '句', incident: '句' },
+  banned: [
+    { term: '賦能', reason: '意思空，讀者不知道得到甚麼' },
+    { term: '閉環', reason: '行業術語，客人不會用' },
+  ],
+  language_policy: '對外一律繁體中文。',
+  contexts: { explain: '句', invite: '句', decline: '句', apologize: '句', incident: '句' },
+  samples: { like: [], unlike: [] },
+  hardest_line: { wrong: '', right: '' },
 });
 
 const TYPE_DOC = JSON.stringify({

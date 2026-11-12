@@ -1818,12 +1818,13 @@
 }
 
 
-/* ── 語氣頁（issue #37） ───────────────────────────────────── */
+/* ── 語氣頁（issue #65；取代 #37） ─────────────────────────── */
 
 /*
- * 這一頁的閱讀次序是「有哪幾把聲音（特質）、每把聲音做與不做的實際句子、
- * 不准講的字、五個場合怎樣講」。所以每個特質是一塊：名、做、不做在上，
- * 兩句實際句子並排在下 —— 句子才是證據，形容詞不是。
+ * 這一頁的閱讀次序是「立場句、有哪幾把聲音（特質）、每把聲音會與不會怎樣講
+ * 加一句真句、不准講的字與原因、用哪種語言、五句像五句不像、五個場合、
+ * 最難的一句」。所以每個特質是一塊：名、會、不會在上，示範句在下 ——
+ * 句子才是證據，形容詞不是。
  */
 .brand-tone {
   display: flex;
@@ -1966,6 +1967,83 @@
   padding-top: 6px;
   font: var(--hx-frame-font-small);
   color: var(--hx-frame-muted);
+}
+
+/* 第幾個特質：刪完之後名會移位，編號是唯一穩定的參照。 */
+.brand-tone__traitIndex {
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-muted);
+}
+
+/* 禁用詞：左邊那個詞窄，右邊「為咩禁」寬 —— 原因才是要讀的部份。 */
+.brand-tone__recordList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.brand-tone__record {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--hx-space-2);
+  padding: 4px 0;
+  border-top: 1px solid var(--hx-frame-border);
+}
+
+.brand-tone__record .design-input {
+  max-width: 100%;
+}
+
+.brand-tone__recordTerm {
+  font-weight: 600;
+}
+
+/* 樣本：像與不像兩組，各佔一半，因為「不像」同樣是規則。 */
+.brand-tone__sampleGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: var(--hx-space-2) 0;
+  border-top: 1px solid var(--hx-frame-border);
+}
+
+.brand-tone__sampleHead {
+  display: flex;
+  align-items: baseline;
+  gap: var(--hx-space-2);
+}
+
+.brand-tone__sampleLabel {
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-ink);
+}
+
+.brand-tone__sampleCount {
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-muted);
+}
+
+.brand-tone__sampleRow {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--hx-space-2);
+}
+
+.brand-tone__sampleRow .design-input {
+  max-width: 100%;
+}
+
+.brand-tone__sampleIndex {
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-muted);
+}
+
+@media (max-width: 900px) {
+  .brand-tone__record {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 /* 版本列表的語氣頁：特質名，不印 JSON。 */

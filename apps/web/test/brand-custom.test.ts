@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ColorDoc } from '../src/design/brandColors';
 import { fullColourDoc, withoutRole } from './fixtures/brandColour';
+import { fullToneDoc } from './fixtures/brandTone';
 import { fullFamily, typeDoc } from './fixtures/brandTypeface';
 import type { TypeDoc } from '../src/design/brandType';
 import type { ToneDoc } from '../src/design/brandTone';
@@ -45,44 +46,7 @@ const TYPE: TypeDoc = {
   pairing: '只用 Inter。',
 };
 
-const TONE: ToneDoc = {
-  traits: [
-    {
-      id: 't-1',
-      name: '直接',
-      does: '講清楚要對方做甚麼',
-      doesExample: '星期四下午三點前把樣板寄回，唔該。',
-      doesNot: '不用「請盡快」',
-      doesNotExample: '請盡快回覆，謝謝。',
-    },
-    {
-      id: 't-2',
-      name: '有溫度',
-      does: '先認同對方',
-      doesExample: '明白你趕時間。',
-      doesNot: '不假裝熱情',
-      doesNotExample: '太棒了！！！',
-    },
-    {
-      id: 't-3',
-      name: '不裝',
-      does: '用日常講法',
-      doesExample: '呢個療程要分三次做。',
-      doesNot: '不講賦能這類字',
-      doesNotExample: '我們賦能客戶。',
-    },
-  ],
-  banned: ['賦能', '閉環'],
-  bilingual: 'zhFirst',
-  bilingualNote: '療程名保留英文原名。',
-  situations: {
-    explain: '呢個療程分三次做。',
-    invite: '下星期三下午有位。',
-    refuse: '呢個做唔到。',
-    apologise: '上一次等得太久。',
-    incident: '系統今早出問題。',
-  },
-};
+const TONE: ToneDoc = fullToneDoc();
 
 const BRIEF = '包裝要決定盒型、紙材、印刷方式與最小落單量，以及盒上的資訊次序。';
 

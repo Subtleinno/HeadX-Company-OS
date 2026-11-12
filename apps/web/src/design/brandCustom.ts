@@ -174,6 +174,16 @@ export function typeRoleResolved(type: TypeDoc | null, role: string): boolean {
   return entry !== undefined && entry.family.trim() !== '';
 }
 
+/** 語氣頁的禁用詞，只要非空的詞。逐句與整頁都靠這一份，不會兩邊不同步。 */
+export function bannedTermsOf(tone: ToneDoc | null): string[] {
+  return (tone?.banned ?? []).map((item) => item.term.trim()).filter((term) => term !== '');
+}
+
+/** 這一句犯了哪幾條禁用詞。逐句標記用。 */
+export function bannedInLine(line: string, tone: ToneDoc | null): string[] {
+  return bannedTermsOf(tone).filter((term) => line.includes(term));
+}
+
 export function bannedHits(doc: CustomDoc, tone: ToneDoc | null): string[] {
   if (tone === null || tone.banned.length === 0) {
     return [];
@@ -181,7 +191,7 @@ export function bannedHits(doc: CustomDoc, tone: ToneDoc | null): string[] {
 
   const haystack = doc.examples.join('\n');
 
-  return tone.banned.filter((word) => word !== '' && haystack.includes(word));
+  return bannedTermsOf(tone).filter((term) => haystack.includes(term));
 }
 
 export function customGaps(input: CustomGapInput): CustomGaps {

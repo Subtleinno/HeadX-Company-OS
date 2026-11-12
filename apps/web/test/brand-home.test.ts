@@ -89,12 +89,10 @@ const TONE = {
   ...emptyToneDoc(),
   traits: [
     {
-      id: 't-1',
       name: '直接',
-      does: '講清楚要對方做甚麼',
-      doesExample: '請你星期三之前回覆。',
-      doesNot: '轉彎',
-      doesNotExample: '唔知你方唔方便呢。',
+      do: '講清楚要對方做甚麼',
+      dont: '轉彎',
+      sentence: '請你星期三之前回覆。',
     },
   ],
 };
