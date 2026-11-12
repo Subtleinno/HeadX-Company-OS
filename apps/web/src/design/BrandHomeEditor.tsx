@@ -21,6 +21,7 @@ import {
   type HomeDoc,
   type LogoGap,
 } from './brandHome';
+import { useGapCount } from './useGapCount';
 
 /**
  * 品牌主頁的表身（issue #39）。
@@ -39,6 +40,8 @@ type BrandHomeEditorProps = {
   onChange: (next: string) => void;
   /** 重編要真的落一版，所以由外層的儲存通道執行；回傳新版的版號。 */
   onSaveNow: (content: string) => Promise<number | null>;
+  /** 把缺口數上報給「這一頁」面板（#53）。解析不到就報 null。 */
+  onGapCount?: (count: number | null) => void;
 };
 
 function write(doc: HomeDoc): string {
@@ -78,7 +81,14 @@ function pxSize(value: string): string | undefined {
   return /^\d+(\.\d+)?px$/.test(value.trim()) ? value.trim() : undefined;
 }
 
-export function BrandHomeEditor({ brandId, content, canEdit, onChange, onSaveNow }: BrandHomeEditorProps) {
+export function BrandHomeEditor({
+  brandId,
+  content,
+  canEdit,
+  onChange,
+  onSaveNow,
+  onGapCount,
+}: BrandHomeEditorProps) {
   const [pages, setPages] = useState<BrandPageSummary[]>([]);
   const [colour, setColour] = useState<ColorDoc | null>(null);
   const [type, setType] = useState<TypeDoc | null>(null);
@@ -144,6 +154,23 @@ export function BrandHomeEditor({ brandId, content, canEdit, onChange, onSaveNow
   }, [brandId]);
 
   const parsed = parseHomeDoc(content);
+
+  // 在 early return 之前上報。四頁未讀到時 `homeGaps` 已經把相關項目標成缺。
+  useGapCount(
+    parsed.kind === 'invalid'
+      ? null
+      : gapCount(
+          homeGaps({
+            doc: parsed.kind === 'ok' ? parsed.doc : { intro: '', logoMode: '' },
+            colour,
+            type,
+            logo,
+            tone,
+            pages,
+          }),
+        ),
+    onGapCount,
+  );
 
   // 舊的自由文字不是這份表：講明讀不到，不當成「空白主頁」靜靜蓋掉。
   if (parsed.kind === 'invalid') {

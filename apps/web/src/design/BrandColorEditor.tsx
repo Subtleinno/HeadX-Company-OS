@@ -25,6 +25,7 @@ import {
   type ColorPair,
   type ColorValue,
 } from './brandColors';
+import { useGapCount } from './useGapCount';
 
 /**
  * 色彩頁的編輯介面（issue #35）。
@@ -53,6 +54,8 @@ type BrandColorEditorProps = {
   canEdit: boolean;
   /** 交回去的是**內容字串**；全空的時候是空字串（等於未有內容）。 */
   onChange: (next: string) => void;
+  /** 把缺口數上報給「這一頁」面板（#53）。解析不到就報 null。 */
+  onGapCount?: (count: number | null) => void;
 };
 
 /** 一份表變成內容字串。全空就交空字串，讓上面那一個「未有內容」的判斷繼續有效。 */
@@ -72,7 +75,7 @@ function groupLabel(group: ColorGroup): string {
   return group === 'reading' ? t('brand.color.group.reading') : t('brand.color.group.function');
 }
 
-export function BrandColorEditor({ content, canEdit, onChange }: BrandColorEditorProps) {
+export function BrandColorEditor({ content, canEdit, onChange, onGapCount }: BrandColorEditorProps) {
   const [mode, setMode] = useState<Mode>('light');
   const [rampDraft, setRampDraft] = useState({ role: COLOR_ROLES[0]?.key ?? '', step: '', hex: '' });
   const [rampError, setRampError] = useState<string | null>(null);
@@ -83,6 +86,15 @@ export function BrandColorEditor({ content, canEdit, onChange }: BrandColorEdito
   });
 
   const parsed = parseColorDoc(content);
+
+  // 上報缺口要在 early return 之前：hook 的數目不可以因為內容壞了就變。
+  // 解析不到就報 null —— 面板會閉嘴，而不是講「沒有缺口」。
+  useGapCount(
+    parsed.kind === 'invalid'
+      ? null
+      : missingRoles(parsed.kind === 'ok' ? parsed.doc : EMPTY_DOC, mode).length,
+    onGapCount,
+  );
 
   if (parsed.kind === 'invalid') {
     return (

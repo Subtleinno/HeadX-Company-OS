@@ -22,6 +22,7 @@ import {
   type LogoDoc,
   type LogoModeKey,
 } from './brandLogo';
+import { useGapCount } from './useGapCount';
 
 /**
  * 標誌頁的編輯介面（issue #36）。
@@ -43,6 +44,8 @@ type BrandLogoEditorProps = {
   content: string;
   canEdit: boolean;
   onChange: (next: string) => void;
+  /** 把缺口數上報給「這一頁」面板（#53）。解析不到就報 null。 */
+  onGapCount?: (count: number | null) => void;
 };
 
 function write(doc: LogoDoc): string {
@@ -87,7 +90,13 @@ function nextAssetId(doc: LogoDoc): string {
   return `a-${index}`;
 }
 
-export function BrandLogoEditor({ brandId, content, canEdit, onChange }: BrandLogoEditorProps) {
+export function BrandLogoEditor({
+  brandId,
+  content,
+  canEdit,
+  onChange,
+  onGapCount,
+}: BrandLogoEditorProps) {
   const [colour, setColour] = useState<ColorDoc | null>(null);
   const [colourLoading, setColourLoading] = useState(true);
   const [families, setFamilies] = useState<{ id: string; label: string }[]>([]);
@@ -152,6 +161,15 @@ export function BrandLogoEditor({ brandId, content, canEdit, onChange }: BrandLo
   }, [brandId]);
 
   const parsed = parseLogoDoc(content);
+
+  // 在 early return 之前上報。色彩頁未讀到（`colour === null`）時 logoGaps
+  // 已經把四種顏色模式標成缺，所以這個數字是真的，不是猜的。
+  useGapCount(
+    parsed.kind === 'invalid'
+      ? null
+      : gapCount(logoGaps(parsed.kind === 'ok' ? parsed.doc : emptyLogoDoc(), colour)),
+    onGapCount,
+  );
 
   if (parsed.kind === 'invalid') {
     return (

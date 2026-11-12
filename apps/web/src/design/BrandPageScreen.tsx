@@ -16,8 +16,10 @@ import { BrandCustomEditor } from './BrandCustomEditor';
 import { BrandHomeEditor } from './BrandHomeEditor';
 import { introInText } from './brandHome';
 import { BrandLogoEditor } from './BrandLogoEditor';
+import { BrandPageGuide } from './BrandPageGuide';
 import { BrandToneEditor } from './BrandToneEditor';
 import { BrandTypeEditor } from './BrandTypeEditor';
+import { formatTime } from './brandGuide';
 import { hexesInText } from './brandColors';
 import { assetNamesInText } from './brandLogo';
 import { leadingLineInText } from './brandCustom';
@@ -48,6 +50,8 @@ type BrandPageScreenProps = {
   pageKey: string;
   /** 只有可以改這個品牌的人見到寫入介面（品牌級授權見 #32）。 */
   canEdit: boolean;
+  /** 只有老闆可以改策略（#53）：策略段有沒有編輯鍵，看這一個。 */
+  isOwner: boolean;
   /** 改名之後叫上層重讀清單：左側的名要跟著變。 */
   onPagesChanged: () => void;
   /** 刪完之後回品牌主頁：留在一個已經不存在的網址上只會見到「找不到」。 */
@@ -180,26 +184,11 @@ function CustomVersionPreview({ preview }: { preview: string }) {
   );
 }
 
-function formatTime(value: string): string {
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return date.toLocaleString('zh-HK', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
-
 export function BrandPageScreen({
   brandId,
   pageKey,
   canEdit,
+  isOwner,
   onPagesChanged,
   onRemoved,
 }: BrandPageScreenProps) {
@@ -213,6 +202,8 @@ export function BrandPageScreen({
   const [renaming, setRenaming] = useState(false);
   const [nameDraft, setNameDraft] = useState('');
   const [confirmRemove, setConfirmRemove] = useState(false);
+  /** 表身上報的缺口數（#53）。`null`＝表身未報，面板就不講數字。 */
+  const [gapCount, setGapCount] = useState<number | null>(null);
 
   /**
    * 讀這一頁。
@@ -226,6 +217,8 @@ export function BrandPageScreen({
     async (keepVisible: boolean): Promise<void> => {
       if (!keepVisible) {
         setState('loading');
+        // 換頁時清掉上一頁的缺口數：留著會令新一頁第一幀顯示舊頁的數字。
+        setGapCount(null);
       }
 
       const page = await fetchBrandPage(brandId, pageKey);
@@ -447,17 +440,22 @@ export function BrandPageScreen({
   return (
     <div className="brand-page" data-brand-page={page.key}>
       {/* 頁名不重複畫：外殼的頁標題就是同一個名（左側、頁籤、標題三者同源）。
-          這裡只補外殼講不到的兩件事：這是自定義頁，以及現行是第幾版。 */}
-      {(isCustom || detail.current !== null) && (
+          版本號也不在這裡畫了 —— 下面的「這一頁」第一句就是現行第幾版，
+          同一個數字畫兩次只會令人以為是兩件事。 */}
+      {isCustom && (
         <div className="brand-page__head">
-          {isCustom && <span className="brand-page__tag">{t('brand.page.manage.customTag')}</span>}
-          {detail.current !== null && (
-            <p className="brand-page__meta">
-              {t('brand.page.versionNo', { no: detail.current.versionNo })}
-            </p>
-          )}
+          <span className="brand-page__tag">{t('brand.page.manage.customTag')}</span>
         </div>
       )}
+
+      {/* 這一頁（#53）：現況、策略、給 agent 的接口。
+          放在表身之前 —— 老闆要先知道這一頁現在怎樣、誰可以改，才會想看要填什麼。 */}
+      <BrandPageGuide
+        pageKey={pageKey}
+        current={detail.current}
+        gapCount={gapCount}
+        isOwner={isOwner}
+      />
 
       {isCustom && page.brief !== null && (
         <p className="brand-page__brief" data-brand-page-brief>
@@ -563,6 +561,7 @@ export function BrandPageScreen({
             canEdit={canEdit}
             onChange={setDraft}
             onSaveNow={(next) => handleSave(next)}
+            onGapCount={setGapCount}
           />
           {canEdit && <p className="design-field__hint">{t('brand.page.hint')}</p>}
         </div>
@@ -574,17 +573,28 @@ export function BrandPageScreen({
             canEdit={canEdit}
             onChange={setDraft}
             onSaveNow={(next) => handleSave(next)}
+            onGapCount={setGapCount}
           />
           {canEdit && <p className="design-field__hint">{t('brand.page.hint')}</p>}
         </div>
       ) : pageKey === 'color' ? (
         <div className="brand-page__body" data-brand-page-body="color">
-          <BrandColorEditor content={draft} canEdit={canEdit} onChange={setDraft} />
+          <BrandColorEditor
+            content={draft}
+            canEdit={canEdit}
+            onChange={setDraft}
+            onGapCount={setGapCount}
+          />
           {canEdit && <p className="design-field__hint">{t('brand.page.hint')}</p>}
         </div>
       ) : pageKey === 'type' ? (
         <div className="brand-page__body" data-brand-page-body="type">
-          <BrandTypeEditor content={draft} canEdit={canEdit} onChange={setDraft} />
+          <BrandTypeEditor
+            content={draft}
+            canEdit={canEdit}
+            onChange={setDraft}
+            onGapCount={setGapCount}
+          />
           {canEdit && <p className="design-field__hint">{t('brand.page.hint')}</p>}
         </div>
       ) : pageKey === 'logo' ? (
@@ -594,12 +604,18 @@ export function BrandPageScreen({
             content={draft}
             canEdit={canEdit}
             onChange={setDraft}
+            onGapCount={setGapCount}
           />
           {canEdit && <p className="design-field__hint">{t('brand.page.hint')}</p>}
         </div>
       ) : pageKey === 'tone' ? (
         <div className="brand-page__body" data-brand-page-body="tone">
-          <BrandToneEditor content={draft} canEdit={canEdit} onChange={setDraft} />
+          <BrandToneEditor
+            content={draft}
+            canEdit={canEdit}
+            onChange={setDraft}
+            onGapCount={setGapCount}
+          />
           {canEdit && <p className="design-field__hint">{t('brand.page.hint')}</p>}
         </div>
       ) : (

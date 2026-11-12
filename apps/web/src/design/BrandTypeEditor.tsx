@@ -26,6 +26,7 @@ import {
   type TypeRoleKey,
 } from './brandType';
 import { isColorRole } from './brandColors';
+import { useGapCount } from './useGapCount';
 
 /**
  * 字體頁的編輯介面（issue #38）。
@@ -48,6 +49,8 @@ type BrandTypeEditorProps = {
   content: string;
   canEdit: boolean;
   onChange: (next: string) => void;
+  /** 把缺口數上報給「這一頁」面板（#53）。解析不到就報 null。 */
+  onGapCount?: (count: number | null) => void;
 };
 
 function write(doc: TypeDoc): string {
@@ -77,10 +80,18 @@ function nextFamilyId(doc: TypeDoc): string {
   return `f-${index}`;
 }
 
-export function BrandTypeEditor({ content, canEdit, onChange }: BrandTypeEditorProps) {
+export function BrandTypeEditor({ content, canEdit, onChange, onGapCount }: BrandTypeEditorProps) {
   const [misuseDraft, setMisuseDraft] = useState('');
 
   const parsed = parseTypeDoc(content);
+
+  // 在 early return 之前上報：內容壞了要報 null（面板閉嘴），不是報 0。
+  useGapCount(
+    parsed.kind === 'invalid'
+      ? null
+      : gapCount(typeGaps(parsed.kind === 'ok' ? parsed.doc : emptyTypeDoc())),
+    onGapCount,
+  );
 
   if (parsed.kind === 'invalid') {
     return (

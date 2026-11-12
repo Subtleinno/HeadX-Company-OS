@@ -18,6 +18,7 @@ import {
   type CustomDoc,
   type CustomSectionKey,
 } from './brandCustom';
+import { useGapCount } from './useGapCount';
 
 /**
  * 自定義頁的表身（issue #41）。
@@ -43,6 +44,8 @@ type BrandCustomEditorProps = {
   onChange: (next: string) => void;
   /** 重編要真的落一版，所以由外層的儲存通道執行；回傳新版的版號。 */
   onSaveNow: (content: string) => Promise<number | null>;
+  /** 把缺口數上報給「這一頁」面板（#53）。解析不到就報 null。 */
+  onGapCount?: (count: number | null) => void;
 };
 
 function write(doc: CustomDoc): string {
@@ -74,6 +77,7 @@ export function BrandCustomEditor({
   canEdit,
   onChange,
   onSaveNow,
+  onGapCount,
 }: BrandCustomEditorProps) {
   const [colour, setColour] = useState<ColorDoc | null>(null);
   const [type, setType] = useState<TypeDoc | null>(null);
@@ -134,6 +138,24 @@ export function BrandCustomEditor({
   }, [brandId]);
 
   const parsed = parseCustomDoc(content);
+
+  // 在 early return 之前上報。跨頁資料（色彩／字體／語氣／策略）未讀到時，
+  // `customGaps` 已經把相關項目標成缺，所以這個數字是真的。
+  useGapCount(
+    parsed.kind === 'invalid'
+      ? null
+      : gapCount(
+          customGaps({
+            doc: parsed.kind === 'ok' ? parsed.doc : emptyCustomDoc(),
+            brief,
+            colour,
+            type,
+            tone,
+            policyText,
+          }),
+        ),
+    onGapCount,
+  );
 
   if (parsed.kind === 'invalid') {
     return (
