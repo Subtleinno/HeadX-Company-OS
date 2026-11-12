@@ -123,6 +123,13 @@ describe('字串表', () => {
       'brand.custom.conflictNoPolicy',
       'brand.custom.roleGap',
       'brand.custom.regenerated',
+      'brand.home.missingLine',
+      'brand.home.gapPages',
+      'brand.home.introShort',
+      'brand.home.logoRoleLine',
+      'brand.home.logoSize',
+      'brand.home.colourSomeMissing',
+      'brand.home.regenerated',
     ]);
   });
 });

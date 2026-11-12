@@ -13,6 +13,8 @@ import {
 import { failureMessage } from './apiFailure';
 import { BrandColorEditor } from './BrandColorEditor';
 import { BrandCustomEditor } from './BrandCustomEditor';
+import { BrandHomeEditor } from './BrandHomeEditor';
+import { introInText } from './brandHome';
 import { BrandLogoEditor } from './BrandLogoEditor';
 import { BrandToneEditor } from './BrandToneEditor';
 import { BrandTypeEditor } from './BrandTypeEditor';
@@ -158,6 +160,16 @@ function ToneVersionPreview({ preview }: { preview: string }) {
  * 每一張自定義頁的內容都不同，所以預覽不畫 chip，直接畫那一版開頭那一句 ——
  * 抽不到就講抽不到。
  */
+function HomeVersionPreview({ preview }: { preview: string }) {
+  const line = introInText(preview);
+
+  return (
+    <p className="brand-page__preview" data-home-version-line={line === '' ? undefined : line}>
+      {line === '' ? t('brand.home.versionNoName') : line}
+    </p>
+  );
+}
+
 function CustomVersionPreview({ preview }: { preview: string }) {
   const line = leadingLineInText(preview);
 
@@ -168,7 +180,8 @@ function CustomVersionPreview({ preview }: { preview: string }) {
   );
 }
 
-function formatTime(value: string): string {  const date = new Date(value);
+function formatTime(value: string): string {
+  const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {
     return value;
@@ -260,7 +273,9 @@ export function BrandPageScreen({
                 ? t('brand.tone.empty')
                 : detail?.page.kind === 'custom'
                   ? t('brand.custom.empty')
-                  : t('brand.page.emptyContent'),
+                  : pageKey === 'home'
+                    ? t('brand.home.empty')
+                    : t('brand.page.emptyContent'),
       );
       return null;
     }
@@ -551,6 +566,17 @@ export function BrandPageScreen({
           />
           {canEdit && <p className="design-field__hint">{t('brand.page.hint')}</p>}
         </div>
+      ) : pageKey === 'home' ? (
+        <div className="brand-page__body" data-brand-page-body="home">
+          <BrandHomeEditor
+            brandId={brandId}
+            content={draft}
+            canEdit={canEdit}
+            onChange={setDraft}
+            onSaveNow={(next) => handleSave(next)}
+          />
+          {canEdit && <p className="design-field__hint">{t('brand.page.hint')}</p>}
+        </div>
       ) : pageKey === 'color' ? (
         <div className="brand-page__body" data-brand-page-body="color">
           <BrandColorEditor content={draft} canEdit={canEdit} onChange={setDraft} />
@@ -648,6 +674,8 @@ export function BrandPageScreen({
 
                   {isCustom ? (
                     <CustomVersionPreview preview={version.preview} />
+                  ) : pageKey === 'home' ? (
+                    <HomeVersionPreview preview={version.preview} />
                   ) : pageKey === 'color' ? (
                     <ColorVersionPreview preview={version.preview} />
                   ) : pageKey === 'type' ? (

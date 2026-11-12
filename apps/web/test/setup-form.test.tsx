@@ -155,7 +155,9 @@ describe('建立老闆帳戶：改動欄位就收起該欄位的錯誤', () => {
     expect(api.count('setup')).toBe(0);
 
     await submit();
-    expect(await screen.findByRole('heading', { name: '今日' })).toBeTruthy();
+    // 全套一起跑時 jsdom 會被其他檔拖慢，1 秒的預設等待會隨機紅 —— 這一格
+    // 等的是「設定完成後真的入到首頁」，不是「一秒內入到」。
+    expect(await screen.findByRole('heading', { name: '今日' }, { timeout: 5000 })).toBeTruthy();
     expect(api.count('setup')).toBe(1);
   });
 

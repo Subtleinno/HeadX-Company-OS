@@ -165,15 +165,17 @@ describe('品牌模組的頁清單', () => {
     }
   });
 
-  it('第一格是品牌主頁的位置，不是公司品牌清單', async () => {
+  it('第一格是品牌主頁，而且是真的主頁（不是「仲未做好」的佔位）', async () => {
     open();
 
+    // #39 之後主頁有內容：#32 年代那個「品牌主頁仲未做好」的佔位已經拆走，
+    // 所以這一格驗的是「第一格打開就是主頁本身」。
     await waitFor(() => {
-      expect(document.querySelector('[data-brand-home-pending]')).not.toBeNull();
+      expect(document.querySelector('[data-brand-page="home"]')).not.toBeNull();
     });
 
-    // 主頁未做完就講未做完，不畫一個假的總覽。
-    expect(screen.getByText('品牌主頁仲未做好。')).toBeTruthy();
+    expect(sidebarPages()[0]).toBe('品牌主頁');
+    expect(window.location.hash).toBe('#/design/brand/home');
   });
 
   it('三張自定義頁都在左側，次序是建立次序，不是字母序', async () => {

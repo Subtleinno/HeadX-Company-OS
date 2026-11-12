@@ -99,7 +99,7 @@ const LATER_EXACT_KEYS = [
   'design.page.brandLogo', 'design.page.brandColor', 'design.page.brandType',
   'design.page.brandTone','design.brand.ownerOnly'];
 
-const LATER_KEY_PREFIXES = ['brand.page.', 'brand.color.', 'brand.type.', 'brand.logo.', 'brand.tone.', 'brand.custom.', 
+const LATER_KEY_PREFIXES = ['brand.page.', 'brand.color.', 'brand.type.', 'brand.logo.', 'brand.tone.', 'brand.custom.', 'brand.home.', 
   'boss.members.',
   // 2026-11-11（issue #30）：恢復停用帳戶新增的鍵，不屬 #168 要守的既有鍵。
   'staff.enable',
