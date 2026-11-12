@@ -16,6 +16,7 @@ import { BrandCustomEditor } from './BrandCustomEditor';
 import { BrandHomeEditor } from './BrandHomeEditor';
 import { introInText } from './brandHome';
 import { BrandLogoEditor } from './BrandLogoEditor';
+import { BrandPlatformEditor } from './BrandPlatformEditor';
 import { BrandGapDialog } from './BrandGapDialog';
 import { BrandNeedsRail } from './BrandNeedsRail';
 import { BrandCheckBanner, BrandCheckBar } from './BrandCheckBar';
@@ -647,6 +648,18 @@ export function BrandPageScreen({
             canEdit={canEdit}
             onChange={setDraft}
             onSaveNow={(next) => handleSave(next)}
+            onGapCount={setGapCount}
+          />
+          {canEdit && <p className="design-field__hint">{t('brand.page.hint')}</p>}
+        </div>
+      ) : pageKey === 'platform' ? (
+        <div className="brand-page__body" data-brand-page-body="platform">
+          <BrandPlatformEditor
+            brandId={brandId}
+            content={draft}
+            canEdit={canEdit}
+            isOwner={isOwner}
+            onChange={setDraft}
             onGapCount={setGapCount}
           />
           {canEdit && <p className="design-field__hint">{t('brand.page.hint')}</p>}

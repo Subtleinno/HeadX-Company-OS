@@ -293,6 +293,17 @@ const platform: PageSchema = {
       }
     }
 
+    // 三個候選由 agent 讀完品牌資料後提出（#61）。少過三個就是缺一個交付：
+    // 檔案型，不是判斷型 —— agent 交得，老闆只需要揀。
+    if (typed.stance_candidates.filter((candidate) => candidate.text !== '').length < 3) {
+      gaps.push({
+        item: 'stance_candidates',
+        what: '三個立場句候選（各附一句理由）',
+        type: 'file',
+        reason: '沒有候選，立場句就只能靠即場想 —— 那不是判斷，是猜。',
+      });
+    }
+
     return gaps;
   },
   layout() {

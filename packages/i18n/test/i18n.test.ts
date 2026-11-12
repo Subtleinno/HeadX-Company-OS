@@ -150,6 +150,8 @@ describe('字串表', () => {
       'brand.check.pass',
       'brand.check.fail',
       'brand.check.undetermined',
+      // #61：Need 編號。
+      'brand.platform.needCreated',
       // #60：建議的三項判斷、接受後的頁名、撞鍵，以及主頁過時的頁數。
       'brand.suggest.title',
       'brand.suggest.accepted',

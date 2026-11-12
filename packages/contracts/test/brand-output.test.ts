@@ -173,3 +173,84 @@ describe('對比計算', () => {
     expect(contrastRatio('red', '#ffffff')).toBeNull();
   });
 });
+
+/**
+ * 兩個品牌的平台頁（issue #61 的驗收）：同一套 renderer，出來的頁要**實質不同**。
+ *
+ * 差異不是靠多一個模板，是靠兩份資料：立場句不同，layout 的區塊次序不同。
+ * 這裡斷言兩項，因為驗收寫明「至少兩項實質差異」—— 一項可以只是換了顏色。
+ */
+describe('兩個品牌的平台頁', () => {
+  function platformPage(options: {
+    stance: string;
+    traits: string[];
+    order: ('stance' | 'positioning' | 'tests')[];
+    reason: string;
+  }): ComposedPage {
+    const payload = {
+      stance: options.stance,
+      positioning: { for: '想被認真看待的人', who: '一間做臨床與品牌的公司', category: '設計研究', benefit: '一句定位', unlike: '同一個人管兩邊', because: '做過十二個品牌' },
+      purpose: '',
+      values: [],
+      traits: options.traits,
+      essence: '',
+      audience: '',
+      references: [],
+      stance_candidates: [],
+      tests: { real: '二〇二四年改過三家診所的預約', relevant: '客人第一句問幾位', unique: '臨床與品牌同一人' },
+    };
+
+    return {
+      key: 'platform',
+      name: '平台',
+      kind: 'fixed',
+      versionNo: 1,
+      policyVersionNo: 1,
+      document: {
+        ...emptyBrandDocument({ blocks: [] }),
+        stance: options.stance,
+        payload,
+        layout: {
+          blocks: options.order.map((kind) =>
+            kind === 'stance'
+              ? { kind: 'stance' as const, reason: options.reason }
+              : { kind: 'section' as const, source: kind, reason: options.reason },
+          ),
+        },
+      },
+    };
+  }
+
+  function htmlOf(page: ComposedPage): string {
+    return renderBrandHtml(
+      { code: 'x', name: 'X', releaseNo: 1, pages: [page], gaps: [] },
+      { pageKey: 'platform' },
+    );
+  }
+
+  it('立場句與區塊次序兩項都不同（不是同一頁換顏色）', () => {
+    const moonic = platformPage({
+      stance: '先白，後墨，再藍。',
+      traits: ['慢', '準'],
+      order: ['stance', 'positioning', 'tests'],
+      reason: '先講自己是誰，再用證據收尾。',
+    });
+    const other = platformPage({
+      stance: '先做人，後做圖。',
+      traits: ['直', '簡'],
+      order: ['positioning', 'stance', 'tests'],
+      reason: '先把六格講清，立場句當成結論。',
+    });
+
+    const a = htmlOf(moonic);
+    const b = htmlOf(other);
+
+    expect(a).not.toBe(b);
+    // 第一項差異：立場句。
+    expect(a).toContain('先白，後墨，再藍。');
+    expect(b).toContain('先做人，後做圖。');
+    // 第二項差異：區塊次序（立場句在定位之前 vs 之後）。
+    expect(a.indexOf('先白，後墨，再藍。')).toBeLessThan(a.indexOf('為誰'));
+    expect(b.indexOf('先做人，後做圖。')).toBeGreaterThan(b.indexOf('為誰'));
+  });
+});
