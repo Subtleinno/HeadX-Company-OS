@@ -111,6 +111,9 @@
   --hx-frame-secondary: #6e6e6e;
   --hx-frame-muted: #a3a3a3;
   --hx-frame-border: #e1e4e8;
+  /* 缺與警示：00-design-system.md 的 #B25E00。只用於「缺」「不通過」的字，
+     不用於大面積填色 —— 橙一多，紅色就失去意思。 */
+  --hx-frame-warning: #b25e00;
   --hx-frame-surface: #f5f6fa;
   --hx-chrome-selected: #f0f1f3;
   --hx-chrome-ink: #191919;

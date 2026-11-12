@@ -2353,3 +2353,156 @@
   overflow-wrap: anywhere;
 }
 
+
+/* ── 策略頁三欄（#56，09-strategy-boss-portal.md） ─────────────────────
+   左：九個槽；中：編輯區與版本；右：這一槽的規則 id 與「正在支撐哪幾頁」。
+   1280 以下右欄收到下面，1024 以下連左欄一齊收到上面 —— 窄螢幕寧願捲，
+   也不要三條 60px 寬的欄。 */
+
+.policy-layout {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr) 260px;
+  gap: var(--hx-space-6);
+  align-items: start;
+}
+
+.policy-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: var(--hx-space-2);
+}
+
+.policy-rail__item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--hx-space-3);
+  padding: 10px 12px;
+  border: 0;
+  border-radius: var(--hx-radius-sm);
+  background: transparent;
+  color: var(--hx-frame-ink);
+  font: var(--hx-frame-font-ui);
+  text-align: left;
+  cursor: pointer;
+}
+
+.policy-rail__item:hover {
+  background: var(--hx-frame-surface);
+}
+
+.policy-rail__item--active {
+  background: var(--hx-frame-surface);
+  font-weight: 600;
+}
+
+.policy-rail__no {
+  color: var(--hx-frame-muted);
+  font: var(--hx-frame-font-small);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 缺的槽用橙：灰字會被讀成「有，只是未載入」。 */
+.policy-rail__no--missing {
+  color: var(--hx-frame-warning);
+}
+
+.policy-main {
+  min-width: 0;
+}
+
+.policy-side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hx-space-6);
+  padding-top: var(--hx-space-2);
+}
+
+.policy-side__block {
+  padding-top: var(--hx-space-4);
+  border-top: 1px solid var(--hx-frame-border);
+}
+
+.policy-side__title {
+  margin: 0 0 var(--hx-space-3);
+  font: var(--hx-frame-font-small);
+  letter-spacing: 0.04em;
+  color: var(--hx-frame-secondary);
+}
+
+.policy-side__empty,
+.policy-side__count {
+  margin: 0;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+}
+
+.policy-side__rules {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hx-space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.policy-side__rule {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.policy-side__id {
+  font-family: var(--hx-font-mono);
+  font-size: 12px;
+  color: var(--hx-frame-ink);
+}
+
+.policy-side__summary {
+  margin: 0;
+  font: var(--hx-frame-font-ui);
+}
+
+.policy-side__threshold,
+.policy-side__states {
+  margin: 0;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+}
+
+.policy-side__pages {
+  margin: var(--hx-space-2) 0 0;
+  padding-left: var(--hx-space-5);
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-ink);
+}
+
+@media (max-width: 1280px) {
+  .policy-layout {
+    grid-template-columns: 200px minmax(0, 1fr);
+  }
+
+  .policy-side {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--hx-space-6);
+  }
+}
+
+@media (max-width: 1024px) {
+  .policy-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .policy-rail {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: var(--hx-space-2);
+  }
+
+  .policy-side {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

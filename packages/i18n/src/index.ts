@@ -831,8 +831,11 @@ export const messages = {
 
   // 品牌頁策略（issue #34）。六個槽、一份策略、只有老闆可以改。
   // 每一句都要講清楚「改了會怎樣」：已經做好的頁不會被重寫。
-  'boss.policy.lead': '六個槽的專業標準。只有你可以改；每次儲存是一個新版本，舊版留著。',
-  'boss.policy.picker': '策略的六個槽',
+  'boss.policy.lead': '九個槽的專業標準。只有你可以改；每次儲存是一個新版本，舊版留著。',
+  'boss.policy.picker': '策略的九個槽',
+  'boss.policy.slot.platform': '平台',
+  'boss.policy.slot.image': '圖像',
+  'boss.policy.slot.apply': '應用',
   'boss.policy.slot.home': '品牌主頁',
   'boss.policy.slot.logo': '標誌',
   'boss.policy.slot.color': '色彩',
@@ -855,6 +858,14 @@ export const messages = {
   'boss.policy.currentNote': '這是現行版本。策略只加不改：要改就儲存新版本，舊版永遠讀得返。',
   'boss.policy.noVersion': '這個槽仲未有版本。',
   'boss.policy.immutable': '策略只加不改：沒有刪除，也沒有改寫。舊版留著，因為已出街的成品可能引用它。',
+  'boss.policy.railMissing': '缺',
+  'boss.policy.rules': '這一槽的可量化規則',
+  'boss.policy.rulesEmpty': '這一槽沒有可量化的規則。不是漏做，而是這些事要靠判斷。',
+  'boss.policy.ruleThreshold': '閾值：{text}',
+  'boss.policy.ruleStates': '通過：{pass}　不通過：{fail}　無法判斷：{unknown}',
+  'boss.policy.usedBy': '現行這一版正在支撐',
+  'boss.policy.usedByNone': '暫時未有頁用這一版。',
+  'boss.policy.usedByCount': '現行這一版由 {count} 頁使用',
 
   'gate.title': '你冇權限睇呢頁',
   'gate.body': '呢頁只有老闆同管理級可以開。你而家嘅身份係「{role}」。',
