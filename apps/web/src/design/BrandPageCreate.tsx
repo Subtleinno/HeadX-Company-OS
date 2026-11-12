@@ -17,7 +17,7 @@ import { failureMessage } from './apiFailure';
  * 自行判斷可不可以建立 —— 那會出現「按鈕可以按但伺服器拒絕」的假希望。
  */
 
-type Belongs = 'none' | 'logo' | 'color' | 'type' | 'tone';
+type Belongs = 'none' | 'logo' | 'color' | 'type' | 'tone' | 'image';
 
 const BELONGS: readonly { key: Belongs; labelKey: MessageKey }[] = [
   { key: 'none', labelKey: 'brand.page.manage.belongsNone' },
@@ -25,6 +25,7 @@ const BELONGS: readonly { key: Belongs; labelKey: MessageKey }[] = [
   { key: 'color', labelKey: 'design.page.brandColor' },
   { key: 'type', labelKey: 'design.page.brandType' },
   { key: 'tone', labelKey: 'design.page.brandTone' },
+  { key: 'image', labelKey: 'design.page.brandImage' },
 ];
 
 export type BrandPageCreateProps = {

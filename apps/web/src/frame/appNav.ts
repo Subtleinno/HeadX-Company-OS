@@ -173,6 +173,7 @@ export const DESIGN_NAV: AppNav = {
             { key: 'color', labelKey: 'design.page.brandColor' },
             { key: 'type', labelKey: 'design.page.brandType' },
             { key: 'tone', labelKey: 'design.page.brandTone' },
+            { key: 'image', labelKey: 'design.page.brandImage' },
           ],
         },
       ],

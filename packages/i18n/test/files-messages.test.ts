@@ -175,7 +175,7 @@ const FROZEN_ALL_SHA256 = 'fb6c35cf665b8ceeff9f842d1a05b25b77697ad4e1e7679f5bbf4
  */
 // 2026-11-11（issue #30）：`staff.enable` 同 `staff.enable.*` 係新增鍵（恢復停用
 // 帳戶的路），唔屬 #163 要守嘅既有鍵；凍結值不變，只係明確排除新鍵。
-const LATER_KEY_PREFIXES = ['brand.page.', 'brand.color.', 'brand.type.', 'brand.logo.', 'brand.tone.', 'brand.custom.', 'brand.home.', 'brand.gap.', 'brand.check.', 'brand.platform.', 'brand.guide.', 'brand.suggest.', 'brand.nav.', 'design.group.', 'grant.detail.', 'boss.members.', 'staff.enable', 'boss.module.people', 'boss.page.people',
+const LATER_KEY_PREFIXES = ['brand.page.', 'brand.color.', 'brand.type.', 'brand.logo.', 'brand.image.', 'brand.tone.', 'brand.custom.', 'brand.home.', 'brand.gap.', 'brand.check.', 'brand.platform.', 'brand.guide.', 'brand.suggest.', 'brand.nav.', 'design.group.', 'grant.detail.', 'boss.members.', 'staff.enable', 'boss.module.people', 'boss.page.people',
   // 2026-11-12（issue #34）：品牌頁策略是新增的介面，不屬本檔要守的既有鍵。
   'boss.policy.', 'boss.module.policy', 'boss.page.brandPolicy',
   'gate.noDepartment.', 'gate.departmentClosed.', 'gate.signOut'];
@@ -188,7 +188,7 @@ const LATER_EXACT_KEYS = [
   // 2026-11-12（issue #32）：品牌模組五頁的頁名。舊的 `design.page.brandPage`
   // 與 `design.section.*` 沒有刪，只是不再有人讀 —— 凍結閘本來就不准刪。
   'design.page.brandLogo', 'design.page.brandColor', 'design.page.brandType',
-  'design.page.brandTone','design.brand.ownerOnly'];
+  'design.page.brandTone','design.page.brandImage','design.brand.ownerOnly'];
 
 function hashExcluding(msgs: Record<string, string>, excluded: ReadonlySet<string>): string {
   const entries = Object.entries(msgs)
