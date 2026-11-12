@@ -77,16 +77,12 @@ const TYPE = {
 
 const LOGO = {
   ...emptyLogoDoc(),
-  assets: [
-    { id: 'a-1', kind: 'logo' as const, name: '主標誌（橫式）', master: 'logo.svg', preview: '' },
+  assets: [{ class: 'logo', label: '主標誌（橫式）', file_ref: 'logo.svg', version: 'v1' }],
+  modes: [
+    { mode: 'brand', color_role: 'brand.primary', note: '' },
+    { mode: 'mono', color_role: 'ink', note: '' },
   ],
-  primaryId: 'a-1',
-  modes: {
-    brand: { screen: '24px', print: '12mm' },
-    mono: { screen: '', print: '' },
-    reverse: { screen: '', print: '' },
-    onDark: { screen: '', print: '' },
-  },
+  min_size: { screen_px: 24, print_mm: 12 },
 };
 
 const TONE = {
@@ -334,12 +330,16 @@ describe('缺什麼', () => {
     expect(gaps.pages).toEqual([]);
   });
 
-  it('標誌頁有資產但未揀主標誌：標「未揀主標誌」', () => {
+  it('有檔案但冇一件類別係 logo：標「未有主標誌」', () => {
     const gaps = homeGaps({
       doc: fullDoc,
       colour: COLOUR,
       type: TYPE,
-      logo: { ...LOGO, primaryId: '' },
+      // 主標誌＝類別為 logo 的那一件，不再另存一個 primaryId。
+      logo: {
+        ...LOGO,
+        assets: [{ class: 'wordmark', label: '字標', file_ref: 'wordmark.svg', version: '' }],
+      },
       tone: TONE,
       pages: PAGES,
     });

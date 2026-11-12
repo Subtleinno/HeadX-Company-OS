@@ -14,17 +14,16 @@ import {
 import { colourDoc } from './fixtures/brandColour';
 
 /**
- * 標誌頁（issue #36）。
+ * 標誌頁（issue #64，取代 #36 的畫面）。
  *
- * 這一張要證明四件事：
+ * 這一張要證明五件事：
  *
- *   1. 打開見到的是**這個品牌的標誌系統**：五類資產、四種顏色模式、安全範圍、
- *      方向、背景、最小尺寸 —— 不是空導覽，也不是一個「上載標誌」的按鈕。
- *   2. 缺的地方標成缺，**沒有假標誌**；色彩頁未定那個角色就標缺，不在這一頁補色。
- *   3. 最小尺寸分模式，而且要寫單位（螢幕 px、印刷 mm）。
- *   4. 有編輯權的人改完，重新載入仍然是改過的；員工只讀。
- *
- * 「色彩頁的值」與「字體家族」都是**引用**：這一頁不存色值、不定字族。
+ *   1. 打開見到的是**這個品牌的標誌系統**：五類檔案、四種顏色模式、淨空間、
+ *      兩個最小尺寸、組合、背景 —— 不是一個「上載標誌」的按鈕。
+ *   2. 色值只來自色彩頁；這一頁只有角色名，沒有色值輸入。
+ *   3. 功能色不可用於標誌（`color.r4` 的同一條界線），當場講。
+ *   4. 缺的地方標成缺，**沒有假標誌**：缺檔、不是向量、冇類別 logo 都講得出。
+ *   5. 有編輯權的人改完，重新載入仍然是改過的；員工只讀。
  */
 
 const BOSS = {
@@ -82,38 +81,36 @@ const PAGES = [
   LOGO_PAGE,
 ];
 
-/** 一份填齊的標誌表。 */
+/** 一份填齊的標誌表：兩件檔案、四種模式各有角色、淨空間與兩個尺寸都有值。 */
 const DOC = {
   assets: [
     {
-      id: 'a-logo',
-      kind: 'logo',
-      name: '主標誌（橫式）',
-      master: 'brand/logo/moonic-logo.svg',
-      preview: 'brand/logo/moonic-logo.png',
+      class: 'logo',
+      label: '主標誌（橫式）',
+      file_ref: 'brand/logo/moonic-logo.svg',
+      version: 'v3',
     },
     {
-      id: 'a-wordmark',
-      kind: 'wordmark',
-      name: 'Moonic 字標',
-      master: 'brand/logo/moonic-wordmark.svg',
-      preview: '',
+      class: 'wordmark',
+      label: 'Moonic 字標',
+      file_ref: 'brand/logo/moonic-wordmark.svg',
+      version: '',
     },
   ],
-  primaryId: 'a-logo',
-  modes: {
-    brand: { screen: '24px', print: '8mm' },
-    mono: { screen: '24px', print: '8mm' },
-    reverse: { screen: '24px', print: '8mm' },
-    onDark: { screen: '24px', print: '8mm' },
-  },
-  safeArea: '0.5X（X 為 mark 的高度）',
-  orientation: '橫式為主；窄於 320px 用直式',
+  logic_line: '一個印章。',
+  master_vector: 'brand/logo/moonic-logo.svg',
+  lockups: [{ id: 'horizontal', use: '網站頁首', min: '120px' }],
+  construction: '圓心對齊字標基線。',
+  clear_space_x: { x: '字標高度', multiples: '2x', note: '' },
+  min_size: { screen_px: 24, print_mm: 8 },
+  modes: [
+    { mode: 'brand', color_role: 'brand.primary', note: '' },
+    { mode: 'mono', color_role: 'ink', note: '' },
+    { mode: 'reverse', color_role: 'paper', note: '' },
+    { mode: 'onDark', color_role: 'surface', note: '' },
+  ],
   backgrounds: '淺色用 ink，品牌色底用反白，深色底用深色 surface',
-  whenToUse: '對外一律用主標誌；只有 square 位用 mark',
-  howToUse: '四周留 0.5X；不裁切、不加效果',
-  wordmarkFamilyId: '',
-  misuse: ['不拉長、不壓扁', '不改色', '不加陰影'],
+  misuse: [{ example: '拉長', reason: '比例一變就不是同一個標誌' }],
 };
 
 const DOC_TEXT = JSON.stringify(DOC);
@@ -142,7 +139,7 @@ const V1 = {
   versionNo: 1,
   createdAt: '2026-11-11T10:00:00.000Z',
   note: null,
-  preview: '{"assets":[{"id":"a-logo"',
+  preview: '{"assets":[{"class":"logo"',
   policyVersionNo: 2,
 };
 
@@ -160,6 +157,7 @@ function detail(page: unknown, content: string | null, versionNo: number) {
     note: null,
     preview: content.slice(0, 120),
     policyVersionNo: 3,
+    changed: [],
     content,
   };
 
@@ -168,7 +166,7 @@ function detail(page: unknown, content: string | null, versionNo: number) {
 
 function openLogo(
   user: typeof BOSS | typeof WAI,
-  options: { doc?: string | null; colour?: string | null; type?: string | null } = {},
+  options: { doc?: string | null; colour?: string | null } = {},
   overrides: FakeHandlers = {},
 ): { api: ReturnType<typeof installFakeApi>; fake: Fake } {
   window.history.replaceState(null, '', '/#/design/brand/logo');
@@ -194,17 +192,6 @@ function openLogo(
         );
       }
 
-      if (request.path.endsWith('/pages/type')) {
-        return jsonResponse(
-          200,
-          detail(
-            { ...LOGO_PAGE, id: 'p-type', key: 'type', name: '字體', sortOrder: 40 },
-            options.type === undefined ? null : options.type,
-            1,
-          ),
-        );
-      }
-
       return jsonResponse(200, detail(LOGO_PAGE, fake.content, fake.versionNo));
     },
     brandPageSave: (request) => {
@@ -221,6 +208,7 @@ function openLogo(
           note: null,
           preview: fake.content.slice(0, 120),
           policyVersionNo: 3,
+          changed: [],
           content: fake.content,
         },
       });
@@ -233,7 +221,11 @@ function openLogo(
   return { api, fake };
 }
 
-function modeRow(key: string): HTMLElement | null {
+function input(selector: string): HTMLInputElement | null {
+  return document.querySelector(selector);
+}
+
+function mode(key: string): HTMLElement | null {
   return document.querySelector(`[data-logo-mode="${key}"]`);
 }
 
@@ -251,30 +243,38 @@ afterEach(() => {
 });
 
 describe('標誌頁', () => {
-  it('看到的是標誌系統：五類資產清單、四種顏色模式、安全範圍、方向、背景', async () => {
+  it('看到的是標誌系統：四種模式、檔案清單、淨空間、兩個最小尺寸、背景', async () => {
     openLogo(BOSS);
 
     await waitFor(() => {
-      expect(modeRow('brand')).not.toBeNull();
+      expect(mode('brand')).not.toBeNull();
     });
 
-    // 四種顏色模式逐行，每一行講明對應色彩頁哪一個角色。
-    const modes = document.querySelectorAll('[data-logo-mode]');
-    expect(modes.length).toBe(4);
-    expect(modeRow('brand')?.textContent).toContain('brand.primary');
-    expect(modeRow('mono')?.textContent).toContain('ink');
-    expect(modeRow('reverse')?.textContent).toContain('paper');
-    expect(modeRow('onDark')?.textContent).toContain('surface');
+    // 四種顏色模式逐行，每一行講明用色彩頁哪一個角色。
+    expect(document.querySelectorAll('[data-logo-mode]').length).toBe(4);
 
-    // 資產清單：五類是上限，用了一類就少一個選擇。
+    for (const [key, role] of [
+      ['brand', 'brand.primary'],
+      ['mono', 'ink'],
+      ['reverse', 'paper'],
+      ['onDark', 'surface'],
+    ] as const) {
+      const select = document.querySelector(`[data-logo-mode-role="${key}"]`) as HTMLSelectElement;
+
+      expect(select.value).toBe(role);
+    }
+
+    // 檔案清單：類別是身份，一類一件。
     expect(document.querySelectorAll('[data-logo-asset]').length).toBe(2);
-    expect(document.querySelector('[data-logo-asset="a-logo"]')?.textContent).toContain('Logo');
+    expect(document.querySelector('[data-logo-asset="logo"]')?.textContent).toContain('Logo');
+    expect(input('[data-logo-asset-file="logo"]')?.value).toContain('moonic-logo.svg');
 
-    // 主標誌、安全範圍、方向、背景都講得出來。
-    expect((document.querySelector('[data-logo-primary]') as HTMLSelectElement).value).toBe('a-logo');
-    expect((document.querySelector('[data-logo-safe-area]') as HTMLInputElement).value).toContain('0.5X');
-    expect((document.querySelector('[data-logo-orientation]') as HTMLInputElement).value).toContain('橫式');
-    expect((document.querySelector('[data-logo-backgrounds]') as HTMLElement).textContent).toContain('surface');
+    // 淨空間、兩個最小尺寸、背景都講得出來。
+    expect(input('[data-logo-space-x]')?.value).toBe('字標高度');
+    expect(input('[data-logo-space-multiples]')?.value).toBe('2x');
+    expect(input('[data-logo-min-screen]')?.value).toBe('24');
+    expect(input('[data-logo-min-print]')?.value).toBe('8');
+    expect(input('[data-logo-backgrounds-text]')?.value).toContain('surface');
   });
 
   it('顏色由色彩頁提供：這一頁只顯示，沒有色值輸入', async () => {
@@ -282,16 +282,17 @@ describe('標誌頁', () => {
 
     // 色彩頁是非同步讀的：先讀完才講值，未讀完講「正在讀」而不是畫一個空。
     await waitFor(() => {
-      expect(document.querySelector('[data-logo-mode-value="brand"]')?.textContent).toContain('#0057ff');
+      expect(document.querySelector('[data-logo-mode-value="brand"]')?.textContent).toContain(
+        '#0057ff',
+      );
     });
 
-    expect(document.querySelector('[data-logo-mode-value="brand"]')?.textContent).toContain('#0057ff');
     expect(document.querySelector('[data-logo-mode-value="mono"]')?.textContent).toContain('#191919');
     expect(document.querySelector('[data-logo-mode-value="onDark"]')?.textContent).toContain('#17171d');
 
-    // 這一頁沒有色值欄位：沒有任何 input 拿顏色。
+    // 這一頁沒有色值欄位。
     const colourInputs = Array.from(document.querySelectorAll('input')).filter(
-      (input) => input.type === 'color',
+      (element) => element.type === 'color',
     );
     expect(colourInputs.length).toBe(0);
   });
@@ -303,91 +304,110 @@ describe('標誌頁', () => {
       expect(document.querySelector('[data-logo-mode-value="mono"]')?.textContent).toContain('缺');
     });
 
-    expect(modeRow('mono')?.getAttribute('data-missing')).toBe('true');
+    expect(mode('mono')?.getAttribute('data-missing')).toBe('true');
+
     const value = document.querySelector('[data-logo-mode-value="mono"]');
-    expect(value?.textContent).toContain('缺');
+
     expect(value?.textContent).toContain('色彩頁');
-    // 沒有偷偷填一個近似色。
     expect(value?.textContent).not.toContain('#');
   });
 
-  it('最小尺寸分模式，而且要寫單位：螢幕 px、印刷 mm', async () => {
-    openLogo(BOSS);
-
-    await waitFor(() => {
-      expect(document.querySelector('[data-logo-screen="mono"]')).not.toBeNull();
-    });
-
-    await userEvent.clear(document.querySelector('[data-logo-screen="mono"]') as HTMLInputElement);
-    await userEvent.type(document.querySelector('[data-logo-screen="mono"]') as HTMLInputElement, '24');
-
-    expect(modeRow('mono')?.getAttribute('data-missing')).toBe('true');
-    expect(document.querySelector('[data-logo-unit-error="mono"]')?.textContent).toContain('px');
-
-    await userEvent.type(document.querySelector('[data-logo-screen="mono"]') as HTMLInputElement, 'px');
-    expect(modeRow('mono')?.getAttribute('data-missing')).toBe('false');
-
-    // 印刷那一格用 mm：寫 px 不算。
-    await userEvent.clear(document.querySelector('[data-logo-print="mono"]') as HTMLInputElement);
-    await userEvent.type(document.querySelector('[data-logo-print="mono"]') as HTMLInputElement, '8px');
-    expect(modeRow('mono')?.getAttribute('data-missing')).toBe('true');
-    expect(document.querySelector('[data-logo-unit-error="mono"]')?.textContent).toContain('mm');
-  });
-
-  it('五類資產封頂：同一類不可以有第二個，加滿之後沒有「新增资产」', async () => {
-    openLogo(BOSS);
-
-    await waitFor(() => {
-      expect(document.querySelector('[data-logo-asset-add]')).not.toBeNull();
-    });
-
-    // 已經用了 Logo 與 Wordmark，新增時只可以揀其餘三類。
-    const options = Array.from(
-      (document.querySelector('[data-logo-asset-kind]') as HTMLSelectElement).options,
-    ).map((option) => option.value);
-    expect(options).toEqual(['mark', 'monogram', 'appicon']);
-
-    for (const kind of ['mark', 'monogram', 'appicon']) {
-      await page_addAsset(kind);
-    }
-
-    expect(document.querySelectorAll('[data-logo-asset]').length).toBe(5);
-    expect(document.querySelector('[data-logo-asset-add]')).toBeNull();
-    expect(document.querySelector('[data-logo-asset-limit]')?.textContent).toContain('五類');
-  });
-
-  it('主檔要向量：主檔不是向量就標缺，主標誌未指定也標缺', async () => {
+  it('功能色不可用於標誌：揀了就在當場講，缺口也算它', async () => {
     openLogo(BOSS, {
       doc: JSON.stringify({
         ...DOC,
-        primaryId: '',
-        assets: [{ ...DOC.assets[0], master: 'brand/logo/moonic-logo.png' }],
+        modes: [{ mode: 'brand', color_role: 'danger', note: '' }, ...DOC.modes.slice(1)],
       }),
     });
 
     await waitFor(() => {
-      expect(document.querySelector('[data-logo-asset="a-logo"]')).not.toBeNull();
+      expect(mode('brand')?.getAttribute('data-missing')).toBe('true');
     });
 
-    expect(document.querySelector('[data-logo-asset="a-logo"]')?.getAttribute('data-missing')).toBe(
+    expect(document.querySelector('[data-logo-mode-badge="brand"]')?.textContent).toContain(
+      '功能色不可用',
+    );
+    expect(document.querySelector('[data-logo-missing]')?.textContent).toContain('顏色模式');
+  });
+
+  it('兩個最小尺寸寫了同一個數：當場講 px 與 mm 不是同一個單位', async () => {
+    openLogo(BOSS, { doc: JSON.stringify({ ...DOC, min_size: { screen_px: 24, print_mm: 24 } }) });
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-logo-min-same]')).not.toBeNull();
+    });
+
+    expect(document.querySelector('[data-logo-min-same]')?.textContent).toContain('同一個數');
+  });
+
+  it('五類封頂：同一類不可以有第二個，加滿之後沒有新增鍵', async () => {
+    openLogo(BOSS);
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-logo-asset-add="mark"]')).not.toBeNull();
+    });
+
+    // 已經用了 Logo 與 Wordmark，新增的按鈕只出三類。
+    expect(document.querySelector('[data-logo-asset-add="logo"]')).toBeNull();
+    expect(document.querySelector('[data-logo-asset-add="wordmark"]')).toBeNull();
+
+    for (const kind of ['mark', 'monogram', 'appicon']) {
+      await userEvent.click(
+        document.querySelector(`[data-logo-asset-add="${kind}"]`) as HTMLElement,
+      );
+    }
+
+    expect(document.querySelectorAll('[data-logo-asset]').length).toBe(5);
+    expect(document.querySelector('[data-logo-asset-adder]')).toBeNull();
+    expect(document.querySelector('[data-logo-asset-limit]')?.textContent).toContain('五類');
+  });
+
+  it('主檔不是向量：標缺，並講明不是向量檔', async () => {
+    openLogo(BOSS, {
+      doc: JSON.stringify({
+        ...DOC,
+        assets: [{ ...DOC.assets[0], file_ref: 'brand/logo/moonic-logo.png' }],
+      }),
+    });
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-logo-asset="logo"]')).not.toBeNull();
+    });
+
+    expect(document.querySelector('[data-logo-asset="logo"]')?.getAttribute('data-missing')).toBe(
       'true',
     );
-    expect(document.querySelector('[data-logo-asset="a-logo"]')?.textContent).toContain('向量');
+    expect(document.querySelector('[data-logo-asset="logo"]')?.textContent).toContain('不是向量檔');
+    expect(document.querySelector('[data-logo-missing]')?.textContent).toContain('檔案');
+  });
 
-    const summary = document.querySelector('[data-logo-missing]');
-    expect(summary?.textContent).toContain('主標誌');
+  it('冇類別 logo 的檔案：主標誌標缺，而且講明主標誌由類別決定', async () => {
+    openLogo(BOSS, {
+      doc: JSON.stringify({
+        ...DOC,
+        assets: [{ class: 'wordmark', label: '字標', file_ref: 'w.svg', version: '' }],
+      }),
+    });
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-logo-primary-hint]')).not.toBeNull();
+    });
+
+    expect(document.querySelector('[data-logo-primary-hint]')?.textContent).toContain('主標誌');
+    expect(document.querySelector('[data-logo-missing]')?.textContent).toContain('主標誌');
   });
 
   it('有編輯權的人改完：入了版本鏈，重新載入仍然是改過的', async () => {
     const { api } = openLogo(BOSS);
 
     await waitFor(() => {
-      expect(document.querySelector('[data-logo-safe-area]')).not.toBeNull();
+      expect(input('[data-logo-space-multiples]')).not.toBeNull();
     });
 
-    const safe = document.querySelector('[data-logo-safe-area]') as HTMLInputElement;
-    await userEvent.clear(safe);
-    await userEvent.type(safe, '1X');
+    const multiples = input('[data-logo-space-multiples]') as HTMLInputElement;
+
+    await userEvent.clear(multiples);
+    await userEvent.type(multiples, '1x');
     await userEvent.click(screen.getByRole('button', { name: '儲存（新增一版）' }));
 
     await waitFor(() => {
@@ -395,39 +415,48 @@ describe('標誌頁', () => {
     });
 
     const sent = JSON.parse(savedContent(api)) as typeof DOC;
-    expect(sent.safeArea).toBe('1X');
+
+    expect(sent.clear_space_x.multiples).toBe('1x');
     expect(sent.assets.length).toBe(2);
 
     await waitFor(() => {
-      expect((document.querySelector('[data-logo-safe-area]') as HTMLInputElement).value).toBe('1X');
+      expect(input('[data-logo-space-multiples]')?.value).toBe('1x');
     });
   });
 
-  it('現行內容不是標誌表（舊的自由文字）：講讀不到，不畫假資產', async () => {
+  it('現行內容不是標誌表（舊的自由文字）：講讀不到，不畫假檔案', async () => {
     openLogo(BOSS, { doc: '主標誌見附件。' });
 
-    expect(await screen.findByText('這一版內容不是標誌表，所以讀不到當中的資產。')).toBeTruthy();
+    expect(
+      await screen.findByText('這一版內容不是標誌表，所以讀不到當中的檔案與模式。'),
+    ).toBeTruthy();
     expect(document.querySelectorAll('[data-logo-asset]').length).toBe(0);
   });
 
-  it('員工：看得到標誌系統，改不了（沒有儲存鍵、沒有新增資產）', async () => {
+  it('#36 的舊形狀（modes 是一個物件）一樣講讀不到', async () => {
+    openLogo(BOSS, {
+      doc: JSON.stringify({
+        assets: [{ id: 'a-1', kind: 'logo', name: '主標誌', master: 'logo.svg' }],
+        modes: { brand: { screen: '24px', print: '8mm' } },
+        primaryId: 'a-1',
+      }),
+    });
+
+    expect(
+      await screen.findByText('這一版內容不是標誌表，所以讀不到當中的檔案與模式。'),
+    ).toBeTruthy();
+  });
+
+  it('員工：看得到標誌系統，改不了（沒有儲存鍵、沒有新增檔案）', async () => {
     openLogo(WAI);
 
     await waitFor(() => {
-      expect(modeRow('brand')).not.toBeNull();
+      expect(mode('brand')).not.toBeNull();
     });
 
     expect(document.querySelector('[data-brand-page-save]')).toBeNull();
-    expect(document.querySelector('[data-logo-asset-add]')).toBeNull();
-    expect((document.querySelector('[data-logo-safe-area]') as HTMLInputElement).readOnly).toBe(true);
+    expect(document.querySelector('[data-logo-asset-adder]')).toBeNull();
+    expect(input('[data-logo-space-x]')?.readOnly).toBe(true);
     expect(screen.getByText('你只可以看這一頁。要改，請找老闆。')).toBeTruthy();
   });
 });
-
-async function page_addAsset(kind: string): Promise<void> {
-  await userEvent.selectOptions(
-    document.querySelector('[data-logo-asset-kind]') as HTMLSelectElement,
-    kind,
-  );
-  await userEvent.click(document.querySelector('[data-logo-asset-add]') as HTMLElement);
-}

@@ -1733,9 +1733,12 @@
 
 .brand-logo__textarea {
   min-height: 56px;
+  width: 100%;
+  max-width: 620px;
 }
 
-.brand-logo__misuseList {
+/* 組合與誤用：一行一個記錄，左邊是名字，右邊是規格。 */
+.brand-logo__recordList {
   margin: 0;
   padding: 0;
   list-style: none;
@@ -1744,12 +1747,59 @@
   gap: 4px;
 }
 
-.brand-logo__misuseItem {
+.brand-logo__record {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: var(--hx-space-2);
+  padding: 4px 0;
+  border-top: 1px solid var(--hx-frame-border);
   font: var(--hx-frame-font-small);
   color: var(--hx-frame-secondary);
+}
+
+.brand-logo__recordSpec {
+  flex: 1;
+  min-width: 0;
+  color: var(--hx-frame-ink);
+}
+
+.brand-logo__recordMeta {
+  flex: none;
+  color: var(--hx-frame-muted);
+}
+
+/* 標籤、說明、長文框由上而下。 */
+.brand-logo__field--stack {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+}
+
+.brand-logo__stanceText {
+  margin: 0;
+  font: var(--hx-frame-font-ui);
+  color: var(--hx-frame-ink);
+}
+
+/* 主標誌的標記：它不是一個可以揀的欄位，是一個由類別派生的事實。 */
+.brand-logo__primaryTag {
+  flex: none;
+  border-radius: var(--hx-radius-sm);
+  padding: 1px 6px;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+  border: 1px solid var(--hx-frame-border);
+}
+
+.brand-logo__hex {
+  font-family: var(--hx-font-mono);
+  font-size: 12px;
+  color: var(--hx-frame-secondary);
+}
+
+.brand-logo__modeMissing {
+  font: var(--hx-frame-font-small);
+  color: var(--hx-danger-text);
 }
 
 /* 版本列表的標誌頁：資產名，不印 JSON。 */

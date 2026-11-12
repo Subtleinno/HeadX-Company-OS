@@ -16,7 +16,7 @@
 
 import type { BrandPageSummary } from '../api';
 import { COLOR_ROLES, valuesOf, type ColorDoc } from './brandColors';
-import { LOGO_MODES, modeRoleValue, primaryAsset, type LogoDoc, type LogoModeKey } from './brandLogo';
+import { LOGO_MODES, modeRoleValue, modeRow, primaryAsset, type LogoDoc, type LogoModeKey } from './brandLogo';
 import { TYPE_ROLES, familyUsable, type TypeDoc, type TypeRoleKey } from './brandType';
 import type { ToneDoc } from './brandTone';
 
@@ -164,28 +164,25 @@ export type LogoUsage = {
   print: string;
 };
 
-/** 標誌的預設用法：主標誌 ＋ 揀了的那個模式 ＋ 它對應的色彩角色與最小尺寸。 */
+/** 標誌的預設用法：主標誌 ＋ 揀了的那個模式 ＋ 它指定的色彩角色與最小尺寸。 */
 export function logoUsage(
   logo: LogoDoc | null,
   mode: '' | LogoModeKey,
   colour: ColorDoc | null,
 ): LogoUsage | null {
-  if (logo === null || mode === '') {
+  if (logo === null || mode === '' || !LOGO_MODES.includes(mode)) {
     return null;
   }
 
-  const spec = LOGO_MODES.find((item) => item.key === mode);
-
-  if (spec === undefined) {
-    return null;
-  }
+  const screen = logo.min_size.screen_px > 0 ? `${logo.min_size.screen_px}px` : '';
+  const print = logo.min_size.print_mm > 0 ? `${logo.min_size.print_mm}mm` : '';
 
   return {
-    assetName: primaryAsset(logo)?.name ?? '',
-    role: spec.role,
-    hex: modeRoleValue(colour, mode),
-    screen: (logo.modes[mode]?.screen ?? '').trim(),
-    print: (logo.modes[mode]?.print ?? '').trim(),
+    assetName: primaryAsset(logo)?.label ?? '',
+    role: modeRow(logo, mode).color_role,
+    hex: modeRoleValue(colour, mode, logo),
+    screen,
+    print,
   };
 }
 
@@ -233,10 +230,11 @@ export function homeGaps(input: HomeGapInput): HomeGaps {
       logo.push('primary');
     }
 
+    // 揀了模式但色彩頁未定那個角色：樣本會畫不出色，所以標出來。
     if (
       input.doc.logoMode !== '' &&
       input.logo.assets.length > 0 &&
-      modeRoleValue(input.colour, input.doc.logoMode) === null
+      modeRoleValue(input.colour, input.doc.logoMode, input.logo) === null
     ) {
       logo.push('modeValue');
     }
@@ -294,7 +292,7 @@ function text(value: unknown): string {
 function knownMode(value: unknown): '' | LogoModeKey {
   const key = text(value);
 
-  return LOGO_MODES.some((mode) => mode.key === key) ? (key as LogoModeKey) : '';
+  return LOGO_MODES.includes(key as LogoModeKey) ? (key as LogoModeKey) : '';
 }
 
 export function parseHomeDoc(value: string): ParseHomeResult {
