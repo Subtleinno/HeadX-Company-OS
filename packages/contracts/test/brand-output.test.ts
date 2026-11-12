@@ -187,7 +187,6 @@ describe('兩個品牌的平台頁', () => {
     order: ('stance' | 'positioning' | 'tests')[];
     reason: string;
   }): ComposedPage {
-    const schema = schemaForPage('platform', 'fixed');
     const payload = {
       stance: options.stance,
       positioning: { for: '想被認真看待的人', who: '一間做臨床與品牌的公司', category: '設計研究', benefit: '一句定位', unlike: '同一個人管兩邊', because: '做過十二個品牌' },
