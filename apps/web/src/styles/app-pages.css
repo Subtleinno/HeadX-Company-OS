@@ -3187,3 +3187,257 @@
     grid-column: 2 / -1;
   }
 }
+
+/* 平台頁（#61）：立場句一屏、定位六格、價值、三檢。
+
+   立場句用大一級的字：它是整本書的第一句，不是七個欄位之一。 */
+
+.brand-platform {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.brand-platform__stance {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid var(--hx-frame-line);
+  border-radius: 12px;
+  background: var(--hx-frame-paper);
+  padding: 16px 20px;
+}
+
+.brand-platform__stanceHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.brand-platform__stanceText {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.5;
+  color: var(--hx-frame-ink);
+}
+
+.brand-platform__stanceEmpty {
+  margin: 0;
+  font-size: 16px;
+  color: var(--hx-frame-warning);
+}
+
+.brand-platform__section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.brand-platform__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 16px;
+}
+
+.brand-platform__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.brand-platform__evidence {
+  resize: vertical;
+}
+
+.brand-platform__missing {
+  color: var(--hx-frame-warning);
+  font-weight: 600;
+}
+
+.brand-platform__values {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.brand-platform__value {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  align-items: end;
+  gap: 8px 12px;
+  border: 1px solid var(--hx-frame-line);
+  border-radius: 10px;
+  padding: 12px;
+}
+
+/* 立場句選擇（05）：720px，三個候選卡＋自己寫一句＋三檢。 */
+
+.stance-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, CanvasText 32%, transparent);
+  padding: 32px;
+}
+
+.stance {
+  width: min(720px, 100%);
+  max-height: calc(100vh - 64px);
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+  border: 1px solid var(--hx-frame-line);
+  border-radius: 14px;
+  background: var(--hx-frame-paper);
+}
+
+.stance__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--hx-frame-ink);
+}
+
+.stance__lead,
+.stance__empty {
+  margin: 4px 0 0;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+}
+
+.stance__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.stance__card {
+  display: grid;
+  grid-template-columns: 20px 1fr;
+  gap: 4px 10px;
+  border: 1px solid var(--hx-frame-line);
+  border-radius: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+}
+
+.stance__card[data-picked='true'] {
+  border-color: var(--hx-frame-accent);
+  background: var(--hx-frame-accent-soft);
+}
+
+.stance__radio {
+  margin-top: 4px;
+}
+
+.stance__text {
+  grid-column: 2;
+  font-family: var(--hx-font-serif, Georgia, serif);
+  font-size: 20px;
+  line-height: 1.4;
+  color: var(--hx-frame-ink);
+}
+
+.stance__reason {
+  grid-column: 2;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+}
+
+.stance__own {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stance__tests {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.stance__test {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border: 1px solid var(--hx-frame-line);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.stance__test[data-state='missing'] {
+  border-color: var(--hx-frame-warning);
+}
+
+.stance__testHead {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.stance__ok {
+  color: var(--hx-frame-success);
+}
+
+.stance__missing {
+  color: var(--hx-frame-warning);
+}
+
+.stance__testBody {
+  margin: 0;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+}
+
+.stance__need {
+  align-self: flex-start;
+  border: none;
+  background: transparent;
+  padding: 0;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-accent);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.stance__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.stance__close {
+  align-self: flex-start;
+  border: none;
+  background: transparent;
+  padding: 0;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+  cursor: pointer;
+}
+
+@media (max-width: 1024px) {
+  .brand-platform__grid,
+  .stance__tests {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .brand-platform__value {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
