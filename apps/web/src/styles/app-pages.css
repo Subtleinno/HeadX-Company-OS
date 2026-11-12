@@ -2203,3 +2203,153 @@
 .brand-home__pageLink:hover {
   text-decoration: underline;
 }
+
+/* 「這一頁」面板（#53）：現況、策略、給 agent 的接口。
+   淺底 + 細線，不用陰影 —— 內容區的區塊靠線分，陰影留給浮層。 */
+.brand-guide {
+  display: grid;
+  gap: var(--hx-space-4);
+  padding: var(--hx-space-4);
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-md);
+  background: var(--hx-frame-surface);
+}
+
+.brand-guide__head {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px var(--hx-space-3);
+  align-items: start;
+}
+
+.brand-guide__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.brand-guide__lead {
+  grid-column: 1;
+  margin: 0;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+}
+
+.brand-guide__toggle {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-sm);
+  background: transparent;
+  color: var(--hx-frame-secondary);
+  font: var(--hx-frame-font-small);
+  cursor: pointer;
+}
+
+.brand-guide__toggle:hover {
+  border-color: var(--hx-frame-muted);
+  color: var(--hx-frame-ink);
+}
+
+.brand-guide__section {
+  display: grid;
+  gap: 6px;
+  padding-top: var(--hx-space-3);
+  border-top: 1px solid var(--hx-frame-border);
+}
+
+.brand-guide__heading {
+  margin: 0;
+  font: var(--hx-frame-font-small);
+  font-weight: 600;
+  color: var(--hx-frame-ink);
+}
+
+.brand-guide__line {
+  margin: 0;
+  font: var(--hx-frame-font-small);
+}
+
+.brand-guide__line--muted {
+  color: var(--hx-frame-secondary);
+}
+
+.brand-guide__line--gap {
+  color: var(--hx-danger-text);
+}
+
+.brand-guide__refs {
+  margin: 0;
+  padding-left: 18px;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+}
+
+.brand-guide__policyNo {
+  display: flex;
+  align-items: baseline;
+  gap: var(--hx-space-2);
+  margin: 0;
+  font: var(--hx-frame-font-small);
+  font-weight: 600;
+}
+
+.brand-guide__policyTime {
+  font: var(--hx-frame-font-small);
+  font-weight: 400;
+  color: var(--hx-frame-secondary);
+}
+
+.brand-guide__policyBody {
+  margin: 0;
+  font: var(--hx-frame-font-body);
+  white-space: pre-wrap;
+}
+
+.brand-guide__editor {
+  display: grid;
+  gap: var(--hx-space-3);
+}
+
+.brand-guide__actions {
+  display: flex;
+  gap: var(--hx-space-2);
+}
+
+.brand-guide__agent {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--hx-space-4);
+}
+
+.brand-guide__agentTitle {
+  margin: 0 0 4px;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+}
+
+.brand-guide__agentList {
+  margin: 0;
+  padding-left: 18px;
+  font: var(--hx-frame-font-small);
+}
+
+.brand-guide__agentList--blocked {
+  color: var(--hx-frame-secondary);
+}
+
+.brand-guide__code {
+  margin: 0;
+  padding: var(--hx-space-3);
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-sm);
+  background: var(--hx-frame-surface);
+  font: var(--hx-frame-font-small);
+  font-family: var(--hx-font-mono);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+

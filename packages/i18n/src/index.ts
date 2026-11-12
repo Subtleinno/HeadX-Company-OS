@@ -1099,6 +1099,61 @@ export const messages = {
   // 這一版當時用的是第幾版策略（#34）。null 就講「未記錄」，不要假設第 1 版。
   'brand.page.policyVersionNo': '依第 {no} 版策略',
   'brand.page.policyUnrecorded': '策略版本未記錄',
+  // 每頁頂部的「這一頁」（#53）：現況／策略／給 agent 的接口。
+  // 三段共用一個面板，因為它們答的是同一個問題：這一頁現在是甚麼狀態。
+  'brand.guide.title': '這一頁',
+  // 每頁一句「這一頁用來做甚麼」。這一句是老闆要求的「指示」：打開就知
+  // 這一頁要交甚麼，而不是先讀完六個欄位才猜。
+  'brand.guide.about.home':
+    '這個品牌是誰，以及標誌預設用哪個模式。其餘四塊即時由來源頁砌出來，這裡不另存一份。',
+  'brand.guide.about.logo':
+    '這個品牌的標誌系統：五類資產、四種顏色模式、分模式最小尺寸、安全範圍、錯誤用法。色值只引用色彩頁的角色。',
+  'brand.guide.about.color':
+    '這個品牌每一個色的角色：品牌色、閱讀色、功能色，以及內文對底的對比。角色名由這一頁定，其他頁只引用名字。',
+  'brand.guide.about.type':
+    '這個品牌用哪幾個字體家族、每個層級的字級／行高／字重，以及文字顏色引用色彩頁的哪個角色。',
+  'brand.guide.about.tone':
+    '這個品牌怎樣說話：三到五個特質（每個一句做、一句不做）、禁用詞、繁英是否並用、五個情境的例句。',
+  'brand.guide.about.custom':
+    '這一張自定義頁自己決定的事。brief 是它的來源；通用標準在「自定義頁通用」策略，不在這裡重寫。',
+  'brand.guide.state': '現況',
+  'brand.guide.current': '現行第 {no} 版，{at} 儲存',
+  'brand.guide.noVersion': '這一頁仲未有版本。',
+  'brand.guide.gaps': '缺口 {count} 項，逐項在下面的表身。',
+  'brand.guide.noGaps': '沒有缺口。',
+  'brand.guide.uses': '用了：{list}',
+  'brand.guide.usedBy': '被用：{list}',
+  'brand.guide.noRefs': '這一頁不引用其他頁，也沒有別頁引用它。',
+  'brand.guide.link': '{page}（{what}）',
+  'brand.guide.what.roles': '角色',
+  'brand.guide.what.families': '字體家族',
+  'brand.guide.what.assets': '標誌資產',
+  'brand.guide.what.traits': '語氣特質',
+  'brand.guide.policyTitle': '策略（只有老闆可以改）',
+  'brand.guide.policyLoading': '正在讀策略…',
+  'brand.guide.policyLoadFailed': '讀唔到策略。',
+  'brand.guide.policyMissing': '這一類頁未有策略。缺就是缺，不要在品牌頁自己補一套。',
+  'brand.guide.policyOwnerOnly': '只有老闆可以改。這一頁用的是第 {no} 版。',
+  'brand.guide.policyEdit': '改策略（新增一版）',
+  'brand.guide.policyLabel': '這一類頁的標準',
+  'brand.guide.policyNote': '為甚麼改（可以不填）',
+  'brand.guide.policySave': '儲存（新增一版）',
+  'brand.guide.policySaving': '儲存中…',
+  'brand.guide.policyCancel': '取消',
+  'brand.guide.policySaved': '已儲存策略第 {no} 版。',
+  'brand.guide.policySaveFailed': '儲存唔到策略，請再試。',
+  'brand.guide.policyEmpty': '策略不可以空白。',
+  'brand.guide.policyImmutable': '策略只加不改：儲存就是新增一版，舊版永遠讀得返。',
+  'brand.guide.agentTitle': '用 AI Agent 管理這一頁',
+  'brand.guide.agentLead': '這一頁對 agent 開放的範圍。寫入要品牌授權；策略不開放。',
+  'brand.guide.agentAllowed': '可以做',
+  'brand.guide.agentBlocked': '不准做',
+  'brand.guide.agent.read': '讀現行版本與版本列表',
+  'brand.guide.agent.write': '交一個新版本（要品牌授權）',
+  'brand.guide.agent.readPolicy': '讀這一類頁的策略',
+  'brand.guide.agent.noPolicy': '改策略 —— 只有老闆可以，agent 一律唯讀',
+  'brand.guide.agent.noDelete': '刪版本 —— 只有人可以按，agent 沒有這條路',
+  'brand.guide.agent.example': '一句可以照講的指令，對應這個請求：',
 
   // ── 品牌模組的頁清單與自定義頁（issue #32）──────────────────────
   // 每一句都講「這一頁」，因為這裡管的是頁，不是內容。三樣齊才建得成：
