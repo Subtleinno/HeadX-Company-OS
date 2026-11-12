@@ -124,6 +124,8 @@ describe('字串表', () => {
       'brand.color.altRatio',
       'brand.type.familyGap',
       'brand.type.missingLine',
+      // #63：字體頁的缺口逐件事講，不是逐個分類講。
+      'brand.type.gapFamilies',
       'brand.type.gapScripts',
       'brand.type.gapRoles',
       'brand.logo.missingLine',

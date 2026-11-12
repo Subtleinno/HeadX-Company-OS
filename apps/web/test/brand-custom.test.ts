@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ColorDoc } from '../src/design/brandColors';
 import { fullColourDoc, withoutRole } from './fixtures/brandColour';
+import { fullFamily, typeDoc } from './fixtures/brandTypeface';
 import type { TypeDoc } from '../src/design/brandType';
 import type { ToneDoc } from '../src/design/brandTone';
 import {
@@ -33,28 +34,15 @@ const POLICY = `先判斷這頁是不是其實屬於標誌、色彩、字體或�
 
 const COLOUR: ColorDoc = fullColourDoc();
 
-const LATIN = {
-  id: 'f-latin',
-  script: 'latin' as const,
-  name: 'Inter',
-  licence: '網頁嵌入',
-  webEmbeddable: true,
-};
-
 const TYPE: TypeDoc = {
-  families: [LATIN],
-  roles: {
-    display: { familyId: 'f-latin', size: '56px', leading: '64px', weight: '700', minSize: '32px', colorRole: 'ink' },
-    heading: { familyId: 'f-latin', size: '28px', leading: '1.3', weight: '600', minSize: '20px', colorRole: 'ink' },
-    body: { familyId: 'f-latin', size: '17px', leading: '26px', weight: '400', minSize: '14px', colorRole: 'ink' },
-    caption: { familyId: 'f-latin', size: '13px', leading: '18px', weight: '400', minSize: '11px', colorRole: 'muted' },
-  },
+  ...typeDoc({
+    display: { family: 'f-latin', size: '56px', leading: '64px', weight: '700', min: 32 },
+    heading: { family: 'f-latin', size: '28px', leading: '1.3', weight: '600', min: 20 },
+    body: { family: 'f-latin', size: '17px', leading: '26px', weight: '400', min: 14 },
+    caption: { family: 'f-latin', size: '13px', leading: '18px', weight: '400', min: 11, color_role: 'muted' },
+  }),
+  families: [fullFamily('f-latin', 'Inter', 'latin')],
   pairing: '只用 Inter。',
-  fallbackLatin: 'system-ui',
-  fallbackChinese: 'PingFang TC',
-  measure: '32 字元',
-  align: 'left',
-  misuse: [],
 };
 
 const TONE: ToneDoc = {

@@ -169,9 +169,9 @@ export function typeRoleResolved(type: TypeDoc | null, role: string): boolean {
     return false;
   }
 
-  const entry = type.roles[role as (typeof TYPE_ROLES)[number]];
+  const entry = type.roles.find((row) => row.role === role);
 
-  return entry !== undefined && entry.familyId.trim() !== '';
+  return entry !== undefined && entry.family.trim() !== '';
 }
 
 export function bannedHits(doc: CustomDoc, tone: ToneDoc | null): string[] {

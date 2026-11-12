@@ -1,40 +1,38 @@
 /**
- * 品牌字體的**結構**（issue #38）。
+ * 品牌字體頁的**資料層**（issue #63，取代 #38 的形狀）。
  *
- * 這一支不是「字體清單」，是四個層級加兩個家族之間的約束。約束來自
- * `brand_policy_version` 字體槽的原文，這裡只放它的結論：
+ * 和色彩頁一樣，這一支是 `@company-os/contracts` 字體 payload 的**編輯器
+ * 轉接層**：存的是同一個 `TypePayload`，所以 tokens.json（`typography`）、
+ * prompt 包、HTML 與這一頁看到的必然是同一份。
  *
- *   - 每個層級都要有角色：display、heading、body、caption。沒有角色的字級
- *     不准存在。
- *   - 一套品牌**最多兩個家族**。中英各一剛好用滿兩個，第三個就是缺。
- *   - 繁中與拉丁分開指定，並講明怎樣配對。缺中文或缺英文就標成缺 ——
- *     **不准用系統預設字充當品牌字**。備用字只作渲染後備，不是品牌字。
- *   - 沒有授權的字不准用；網頁必須有可嵌入的檔。沒有就標成缺。
- *   - 尺寸要寫單位（px／rem／pt）。只寫數字的「18」不是 18 像素，是缺。
- *   - 文字顏色只引用色彩頁的角色名（`ink`、`muted` 或色彩頁那九個），
- *     **不發明色** —— 所以這裡沒有色值欄位。
- *   - 標誌的最小尺寸不在這一頁，屬 #36。
+ * 舊版（#38）有自己的形狀（`roles` 是一個以層級為鍵的物件、`licence` 一句
+ * 自由文字、`webEmbeddable` 一個勾）。它靠 legacy 轉換餵 renderer，而那個
+ * 轉換會**無中生有**：勾了「可嵌入」就寫成 `license_web: '可嵌入'`，可嵌入
+ * 檔永遠是空。結果是 tokens 與 prompt 拿到一份看起來齊全、實際上缺檔的家族。
+ * 缺就是缺，所以形狀要對齊，不要靠翻譯。
  *
- * 字體名、授權、數值都住在「字體」頁的版本內容（#33），不在原始碼裡。
- * 角色名（display／heading／body／caption）與腳本（latin／chinese）寫死，
- * 因為其他頁（#36 的字標）引用的是這幾個名字。
+ * 約束不變（策略字體槽原文）：
+ *   - 一套品牌**最多兩個家族**；中英各一剛好用滿。
+ *   - 沒有授權或沒有可嵌入檔，標缺 —— **不准用系統預設字充當品牌字**。
+ *   - 每一級都要有最小尺寸；`18` 不是 18 像素，是缺。
+ *   - 文字顏色只引用色彩頁的角色名，這一頁沒有色值欄位。
  */
 
+import { schemaForPage, type TypePayload } from '@company-os/contracts';
 import { COLOR_ROLES, isColorRole } from './brandColors';
+
+export type TypeDoc = TypePayload;
 
 export type Script = 'latin' | 'chinese';
 
 export const SCRIPTS: readonly Script[] = ['latin', 'chinese'];
 
-export type Align = 'left' | 'justify' | 'center';
-
-export const ALIGNS: readonly Align[] = ['left', 'justify', 'center'];
-
 export type TypeRoleKey = 'display' | 'heading' | 'body' | 'caption';
 
+/** 四個層級的名字寫死：其他頁（標誌的字標、主頁的樣本）引用的是這幾個。 */
 export const TYPE_ROLES: readonly TypeRoleKey[] = ['display', 'heading', 'body', 'caption'];
 
-/** 策略：一套品牌最多兩個家族，除非老闆在策略加例外（這裡沒有那個例外）。 */
+/** 策略：一套品牌最多兩個家族。 */
 export const MAX_FAMILIES = 2;
 
 /** 准用字重。清單寫死，因為「600」與「semibold」是兩個講法同一個東西。 */
@@ -43,96 +41,169 @@ export const WEIGHTS: readonly string[] = ['300', '400', '500', '600', '700', '8
 /** 文字顏色可以揀的角色：就是色彩頁那九個。不另開一份名單。 */
 export const TEXT_COLOR_ROLES: readonly string[] = COLOR_ROLES.map((role) => role.key);
 
-export type FontFamily = {
-  /** 內部 id：層級用它指去某一個家族。改名不會斷掉。 */
-  id: string;
-  script: Script;
-  name: string;
-  /** 授權範圍（人寫的文字）：網頁嵌入、印刷、應用程式、只有桌面… */
-  licence: string;
-  /** 網頁必須有可嵌入的檔。false 就等於「不可以在網頁用」。 */
-  webEmbeddable: boolean;
-};
+export type FontFamily = TypeDoc['families'][number];
+export type RoleSpec = TypeDoc['roles'][number];
+export type PrintRow = TypeDoc['print_matrix'][number];
+export type Misuse = TypeDoc['misuse'][number];
 
-export type RoleSpec = {
-  familyId: string;
-  /** 帶單位：`56px`、`3.5rem`、`42pt`。 */
-  size: string;
-  leading: string;
-  weight: string;
-  minSize: string;
-  /** 角色的文字顏色：色彩頁的角色名，不是色值。 */
-  colorRole: string;
-};
+const TYPE_SCHEMA = schemaForPage('type', 'fixed');
 
-export type TypeDoc = {
-  families: FontFamily[];
-  roles: Record<TypeRoleKey, RoleSpec>;
-  /** 中英怎樣配對（人寫的一兩句）。 */
-  pairing: string;
-  fallbackLatin: string;
-  fallbackChinese: string;
-  /** 內文行長，例如「32 字元」或「64ch」。 */
-  measure: string;
-  align: Align | '';
-  /** 錯誤用法：不准做的事。 */
-  misuse: string[];
+export const EMPTY_DOC: TypeDoc = {
+  stance: '',
+  philosophy: '',
+  families: [],
+  roles: [],
+  pairing: '',
+  sentence_anatomy: '',
+  print_matrix: [],
+  mixed_setting: '',
+  misuse: [],
 };
-
-export function emptyRole(): RoleSpec {
-  return { familyId: '', size: '', leading: '', weight: '', minSize: '', colorRole: '' };
-}
 
 export function emptyTypeDoc(): TypeDoc {
+  return { ...EMPTY_DOC, families: [], roles: [], print_matrix: [], misuse: [] };
+}
+
+export function emptyRole(role: string): RoleSpec {
   return {
-    families: [],
-    roles: {
-      display: emptyRole(),
-      heading: emptyRole(),
-      body: emptyRole(),
-      caption: emptyRole(),
-    },
-    pairing: '',
-    fallbackLatin: '',
-    fallbackChinese: '',
+    role,
+    family: '',
+    weight: '',
+    size: '',
+    leading: '',
+    min: 0,
     measure: '',
-    align: '',
-    misuse: [],
+    color_role: '',
+    reason: '',
   };
+}
+
+export function emptyFamily(id: string): FontFamily {
+  return {
+    id,
+    name: '',
+    script: 'latin',
+    license_web: '',
+    license_print: '',
+    license_app: '',
+    license_desktop: '',
+    file_ref: '',
+  };
+}
+
+/* ── 讀與寫 ───────────────────────────────────────────────── */
+
+export type ParseTypeResult = { kind: 'ok'; doc: TypeDoc } | { kind: 'empty' } | { kind: 'invalid' };
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
+/**
+ * 認得這份 JSON 是不是一張字體表。
+ *
+ * 舊形狀（`roles` 是物件、`licence` 一句字）雖然解析得到，但它不是這一份
+ * 表 —— 硬讀就會畫出一張看起來齊全、實際上缺檔的表。所以形狀不認就講
+ * 讀不到，並提供「由空白起手」。
+ */
+export function parseTypeDoc(content: string): ParseTypeResult {
+  if (content.trim() === '') {
+    return { kind: 'empty' };
+  }
+
+  let raw: unknown;
+
+  try {
+    raw = JSON.parse(content);
+  } catch {
+    return { kind: 'invalid' };
+  }
+
+  const record = asRecord(raw);
+
+  if (record === null) {
+    return { kind: 'invalid' };
+  }
+
+  const v2Shape =
+    (Array.isArray(record['families']) ||
+      'philosophy' in record ||
+      'print_matrix' in record ||
+      'mixed_setting' in record ||
+      'sentence_anatomy' in record) &&
+    // 舊形狀（#38）的 `roles` 是一個以層級為鍵的物件。留著它只會畫出一張
+    // 看起來齊全、實際上每格都空的表，所以形狀不對就講讀不到。
+    (record['roles'] === undefined || Array.isArray(record['roles']));
+
+  if (!v2Shape) {
+    return { kind: 'invalid' };
+  }
+
+  const doc = TYPE_SCHEMA.normalize(raw) as TypeDoc;
+
+  // 策略上限：一套品牌兩個家族。多出來的不是「一起用」，是沒有決定。
+  return { kind: 'ok', doc: { ...doc, families: doc.families.slice(0, MAX_FAMILIES) } };
+}
+
+/** 存進版本的內容：單行，因為版本預覽只有頭 160 字元。 */
+export function serializeTypeDoc(doc: TypeDoc): string {
+  return JSON.stringify(TYPE_SCHEMA.normalize(doc));
 }
 
 export function hasAnyValue(doc: TypeDoc): boolean {
   return (
     doc.families.length > 0 ||
+    doc.roles.length > 0 ||
+    doc.philosophy.trim() !== '' ||
     doc.pairing.trim() !== '' ||
-    doc.measure.trim() !== '' ||
-    doc.align !== '' ||
-    doc.misuse.length > 0 ||
-    TYPE_ROLES.some((key) => {
-      const role = doc.roles[key];
-
-      return (
-        role.familyId !== '' ||
-        role.size !== '' ||
-        role.leading !== '' ||
-        role.weight !== '' ||
-        role.minSize !== '' ||
-        role.colorRole !== ''
-      );
-    })
+    doc.sentence_anatomy.trim() !== '' ||
+    doc.mixed_setting.trim() !== '' ||
+    doc.print_matrix.length > 0 ||
+    doc.misuse.length > 0
   );
 }
 
-/* ── 缺的判斷 ─────────────────────────────────────────────── */
+/* ── 家族 ─────────────────────────────────────────────────── */
+
+export type FamilyGap = 'name' | 'licence' | 'file';
 
 /**
- * 一個家族可不可以用。
+ * 一個家族缺甚麼。
  *
- * 三個條件缺一不可：有名、有授權、網頁有可嵌入的檔（策略原文）。任何一個
- * 缺，它就是「缺」—— 不可以用它排版，也不可以由備用字頂上當品牌字。
+ * `type.r3` 要的是「至少寫明一種授權」—— 四個渠道（網頁、印刷、應用程式、
+ * 桌面）任一個有寫就當有授權，四個都空才是缺。可嵌入檔是另一件事：沒有檔
+ * 就畫不出真樣本。
  */
+export function familyGaps(family: FontFamily): FamilyGap[] {
+  const gaps: FamilyGap[] = [];
+
+  if (family.name.trim() === '') {
+    gaps.push('name');
+  }
+
+  const licensed = [
+    family.license_web,
+    family.license_print,
+    family.license_app,
+    family.license_desktop,
+  ].some((value) => value.trim() !== '');
+
+  if (!licensed) {
+    gaps.push('licence');
+  }
+
+  if (family.file_ref.trim() === '') {
+    gaps.push('file');
+  }
+
+  return gaps;
+}
+
+/** 可用＝三個條件齊。任何一個缺，它就不可以用來排版。 */
 export function familyUsable(family: FontFamily): boolean {
-  return family.name.trim() !== '' && family.licence.trim() !== '' && family.webEmbeddable;
+  return familyGaps(family).length === 0;
 }
 
 export function usableFamilies(doc: TypeDoc): FontFamily[] {
@@ -143,18 +214,46 @@ export function findFamily(doc: TypeDoc, id: string): FontFamily | null {
   return doc.families.find((family) => family.id === id) ?? null;
 }
 
-/** 這個角色指去的家族，可用就回它，否則 null（＝缺）。 */
-export function roleFamily(doc: TypeDoc, key: TypeRoleKey): FontFamily | null {
-  const family = findFamily(doc, doc.roles[key].familyId);
-
-  return family !== null && familyUsable(family) ? family : null;
-}
-
 /** 哪幾個腳本沒有可用的家族。缺中文就在這裡講，不靜靜用系統字。 */
 export function missingScripts(doc: TypeDoc): Script[] {
   const usable = usableFamilies(doc);
 
   return SCRIPTS.filter((script) => !usable.some((family) => family.script === script));
+}
+
+/* ── 字階 ─────────────────────────────────────────────────── */
+
+export function roleOf(doc: TypeDoc, key: TypeRoleKey): RoleSpec {
+  return doc.roles.find((role) => role.role === key) ?? emptyRole(key);
+}
+
+/** 改一級的一格；整行都空了就刪走，不留空殼。 */
+export function setRole(
+  doc: TypeDoc,
+  key: TypeRoleKey,
+  patch: Partial<Omit<RoleSpec, 'role'>>,
+): TypeDoc {
+  const next: RoleSpec = { ...roleOf(doc, key), ...patch };
+  const blank =
+    next.family.trim() === '' &&
+    next.weight.trim() === '' &&
+    next.size.trim() === '' &&
+    next.leading.trim() === '' &&
+    next.min <= 0 &&
+    next.measure.trim() === '' &&
+    next.color_role.trim() === '' &&
+    next.reason.trim() === '';
+
+  const others = doc.roles.filter((role) => role.role !== key);
+
+  return { ...doc, roles: blank ? others : [...others, next] };
+}
+
+/** 這個層級指去的家族，可用就回它，否則 null（＝缺）。 */
+export function roleFamily(doc: TypeDoc, key: TypeRoleKey): FontFamily | null {
+  const family = findFamily(doc, roleOf(doc, key).family);
+
+  return family !== null && familyUsable(family) ? family : null;
 }
 
 /** 尺寸一定要帶單位。`18` 不是 18 像素，是缺。 */
@@ -167,10 +266,10 @@ export function leadingOk(value: string): boolean {
   return /^\d+(\.\d+)?(px|rem|pt|%)?$/.test(value.trim());
 }
 
-export type RoleGap = 'family' | 'size' | 'leading' | 'weight' | 'minSize' | 'color';
+export type RoleGap = 'family' | 'size' | 'leading' | 'weight' | 'min' | 'color';
 
 export function roleGaps(doc: TypeDoc, key: TypeRoleKey): RoleGap[] {
-  const role = doc.roles[key];
+  const role = roleOf(doc, key);
   const gaps: RoleGap[] = [];
 
   if (roleFamily(doc, key) === null) {
@@ -189,11 +288,11 @@ export function roleGaps(doc: TypeDoc, key: TypeRoleKey): RoleGap[] {
     gaps.push('weight');
   }
 
-  if (!sizeHasUnit(role.minSize)) {
-    gaps.push('minSize');
+  if (role.min <= 0) {
+    gaps.push('min');
   }
 
-  if (!isColorRole(role.colorRole)) {
+  if (!isColorRole(role.color_role)) {
     gaps.push('color');
   }
 
@@ -204,176 +303,64 @@ export function roleMissing(doc: TypeDoc, key: TypeRoleKey): boolean {
   return roleGaps(doc, key).length > 0;
 }
 
+/* ── 缺口 ─────────────────────────────────────────────────── */
+
 export type TypeGaps = {
+  /** 有缺的家族（家族 id）。 */
+  families: string[];
   scripts: Script[];
   roles: TypeRoleKey[];
   pairing: boolean;
-  measure: boolean;
-  align: boolean;
+  philosophy: boolean;
 };
 
 export function typeGaps(doc: TypeDoc): TypeGaps {
   return {
+    families: doc.families.filter((family) => familyGaps(family).length > 0).map((family) => family.id),
     scripts: missingScripts(doc),
     roles: TYPE_ROLES.filter((key) => roleMissing(doc, key)),
     pairing: doc.pairing.trim() === '',
-    measure: doc.measure.trim() === '',
-    align: doc.align === '',
+    philosophy: doc.philosophy.trim() === '',
   };
 }
 
+/** 缺口數＝每一件未完成的事算一項。數字要對得上畫面，不是對得上分類。 */
 export function gapCount(gaps: TypeGaps): number {
   return (
+    gaps.families.length +
     gaps.scripts.length +
     gaps.roles.length +
     (gaps.pairing ? 1 : 0) +
-    (gaps.measure ? 1 : 0) +
-    (gaps.align ? 1 : 0)
+    (gaps.philosophy ? 1 : 0)
   );
 }
 
-/* ── 讀與寫 ───────────────────────────────────────────────── */
+/**
+ * 版本預覽抽家族名：那一版用了什麼字。
+ *
+ * 用 `new RegExp` 而不用字面量：模式裡的引號數目是單數，寫成字面量會令
+ * i18n 守門的字元掃描器以為字串未收尾，之後的註解就不再被當成註解
+ * （那個守門要逐字判斷是否在字串內）。
+ */
+const NAME_PATTERN = new RegExp('"name":"([^"]{1,40})"', 'g');
 
-export type ParseTypeResult =
-  | { kind: 'ok'; doc: TypeDoc }
-  | { kind: 'empty' }
-  | { kind: 'invalid' };
+export function namesInText(value: string): string[] {
+  const found = value.matchAll(NAME_PATTERN);
 
-function asRecord(value: unknown): Record<string, unknown> | null {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : null;
-}
-
-function text(value: unknown): string {
-  return typeof value === 'string' ? value.trim() : '';
-}
-
-function readFamilies(raw: unknown): FontFamily[] {
-  if (!Array.isArray(raw)) {
-    return [];
-  }
-
-  const families: FontFamily[] = [];
-
-  for (const item of raw) {
-    const entry = asRecord(item);
-
-    if (entry === null) {
-      continue;
-    }
-
-    const script = entry.script === 'chinese' ? 'chinese' : entry.script === 'latin' ? 'latin' : null;
-    const id = text(entry.id);
-
-    if (script === null || id === '') {
-      continue;
-    }
-
-    families.push({
-      id,
-      script,
-      name: text(entry.name),
-      licence: text(entry.licence),
-      webEmbeddable: entry.webEmbeddable === true,
-    });
-  }
-
-  // 第一個以外的多餘家族：讀入時丟掉。策略只准兩個，畫面也加不到第三個，
-  // 所以走到這裡代表內容是由外面寫入的 —— 留著只會出現畫面解釋不到的第三行。
-  return families.slice(0, MAX_FAMILIES);
-}
-
-function readRole(raw: unknown, previous: RoleSpec): RoleSpec {
-  const entry = asRecord(raw);
-
-  if (entry === null) {
-    return previous;
-  }
-
-  return {
-    familyId: text(entry.familyId),
-    size: text(entry.size),
-    leading: text(entry.leading),
-    weight: text(entry.weight),
-    minSize: text(entry.minSize),
-    colorRole: text(entry.colorRole),
-  };
-}
-
-export function parseTypeDoc(value: string): ParseTypeResult {
-  if (value.trim() === '') {
-    return { kind: 'empty' };
-  }
-
-  let raw: unknown;
-
-  try {
-    raw = JSON.parse(value);
-  } catch {
-    return { kind: 'invalid' };
-  }
-
-  const record = asRecord(raw);
-
-  if (record === null) {
-    return { kind: 'invalid' };
-  }
-
-  // 認得形狀才算字體表。任意 JSON 硬當成空表，就會畫出四行假的「缺」。
-  if (!('families' in record) && !('roles' in record)) {
-    return { kind: 'invalid' };
-  }
-
-  const rolesRaw = asRecord(record.roles);
-  const roles = {} as Record<TypeRoleKey, RoleSpec>;
-
-  for (const key of TYPE_ROLES) {
-    roles[key] = readRole(rolesRaw?.[key], emptyRole());
-  }
-
-  const alignRaw = text(record.align);
-  const align = ALIGNS.find((item) => item === alignRaw) ?? '';
-
-  const misuse = Array.isArray(record.misuse)
-    ? record.misuse.map((item) => text(item)).filter((item) => item !== '')
-    : [];
-
-  return {
-    kind: 'ok',
-    doc: {
-      families: readFamilies(record.families),
-      roles,
-      pairing: text(record.pairing),
-      fallbackLatin: text(record.fallbackLatin),
-      fallbackChinese: text(record.fallbackChinese),
-      measure: text(record.measure),
-      align,
-      misuse,
-    },
-  };
+  return Array.from(new Set(Array.from(found, (match) => match[1] ?? '').filter((name) => name !== '')));
 }
 
 /**
- * 存進版本的內容。單行、家族排第一 —— 版本列表只拿得到頭 160 字元做預覽，
- * 家族名寫在最前面，那一版用了什麼字才抽得出來（`namesInText`）。
+ * 下一個家族 id：`f-1`、`f-2`…，刪走之後重用細號也不撞。
+ *
+ * 用細號而不是時間戳：同一份內容重讀幾次都一樣。
  */
-export function serializeTypeDoc(doc: TypeDoc): string {
-  return JSON.stringify({
-    families: doc.families,
-    roles: doc.roles,
-    pairing: doc.pairing,
-    fallbackLatin: doc.fallbackLatin,
-    fallbackChinese: doc.fallbackChinese,
-    measure: doc.measure,
-    align: doc.align,
-    misuse: doc.misuse,
-  });
-}
+export function nextFamilyId(doc: TypeDoc): string {
+  let index = doc.families.length + 1;
 
-/** 版本預覽裡的家族名。抽不到就空 —— 不會假裝有。 */
-export function namesInText(value: string): string[] {
-  const found = value.matchAll(/"name":"([^"]{1,40})"/g);
+  while (doc.families.some((family) => family.id === `f-${index}`)) {
+    index += 1;
+  }
 
-  return Array.from(new Set(Array.from(found, (match) => match[1] ?? '').filter((name) => name !== '')));
+  return `f-${index}`;
 }

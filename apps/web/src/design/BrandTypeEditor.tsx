@@ -1,35 +1,33 @@
 import { useState } from 'react';
 import { t } from '@company-os/i18n';
 import {
-  ALIGNS,
   MAX_FAMILIES,
   SCRIPTS,
-  TEXT_COLOR_ROLES,
   TYPE_ROLES,
   WEIGHTS,
-  emptyRole,
   emptyTypeDoc,
+  familyGaps,
   familyUsable,
   gapCount,
   hasAnyValue,
   missingScripts,
+  nextFamilyId,
   parseTypeDoc,
   roleGaps,
+  roleOf,
   serializeTypeDoc,
-  sizeHasUnit,
+  setRole,
   typeGaps,
-  type Align,
-  type FontFamily,
-  type RoleSpec,
+  type FamilyGap,
+  type RoleGap,
   type Script,
   type TypeDoc,
-  type TypeRoleKey,
 } from './brandType';
-import { isColorRole } from './brandColors';
+import { COLOR_ROLES } from './brandColors';
 import { useGapCount } from './useGapCount';
 
 /**
- * 字體頁的編輯介面（issue #38）。
+ * 字體頁的編輯介面（issue #63，取代 #38）。
  *
  * 這一頁不是「揀一個好看的字」：它是四個層級與最多兩個家族之間的約束表。
  * 理由寫在 `brandType.ts` 開頭 —— 一句「主標用思源黑體」沒有「哪個層級用
@@ -39,20 +37,23 @@ import { useGapCount } from './useGapCount';
  * draft，按「儲存」才真的新增一版。所以這一頁沒有自己的儲存鍵。
  *
  * 四個誠實位：
- *   1. 缺授權、缺中文，標成缺 —— 不靜靜用系統預設字，也不用備用字頂上。
- *   2. 尺寸只寫數字（`18`）就是缺：它不是 18 像素。
- *   3. 文字顏色只可以揀色彩頁的角色名，沒有第二個放色值的地方。
+ *   1. 缺授權、缺可嵌入檔，標成缺 —— 不靜靜用系統預設字，也不用備用字頂上。
+ *   2. 字級只寫數字（`18`）就是缺：它不是 18 像素。要寫單位。
+ *   3. 文字色只可以揀色彩頁的角色名，這一頁沒有第二個放色值的地方。
  *   4. 現行內容不是字體表就講讀不到，不畫四行假的層級。
  */
 
 type BrandTypeEditorProps = {
+  /** 現行版本的內容（JSON 字串，或者是舊形狀）。 */
   content: string;
   canEdit: boolean;
+  /** 交回去的是**內容字串**；全空的時候是空字串（等於未有內容）。 */
   onChange: (next: string) => void;
   /** 把缺口數上報給「這一頁」面板（#53）。解析不到就報 null。 */
   onGapCount?: (count: number | null) => void;
 };
 
+/** 一份表變成內容字串。全空就交空字串，讓「未有內容」的判斷繼續有效。 */
 function write(doc: TypeDoc): string {
   return hasAnyValue(doc) ? serializeTypeDoc(doc) : '';
 }
@@ -61,31 +62,41 @@ function scriptLabel(script: Script): string {
   return script === 'latin' ? t('brand.type.scriptLatin') : t('brand.type.scriptChinese');
 }
 
-function alignLabel(value: Align): string {
-  if (value === 'left') {
-    return t('brand.type.alignLeft');
+function familyGapLabel(gap: FamilyGap): string {
+  if (gap === 'name') {
+    return t('brand.type.familyGapName');
   }
 
-  return value === 'justify' ? t('brand.type.alignJustify') : t('brand.type.alignCenter');
+  return gap === 'licence' ? t('brand.type.familyGapLicence') : t('brand.type.familyGapFile');
 }
 
-/** 下一個未用的家族 id。用細號而不是時間戳：同一份內容重讀幾次都一樣。 */
-function nextFamilyId(doc: TypeDoc): string {
-  let index = 1;
-
-  while (doc.families.some((family) => family.id === `f-${index}`)) {
-    index += 1;
+function roleGapLabel(gap: RoleGap): string {
+  switch (gap) {
+    case 'family':
+      return t('brand.type.gapFamily');
+    case 'size':
+      return t('brand.type.gapSize');
+    case 'leading':
+      return t('brand.type.gapLeading');
+    case 'weight':
+      return t('brand.type.gapWeight');
+    case 'min':
+      return t('brand.type.gapMin');
+    default:
+      return t('brand.type.gapColor');
   }
-
-  return `f-${index}`;
 }
 
 export function BrandTypeEditor({ content, canEdit, onChange, onGapCount }: BrandTypeEditorProps) {
-  const [misuseDraft, setMisuseDraft] = useState('');
+  const [printDraft, setPrintDraft] = useState({ item: '', spec: '' });
+  const [printError, setPrintError] = useState<string | null>(null);
+  const [misuseDraft, setMisuseDraft] = useState({ example: '', reason: '' });
+  const [misuseError, setMisuseError] = useState<string | null>(null);
 
   const parsed = parseTypeDoc(content);
 
-  // 在 early return 之前上報：內容壞了要報 null（面板閉嘴），不是報 0。
+  // 上報缺口要在 early return 之前：hook 的數目不可以因為內容壞了就變。
+  // 解析不到就報 null —— 面板會閉嘴，而不是講「沒有缺口」。
   useGapCount(
     parsed.kind === 'invalid'
       ? null
@@ -124,7 +135,7 @@ export function BrandTypeEditor({ content, canEdit, onChange, onGapCount }: Bran
     onChange(write(next));
   }
 
-  function setFamily(id: string, patch: Partial<FontFamily>): void {
+  function patchFamily(id: string, patch: Partial<TypeDoc['families'][number]>): void {
     commit({
       ...doc,
       families: doc.families.map((family) => (family.id === id ? { ...family, ...patch } : family)),
@@ -137,58 +148,82 @@ export function BrandTypeEditor({ content, canEdit, onChange, onGapCount }: Bran
     }
 
     // 補一個未用過的腳本：兩個家族最常見就是中英各一。
-    const usedScripts = new Set(doc.families.map((family) => family.script));
-    const script = SCRIPTS.find((item) => !usedScripts.has(item)) ?? 'latin';
+    const used = new Set(doc.families.map((family) => family.script));
+    const script = SCRIPTS.find((item) => !used.has(item)) ?? 'latin';
 
     commit({
       ...doc,
       families: [
         ...doc.families,
-        { id: nextFamilyId(doc), script, name: '', licence: '', webEmbeddable: false },
+        {
+          id: nextFamilyId(doc),
+          name: '',
+          script,
+          license_web: '',
+          license_print: '',
+          license_app: '',
+          license_desktop: '',
+          file_ref: '',
+        },
       ],
     });
   }
 
   function removeFamily(id: string): void {
-    const roles = { ...doc.roles };
+    // 刪走家族，指向它的層級一併清空 —— 否則層級會指著一個不存在的家族，
+    // 畫面看起來有值，實際排不出字。
+    let next: TypeDoc = { ...doc, families: doc.families.filter((family) => family.id !== id) };
 
     for (const key of TYPE_ROLES) {
-      if (roles[key].familyId === id) {
-        roles[key] = { ...roles[key], familyId: '' };
+      if (roleOf(next, key).family === id) {
+        next = setRole(next, key, { family: '' });
       }
     }
 
-    commit({ ...doc, families: doc.families.filter((family) => family.id !== id), roles });
+    commit(next);
   }
 
-  function setRole(key: TypeRoleKey, patch: Partial<RoleSpec>): void {
-    commit({ ...doc, roles: { ...doc.roles, [key]: { ...doc.roles[key], ...patch } } });
-  }
+  function addPrint(): void {
+    const item = printDraft.item.trim();
+    const spec = printDraft.spec.trim();
 
-  function addMisuse(): void {
-    const next = misuseDraft.trim();
-
-    if (next === '' || doc.misuse.includes(next)) {
-      setMisuseDraft('');
+    if (item === '' || spec === '') {
+      setPrintError(t('brand.type.printInvalid'));
       return;
     }
 
-    commit({ ...doc, misuse: [...doc.misuse, next] });
-    setMisuseDraft('');
+    // 同一項目寫兩次只會令人以為有兩個決定。
+    const others = doc.print_matrix.filter((row) => row.item !== item);
+
+    commit({ ...doc, print_matrix: [...others, { item, spec }] });
+    setPrintDraft({ item: '', spec: '' });
+    setPrintError(null);
   }
 
-  function removeMisuse(value: string): void {
-    commit({ ...doc, misuse: doc.misuse.filter((item) => item !== value) });
+  function addMisuse(): void {
+    const example = misuseDraft.example.trim();
+    const reason = misuseDraft.reason.trim();
+
+    if (example === '' || reason === '') {
+      setMisuseError(t('brand.type.misuseInvalid'));
+      return;
+    }
+
+    const others = doc.misuse.filter((row) => row.example !== example);
+
+    commit({ ...doc, misuse: [...others, { example, reason }] });
+    setMisuseDraft({ example: '', reason: '' });
+    setMisuseError(null);
   }
 
   const summary: string[] = [];
 
+  if (gaps.families.length > 0) {
+    summary.push(t('brand.type.gapFamilies', { count: gaps.families.length }));
+  }
+
   if (gaps.scripts.length > 0) {
-    summary.push(
-      t('brand.type.gapScripts', {
-        scripts: gaps.scripts.map(scriptLabel).join('、'),
-      }),
-    );
+    summary.push(t('brand.type.gapScripts', { scripts: gaps.scripts.map(scriptLabel).join('、') }));
   }
 
   if (gaps.roles.length > 0) {
@@ -199,53 +234,69 @@ export function BrandTypeEditor({ content, canEdit, onChange, onGapCount }: Bran
     summary.push(t('brand.type.gapPairing'));
   }
 
-  if (gaps.measure) {
-    summary.push(t('brand.type.gapMeasure'));
+  if (gaps.philosophy) {
+    summary.push(t('brand.type.gapPhilosophy'));
   }
 
-  if (gaps.align) {
-    summary.push(t('brand.type.gapAlign'));
-  }
+  const total = gapCount(gaps);
 
   return (
     <div className="brand-type" data-type-doc>
-      <p className="design-field__hint" data-type-color-note>
-        {t('brand.type.colorNote')}
-      </p>
+      <section className="brand-type__section" data-type-stance>
+        <h3 className="brand-page__versionsTitle">{t('brand.type.stance')}</h3>
+
+        {doc.stance.trim() === '' ? (
+          <p className="design-note" data-type-stance-missing>
+            {t('brand.type.stanceMissing')}
+          </p>
+        ) : (
+          <p className="brand-type__stanceText">{doc.stance}</p>
+        )}
+
+        <p className="design-field__hint">{t('brand.type.stanceFrom')}</p>
+      </section>
 
       <p
-        className={`brand-type__missing${gapCount(gaps) === 0 ? '' : ' brand-type__missing--gap'}`}
-        data-type-missing
+        className={`brand-type__missing${total === 0 ? '' : ' brand-type__missing--gap'}`}
+        data-type-missing={total}
       >
-        {gapCount(gaps) === 0
+        {total === 0
           ? t('brand.type.allPresent')
           : t('brand.type.missingLine', { items: summary.join('、') })}
       </p>
+
+      <section className="brand-type__section" data-type-philosophy>
+        <h3 className="brand-page__versionsTitle">{t('brand.type.philosophy')}</h3>
+        <p className="design-field__hint">{t('brand.type.philosophyHint')}</p>
+
+        <textarea
+          className="brand-page__textarea brand-type__textarea"
+          data-type-philosophy-text
+          value={doc.philosophy}
+          readOnly={!canEdit}
+          rows={2}
+          placeholder={t('brand.type.philosophyPlaceholder')}
+          onChange={(event) => {
+            commit({ ...doc, philosophy: event.target.value });
+          }}
+        />
+      </section>
 
       <section className="brand-type__section" data-type-families>
         <h3 className="brand-page__versionsTitle">{t('brand.type.families')}</h3>
         <p className="design-field__hint">{t('brand.type.familiesHint')}</p>
 
-        {doc.families.length === 0 && (
-          <p className="design-empty">{t('brand.type.familyEmpty')}</p>
-        )}
+        {doc.families.length === 0 && <p className="design-empty">{t('brand.type.familyEmpty')}</p>}
 
         {doc.families.map((family) => {
-          const usable = familyUsable(family);
-          const reason = !family.name.trim()
-            ? t('brand.type.familyMissingName')
-            : !family.licence.trim()
-              ? t('brand.type.familyMissingLicence')
-              : !family.webEmbeddable
-                ? t('brand.type.familyMissingEmbed')
-                : '';
+          const familyGapList = familyGaps(family);
 
           return (
             <div
               className="brand-type__family"
               key={family.id}
               data-type-family={family.id}
-              data-missing={usable ? 'false' : 'true'}
+              data-missing={familyGapList.length === 0 ? 'false' : 'true'}
             >
               <div className="brand-type__familyHead">
                 <code className="brand-type__key">{family.script}</code>
@@ -253,9 +304,9 @@ export function BrandTypeEditor({ content, canEdit, onChange, onGapCount }: Bran
                   {family.name === '' ? t('brand.type.familyUnnamed') : family.name}
                 </span>
 
-                {!usable && (
-                  <span className="brand-type__badge" data-type-family-badge>
-                    {reason}
+                {familyGapList.length > 0 && (
+                  <span className="brand-type__badge" data-type-family-badge={family.id}>
+                    {familyGapList.map(familyGapLabel).join('、')}
                   </span>
                 )}
 
@@ -274,6 +325,22 @@ export function BrandTypeEditor({ content, canEdit, onChange, onGapCount }: Bran
               </div>
 
               <div className="brand-type__familyFields">
+                <label className="brand-type__field brand-type__field--wide">
+                  <span className="brand-type__fieldLabel">{t('brand.type.familyNameField')}</span>
+                  <input
+                    className="design-input"
+                    data-type-family-name={family.id}
+                    value={family.name}
+                    readOnly={!canEdit}
+                    autoComplete="off"
+                    spellCheck={false}
+                    placeholder={t('brand.type.familyNamePlaceholder')}
+                    onChange={(event) => {
+                      patchFamily(family.id, { name: event.target.value });
+                    }}
+                  />
+                </label>
+
                 <label className="brand-type__field">
                   <span className="brand-type__fieldLabel">{t('brand.type.script')}</span>
                   <select
@@ -282,7 +349,7 @@ export function BrandTypeEditor({ content, canEdit, onChange, onGapCount }: Bran
                     value={family.script}
                     disabled={!canEdit}
                     onChange={(event) => {
-                      setFamily(family.id, {
+                      patchFamily(family.id, {
                         script: event.target.value === 'chinese' ? 'chinese' : 'latin',
                       });
                     }}
@@ -295,48 +362,84 @@ export function BrandTypeEditor({ content, canEdit, onChange, onGapCount }: Bran
                   </select>
                 </label>
 
-                <label className="brand-type__field brand-type__field--wide">
-                  <span className="brand-type__fieldLabel">{t('brand.type.familyNameField')}</span>
+                <label className="brand-type__field">
+                  <span className="brand-type__fieldLabel">{t('brand.type.licenceWeb')}</span>
                   <input
                     className="design-input"
-                    data-type-family-name={family.id}
-                    value={family.name}
+                    data-type-family-licence-web={family.id}
+                    value={family.license_web}
                     readOnly={!canEdit}
                     autoComplete="off"
                     spellCheck={false}
-                    placeholder={t('brand.type.familyNamePlaceholder')}
+                    placeholder={t('brand.type.licencePlaceholder')}
                     onChange={(event) => {
-                      setFamily(family.id, { name: event.target.value });
+                      patchFamily(family.id, { license_web: event.target.value });
+                    }}
+                  />
+                </label>
+
+                <label className="brand-type__field">
+                  <span className="brand-type__fieldLabel">{t('brand.type.licencePrint')}</span>
+                  <input
+                    className="design-input"
+                    data-type-family-licence-print={family.id}
+                    value={family.license_print}
+                    readOnly={!canEdit}
+                    autoComplete="off"
+                    spellCheck={false}
+                    placeholder={t('brand.type.licencePlaceholder')}
+                    onChange={(event) => {
+                      patchFamily(family.id, { license_print: event.target.value });
+                    }}
+                  />
+                </label>
+
+                <label className="brand-type__field">
+                  <span className="brand-type__fieldLabel">{t('brand.type.licenceApp')}</span>
+                  <input
+                    className="design-input"
+                    data-type-family-licence-app={family.id}
+                    value={family.license_app}
+                    readOnly={!canEdit}
+                    autoComplete="off"
+                    spellCheck={false}
+                    placeholder={t('brand.type.licencePlaceholder')}
+                    onChange={(event) => {
+                      patchFamily(family.id, { license_app: event.target.value });
+                    }}
+                  />
+                </label>
+
+                <label className="brand-type__field">
+                  <span className="brand-type__fieldLabel">{t('brand.type.licenceDesktop')}</span>
+                  <input
+                    className="design-input"
+                    data-type-family-licence-desktop={family.id}
+                    value={family.license_desktop}
+                    readOnly={!canEdit}
+                    autoComplete="off"
+                    spellCheck={false}
+                    placeholder={t('brand.type.licencePlaceholder')}
+                    onChange={(event) => {
+                      patchFamily(family.id, { license_desktop: event.target.value });
                     }}
                   />
                 </label>
 
                 <label className="brand-type__field brand-type__field--wide">
-                  <span className="brand-type__fieldLabel">{t('brand.type.familyLicence')}</span>
+                  <span className="brand-type__fieldLabel">{t('brand.type.fileRef')}</span>
                   <input
                     className="design-input"
-                    data-type-family-licence={family.id}
-                    value={family.licence}
+                    data-type-family-file={family.id}
+                    value={family.file_ref}
                     readOnly={!canEdit}
                     autoComplete="off"
-                    placeholder={t('brand.type.familyLicencePlaceholder')}
+                    spellCheck={false}
+                    placeholder={t('brand.type.fileRefPlaceholder')}
                     onChange={(event) => {
-                      setFamily(family.id, { licence: event.target.value });
+                      patchFamily(family.id, { file_ref: event.target.value });
                     }}
                   />
-                </label>
-
-                <label className="brand-type__check">
-                  <input
-                    type="checkbox"
-                    data-type-family-embed={family.id}
-                    checked={family.webEmbeddable}
-                    disabled={!canEdit}
-                    onChange={(event) => {
-                      setFamily(family.id, { webEmbeddable: event.target.checked });
-                    }}
-                  />
-                  <span>{t('brand.type.familyEmbed')}</span>
                 </label>
               </div>
             </div>
@@ -362,11 +465,12 @@ export function BrandTypeEditor({ content, canEdit, onChange, onGapCount }: Bran
           </p>
         )}
 
+        <p className="design-field__hint">{t('brand.type.licenceHint')}</p>
+        <p className="design-field__hint">{t('brand.type.fileRefHint')}</p>
+
         {missing.length > 0 && (
           <p className="design-note design-note--error" data-type-family-gap>
-            {t('brand.type.familyGap', {
-              scripts: missing.map(scriptLabel).join('、'),
-            })}
+            {t('brand.type.familyGap', { scripts: missing.map(scriptLabel).join('、') })}
           </p>
         )}
       </section>
@@ -377,10 +481,8 @@ export function BrandTypeEditor({ content, canEdit, onChange, onGapCount }: Bran
         <p className="design-field__hint">{t('brand.type.leadingHint')}</p>
 
         {TYPE_ROLES.map((key) => {
-          const role = doc.roles[key] ?? emptyRole();
+          const role = roleOf(doc, key);
           const roleGapList = roleGaps(doc, key);
-          const missingUnit = !sizeHasUnit(role.size) && role.size.trim() !== '';
-          const missingMinUnit = !sizeHasUnit(role.minSize) && role.minSize.trim() !== '';
 
           return (
             <div
@@ -393,7 +495,9 @@ export function BrandTypeEditor({ content, canEdit, onChange, onGapCount }: Bran
                 <code className="brand-type__key">{key}</code>
 
                 {roleGapList.length > 0 && (
-                  <span className="brand-type__badge">{t('brand.type.missing')}</span>
+                  <span className="brand-type__badge" data-type-role-badge={key}>
+                    {roleGapList.map(roleGapLabel).join('、')}
+                  </span>
                 )}
               </div>
 
@@ -401,17 +505,19 @@ export function BrandTypeEditor({ content, canEdit, onChange, onGapCount }: Bran
                 <span className="brand-type__fieldLabel">{t('brand.type.roleFamily')}</span>
                 <select
                   className="design-input"
-                  data-type-family-select={key}
-                  value={role.familyId}
+                  data-type-role-family={key}
+                  value={role.family}
                   disabled={!canEdit}
                   onChange={(event) => {
-                    setRole(key, { familyId: event.target.value });
+                    commit(setRole(doc, key, { family: event.target.value }));
                   }}
                 >
                   <option value="">{t('brand.type.roleUnassigned')}</option>
                   {doc.families.map((family) => (
                     <option key={family.id} value={family.id}>
-                      {`${scriptLabel(family.script)}・${family.name === '' ? t('brand.type.familyUnnamed') : family.name}${familyUsable(family) ? '' : `（${t('brand.type.missing')}）`}`}
+                      {`${scriptLabel(family.script as Script)}・${
+                        family.name === '' ? t('brand.type.familyUnnamed') : family.name
+                      }${familyUsable(family) ? '' : `（${t('brand.type.missing')}）`}`}
                     </option>
                   ))}
                 </select>
@@ -421,14 +527,14 @@ export function BrandTypeEditor({ content, canEdit, onChange, onGapCount }: Bran
                 <span className="brand-type__fieldLabel">{t('brand.type.roleSize')}</span>
                 <input
                   className="design-input"
-                  data-type-size={key}
+                  data-type-role-size={key}
                   value={role.size}
                   readOnly={!canEdit}
                   autoComplete="off"
                   spellCheck={false}
-                  placeholder="56px"
+                  placeholder={t('brand.type.roleSizePlaceholder')}
                   onChange={(event) => {
-                    setRole(key, { size: event.target.value });
+                    commit(setRole(doc, key, { size: event.target.value }));
                   }}
                 />
               </label>
@@ -437,14 +543,14 @@ export function BrandTypeEditor({ content, canEdit, onChange, onGapCount }: Bran
                 <span className="brand-type__fieldLabel">{t('brand.type.roleLeading')}</span>
                 <input
                   className="design-input"
-                  data-type-leading={key}
+                  data-type-role-leading={key}
                   value={role.leading}
                   readOnly={!canEdit}
                   autoComplete="off"
                   spellCheck={false}
-                  placeholder="64px"
+                  placeholder={t('brand.type.roleLeadingPlaceholder')}
                   onChange={(event) => {
-                    setRole(key, { leading: event.target.value });
+                    commit(setRole(doc, key, { leading: event.target.value }));
                   }}
                 />
               </label>
@@ -453,11 +559,11 @@ export function BrandTypeEditor({ content, canEdit, onChange, onGapCount }: Bran
                 <span className="brand-type__fieldLabel">{t('brand.type.roleWeight')}</span>
                 <select
                   className="design-input"
-                  data-type-weight={key}
+                  data-type-role-weight={key}
                   value={role.weight}
                   disabled={!canEdit}
                   onChange={(event) => {
-                    setRole(key, { weight: event.target.value });
+                    commit(setRole(doc, key, { weight: event.target.value }));
                   }}
                 >
                   <option value="">—</option>
@@ -470,17 +576,36 @@ export function BrandTypeEditor({ content, canEdit, onChange, onGapCount }: Bran
               </label>
 
               <label className="brand-type__field">
-                <span className="brand-type__fieldLabel">{t('brand.type.roleMinSize')}</span>
+                <span className="brand-type__fieldLabel">{t('brand.type.roleMin')}</span>
                 <input
                   className="design-input"
-                  data-type-min-size={key}
-                  value={role.minSize}
+                  data-type-role-min={key}
+                  value={role.min > 0 ? String(role.min) : ''}
+                  readOnly={!canEdit}
+                  inputMode="numeric"
+                  autoComplete="off"
+                  placeholder="14"
+                  onChange={(event) => {
+                    const value = Number(event.target.value.trim());
+
+                    commit(
+                      setRole(doc, key, { min: Number.isFinite(value) && value > 0 ? value : 0 }),
+                    );
+                  }}
+                />
+              </label>
+
+              <label className="brand-type__field">
+                <span className="brand-type__fieldLabel">{t('brand.type.roleMeasure')}</span>
+                <input
+                  className="design-input"
+                  data-type-role-measure={key}
+                  value={role.measure}
                   readOnly={!canEdit}
                   autoComplete="off"
-                  spellCheck={false}
-                  placeholder="14px"
+                  placeholder={t('brand.type.roleMeasurePlaceholder')}
                   onChange={(event) => {
-                    setRole(key, { minSize: event.target.value });
+                    commit(setRole(doc, key, { measure: event.target.value }));
                   }}
                 />
               </label>
@@ -489,23 +614,38 @@ export function BrandTypeEditor({ content, canEdit, onChange, onGapCount }: Bran
                 <span className="brand-type__fieldLabel">{t('brand.type.roleColor')}</span>
                 <select
                   className="design-input"
-                  data-type-color={key}
-                  value={isColorRole(role.colorRole) ? role.colorRole : ''}
+                  data-type-role-color={key}
+                  value={role.color_role}
                   disabled={!canEdit}
                   onChange={(event) => {
-                    setRole(key, { colorRole: event.target.value });
+                    commit(setRole(doc, key, { color_role: event.target.value }));
                   }}
                 >
                   <option value="">—</option>
-                  {TEXT_COLOR_ROLES.map((colorRole) => (
-                    <option key={colorRole} value={colorRole}>
-                      {colorRole}
+                  {COLOR_ROLES.map((colorRole) => (
+                    <option key={colorRole.key} value={colorRole.key}>
+                      {colorRole.key}
                     </option>
                   ))}
                 </select>
               </label>
 
-              {(missingUnit || missingMinUnit) && (
+              <label className="brand-type__field brand-type__field--wide">
+                <span className="brand-type__fieldLabel">{t('brand.type.roleReason')}</span>
+                <input
+                  className="design-input"
+                  data-type-role-reason={key}
+                  value={role.reason}
+                  readOnly={!canEdit}
+                  autoComplete="off"
+                  placeholder={t('brand.type.roleReasonPlaceholder')}
+                  onChange={(event) => {
+                    commit(setRole(doc, key, { reason: event.target.value }));
+                  }}
+                />
+              </label>
+
+              {role.size.trim() !== '' && roleGapList.includes('size') && (
                 <p className="design-note design-note--error" data-type-unit-error={key}>
                   {t('brand.type.unitError')}
                 </p>
@@ -513,6 +653,8 @@ export function BrandTypeEditor({ content, canEdit, onChange, onGapCount }: Bran
             </div>
           );
         })}
+
+        <p className="design-field__hint">{t('brand.type.colorNote')}</p>
       </section>
 
       <section className="brand-type__section" data-type-pairing-section>
@@ -524,111 +666,71 @@ export function BrandTypeEditor({ content, canEdit, onChange, onGapCount }: Bran
           data-type-pairing
           value={doc.pairing}
           readOnly={!canEdit}
-          rows={3}
+          rows={2}
           onChange={(event) => {
             commit({ ...doc, pairing: event.target.value });
           }}
         />
+
+        <label className="brand-type__field brand-type__field--stack">
+          <span className="brand-type__fieldLabel">{t('brand.type.anatomy')}</span>
+          <span className="design-field__hint">{t('brand.type.anatomyHint')}</span>
+          <textarea
+            className="brand-page__textarea brand-type__textarea"
+            data-type-anatomy
+            value={doc.sentence_anatomy}
+            readOnly={!canEdit}
+            rows={2}
+            placeholder={t('brand.type.anatomyPlaceholder')}
+            onChange={(event) => {
+              commit({ ...doc, sentence_anatomy: event.target.value });
+            }}
+          />
+        </label>
+
+        <label className="brand-type__field brand-type__field--stack">
+          <span className="brand-type__fieldLabel">{t('brand.type.mixedSetting')}</span>
+          <span className="design-field__hint">{t('brand.type.mixedHint')}</span>
+          <textarea
+            className="brand-page__textarea brand-type__textarea"
+            data-type-mixed
+            value={doc.mixed_setting}
+            readOnly={!canEdit}
+            rows={2}
+            placeholder={t('brand.type.mixedPlaceholder')}
+            onChange={(event) => {
+              commit({ ...doc, mixed_setting: event.target.value });
+            }}
+          />
+        </label>
       </section>
 
-      <section className="brand-type__section" data-type-fallbacks>
-        <h3 className="brand-page__versionsTitle">{t('brand.type.fallbacks')}</h3>
-        <p className="design-field__hint">{t('brand.type.fallbackHint')}</p>
+      <section className="brand-type__section" data-type-print-section>
+        <h3 className="brand-page__versionsTitle">{t('brand.type.print')}</h3>
+        <p className="design-field__hint">{t('brand.type.printHint')}</p>
 
-        <div className="brand-type__familyFields">
-          <label className="brand-type__field brand-type__field--wide">
-            <span className="brand-type__fieldLabel">{t('brand.type.fallbackLatin')}</span>
-            <input
-              className="design-input"
-              data-type-fallback-latin
-              value={doc.fallbackLatin}
-              readOnly={!canEdit}
-              autoComplete="off"
-              spellCheck={false}
-              onChange={(event) => {
-                commit({ ...doc, fallbackLatin: event.target.value });
-              }}
-            />
-          </label>
-
-          <label className="brand-type__field brand-type__field--wide">
-            <span className="brand-type__fieldLabel">{t('brand.type.fallbackChinese')}</span>
-            <input
-              className="design-input"
-              data-type-fallback-chinese
-              value={doc.fallbackChinese}
-              readOnly={!canEdit}
-              autoComplete="off"
-              spellCheck={false}
-              onChange={(event) => {
-                commit({ ...doc, fallbackChinese: event.target.value });
-              }}
-            />
-          </label>
-        </div>
-      </section>
-
-      <section className="brand-type__section" data-type-measure-section>
-        <h3 className="brand-page__versionsTitle">{t('brand.type.measureTitle')}</h3>
-
-        <div className="brand-type__familyFields">
-          <label className="brand-type__field brand-type__field--wide">
-            <span className="brand-type__fieldLabel">{t('brand.type.measure')}</span>
-            <input
-              className="design-input"
-              data-type-measure
-              value={doc.measure}
-              readOnly={!canEdit}
-              autoComplete="off"
-              placeholder={t('brand.type.measurePlaceholder')}
-              onChange={(event) => {
-                commit({ ...doc, measure: event.target.value });
-              }}
-            />
-          </label>
-
-          <label className="brand-type__field">
-            <span className="brand-type__fieldLabel">{t('brand.type.align')}</span>
-            <select
-              className="design-input"
-              data-type-align
-              value={doc.align}
-              disabled={!canEdit}
-              onChange={(event) => {
-                const value = ALIGNS.find((item) => item === event.target.value) ?? '';
-                commit({ ...doc, align: value });
-              }}
-            >
-              <option value="">—</option>
-              {ALIGNS.map((item) => (
-                <option key={item} value={item}>
-                  {alignLabel(item)}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-      </section>
-
-      <section className="brand-type__section" data-type-misuse-section>
-        <h3 className="brand-page__versionsTitle">{t('brand.type.misuse')}</h3>
-        <p className="design-field__hint">{t('brand.type.misuseHint')}</p>
-
-        {doc.misuse.length === 0 ? (
-          <p className="design-empty">{t('brand.type.misuseEmpty')}</p>
+        {doc.print_matrix.length === 0 ? (
+          <p className="design-empty">{t('brand.type.printEmpty')}</p>
         ) : (
-          <ul className="brand-type__misuseList">
-            {doc.misuse.map((item) => (
-              <li className="brand-type__misuseItem" key={item} data-type-misuse-item={item}>
-                <span>{item}</span>
+          <ul className="brand-type__recordList">
+            {doc.print_matrix.map((row) => (
+              <li className="brand-type__record" key={row.item} data-type-print-row={row.item}>
+                <code className="brand-type__key">{row.item}</code>
+                <span className="brand-type__recordSpec" data-type-print-spec={row.item}>
+                  {row.spec}
+                </span>
+
                 {canEdit && (
                   <button
                     type="button"
                     className="brand-color__iconButton"
-                    data-type-misuse-remove={item}
-                    aria-label={`${t('brand.type.misuseRemove')} ${item}`}
+                    data-type-print-remove={row.item}
+                    aria-label={`${t('brand.type.remove')} ${row.item}`}
                     onClick={() => {
-                      removeMisuse(item);
+                      commit({
+                        ...doc,
+                        print_matrix: doc.print_matrix.filter((other) => other.item !== row.item),
+                      });
                     }}
                   >
                     ×
@@ -639,24 +741,106 @@ export function BrandTypeEditor({ content, canEdit, onChange, onGapCount }: Bran
           </ul>
         )}
 
+        {printError !== null && (
+          <p className="design-note design-note--error" data-type-print-error>
+            {printError}
+          </p>
+        )}
+
+        {canEdit && (
+          <div className="brand-type__adder">
+            <input
+              className="design-input"
+              data-type-print-item
+              value={printDraft.item}
+              autoComplete="off"
+              placeholder={t('brand.type.printItem')}
+              onChange={(event) => {
+                setPrintDraft({ ...printDraft, item: event.target.value });
+              }}
+            />
+            <input
+              className="design-input"
+              data-type-print-spec-input
+              value={printDraft.spec}
+              autoComplete="off"
+              placeholder={t('brand.type.printSpec')}
+              onChange={(event) => {
+                setPrintDraft({ ...printDraft, spec: event.target.value });
+              }}
+            />
+            <button type="button" className="brand-page__action" data-type-print-add onClick={addPrint}>
+              {t('brand.type.printAdd')}
+            </button>
+          </div>
+        )}
+      </section>
+
+      <section className="brand-type__section" data-type-misuse-section>
+        <h3 className="brand-page__versionsTitle">{t('brand.type.misuse')}</h3>
+        <p className="design-field__hint">{t('brand.type.misuseHint')}</p>
+
+        {doc.misuse.length === 0 ? (
+          <p className="design-empty">{t('brand.type.misuseEmpty')}</p>
+        ) : (
+          <ul className="brand-type__recordList">
+            {doc.misuse.map((row) => (
+              <li className="brand-type__record" key={row.example} data-type-misuse-row={row.example}>
+                <code className="brand-type__key">{row.example}</code>
+                <span className="brand-type__recordSpec" data-type-misuse-reason={row.example}>
+                  {row.reason}
+                </span>
+
+                {canEdit && (
+                  <button
+                    type="button"
+                    className="brand-color__iconButton"
+                    data-type-misuse-remove={row.example}
+                    aria-label={`${t('brand.type.remove')} ${row.example}`}
+                    onClick={() => {
+                      commit({
+                        ...doc,
+                        misuse: doc.misuse.filter((other) => other.example !== row.example),
+                      });
+                    }}
+                  >
+                    ×
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {misuseError !== null && (
+          <p className="design-note design-note--error" data-type-misuse-error>
+            {misuseError}
+          </p>
+        )}
+
         {canEdit && (
           <div className="brand-type__adder">
             <input
               className="design-input"
               data-type-misuse-input
-              value={misuseDraft}
+              value={misuseDraft.example}
               autoComplete="off"
               placeholder={t('brand.type.misusePlaceholder')}
               onChange={(event) => {
-                setMisuseDraft(event.target.value);
+                setMisuseDraft({ ...misuseDraft, example: event.target.value });
               }}
             />
-            <button
-              type="button"
-              className="brand-page__action"
-              data-type-misuse-add
-              onClick={addMisuse}
-            >
+            <input
+              className="design-input"
+              data-type-misuse-reason-input
+              value={misuseDraft.reason}
+              autoComplete="off"
+              placeholder={t('brand.type.misuseReasonPlaceholder')}
+              onChange={(event) => {
+                setMisuseDraft({ ...misuseDraft, reason: event.target.value });
+              }}
+            />
+            <button type="button" className="brand-page__action" data-type-misuse-add onClick={addMisuse}>
               {t('brand.type.misuseAdd')}
             </button>
           </div>

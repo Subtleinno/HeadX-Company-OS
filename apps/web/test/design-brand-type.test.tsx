@@ -11,18 +11,21 @@ import {
   resetBrowserState,
   type FakeHandlers,
 } from './helpers/fake-api';
+import { fullTypeDoc } from './fixtures/brandTypeface';
 
 /**
- * 字體頁（issue #38）。
+ * 字體頁（issue #63，取代 #38 的畫面）。
  *
- * 這一張要證明四件事，四件都是「打開畫面之後，眼睛看到什麼」：
+ * 這一張要證明五件事，五件都是「打開畫面之後，眼睛看到什麼」：
  *
- *   1. 看到的是**有角色的層級**（display／heading／body／caption），不是只有
- *      一個字體名稱。每個層級都有自己的尺寸、行距、字重、最小尺寸、文字顏色。
- *   2. 缺授權、缺中文，標成缺 —— 而且**沒有用系統字充數**：未授權的家族，
- *      引用它的層級一併標缺，不會靜靜用系統預設字頂上。
- *   3. 尺寸要寫單位。打 `18` 會當場講，不是靜靜當成 18 像素。
- *   4. 文字顏色只引用色彩頁的角色名，沒有第二個放色值的地方。
+ *   1. 看到的是**有角色的層級**（display／heading／body／caption），每級都有
+ *      家族、字級、行高、字重、最小 px、每行字數、文字色。
+ *   2. 四個授權渠道（網頁、印刷、應用程式、桌面）逐一在畫面上；留空是
+ *      「未寫明」，不是「沒有授權」。
+ *   3. 缺可嵌入檔、缺中文，標成缺 —— 而且**沒有用系統字充數**：引用它的
+ *      層級一併標缺。
+ *   4. 字級要寫單位。打 `18` 會當場講，不是靜靜當成 18 像素。
+ *   5. 文字色只引用色彩頁的角色名，沒有第二個放色值的地方。
  *
  * 「改完重新載入仍然是改過的」與「員工只讀」兩條另驗：前者證明真的入了
  * 版本鏈（不是只留在畫面），後者是權限。
@@ -83,37 +86,8 @@ const PAGES = [
   TYPE_PAGE,
 ];
 
-/** 一份填齊的字體表：兩個家族（有授權、可嵌入）、四個層級都有值。 */
-const DOC = {
-  families: [
-    {
-      id: 'f-latin',
-      script: 'latin',
-      name: 'Inter',
-      licence: '網頁嵌入、印刷、應用程式',
-      webEmbeddable: true,
-    },
-    {
-      id: 'f-chinese',
-      script: 'chinese',
-      name: '思源黑體',
-      licence: '網頁嵌入、印刷',
-      webEmbeddable: true,
-    },
-  ],
-  roles: {
-    display: { familyId: 'f-chinese', size: '56px', leading: '64px', weight: '700', minSize: '32px', colorRole: 'ink' },
-    heading: { familyId: 'f-chinese', size: '28px', leading: '36px', weight: '600', minSize: '20px', colorRole: 'ink' },
-    body: { familyId: 'f-latin', size: '17px', leading: '26px', weight: '400', minSize: '14px', colorRole: 'ink' },
-    caption: { familyId: 'f-latin', size: '13px', leading: '18px', weight: '400', minSize: '11px', colorRole: 'muted' },
-  },
-  pairing: '中文用思源黑體，拉丁與數字用 Inter；行高取兩者較大者。',
-  fallbackLatin: 'system-ui, sans-serif',
-  fallbackChinese: 'PingFang TC, sans-serif',
-  measure: '32 字元',
-  align: 'left',
-  misuse: ['不拉寬、不壓扁', '不用低於最小尺寸的字'],
-};
+/** 一份填齊的字體表：兩個家族（四個渠道有寫、有可嵌入檔）、四級都有值。 */
+const DOC = fullTypeDoc();
 
 const DOC_TEXT = JSON.stringify(DOC);
 
@@ -140,6 +114,7 @@ function detailFor(fake: Fake) {
     note: null,
     preview: fake.content.slice(0, 120),
     policyVersionNo: 3,
+    changed: [],
     content: fake.content,
   };
 
@@ -176,6 +151,7 @@ function openType(
           note: null,
           preview: fake.content.slice(0, 120),
           policyVersionNo: 3,
+          changed: [],
           content: fake.content,
         },
       });
@@ -192,8 +168,12 @@ function role(name: string): HTMLElement | null {
   return document.querySelector(`[data-type-role="${name}"]`);
 }
 
-function field(name: string, fieldName: string): HTMLInputElement | null {
-  return document.querySelector(`[data-type-${fieldName}="${name}"]`);
+function input(selector: string): HTMLInputElement | null {
+  return document.querySelector(selector);
+}
+
+function familyField(id: string, field: string): HTMLInputElement | null {
+  return document.querySelector(`[data-type-family-${field}="${id}"]`);
 }
 
 function savedContent(api: ReturnType<typeof installFakeApi>): string {
@@ -210,7 +190,7 @@ afterEach(() => {
 });
 
 describe('字體頁', () => {
-  it('看到的是有角色的層級：四行，每行有尺寸、行距、字重、最小尺寸、文字顏色', async () => {
+  it('看到的是有角色的層級：四行，每行有家族、字級、行高、字重、最小 px、文字色', async () => {
     openType(BOSS);
 
     await waitFor(() => {
@@ -223,15 +203,16 @@ describe('字體頁', () => {
       expect(role(key), key).not.toBeNull();
     }
 
-    // 不是只有一個字體名：每一層都有自己的數值。
-    expect(field('display', 'size')?.value).toBe('56px');
-    expect(field('display', 'leading')?.value).toBe('64px');
-    expect(field('display', 'weight')?.value).toBe('700');
-    expect(field('display', 'min-size')?.value).toBe('32px');
+    // 不是只有一個字體名：每一級都有自己的數值。
+    expect(input('[data-type-role-size="display"]')?.value).toBe('56px');
+    expect(input('[data-type-role-leading="display"]')?.value).toBe('64px');
+    expect(input('[data-type-role-weight="display"]')?.value).toBe('700');
+    expect(input('[data-type-role-min="display"]')?.value).toBe('32');
+    expect(input('[data-type-role-measure="display"]')?.value).toBe('32 字元');
 
-    // 文字顏色是一個角色名，不是色值。
+    // 文字色是一個角色名，不是色值。
     expect(
-      (document.querySelector('[data-type-color="display"]') as HTMLSelectElement).value,
+      (document.querySelector('[data-type-role-color="display"]') as HTMLSelectElement).value,
     ).toBe('ink');
     expect(document.body.textContent).not.toContain('#');
 
@@ -250,8 +231,56 @@ describe('字體頁', () => {
     expect(document.querySelector('[data-type-family-limit]')?.textContent).toContain('最多兩個');
   });
 
-  it('缺授權：家族標缺，引用它的層級一併標缺，沒有用系統字充數', async () => {
-    openType(BOSS, {}, JSON.stringify({ ...DOC, families: [{ ...DOC.families[0], licence: '' }, DOC.families[1]] }));
+  it('四個授權渠道逐一在畫面上：網頁、印刷、應用程式、桌面', async () => {
+    openType(BOSS);
+
+    await waitFor(() => {
+      expect(familyField('f-latin', 'licence-web')).not.toBeNull();
+    });
+
+    expect(familyField('f-latin', 'licence-web')?.value).toContain('OFL');
+    expect(familyField('f-latin', 'licence-print')?.value).toContain('OFL');
+    expect(familyField('f-latin', 'licence-app')).not.toBeNull();
+    expect(familyField('f-latin', 'licence-desktop')).not.toBeNull();
+
+    // 留空＝未寫明，不是「沒有授權」：上面那句要講清楚。
+    expect(document.body.textContent).toContain('留空＝未寫明');
+  });
+
+  it('只有應用程式授權也算有授權：不在網頁那一格填東西就不算缺', async () => {
+    openType(
+      BOSS,
+      {},
+      JSON.stringify({
+        ...DOC,
+        families: [
+          {
+            ...DOC.families[0],
+            license_web: '',
+            license_print: '',
+            license_app: 'App Store 內嵌',
+          },
+          DOC.families[1],
+        ],
+      }),
+    );
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-type-family="f-latin"]')).not.toBeNull();
+    });
+
+    expect(
+      document.querySelector('[data-type-family="f-latin"]')?.getAttribute('data-missing'),
+    ).toBe('false');
+    expect(role('body')?.getAttribute('data-missing')).toBe('false');
+  });
+
+  it('缺可嵌入檔：家族標缺，引用它的層級一併標缺，沒有用系統字充數', async () => {
+    openType(
+      BOSS,
+      {},
+      JSON.stringify({ ...DOC, families: [{ ...DOC.families[0], file_ref: '' }, DOC.families[1]] }),
+    );
 
     await waitFor(() => {
       expect(document.querySelector('[data-type-family="f-latin"]')).not.toBeNull();
@@ -259,7 +288,7 @@ describe('字體頁', () => {
 
     const latin = document.querySelector('[data-type-family="f-latin"]');
     expect(latin?.getAttribute('data-missing')).toBe('true');
-    expect(latin?.textContent).toContain('缺授權');
+    expect(latin?.textContent).toContain('缺可嵌入檔');
 
     // body 與 caption 用拉丁家族：一併標缺。
     expect(role('body')?.getAttribute('data-missing')).toBe('true');
@@ -280,22 +309,24 @@ describe('字體頁', () => {
     expect(gap?.textContent).toContain('系統預設字');
   });
 
-  it('尺寸要寫單位：打 18 當場講，打 18px 才算', async () => {
+  it('字級要寫單位：打 18 當場講，打 18px 才算', async () => {
     openType(BOSS);
 
     await waitFor(() => {
-      expect(field('heading', 'size')).not.toBeNull();
+      expect(input('[data-type-role-size="heading"]')).not.toBeNull();
     });
 
-    await userEvent.clear(field('heading', 'size') as HTMLInputElement);
-    await userEvent.type(field('heading', 'size') as HTMLInputElement, '18');
+    const size = input('[data-type-role-size="heading"]') as HTMLInputElement;
+
+    await userEvent.clear(size);
+    await userEvent.type(size, '18');
 
     expect(role('heading')?.getAttribute('data-missing')).toBe('true');
     expect(document.querySelector('[data-type-unit-error="heading"]')?.textContent).toContain(
       '要寫單位',
     );
 
-    await userEvent.type(field('heading', 'size') as HTMLInputElement, 'px');
+    await userEvent.type(size, 'px');
 
     expect(role('heading')?.getAttribute('data-missing')).toBe('false');
     expect(document.querySelector('[data-type-unit-error="heading"]')).toBeNull();
@@ -305,11 +336,13 @@ describe('字體頁', () => {
     const { api } = openType(BOSS);
 
     await waitFor(() => {
-      expect(field('body', 'size')).not.toBeNull();
+      expect(input('[data-type-role-size="body"]')).not.toBeNull();
     });
 
-    await userEvent.clear(field('body', 'size') as HTMLInputElement);
-    await userEvent.type(field('body', 'size') as HTMLInputElement, '18px');
+    const size = input('[data-type-role-size="body"]') as HTMLInputElement;
+
+    await userEvent.clear(size);
+    await userEvent.type(size, '18px');
     await userEvent.click(screen.getByRole('button', { name: '儲存（新增一版）' }));
 
     await waitFor(() => {
@@ -317,18 +350,96 @@ describe('字體頁', () => {
     });
 
     const sent = JSON.parse(savedContent(api)) as typeof DOC;
-    expect(sent.roles.body.size).toBe('18px');
-    expect(sent.roles.display.size).toBe('56px');
+    const body = sent.roles.find((row) => row.role === 'body');
+
+    expect(body?.size).toBe('18px');
+    expect(sent.roles.find((row) => row.role === 'display')?.size).toBe('56px');
 
     await waitFor(() => {
-      expect(field('body', 'size')?.value).toBe('18px');
+      expect(input('[data-type-role-size="body"]')?.value).toBe('18px');
     });
   });
 
-  it('現行內容不是字體表（舊的自由文字）：講讀不到，不畫假層級', async () => {
+  it('刪走家族：指向它的層級一併清空，不留一個指去不存在的家族的值', async () => {
+    const { api } = openType(BOSS);
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-type-family-remove="f-latin"]')).not.toBeNull();
+    });
+
+    await userEvent.click(
+      document.querySelector('[data-type-family-remove="f-latin"]') as HTMLElement,
+    );
+    await userEvent.click(screen.getByRole('button', { name: '儲存（新增一版）' }));
+
+    await waitFor(() => {
+      expect(api.count('brandPageSave')).toBe(1);
+    });
+
+    const sent = JSON.parse(savedContent(api)) as typeof DOC;
+
+    expect(sent.families.map((family) => family.id)).toEqual(['f-chinese']);
+    expect(sent.roles.find((row) => row.role === 'body')?.family).toBe('');
+    expect(sent.roles.find((row) => row.role === 'display')?.family).toBe('f-chinese');
+  });
+
+  it('印刷矩陣與錯誤用法：要填齊才加得入，加完看得到', async () => {
+    openType(BOSS);
+
+    await waitFor(() => {
+      expect(input('[data-type-print-item]')).not.toBeNull();
+    });
+
+    // 只寫項目、沒有規格：講清楚，不靜靜加一行空的。
+    await userEvent.type(input('[data-type-print-item]') as HTMLInputElement, '海報');
+    await userEvent.click(document.querySelector('[data-type-print-add]') as HTMLElement);
+
+    expect(document.querySelector('[data-type-print-error]')?.textContent).toContain('規格');
+
+    await userEvent.type(input('[data-type-print-spec-input]') as HTMLInputElement, 'A1／300dpi');
+    await userEvent.click(document.querySelector('[data-type-print-add]') as HTMLElement);
+
+    expect(document.querySelector('[data-type-print-row="海報"]')).not.toBeNull();
+    expect(document.querySelector('[data-type-print-spec="海報"]')?.textContent).toBe('A1／300dpi');
+
+    // 錯誤用法一樣要寫為咩不可以。
+    await userEvent.type(input('[data-type-misuse-input]') as HTMLInputElement, '拉寬');
+    await userEvent.click(document.querySelector('[data-type-misuse-add]') as HTMLElement);
+
+    expect(document.querySelector('[data-type-misuse-error]')?.textContent).toContain('理由');
+
+    await userEvent.type(
+      input('[data-type-misuse-reason-input]') as HTMLInputElement,
+      '字骨架會歪，遠處看是扁的',
+    );
+    await userEvent.click(document.querySelector('[data-type-misuse-add]') as HTMLElement);
+
+    expect(document.querySelector('[data-type-misuse-row="拉寬"]')).not.toBeNull();
+    expect(document.querySelector('[data-type-misuse-reason="拉寬"]')?.textContent).toContain('歪');
+  });
+
+  it('現行內容不是字體表：講讀不到，不畫假層級', async () => {
     openType(BOSS, {}, '主標用思源黑體，內文用 Inter。');
 
-    expect(await screen.findByText('這一版內容不是字體表，所以讀不到當中的層級。')).toBeTruthy();
+    expect(
+      await screen.findByText('這一版內容不是字體表，所以讀不到當中的家族與層級。'),
+    ).toBeTruthy();
+    expect(document.querySelectorAll('[data-type-role]').length).toBe(0);
+  });
+
+  it('#38 的舊形狀（roles 是一個物件）一樣講讀不到，不會無中生有一張齊全表', async () => {
+    openType(
+      BOSS,
+      {},
+      JSON.stringify({
+        families: [{ id: 'f', name: 'Inter', licence: '網頁嵌入', webEmbeddable: true }],
+        roles: { body: { familyId: 'f', size: '17px' } },
+      }),
+    );
+
+    expect(
+      await screen.findByText('這一版內容不是字體表，所以讀不到當中的家族與層級。'),
+    ).toBeTruthy();
     expect(document.querySelectorAll('[data-type-role]').length).toBe(0);
   });
 
@@ -336,10 +447,10 @@ describe('字體頁', () => {
     openType(WAI);
 
     await waitFor(() => {
-      expect(field('display', 'size')).not.toBeNull();
+      expect(input('[data-type-role-size="display"]')).not.toBeNull();
     });
 
-    expect(field('display', 'size')?.readOnly).toBe(true);
+    expect(input('[data-type-role-size="display"]')?.readOnly).toBe(true);
     expect(document.querySelector('[data-brand-page-save]')).toBeNull();
     expect(document.querySelector('[data-type-family-remove]')).toBeNull();
     expect(screen.getByText('你只可以看這一頁。要改，請找老闆。')).toBeTruthy();

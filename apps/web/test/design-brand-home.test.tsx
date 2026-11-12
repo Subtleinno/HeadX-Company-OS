@@ -113,11 +113,30 @@ const LOGO_DOC = JSON.stringify({
 
 const TYPE_DOC = JSON.stringify({
   families: [
-    { id: 'f-latin', script: 'latin', name: 'Inter', licence: '網頁嵌入', webEmbeddable: true },
+    {
+      id: 'f-latin',
+      script: 'latin',
+      name: 'Inter',
+      license_web: 'SIL OFL 1.1，可嵌入',
+      license_print: '',
+      license_app: '',
+      license_desktop: '',
+      file_ref: 'fonts/Inter.woff2',
+    },
   ],
-  roles: {
-    heading: { familyId: 'f-latin', size: '28px', leading: '1.3', weight: '600', minSize: '20px', colorRole: 'ink' },
-  },
+  roles: [
+    {
+      role: 'heading',
+      family: 'f-latin',
+      weight: '600',
+      size: '28px',
+      leading: '1.3',
+      min: 20,
+      measure: '32 字元',
+      color_role: 'ink',
+      reason: '',
+    },
+  ],
 });
 
 const TONE_DOC = JSON.stringify({
