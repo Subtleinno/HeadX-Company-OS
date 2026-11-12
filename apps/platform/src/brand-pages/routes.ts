@@ -352,6 +352,7 @@ export function registerBrandPages(app: FastifyInstance, deps: BrandPagesDeps): 
 
       const version = await createVersion(deps.pool, {
         pageId: resolved.page.id,
+        document: parsed.value.document,
         content: parsed.value.content,
         note: parsed.value.note,
         actorId: user.id,

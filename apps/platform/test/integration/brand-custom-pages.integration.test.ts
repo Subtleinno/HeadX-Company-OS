@@ -164,8 +164,20 @@ describe('自定義頁與品牌編輯權', () => {
     const { items } = await listPages(owner.cookie, brandId);
     const keys = items.map((item) => item.key);
 
-    // 五個固定頁先，然後三張自定義頁按建立次序（不是字母：naming < packaging < photo）。
-    expect(keys).toEqual(['home', 'logo', 'color', 'type', 'tone', 'photo', 'packaging', 'naming']);
+    // 八個固定頁先（C112），然後三張自定義頁按建立次序（不是字母：naming < packaging < photo）。
+    expect(keys).toEqual([
+      'home',
+      'platform',
+      'color',
+      'type',
+      'logo',
+      'tone',
+      'image',
+      'examples',
+      'photo',
+      'packaging',
+      'naming',
+    ]);
     expect(items.filter((item) => item.kind === 'custom')).toHaveLength(3);
   });
 
@@ -192,7 +204,7 @@ describe('自定義頁與品牌編輯權', () => {
     expect(fixedSlug.statusCode).toBe(400);
     expect((fixedSlug.json() as { reason: string }).reason).toContain('固定頁');
 
-    expect((await listPages(owner.cookie, brandId)).items).toHaveLength(5);
+    expect((await listPages(owner.cookie, brandId)).items).toHaveLength(8);
   });
 
   it('撞名：409，講明撞了哪一張，不會靜靜改名', async () => {
@@ -306,7 +318,7 @@ describe('自定義頁與品牌編輯權', () => {
     expect(again.statusCode).toBe(201);
   });
 
-  it('五個固定頁不可以刪：409 講明它是網址的一部分', async () => {
+  it('固定頁不可以刪：409 講明它是網址的一部分', async () => {
     const owner = await setupOwner();
     const brandId = await createBrandRow('moonic', 'Moonic');
 
@@ -397,7 +409,17 @@ describe('自定義頁與品牌編輯權', () => {
     expect(saved.statusCode).toBe(403);
 
     const { items } = await listPages(staff.cookie, brandId);
-    expect(items.map((item) => item.key)).toEqual(['home', 'logo', 'color', 'type', 'tone', 'packaging']);
+    expect(items.map((item) => item.key)).toEqual([
+      'home',
+      'platform',
+      'color',
+      'type',
+      'logo',
+      'tone',
+      'image',
+      'examples',
+      'packaging',
+    ]);
     expect(items.find((item) => item.key === 'packaging')?.name).toBe('包裝');
   });
 

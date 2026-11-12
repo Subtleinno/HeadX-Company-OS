@@ -1,5 +1,7 @@
+import { BRAND_FIXED_PAGE_KEYS, parseBrandDocument, type BrandDocument } from '@company-os/contracts';
+
 /**
- * 品牌頁版本的輸入驗證（issue #33）。
+ * 品牌頁版本的輸入驗證（issue #33、#57）。
  *
  * 這一層只做「形狀」：是不是字串、長度、是不是空的。它不判斷版本是否現行、
  * 是否被成品釘住 —— 那些要讀資料庫，屬 store 的事。分開的原因是同一個
@@ -23,6 +25,9 @@ export function isUuid(value: string): boolean {
 }
 
 export type VersionInput = {
+  /** v2 文件（issue #57）。有它時 `content` 由它產生。 */
+  document: BrandDocument | null;
+  /** 舊格式原文。只有在沒有文件時使用。 */
   content: string;
   note: string | null;
 };
@@ -43,18 +48,38 @@ export function parseVersionInput(body: unknown): ParseResult<VersionInput> {
   }
 
   const record = body as Record<string, unknown>;
+
+  /**
+   * v2：整份文件。驗證在 contracts 做（同一個形狀 web 與 platform 都認得），
+   * 這裡只負責把錯誤轉成一條講得明的句子。
+   */
+  const document = record.document;
+  let parsedDocument: BrandDocument | null = null;
+
+  if (document !== undefined && document !== null) {
+    const parsed = parseBrandDocument(document);
+
+    if (!parsed.ok) {
+      return { ok: false, reason: `document 不合格：${parsed.errors.join('；')}` };
+    }
+
+    parsedDocument = parsed.value;
+  }
+
   const content = record.content;
 
-  if (typeof content !== 'string') {
-    return { ok: false, reason: 'content 必須是字串' };
-  }
+  if (parsedDocument === null) {
+    if (typeof content !== 'string') {
+      return { ok: false, reason: 'content 必須是字串（或者交出 document）' };
+    }
 
-  if (content.trim() === '') {
-    return { ok: false, reason: 'content 不可以是空白' };
-  }
+    if (content.trim() === '') {
+      return { ok: false, reason: 'content 不可以是空白' };
+    }
 
-  if (content.length > MAX_CONTENT_LENGTH) {
-    return { ok: false, reason: `content 不可以超過 ${MAX_CONTENT_LENGTH} 個字元` };
+    if (content.length > MAX_CONTENT_LENGTH) {
+      return { ok: false, reason: `content 不可以超過 ${MAX_CONTENT_LENGTH} 個字元` };
+    }
   }
 
   const rawNote = record.note;
@@ -69,7 +94,14 @@ export function parseVersionInput(body: unknown): ParseResult<VersionInput> {
     return { ok: false, reason: `note 不可以超過 ${MAX_NOTE_LENGTH} 個字元` };
   }
 
-  return { ok: true, value: { content, note: note === '' ? null : note } };
+  return {
+    ok: true,
+    value: {
+      document: parsedDocument,
+      content: typeof content === 'string' ? content : '',
+      note: note === '' ? null : note,
+    },
+  };
 }
 
 /* ── 自定義頁（issue #32） ───────────────────────────────────── */
@@ -80,8 +112,8 @@ export const MAX_BRIEF_LENGTH = 400;
 
 const SLUG = /^[a-z][a-z0-9-]{0,39}$/;
 
-/** 五個固定頁的鍵。自定義頁不准用（0013 有 check，這裡先講得清楚）。 */
-export const FIXED_PAGE_KEYS: readonly string[] = ['home', 'logo', 'color', 'type', 'tone'];
+/** 八個固定頁的鍵（C112）。自定義頁不准用（0017 有 check，這裡先講得清楚）。 */
+export const FIXED_PAGE_KEYS: readonly string[] = BRAND_FIXED_PAGE_KEYS;
 
 export type CreatePageInput = {
   name: string;

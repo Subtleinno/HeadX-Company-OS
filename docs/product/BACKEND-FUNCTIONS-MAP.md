@@ -52,7 +52,7 @@
 | POST | `/brands` | 開新品牌 | **`requireOwner`** | ✅ 只有老闆見到表單（#19） |
 | GET | `/me/brand-focus` | 我上次工作的品牌，未揀過回 `null` | `requireUser` | ✅ `useDirectory` |
 | PUT | `/me/brand-focus` | 記住我這次的品牌（只寫自己那一行；品牌不存在 → `400 unknown_brand`） | `requireUser` | ✅ |
-| GET | `/brands/:id/pages` | 品牌頁清單＋`canEdit`（順手確保五個固定頁存在） | `requireUser` | ✅ `DesignApp`／`useBrandPages` |
+| GET | `/brands/:id/pages` | 品牌頁清單＋`canEdit`（順手確保八個固定頁存在，C112） | `requireUser` | ✅ `DesignApp`／`useBrandPages` |
 | POST | `/brands/:id/pages` | 建立自定義頁（名／slug／brief 三樣齊；撞鍵 409 `page_key_taken`、固定鍵 409 `page_key_reserved`） | 品牌編輯權（`canEditBrand`，C103） | ✅ `BrandPageCreate` |
 | PATCH | `/brands/:id/pages/:key` | 改顯示名（帶 `slug` 一律 400：slug 不可改） | 品牌編輯權 | ✅ `BrandPageScreen` |
 | DELETE | `/brands/:id/pages/:key` | 軟刪除自定義頁連版本；固定頁 409 `page_is_fixed`、被成品釘住 409 `page_pinned` | 品牌編輯權 | ✅ |
@@ -60,9 +60,13 @@
 | PUT | `/brands/:id/editors/:userId` | 授予品牌編輯權 | **`requireOwner`** | ✅ |
 | DELETE | `/brands/:id/editors/:userId` | 收回品牌編輯權 | **`requireOwner`** | ✅ |
 | GET | `/brands/:id/pages/:key` | 一頁的現行版本＋版本列表 | `requireUser` | ✅ |
-| POST | `/brands/:id/pages/:key/versions` | 儲存＝新增一版（空內容 400） | 品牌編輯權（C103；老闆永遠可以） | ✅ |
+| POST | `/brands/:id/pages/:key/versions` | 儲存＝新增一版（交 `document`（v2）或 `content`（舊格式）；空白 400；順手寫一列 `brand_release`） | 品牌編輯權（C103；老闆永遠可以） | ✅ |
 | POST | `/brands/:id/pages/:key/versions/:vid/restore` | 用回舊版：以舊內容新增一版，不改歷史 | 品牌編輯權 | ✅ |
 | DELETE | `/brands/:id/pages/:key/versions/:vid` | 軟刪除舊版；現行 409 `current_version`、被成品釘住 409 `version_pinned` | 品牌編輯權 | ✅ |
+| GET | `/brands/:id/output/tokens.json` | W3C Design Tokens（淺／深兩套），由各頁現行版本組成 | `requireUser` | ⏳ #67 的「給 AI 用」卡 |
+| GET | `/brands/:id/output/prompt.md` | 品牌 prompt 包（Markdown），帶比例、對比下限、最小尺寸與缺口 | `requireUser` | ⏳ #67 |
+| GET | `/brands/:id/output/html` | 整本品牌書的 HTML（可 `?page=key`），由 layout 渲染 | `requireUser` | ⏳ #67 |
+| GET | `/brands/:id/output/print` | A4 印刷版：同一份標記加 `@page` 與 folio | `requireUser` | ⏳ #67 |
 | GET | `/policy` | 策略九個槽：現行全文、版本列表、每個槽的規則 id 表（`rules.ts`）與「現行這一版正在支撐哪幾頁」 | `requireUser` | ✅ `PolicyScreen` |
 | POST | `/policy/:slot/versions` | 儲存＝新增一版（九個槽：platform／color／type／logo／image／tone／home／apply／custom） | **`requireOwner`** | ✅ |
 | GET | `/company` | 頁尾要顯示的公司識別（本機公司・公司名・城市） | `requireUser` | ✅ `AppFrame` |
