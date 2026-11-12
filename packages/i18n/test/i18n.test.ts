@@ -114,6 +114,15 @@ describe('字串表', () => {
       'brand.tone.gapTraits',
       'brand.tone.gapSituations',
       'brand.tone.traitLimit',
+      'brand.custom.briefVague',
+      'brand.custom.missingLine',
+      'brand.custom.gapSections',
+      'brand.custom.gapBanned',
+      'brand.custom.lineBanned',
+      'brand.custom.conflictLine',
+      'brand.custom.conflictNoPolicy',
+      'brand.custom.roleGap',
+      'brand.custom.regenerated',
     ]);
   });
 });

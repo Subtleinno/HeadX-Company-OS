@@ -12,11 +12,13 @@ import {
 } from '../api';
 import { failureMessage } from './apiFailure';
 import { BrandColorEditor } from './BrandColorEditor';
+import { BrandCustomEditor } from './BrandCustomEditor';
 import { BrandLogoEditor } from './BrandLogoEditor';
 import { BrandToneEditor } from './BrandToneEditor';
 import { BrandTypeEditor } from './BrandTypeEditor';
 import { hexesInText } from './brandColors';
 import { assetNamesInText } from './brandLogo';
+import { leadingLineInText } from './brandCustom';
 import { traitNamesInText } from './brandTone';
 import { namesInText } from './brandType';
 
@@ -150,6 +152,22 @@ function ToneVersionPreview({ preview }: { preview: string }) {
   );
 }
 
+/**
+ * 自定義頁的版本預覽：第一句（這一頁決定什麼）。
+ *
+ * 每一張自定義頁的內容都不同，所以預覽不畫 chip，直接畫那一版開頭那一句 ——
+ * 抽不到就講抽不到。
+ */
+function CustomVersionPreview({ preview }: { preview: string }) {
+  const line = leadingLineInText(preview);
+
+  return (
+    <p className="brand-page__preview" data-custom-version-line={line === '' ? undefined : line}>
+      {line === '' ? t('brand.custom.versionNoName') : line}
+    </p>
+  );
+}
+
 function formatTime(value: string): string {  const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {
@@ -183,37 +201,54 @@ export function BrandPageScreen({
   const [nameDraft, setNameDraft] = useState('');
   const [confirmRemove, setConfirmRemove] = useState(false);
 
-  const reload = useCallback(async (): Promise<void> => {
-    setState('loading');
+  /**
+   * 讀這一頁。
+   *
+   * `keepVisible` 是「換頁」與「寫完之後重新讀」的分別：換頁一定要收起舊頁
+   * （不然會見到上一頁的名字與內容），寫完之後不要收 —— 收起會令表身連同它
+   * 自己的狀態（例如按完「重編」那句回饋）一齊被拆掉再重建，讀的人只會見到
+   * 畫面跳一下、訊息一閃即散。
+   */
+  const load = useCallback(
+    async (keepVisible: boolean): Promise<void> => {
+      if (!keepVisible) {
+        setState('loading');
+      }
 
-    const page = await fetchBrandPage(brandId, pageKey);
+      const page = await fetchBrandPage(brandId, pageKey);
 
-    if (!page.ok) {
-      if (page.failure.kind === 'http' && page.failure.status === 404) {
-        setState('missing');
+      if (!page.ok) {
+        if (page.failure.kind === 'http' && page.failure.status === 404) {
+          setState('missing');
+          return;
+        }
+
+        setState('failed');
         return;
       }
 
-      setState('failed');
-      return;
-    }
-
-    setDetail(page.data);
-    setDraft(page.data.current?.content ?? '');
-    setNameDraft(page.data.page.name);
-    setState('ready');
-  }, [brandId, pageKey]);
+      setDetail(page.data);
+      setDraft(page.data.current?.content ?? '');
+      setNameDraft(page.data.page.name);
+      setState('ready');
+    },
+    [brandId, pageKey],
+  );
 
   useEffect(() => {
-    void reload();
-  }, [reload]);
+    void load(false);
+  }, [load]);
 
-  async function handleSave(): Promise<void> {
+  /**
+   * 儲存通道。`content` 可以指定：自定義頁的「重編」要即刻落一版，而那一刻
+   * 上層的 `draft` 還是舊值（React 未 re-render），所以由呼叫方直接交內容。
+   */
+  async function handleSave(content: string = draft): Promise<number | null> {
     if (busy) {
-      return;
+      return null;
     }
 
-    if (draft.trim() === '') {
+    if (content.trim() === '') {
       setError(
         pageKey === 'color'
           ? t('brand.color.empty')
@@ -223,26 +258,30 @@ export function BrandPageScreen({
               ? t('brand.logo.empty')
               : pageKey === 'tone'
                 ? t('brand.tone.empty')
-                : t('brand.page.emptyContent'),
+                : detail?.page.kind === 'custom'
+                  ? t('brand.custom.empty')
+                  : t('brand.page.emptyContent'),
       );
-      return;
+      return null;
     }
 
     setBusy(true);
     setError(null);
     setNotice(null);
 
-    const result = await saveBrandPageVersion(brandId, pageKey, { content: draft });
+    const result = await saveBrandPageVersion(brandId, pageKey, { content });
 
     setBusy(false);
 
     if (!result.ok) {
       setError(failureMessage(result.failure, t('brand.page.saveFailed')));
-      return;
+      return null;
     }
 
     setNotice(t('brand.page.saved', { no: result.data.version.versionNo }));
-    await reload();
+    await load(true);
+
+    return result.data.version.versionNo;
   }
 
   async function handleRestore(version: BrandPageVersionSummary): Promise<void> {
@@ -269,7 +308,7 @@ export function BrandPageScreen({
         no: result.data.version.versionNo,
       }),
     );
-    await reload();
+    await load(true);
   }
 
   async function handleDelete(version: BrandPageVersionSummary): Promise<void> {
@@ -297,7 +336,7 @@ export function BrandPageScreen({
     }
 
     setNotice(t('brand.page.deleted', { no: result.data.versionNo }));
-    await reload();
+    await load(true);
   }
 
   async function handleRename(): Promise<void> {
@@ -328,7 +367,7 @@ export function BrandPageScreen({
     setRenaming(false);
     setNotice(t('brand.page.manage.renamed', { name: result.data.page.name }));
     onPagesChanged();
-    await reload();
+    await load(true);
   }
 
   async function handleRemove(): Promise<void> {
@@ -378,7 +417,7 @@ export function BrandPageScreen({
           type="button"
           className="design-btn"
           onClick={() => {
-            void reload();
+            void load(false);
           }}
         >
           {t('common.retry')}
@@ -500,7 +539,19 @@ export function BrandPageScreen({
       {/* 色彩（#35）、字體（#38）、標誌（#36）用表，不用自由文字。三者共用
           同一個 draft 與同一個儲存鍵：在這裡分岔而不是另開一個畫面，版本
           列表、改名、刪頁就只有一份。 */}
-      {pageKey === 'color' ? (
+      {isCustom ? (
+        <div className="brand-page__body" data-brand-page-body="custom">
+          <BrandCustomEditor
+            brandId={brandId}
+            brief={page.brief ?? ''}
+            content={draft}
+            canEdit={canEdit}
+            onChange={setDraft}
+            onSaveNow={(next) => handleSave(next)}
+          />
+          {canEdit && <p className="design-field__hint">{t('brand.page.hint')}</p>}
+        </div>
+      ) : pageKey === 'color' ? (
         <div className="brand-page__body" data-brand-page-body="color">
           <BrandColorEditor content={draft} canEdit={canEdit} onChange={setDraft} />
           {canEdit && <p className="design-field__hint">{t('brand.page.hint')}</p>}
@@ -595,7 +646,9 @@ export function BrandPageScreen({
                     <p className="brand-page__note">{version.note}</p>
                   )}
 
-                  {pageKey === 'color' ? (
+                  {isCustom ? (
+                    <CustomVersionPreview preview={version.preview} />
+                  ) : pageKey === 'color' ? (
                     <ColorVersionPreview preview={version.preview} />
                   ) : pageKey === 'type' ? (
                     <TypeVersionPreview preview={version.preview} />
