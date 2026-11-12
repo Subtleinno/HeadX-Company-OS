@@ -91,7 +91,9 @@ export type FakeHandlers = Partial<
     | 'brandPageRestore'
     | 'brandPageDelete'
     | 'policy'
-    | 'policySave',
+    | 'policySave'
+    | 'brandGaps'
+    | 'brandGapNeed',
     Handler
   >
 >;
@@ -327,6 +329,16 @@ function routeKey(path: string, method: string): keyof FakeHandlers | null {
     return method === 'GET' ? 'filesList' : method === 'POST' ? 'filesUpload' : null;
   }
 
+  // ── 品牌缺口與 Need（issue #58）。`gaps/needs` 要先配對，否則會被當成
+  // 一般缺口清單。
+  if (/\/brands\/[^/]+\/gaps\/needs$/.test(bare)) {
+    return method === 'POST' ? 'brandGapNeed' : null;
+  }
+
+  if (/\/brands\/[^/]+\/gaps$/.test(bare)) {
+    return method === 'GET' ? 'brandGaps' : null;
+  }
+
   // ── 品牌與「我上次做緊邊個品牌」（issue #15）。
   // `/me/brand-focus` 要放喺 `/me` 之前配對：兩者都係 GET。
   if (bare.endsWith('/me/brand-focus')) {
@@ -440,7 +452,14 @@ export function installFakeApi(handlers: FakeHandlers): FakeApi {
       }
 
       const handler = handlers[key];
+
       if (handler === undefined) {
+        // 缺口清單（#58）幾乎每一頁都會讀。未有準備時回一個空清單，而不是
+        // 令每一個舊測試都要補一個 handler —— 那些測試驗的是別的東西。
+        if (key === 'brandGaps') {
+          return jsonResponse(200, { items: [], counts: { total: 0, file: 0, judgement: 0, open: 0 } });
+        }
+
         throw new Error(`測試沒有為 ${key} 準備回應`);
       }
 

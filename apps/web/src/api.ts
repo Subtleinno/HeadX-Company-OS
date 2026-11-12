@@ -1028,6 +1028,43 @@ export type BrandPageDetail = {
   current: BrandPageVersionDetail | null;
 };
 
+/** 一個品牌缺口（#58）。缺什麼由頁的文件講，這裡補「交了給誰跟」。 */
+export type BrandGapItem = {
+  pageKey: string;
+  pageName: string;
+  item: string;
+  what: string;
+  type: 'file' | 'judgement';
+  ruleId: string | null;
+  needId: string | null;
+  needCode: string | null;
+  needState: 'open' | 'claimed' | 'uploaded' | 'absorbed' | 'closed' | null;
+  assigneeName: string | null;
+};
+
+export type BrandGapCounts = { total: number; file: number; judgement: number; open: number };
+
+export function fetchBrandGaps(
+  brandId: string,
+  pageKey?: string,
+): Promise<ApiResult<{ items: BrandGapItem[]; counts: BrandGapCounts }>> {
+  const query = pageKey === undefined ? '' : `?page=${encodeURIComponent(pageKey)}`;
+  return request<{ items: BrandGapItem[]; counts: BrandGapCounts }>(
+    `/api/brands/${encodeURIComponent(brandId)}/gaps${query}`,
+  );
+}
+
+/** 一鍵建立 Need。重複按會回同一張（`created: false`），不會開第二張。 */
+export function createGapNeed(
+  brandId: string,
+  input: { pageKey: string; item: string },
+): Promise<ApiResult<{ need: { id: string; code: string }; created: boolean }>> {
+  return request<{ need: { id: string; code: string }; created: boolean }>(
+    `/api/brands/${encodeURIComponent(brandId)}/gaps/needs`,
+    { method: 'POST', body: JSON.stringify(input) },
+  );
+}
+
 /**
  * 這個品牌的頁清單，以及「我是不是可以改這個品牌的頁」。
  *

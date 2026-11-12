@@ -142,6 +142,10 @@ describe('字串表', () => {
       'brand.home.logoSize',
       'brand.home.colourSomeMissing',
       'brand.home.regenerated',
+      'brand.gap.created',
+      'brand.gap.existing',
+      'brand.gap.meta',
+      'brand.gap.dialogLead',
     ]);
   });
 });

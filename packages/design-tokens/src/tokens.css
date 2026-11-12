@@ -114,6 +114,10 @@
   /* 缺與警示：00-design-system.md 的 #B25E00。只用於「缺」「不通過」的字，
      不用於大面積填色 —— 橙一多，紅色就失去意思。 */
   --hx-frame-warning: #b25e00;
+  /* 通過與不通過（00-design-system.md 的狀態色）。同樣只用於小標籤與一個字，
+     不做大面積填色。 */
+  --hx-frame-success: #1f7a4d;
+  --hx-frame-danger: #c0362c;
   --hx-frame-surface: #f5f6fa;
   --hx-chrome-selected: #f0f1f3;
   --hx-chrome-ink: #191919;

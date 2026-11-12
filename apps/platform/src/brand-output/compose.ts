@@ -7,6 +7,7 @@ import {
   type ComposedGap,
 } from '@company-os/contracts';
 import { brandHeader, composePages } from '../brand-pages/store.js';
+import { gapsForOutput } from '../brand-gaps/store.js';
 
 /**
  * 品牌輸出的組成（issue #57）。
@@ -15,8 +16,8 @@ import { brandHeader, composePages } from '../brand-pages/store.js';
  * 所以改了色彩頁，下一秒的 tokens、prompt、HTML 都會跟著變。要固定下來給
  * 成品用的話，那是 `brand_release`（品牌版本）的事，不是這裡。
  *
- * 缺口的來源暫時只有文件內的 `gaps`（#58 會加入資料庫的缺口登記與 Need 狀態）。
- * 這裡先回 `needStatus: 'none'`，而不是假裝已建立 Need。
+ * 缺口由文件講（有什麼缺），由 `brand_gap` 補「交了給誰跟」（#58）。
+ * prompt 的缺口段落因此講得出「已建立 Need」與「未建立」，而不是一律同一句。
  */
 
 export async function composeBrand(pool: Pool, brandId: string): Promise<ComposedBrand | null> {
@@ -27,21 +28,7 @@ export async function composeBrand(pool: Pool, brandId: string): Promise<Compose
   }
 
   const pages = await composePages(pool, brandId);
-  const gaps: ComposedGap[] = [];
-
-  for (const page of pages) {
-    for (const gap of page.document.gaps) {
-      gaps.push({
-        pageKey: page.key,
-        pageName: page.name,
-        item: gap.item,
-        what: gap.what,
-        type: gap.type,
-        ruleId: gap.ruleId ?? null,
-        needStatus: 'none',
-      });
-    }
-  }
+  const gaps: ComposedGap[] = await gapsForOutput(pool, brandId);
 
   return {
     code: header.code,

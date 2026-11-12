@@ -16,10 +16,13 @@ import { BrandCustomEditor } from './BrandCustomEditor';
 import { BrandHomeEditor } from './BrandHomeEditor';
 import { introInText } from './brandHome';
 import { BrandLogoEditor } from './BrandLogoEditor';
+import { BrandGapDialog } from './BrandGapDialog';
+import { BrandNeedsRail } from './BrandNeedsRail';
 import { BrandPageGuide } from './BrandPageGuide';
 import { BrandToneEditor } from './BrandToneEditor';
 import { BrandTypeEditor } from './BrandTypeEditor';
 import { formatTime } from './brandGuide';
+import { useBrandGaps } from './useBrandGaps';
 import { hexesInText } from './brandColors';
 import { assetNamesInText } from './brandLogo';
 import { leadingLineInText } from './brandCustom';
@@ -204,6 +207,10 @@ export function BrandPageScreen({
   const [confirmRemove, setConfirmRemove] = useState(false);
   /** 表身上報的缺口數（#53）。`null`＝表身未報，面板就不講數字。 */
   const [gapCount, setGapCount] = useState<number | null>(null);
+  /** 缺口與 Need（#58）：一次讀整個品牌，右側欄只畫這一頁那幾項。 */
+  const gaps = useBrandGaps(brandId, null);
+  const [gapDialog, setGapDialog] = useState(false);
+  const pageGaps = gaps.items.filter((item) => item.pageKey === pageKey);
 
   /**
    * 讀這一頁。
@@ -438,7 +445,8 @@ export function BrandPageScreen({
   const isCustom = page.kind === 'custom';
 
   return (
-    <div className="brand-page" data-brand-page={page.key}>
+    <div className="brand-frame" data-brand-page={page.key}>
+      <div className="brand-page">
       {/* 頁名不重複畫：外殼的頁標題就是同一個名（左側、頁籤、標題三者同源）。
           版本號也不在這裡畫了 —— 下面的「這一頁」第一句就是現行第幾版，
           同一個數字畫兩次只會令人以為是兩件事。 */}
@@ -752,6 +760,39 @@ export function BrandPageScreen({
           </ul>
         )}
       </section>
+      </div>
+
+      <BrandNeedsRail
+        brandId={brandId}
+        items={pageGaps}
+        counts={{
+          total: pageGaps.length,
+          file: pageGaps.filter((item) => item.type === 'file').length,
+          judgement: pageGaps.filter((item) => item.type === 'judgement').length,
+          open: pageGaps.filter((item) => item.needState !== 'closed').length,
+        }}
+        state={gaps.state === 'idle' ? 'loading' : gaps.state}
+        canEdit={canEdit}
+        isOwner={isOwner}
+        onChanged={gaps.reload}
+        onOpenAll={() => {
+          setGapDialog(true);
+        }}
+      />
+
+      {gapDialog && (
+        <BrandGapDialog
+          brandId={brandId}
+          items={gaps.items}
+          counts={gaps.counts}
+          canEdit={canEdit}
+          isOwner={isOwner}
+          onChanged={gaps.reload}
+          onClose={() => {
+            setGapDialog(false);
+          }}
+        />
+      )}
     </div>
   );
 }
