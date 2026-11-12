@@ -2650,11 +2650,9 @@
   word-break: break-word;
 }
 
-@media (max-width: 900px) {
-  .brand-home__split {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
+/* 1024（筆電）：側欄收成 200px，內容區約 824px。版面那一行放不下四件事，
+   所以來源與理由各佔一行；引用變成兩行（名在上、來源在下）。 */
+@media (max-width: 1024px) {
   .brand-home__layoutHead {
     align-items: flex-start;
   }
@@ -2669,6 +2667,14 @@
 
   .brand-home__refSource {
     margin-left: 0;
+  }
+}
+
+/* 768（平板）：側欄 180px，內容約 588px。兩格並排會擠成一行兩個字，
+   所以疊成一欄 —— 唔用 overflow: hidden 遮住。 */
+@media (max-width: 768px) {
+  .brand-home__split {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -2959,7 +2965,20 @@
   text-decoration: underline;
 }
 
-@media (max-width: 900px) {
+/* 1024（筆電）：三欄太窄（每欄約 260px，縮圖 170px 高會壓扁標題），
+   所以兩欄；載體示範同樣兩欄。 */
+@media (max-width: 1024px) {
+  .brand-examples__cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .brand-examples__carriers {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* 768（平板）：一欄。 */
+@media (max-width: 768px) {
   .brand-examples__cards,
   .brand-examples__carriers {
     grid-template-columns: minmax(0, 1fr);
@@ -4418,7 +4437,9 @@
   color: var(--hx-danger-text);
 }
 
-@media (max-width: 900px) {
+/* 768（平板）：六格兩欄每格只剩 290px，而六格是「同一張照片的六個決定」，
+   擠成兩欄會讀成六段。所以一欄。 */
+@media (max-width: 768px) {
   .brand-image__photo {
     grid-template-columns: minmax(0, 1fr);
   }
