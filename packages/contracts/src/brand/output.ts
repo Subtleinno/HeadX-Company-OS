@@ -137,13 +137,16 @@ export function buildPromptPack(composed: ComposedBrand): PromptPack {
     .filter((page) => page.document.payload !== undefined && page.versionNo > 0)
     .map((page) => ({ page: page.key, name: page.name, versionNo: page.versionNo }));
 
-  for (const page of composed.pages) {
+  // 主頁與範例放最後：它們是彙整與引用，不是規則。之前兩者直接被跳過，
+  // 結果 `home.prompt()` 寫的立場與版面永遠出不了街（#67）、範例也進不了
+  // prompt 包（#68）—— 一段「寫好了但永遠不會執行」的碼比冇寫更危險。
+  const ordered = [
+    ...composed.pages.filter((page) => page.key !== 'home' && page.key !== 'examples'),
+    ...composed.pages.filter((page) => page.key === 'home' || page.key === 'examples'),
+  ];
+
+  for (const page of ordered) {
     const schema = schemaForPage(page.key, page.kind);
-
-    if (schema.key === 'home' || schema.key === 'examples') {
-      continue;
-    }
-
     const payload = schema.normalize(page.document.payload);
     const pageSections = schema.prompt(payload);
 
