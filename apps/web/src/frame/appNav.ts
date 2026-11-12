@@ -174,6 +174,7 @@ export const DESIGN_NAV: AppNav = {
             { key: 'type', labelKey: 'design.page.brandType' },
             { key: 'tone', labelKey: 'design.page.brandTone' },
             { key: 'image', labelKey: 'design.page.brandImage' },
+            { key: 'examples', labelKey: 'design.page.brandExamples' },
           ],
         },
       ],

@@ -97,9 +97,9 @@ const LATER_EXACT_KEYS = [
   // 2026-11-12（issue #32）：品牌模組五頁的頁名。舊的 `design.page.brandPage`
   // 與 `design.section.*` 沒有刪，只是不再有人讀 —— 凍結閘本來就不准刪。
   'design.page.brandLogo', 'design.page.brandColor', 'design.page.brandType',
-  'design.page.brandTone','design.page.brandImage','design.brand.ownerOnly'];
+  'design.page.brandTone','design.page.brandImage','design.page.brandExamples','design.brand.ownerOnly'];
 
-const LATER_KEY_PREFIXES = ['brand.page.', 'brand.color.', 'brand.type.', 'brand.logo.', 'brand.image.', 'brand.tone.', 'brand.custom.', 'brand.home.', 'brand.gap.', 'brand.check.', 'brand.platform.', 'brand.guide.', 'brand.suggest.', 'brand.nav.', 'design.group.', 
+const LATER_KEY_PREFIXES = ['brand.page.', 'brand.color.', 'brand.type.', 'brand.logo.', 'brand.image.', 'brand.examples.', 'brand.tone.', 'brand.custom.', 'brand.home.', 'brand.gap.', 'brand.check.', 'brand.platform.', 'brand.guide.', 'brand.suggest.', 'brand.nav.', 'design.group.', 
   'boss.members.',
   // 2026-11-11（issue #30）：恢復停用帳戶新增的鍵，不屬 #168 要守的既有鍵。
   'staff.enable',

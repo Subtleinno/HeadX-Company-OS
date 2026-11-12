@@ -74,7 +74,7 @@ const FROZEN_NON_FRAME_SHA256 =
 // 凍結值 a48ab… 同守衛嘅 489 個既有鍵唔變，唔係放寬門檻。
 // 2026-11-11（issue #30）：`staff.enable` 同 `staff.enable.*` 係新增鍵（恢復停用
 // 帳戶的路），唔屬 #155 要守嘅既有鍵；凍結值不變，只係明確排除新鍵。
-const LATER_KEY_PREFIXES = ['brand.page.', 'brand.color.', 'brand.type.', 'brand.logo.', 'brand.image.', 'brand.tone.', 'brand.custom.', 'brand.home.', 'brand.gap.', 'brand.check.', 'brand.platform.', 'brand.guide.', 'brand.suggest.', 'brand.nav.', 'design.group.', 'policy.', 'files.', 'grant.detail.', 'boss.members.', 'staff.enable', 'boss.module.people', 'boss.page.people', 'gate.noDepartment.', 'gate.departmentClosed.', 'gate.signOut',
+const LATER_KEY_PREFIXES = ['brand.page.', 'brand.color.', 'brand.type.', 'brand.logo.', 'brand.image.', 'brand.examples.', 'brand.tone.', 'brand.custom.', 'brand.home.', 'brand.gap.', 'brand.check.', 'brand.platform.', 'brand.guide.', 'brand.suggest.', 'brand.nav.', 'design.group.', 'policy.', 'files.', 'grant.detail.', 'boss.members.', 'staff.enable', 'boss.module.people', 'boss.page.people', 'gate.noDepartment.', 'gate.departmentClosed.', 'gate.signOut',
   // 2026-11-12（issue #34）：品牌頁策略是新增的介面，不屬本檔要守的既有鍵。
   'boss.policy.', 'boss.module.policy', 'boss.page.brandPolicy'];
 const LATER_EXACT_KEYS = [
@@ -82,7 +82,7 @@ const LATER_EXACT_KEYS = [
   // 2026-11-12（issue #32）：品牌模組五頁的頁名。舊的 `design.page.brandPage`
   // 與 `design.section.*` 沒有刪，只是不再有人讀 —— 凍結閘本來就不准刪。
   'design.page.brandLogo', 'design.page.brandColor', 'design.page.brandType',
-  'design.page.brandTone','design.page.brandImage','admin.page.policy', 'design.brand.ownerOnly'];
+  'design.page.brandTone','design.page.brandImage','design.page.brandExamples','admin.page.policy', 'design.brand.ownerOnly'];
 
 function hashNonFrame(msgs: Record<string, string>): string {
   const entries = Object.entries(msgs)

@@ -101,7 +101,7 @@ describe('resolveNav', () => {
     ]);
   });
 
-  it('品牌模組六頁：品牌主頁、標誌、色彩、字體、語氣、圖像（issue #32、#66）', () => {
+  it('品牌模組七頁：品牌主頁、標誌、色彩、字體、語氣、圖像、已核准範例（#32、#66、#68）', () => {
     const brand = DESIGN_NAV.modules.find((item) => item.key === 'brand');
 
     expect(brand?.groups.flatMap((group) => group.pages.map((page) => page.key))).toEqual([
@@ -111,6 +111,7 @@ describe('resolveNav', () => {
       'type',
       'tone',
       'image',
+      'examples',
     ]);
   });
 

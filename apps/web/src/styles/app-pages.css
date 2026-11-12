@@ -2672,6 +2672,338 @@
   }
 }
 
+/* ── 已核准範例（#68）───────────────────────────────────── */
+
+/* 範例卡三欄：縮圖在上，四格在下面。三欄是因為「做對的樣子」要一眼見幾件；
+   一欄會變成一份清單，看不到系列感。 */
+.brand-examples {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hx-space-4);
+}
+
+.brand-examples__missing {
+  margin: 0;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+}
+
+.brand-examples__missing--gap {
+  color: var(--hx-danger-text);
+}
+
+.brand-examples__missingLead {
+  margin: 0;
+}
+
+.brand-examples__missingList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 4px 0 0;
+  padding-left: 1.1em;
+}
+
+.brand-examples__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hx-space-2);
+  padding: var(--hx-space-3) var(--hx-space-4);
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-md);
+  background: var(--hx-frame-surface);
+}
+
+.brand-examples__cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--hx-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.brand-examples__card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hx-space-2);
+  padding: var(--hx-space-3);
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-sm);
+  background: var(--hx-frame-raised);
+}
+
+.brand-examples__thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 170px;
+  overflow: hidden;
+  border: 1px dashed var(--hx-frame-border);
+  border-radius: var(--hx-radius-sm);
+  background: var(--hx-frame-sunken, var(--hx-frame-surface));
+}
+
+.brand-examples__thumbImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.brand-examples__thumbEmpty {
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-muted);
+}
+
+.brand-examples__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.brand-examples__chipBtn {
+  padding: 2px 8px;
+  border: 1px solid var(--hx-frame-border);
+  border-radius: 999px;
+  background: var(--hx-frame-surface);
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+  cursor: pointer;
+}
+
+.brand-examples__chipBtn:hover {
+  color: var(--hx-frame-ink);
+  border-color: var(--hx-frame-muted);
+}
+
+/* 用了哪幾頁版本：一頁一行，版本跟在後面 —— 這是「舊範例仍標示它用的版本」。 */
+.brand-examples__refs {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.brand-examples__refRow {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+  flex-wrap: wrap;
+  font: var(--hx-frame-font-small);
+}
+
+.brand-examples__check {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--hx-frame-ink);
+}
+
+.brand-examples__refVersion {
+  width: 68px;
+  flex: none;
+}
+
+.brand-examples__versions {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+  margin: 0;
+  font-family: var(--hx-font-mono);
+  font-size: 12px;
+  color: var(--hx-frame-muted);
+}
+
+.brand-examples__staleTag {
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--hx-warning-surface, var(--hx-frame-raised));
+  font-family: var(--hx-frame-font-family);
+  font-size: 11px;
+  color: var(--hx-warning-text, var(--hx-frame-secondary));
+}
+
+.brand-examples__gap {
+  margin: 0;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-danger-text);
+}
+
+.brand-examples__adder {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+}
+
+/* 成功 prompt：一張卡一段。prompt 是主角，所以字級比備註大一級、行高闊些。 */
+.brand-examples__prompts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hx-space-3);
+}
+
+.brand-examples__prompt {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hx-space-2);
+  padding: var(--hx-space-3);
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-sm);
+  background: var(--hx-frame-raised);
+}
+
+.brand-examples__split {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--hx-space-3);
+}
+
+.brand-examples__promptText {
+  font-family: var(--hx-font-mono);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.brand-examples__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+}
+
+/* 重用面板：先把「這次用哪一版」講清楚，再講差在哪，最後才是 prompt。 */
+.brand-examples__reuse {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--hx-space-3);
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-sm);
+  background: var(--hx-frame-surface);
+}
+
+.brand-examples__reuseHead {
+  margin: 0;
+  font: var(--hx-frame-font-small);
+  font-weight: 600;
+  color: var(--hx-frame-ink);
+}
+
+.brand-examples__reuseNow {
+  margin: 0;
+  font-family: var(--hx-font-mono);
+  font-size: 12px;
+  color: var(--hx-frame-secondary);
+}
+
+.brand-examples__reuseList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding-left: 1.1em;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+}
+
+.brand-examples__reusePrompt {
+  max-height: 240px;
+  margin: 0;
+  padding: var(--hx-space-2);
+  overflow: auto;
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-sm);
+  background: var(--hx-frame-raised);
+  font-family: var(--hx-font-mono);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--hx-frame-ink);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* 載體示範：三個載體並列，每個一句「這個載體會變甚麼」。 */
+.brand-examples__carriers {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--hx-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.brand-examples__carrierName {
+  display: block;
+  font: var(--hx-frame-font-small);
+  font-weight: 600;
+  color: var(--hx-frame-ink);
+}
+
+.brand-examples__outputs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--hx-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font: var(--hx-frame-font-small);
+}
+
+.brand-examples__link {
+  color: var(--hx-frame-accent);
+  text-decoration: none;
+}
+
+.brand-examples__link:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 900px) {
+  .brand-examples__cards,
+  .brand-examples__carriers {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .brand-examples__split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* 圖像頁的「已核准範例」引用：一行一件，版本在右。 */
+.brand-image__approved {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.brand-image__approvedRow {
+  display: flex;
+  align-items: baseline;
+  gap: var(--hx-space-2);
+  padding: 2px 0;
+  border-bottom: 1px solid var(--hx-frame-border);
+  font: var(--hx-frame-font-small);
+}
+
+.brand-image__approvedRow:last-child {
+  border-bottom: none;
+}
+
+.brand-image__approvedName {
+  color: var(--hx-frame-ink);
+}
+
+.brand-image__approvedVersion {
+  margin-left: auto;
+  font-family: var(--hx-font-mono);
+  font-size: 12px;
+  color: var(--hx-frame-muted);
+}
+
 /* 「這一頁」面板（#53）：現況、策略、給 agent 的接口。
    淺底 + 細線，不用陰影 —— 內容區的區塊靠線分，陰影留給浮層。 */
 .brand-guide {
