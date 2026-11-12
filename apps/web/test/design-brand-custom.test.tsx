@@ -12,6 +12,7 @@ import {
   type FakeHandlers,
 } from './helpers/fake-api';
 import { colourDoc } from './fixtures/brandColour';
+import { enterEditMode, whenEditable } from './helpers/brand-page';
 
 /**
  * 自定義頁（issue #41）。
@@ -324,6 +325,9 @@ describe('自定義頁', () => {
   it('有編輯權的人改完：入了版本鏈，重新載入仍然是改過的', async () => {
     const { api } = openCustom(BOSS);
 
+    await whenEditable();
+    await enterEditMode();
+
     await waitFor(() => {
       expect(document.querySelector('[data-custom-decided]')).not.toBeNull();
     });
@@ -332,7 +336,7 @@ describe('自定義頁', () => {
 
     await userEvent.clear(decided);
     await userEvent.type(decided, '這一頁決定盒型。');
-    await userEvent.click(screen.getByRole('button', { name: '儲存（新增一版）' }));
+    await userEvent.click(screen.getByRole('button', { name: '儲存為新版本' }));
 
     await waitFor(() => {
       expect(api.count('brandPageSave')).toBe(1);
@@ -354,6 +358,9 @@ describe('自定義頁', () => {
   it('重編：按一下就新增一版，手改的文字原封不動', async () => {
     const { api } = openCustom(BOSS);
 
+    await whenEditable();
+    await enterEditMode();
+
     await waitFor(() => {
       expect(document.querySelector('[data-custom-regenerate]')).not.toBeNull();
     });
@@ -374,6 +381,9 @@ describe('自定義頁', () => {
   it('未有任何版本：六欄各自講自己未有內容，不是同一句抄三次', async () => {
     openCustom(BOSS, { doc: null });
 
+    await whenEditable();
+    await enterEditMode();
+
     await waitFor(() => {
       expect(document.querySelector('[data-custom-decided]')).not.toBeNull();
     });
@@ -392,6 +402,9 @@ describe('自定義頁', () => {
     const { api } = openCustom(BOSS, {
       doc: JSON.stringify({ ...PACKAGING_DOC, typeRoles: ['caption'] }),
     });
+
+    await whenEditable();
+    await enterEditMode();
 
     await waitFor(() => {
       expect(document.querySelector('[data-custom-regenerate]')).not.toBeNull();

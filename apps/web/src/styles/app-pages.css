@@ -4602,3 +4602,34 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* 閱讀態／編輯態（v2.1）：預設閱讀。動作在最上面，寫完不用捲到底才找到。 */
+.brand-page__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.brand-page__toolbarActions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.brand-page__modeLead {
+  margin: 0;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+}
+
+/* 閱讀態把框收成字：同一個 DOM，只是不再畫成「這是你可以打字的地方」。
+   顏色與字級照舊，所以讀起來仍然是內容，不是一個空的輸入框。 */
+.brand-page--reading input.design-input[readonly],
+.brand-page--reading textarea.design-input[readonly],
+.brand-page--reading textarea.brand-page__textarea[readonly] {
+  padding-left: 0;
+  border-color: transparent;
+  background: transparent;
+}

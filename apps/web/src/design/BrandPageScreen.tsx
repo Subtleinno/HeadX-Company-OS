@@ -265,6 +265,14 @@ export function BrandPageScreen({
   const [renaming, setRenaming] = useState(false);
   const [nameDraft, setNameDraft] = useState('');
   const [confirmRemove, setConfirmRemove] = useState(false);
+  /**
+   * 閱讀態預設（v2.1，共通修正第 6 節）。
+   *
+   * 為甚麼要有這個狀態而不是「有編輯權就永遠可改」：一張永遠在編輯的頁，
+   * 每一個欄位都是一個框，讀的人分不出「這是內容」與「這是我可以改的地方」，
+   * 而且一不留神就打斷了別人的字。閱讀態把框收成字，要改才按「編輯」。
+   */
+  const [editing, setEditing] = useState(false);
   /** 表身上報的缺口數（#53）。`null`＝表身未報，面板就不講數字。 */
   const [gapCount, setGapCount] = useState<number | null>(null);
   /** 缺口與 Need（#58）：一次讀整個品牌，右側欄只畫這一頁那幾項。 */
@@ -294,6 +302,7 @@ export function BrandPageScreen({
         setState('loading');
         // 換頁時清掉上一頁的缺口數：留著會令新一頁第一幀顯示舊頁的數字。
         setGapCount(null);
+        setEditing(false);
       }
 
       const page = await fetchBrandPage(brandId, pageKey);
@@ -320,11 +329,19 @@ export function BrandPageScreen({
     void load(false);
   }, [load]);
 
+  /** 放棄：把 draft 還原成現行版本，回到閱讀態。不寫入任何東西。 */
+  function handleDiscard(): void {
+    setDraft(detail?.current?.content ?? '');
+    setEditing(false);
+    setError(null);
+    setNotice(null);
+  }
+
   /**
    * 儲存通道。`content` 可以指定：自定義頁的「重編」要即刻落一版，而那一刻
    * 上層的 `draft` 還是舊值（React 未 re-render），所以由呼叫方直接交內容。
    */
-  async function handleSave(content: string = draft): Promise<number | null> {
+  async function handleSave(content: string = draft, keepEditing = false): Promise<number | null> {
     if (busy) {
       return null;
     }
@@ -366,6 +383,13 @@ export function BrandPageScreen({
     }
 
     setNotice(t('brand.page.saved', { no: result.data.version.versionNo }));
+
+    // 表身自己發起的儲存（重編、採用建議）不把人踢出編輯態：那些鍵的結果
+    // 是一句留在原位的話（「已重編」），一離開編輯態那句話就隨之消失，
+    // 讀的人只會見到畫面跳一下。
+    if (!keepEditing) {
+      setEditing(false);
+    }
     await load(true);
     // 儲存之後即刻再檢查：檢查讀的是現行版本，不重跑就會顯示上一個版本的結果。
     check.reload();
@@ -518,6 +542,8 @@ export function BrandPageScreen({
 
   const page = detail.page;
   const isCustom = page.kind === 'custom';
+  /** 表身拿到的不是「這個人有沒有權」，而是「這一刻在不在改」。 */
+  const editable = canEdit && editing;
 
   const pending = suggestions.items;
   const homeSuggestion = pageKey === 'home' ? pending.find((item) => item.belongsTo === null) : undefined;
@@ -527,7 +553,62 @@ export function BrandPageScreen({
 
   return (
     <div className="brand-frame" data-brand-page={page.key}>
-      <div className="brand-page">
+      <div className={`brand-page${editing ? ' brand-page--editing' : ' brand-page--reading'}`}>
+      {/* 閱讀態／編輯態（v2.1，共通修正第 6 節）：預設閱讀，按「編輯」才改。
+          動作放在最上面而不是最下面 —— 寫完之後要按的那個鍵，不應該要人
+          先捲過整頁才見到。 */}
+      <div className="brand-page__toolbar" data-brand-page-toolbar data-mode={editing ? 'edit' : 'read'}>
+        {editing && (
+          <p className="brand-page__modeLead" data-brand-page-mode-lead>
+            {detail.current === null
+              ? t('brand.page.editingLeadNew')
+              : t('brand.page.editingLead', { no: detail.current.versionNo })}
+          </p>
+        )}
+
+        <div className="brand-page__toolbarActions">
+          {canEdit && !editing && (
+            <button
+              type="button"
+              className="design-btn"
+              data-brand-page-edit
+              onClick={() => {
+                setNotice(null);
+                setError(null);
+                setEditing(true);
+              }}
+            >
+              {t('brand.page.edit')}
+            </button>
+          )}
+
+          {editing && (
+            <>
+              <button
+                type="button"
+                className="design-btn"
+                data-brand-page-discard
+                disabled={busy}
+                onClick={handleDiscard}
+              >
+                {t('brand.page.discard')}
+              </button>
+              <button
+                type="button"
+                className="design-btn design-btn--primary"
+                data-brand-page-save
+                disabled={busy || draft.trim() === ''}
+                onClick={() => {
+                  void handleSave();
+                }}
+              >
+                {busy ? t('brand.page.saving') : t('brand.page.saveVersion')}
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+
       {/* 頁名不重複畫：外殼的頁標題就是同一個名（左側、頁籤、標題三者同源）。
           版本號也不在這裡畫了 —— 下面的「這一頁」第一句就是現行第幾版，
           同一個數字畫兩次只會令人以為是兩件事。 */}
@@ -681,100 +762,108 @@ export function BrandPageScreen({
             brandId={brandId}
             brief={page.brief ?? ''}
             content={draft}
-            canEdit={canEdit}
+            canEdit={editable}
             onChange={setDraft}
-            onSaveNow={(next) => handleSave(next)}
+            onSaveNow={(next) => handleSave(next, true)}
             onGapCount={setGapCount}
           />
-          {canEdit && <p className="design-field__hint">{t('brand.page.hint')}</p>}
+          {editable && <p className="design-field__hint">{t('brand.page.hint')}</p>}
         </div>
       ) : pageKey === 'home' ? (
         <div className="brand-page__body" data-brand-page-body="home">
           <BrandHomeEditor
             brandId={brandId}
             content={draft}
-            canEdit={canEdit}
+            canEdit={editable}
             onChange={setDraft}
-            onSaveNow={(next) => handleSave(next)}
+            onSaveNow={(next) => handleSave(next, true)}
             onGapCount={setGapCount}
           />
-          {canEdit && <p className="design-field__hint">{t('brand.page.hint')}</p>}
+          {editable && <p className="design-field__hint">{t('brand.page.hint')}</p>}
         </div>
       ) : pageKey === 'platform' ? (
         <div className="brand-page__body" data-brand-page-body="platform">
           <BrandPlatformEditor
             brandId={brandId}
+            mayEdit={canEdit}
+            onStartEdit={() => {
+              setEditing(true);
+            }}
             content={draft}
-            canEdit={canEdit}
+            canEdit={editable}
             isOwner={isOwner}
             onChange={setDraft}
             onGapCount={setGapCount}
           />
-          {canEdit && <p className="design-field__hint">{t('brand.page.hint')}</p>}
+          {editable && <p className="design-field__hint">{t('brand.page.hint')}</p>}
         </div>
       ) : pageKey === 'color' ? (
         <div className="brand-page__body" data-brand-page-body="color">
           <BrandColorEditor
             content={draft}
-            canEdit={canEdit}
+            mayEdit={canEdit}
+            onStartEdit={() => {
+              setEditing(true);
+            }}
+            canEdit={editable}
             onChange={setDraft}
             onGapCount={setGapCount}
           />
-          {canEdit && <p className="design-field__hint">{t('brand.page.hint')}</p>}
+          {editable && <p className="design-field__hint">{t('brand.page.hint')}</p>}
         </div>
       ) : pageKey === 'type' ? (
         <div className="brand-page__body" data-brand-page-body="type">
           <BrandTypeEditor
             content={draft}
-            canEdit={canEdit}
+            canEdit={editable}
             onChange={setDraft}
             onGapCount={setGapCount}
           />
-          {canEdit && <p className="design-field__hint">{t('brand.page.hint')}</p>}
+          {editable && <p className="design-field__hint">{t('brand.page.hint')}</p>}
         </div>
       ) : pageKey === 'logo' ? (
         <div className="brand-page__body" data-brand-page-body="logo">
           <BrandLogoEditor
             brandId={brandId}
             content={draft}
-            canEdit={canEdit}
+            canEdit={editable}
             onChange={setDraft}
             onGapCount={setGapCount}
           />
-          {canEdit && <p className="design-field__hint">{t('brand.page.hint')}</p>}
+          {editable && <p className="design-field__hint">{t('brand.page.hint')}</p>}
         </div>
       ) : pageKey === 'tone' ? (
         <div className="brand-page__body" data-brand-page-body="tone">
           <BrandToneEditor
             content={draft}
-            canEdit={canEdit}
+            canEdit={editable}
             onChange={setDraft}
             onGapCount={setGapCount}
           />
-          {canEdit && <p className="design-field__hint">{t('brand.page.hint')}</p>}
+          {editable && <p className="design-field__hint">{t('brand.page.hint')}</p>}
         </div>
       ) : pageKey === 'image' ? (
         <div className="brand-page__body" data-brand-page-body="image">
           <BrandImageEditor
             brandId={brandId}
             content={draft}
-            canEdit={canEdit}
+            canEdit={editable}
             onChange={setDraft}
             onGapCount={setGapCount}
           />
-          {canEdit && <p className="design-field__hint">{t('brand.page.hint')}</p>}
+          {editable && <p className="design-field__hint">{t('brand.page.hint')}</p>}
         </div>
       ) : pageKey === 'examples' ? (
         <div className="brand-page__body" data-brand-page-body="examples">
           <BrandExamplesEditor
             brandId={brandId}
             content={draft}
-            canEdit={canEdit}
+            canEdit={editable}
             onChange={setDraft}
-            onSaveNow={handleSave}
+            onSaveNow={(next) => handleSave(next, true)}
             onGapCount={setGapCount}
           />
-          {canEdit && <p className="design-field__hint">{t('brand.page.hint')}</p>}
+          {editable && <p className="design-field__hint">{t('brand.page.hint')}</p>}
         </div>
       ) : (
         <label className="brand-page__editor">
@@ -782,7 +871,7 @@ export function BrandPageScreen({
           <textarea
             className="brand-page__textarea"
             value={draft}
-            readOnly={!canEdit}
+            readOnly={!editable}
             rows={10}
             spellCheck={false}
             onChange={(event) => {
@@ -791,25 +880,11 @@ export function BrandPageScreen({
           />
           {/* 只讀的人不應該讀到「每次儲存都會新增一版」—— 他儲存不了。
               唯讀的說明在下面那一句，兩句一起出就變成同一件事講兩次。 */}
-          {canEdit && <span className="design-field__hint">{t('brand.page.hint')}</span>}
+          {editable && <span className="design-field__hint">{t('brand.page.hint')}</span>}
         </label>
       )}
 
-      {canEdit ? (
-        <div className="design-form__actions">
-          <button
-            type="button"
-            className="design-btn design-btn--primary"
-            data-brand-page-save
-            disabled={busy || draft.trim() === ''}
-            onClick={() => {
-              void handleSave();
-            }}
-          >
-            {busy ? t('brand.page.saving') : t('brand.page.save')}
-          </button>
-        </div>
-      ) : (
+      {!canEdit && (
         <p className="design-footnote" data-brand-page-readonly>
           {t('brand.page.readOnly')}
         </p>
@@ -944,7 +1019,7 @@ export function BrandPageScreen({
           open: pageGaps.filter((item) => item.needState !== 'closed').length,
         }}
         state={gaps.state === 'idle' ? 'loading' : gaps.state}
-        canEdit={canEdit}
+        canEdit={editable}
         isOwner={isOwner}
         onChanged={gaps.reload}
         onOpenAll={() => {
@@ -974,7 +1049,7 @@ export function BrandPageScreen({
           brandId={brandId}
           items={gaps.items}
           counts={gaps.counts}
-          canEdit={canEdit}
+          canEdit={editable}
           isOwner={isOwner}
           onChanged={gaps.reload}
           onClose={() => {

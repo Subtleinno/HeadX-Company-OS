@@ -15,6 +15,7 @@ import {
 import { colourDoc } from './fixtures/brandColour';
 import { fullHomeDoc } from './fixtures/brandHome';
 import { emptyToneDoc } from '../src/design/brandTone';
+import { enterEditMode, whenEditable } from './helpers/brand-page';
 
 /**
  * 品牌主頁（issue #67，取代 #39）。
@@ -458,6 +459,9 @@ describe('品牌主頁：缺什麼逐項講', () => {
 
     openHome(BOSS, { doc: JSON.stringify(doc) });
 
+    await whenEditable();
+    await enterEditMode();
+
     await waitFor(() => {
       expect(document.querySelector('[data-home-layout-reason-gap="2"]')).not.toBeNull();
     });
@@ -500,6 +504,9 @@ describe('品牌主頁：改與存', () => {
   it('改「是誰」再儲存：入版本鏈，重新載入仍然在', async () => {
     const { api } = openHome(BOSS);
 
+    await whenEditable();
+    await enterEditMode();
+
     await waitFor(() => {
       expect(document.querySelector('[data-home-who]')).not.toBeNull();
     });
@@ -508,7 +515,7 @@ describe('品牌主頁：改與存', () => {
 
     await userEvent.clear(who);
     await userEvent.type(who, '滿月堂是一間診所，專做皮膚與身體調理。');
-    await userEvent.click(screen.getByRole('button', { name: '儲存（新增一版）' }));
+    await userEvent.click(screen.getByRole('button', { name: '儲存為新版本' }));
 
     await waitFor(() => {
       expect(api.count('brandPageSave')).toBe(1);
@@ -530,6 +537,9 @@ describe('品牌主頁：改與存', () => {
   it('重編：新增一版，手改的欄位與版面原封不動', async () => {
     const { api } = openHome(BOSS);
 
+    await whenEditable();
+    await enterEditMode();
+
     await waitFor(() => {
       expect(document.querySelector('[data-home-regenerate]')).not.toBeNull();
     });
@@ -549,6 +559,9 @@ describe('品牌主頁：改與存', () => {
 
   it('舊形狀（#39 的 intro ＋ logoMode）講讀不到，不會被當成空白主頁蓋掉', async () => {
     openHome(BOSS, { doc: JSON.stringify({ intro: '滿月堂是一間診所。', logoMode: 'brand' }) });
+
+    await whenEditable();
+    await enterEditMode();
 
     await waitFor(() => {
       expect(document.querySelector('[data-home-invalid]')).not.toBeNull();

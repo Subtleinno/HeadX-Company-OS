@@ -51,6 +51,10 @@ type BrandColorEditorProps = {
   /** 現行版本的內容（JSON 字串，或者是舊的自由文字）。 */
   content: string;
   canEdit: boolean;
+  /** 有沒有編輯權（與 `canEdit` 的分別：`canEdit` 還要「正在編輯」）。 */
+  mayEdit?: boolean;
+  /** 由閱讀態開始改：修復類動作要通知外殼切去編輯態。 */
+  onStartEdit?: () => void;
   /** 交回去的是**內容字串**；全空的時候是空字串（等於未有內容）。 */
   onChange: (next: string) => void;
   /** 把缺口數上報給「這一頁」面板（#53）。解析不到就報 null。 */
@@ -81,7 +85,14 @@ function alternativeLine(alternative: Alternative, role: string): string {
     : t('brand.color.altRole', { role: alternative.role, hex: alternative.hex });
 }
 
-export function BrandColorEditor({ content, canEdit, onChange, onGapCount }: BrandColorEditorProps) {
+export function BrandColorEditor({
+  content,
+  canEdit,
+  mayEdit = canEdit,
+  onStartEdit,
+  onChange,
+  onGapCount,
+}: BrandColorEditorProps) {
   const [ratioDraft, setRatioDraft] = useState({
     role: COLOR_ROLES[0]?.key ?? '',
     percent: '',
@@ -110,13 +121,14 @@ export function BrandColorEditor({ content, canEdit, onChange, onGapCount }: Bra
       <div className="brand-color brand-color--invalid" data-color-invalid>
         <p className="design-note design-note--error">{t('brand.color.invalid')}</p>
 
-        {canEdit && (
+        {mayEdit && (
           <div className="design-form__actions">
             <button
               type="button"
               className="design-btn"
               data-color-reset
               onClick={() => {
+                onStartEdit?.();
                 onChange(write(EMPTY_DOC));
               }}
             >

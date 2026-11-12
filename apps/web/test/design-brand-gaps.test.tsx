@@ -6,6 +6,7 @@ import './helpers/rtl';
 import { App } from '../src/App';
 import { resetDirectoryCache } from '../src/frame/useDirectory';
 import { installFakeApi, jsonResponse, resetBrowserState, type FakeHandlers } from './helpers/fake-api';
+import { enterEditMode, whenEditable } from './helpers/brand-page';
 
 /**
  * 缺口與 Need（issue #58）。
@@ -156,6 +157,9 @@ describe('品牌缺口', () => {
   it('老闆：判斷型缺口有建立鍵', async () => {
     openPage(BOSS);
 
+    await whenEditable();
+    await enterEditMode();
+
     await waitFor(() => {
       expect(screen.getByText('攝影題材')).toBeTruthy();
     });
@@ -165,6 +169,9 @@ describe('品牌缺口', () => {
 
   it('有編輯權但不是老闆：判斷型缺口沒有建立鍵，檔案型仍然有', async () => {
     openPage(DESIGNER);
+
+    await whenEditable();
+    await enterEditMode();
 
     await waitFor(() => {
       expect(screen.getByText('攝影題材')).toBeTruthy();
@@ -183,6 +190,9 @@ describe('品牌缺口', () => {
       expect(screen.getByText('已核准的真實照片')).toBeTruthy();
     });
 
+    await whenEditable();
+    await enterEditMode();
+
     await userEvent.click(screen.getAllByRole('button', { name: '建立 Need' })[0] as HTMLElement);
 
     await waitFor(() => {
@@ -196,6 +206,9 @@ describe('品牌缺口', () => {
 
   it('查看全部缺口：三行、可按型別篩選', async () => {
     openPage(BOSS);
+
+    await whenEditable();
+    await enterEditMode();
 
     await waitFor(() => {
       expect(screen.getByText('已核准的真實照片')).toBeTruthy();

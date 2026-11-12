@@ -163,6 +163,10 @@ function GapReporter({ count, onCount }: { count: number; onCount?: (count: numb
 
 export type BrandPlatformEditorProps = {
   brandId: string;
+  /** 有沒有編輯權。與 `canEdit` 不同：`canEdit` 還要「正在編輯」。 */
+  mayEdit?: boolean;
+  /** 由閱讀態開始改：按「選一句立場」時通知外殼切去編輯態。 */
+  onStartEdit?: () => void;
   /** 現行版本的內容（JSON 字串，或者是舊的自由文字）。 */
   content: string;
   canEdit: boolean;
@@ -228,11 +232,14 @@ export function BrandPlatformEditor(props: BrandPlatformEditorProps) {
           titleKey="brand.platform.emptyTitle"
           leadKey="brand.platform.emptyLead"
           primary={
-            props.canEdit
+            // 全空的第一件事在閱讀態都要按得落：這一頁唯一的動作就是選立場，
+            // 要人先按「編輯」再按「選一句立場」是兩步做一件事。
+            (props.mayEdit ?? props.canEdit)
               ? {
                   labelKey: 'brand.platform.pick',
                   dataName: 'stance',
                   onSelect: () => {
+                    props.onStartEdit?.();
                     setPicking(true);
                   },
                 }

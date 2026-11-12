@@ -6,6 +6,7 @@ import './helpers/rtl';
 import { App } from '../src/App';
 import { resetDirectoryCache } from '../src/frame/useDirectory';
 import { installFakeApi, jsonResponse, resetBrowserState, type FakeHandlers } from './helpers/fake-api';
+import { enterEditMode, whenEditable } from './helpers/brand-page';
 
 /**
  * 平台頁與立場句選擇（issue #61）。
@@ -160,6 +161,9 @@ describe('平台頁的形狀', () => {
   it('關鍵詞：Enter 加一個，按 × 移除一個', async () => {
     open();
 
+    await whenEditable();
+    await enterEditMode();
+
     await waitFor(() => {
       expect(document.querySelector('[data-brand-platform-tag-input="keyword"]')).not.toBeNull();
     });
@@ -288,6 +292,8 @@ describe('平台頁的形狀', () => {
       expect(document.querySelector('[data-brand-platform="ready"]')).not.toBeNull();
     });
 
+    await enterEditMode();
+
     await userEvent.click(screen.getByRole('button', { name: '選一句立場' }));
 
     // 對話框內三檢小卡：缺的兩項有建立鍵（老闆）。
@@ -303,6 +309,8 @@ describe('平台頁的形狀', () => {
       expect(document.querySelector('[data-brand-platform="ready"]')).not.toBeNull();
     });
 
+    await enterEditMode();
+
     await userEvent.click(screen.getByRole('button', { name: '選一句立場' }));
 
     expect(document.querySelectorAll('[data-stance-need]')).toHaveLength(0);
@@ -312,6 +320,9 @@ describe('平台頁的形狀', () => {
 describe('立場句選擇', () => {
   it('三個候選連理由，按落去換立場', async () => {
     open();
+
+    await whenEditable();
+    await enterEditMode();
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: '選一句立場' })).toBeTruthy();
@@ -340,6 +351,9 @@ describe('立場句選擇', () => {
   it('自己寫一句：蓋過已選的候選', async () => {
     open();
 
+    await whenEditable();
+    await enterEditMode();
+
     await waitFor(() => {
       expect(screen.getByRole('button', { name: '選一句立場' })).toBeTruthy();
     });
@@ -361,6 +375,9 @@ describe('立場句選擇', () => {
         brandGapNeed: () => jsonResponse(201, { need: { id: 'n-1', code: 'COS-INTL-001' }, created: true }),
       },
     });
+
+    await whenEditable();
+    await enterEditMode();
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: '選一句立場' })).toBeTruthy();

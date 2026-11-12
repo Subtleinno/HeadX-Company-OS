@@ -12,6 +12,7 @@ import {
   type FakeHandlers,
 } from './helpers/fake-api';
 import { fullTypeDoc } from './fixtures/brandTypeface';
+import { enterEditMode, whenEditable } from './helpers/brand-page';
 
 /**
  * 字體頁（issue #63，取代 #38 的畫面）。
@@ -312,6 +313,9 @@ describe('字體頁', () => {
   it('字級要寫單位：打 18 當場講，打 18px 才算', async () => {
     openType(BOSS);
 
+    await whenEditable();
+    await enterEditMode();
+
     await waitFor(() => {
       expect(input('[data-type-role-size="heading"]')).not.toBeNull();
     });
@@ -335,6 +339,9 @@ describe('字體頁', () => {
   it('有編輯權的人改完：入了版本鏈，重新載入仍然是改過的', async () => {
     const { api } = openType(BOSS);
 
+    await whenEditable();
+    await enterEditMode();
+
     await waitFor(() => {
       expect(input('[data-type-role-size="body"]')).not.toBeNull();
     });
@@ -343,7 +350,7 @@ describe('字體頁', () => {
 
     await userEvent.clear(size);
     await userEvent.type(size, '18px');
-    await userEvent.click(screen.getByRole('button', { name: '儲存（新增一版）' }));
+    await userEvent.click(screen.getByRole('button', { name: '儲存為新版本' }));
 
     await waitFor(() => {
       expect(api.count('brandPageSave')).toBe(1);
@@ -363,6 +370,9 @@ describe('字體頁', () => {
   it('刪走家族：指向它的層級一併清空，不留一個指去不存在的家族的值', async () => {
     const { api } = openType(BOSS);
 
+    await whenEditable();
+    await enterEditMode();
+
     await waitFor(() => {
       expect(document.querySelector('[data-type-family-remove="f-latin"]')).not.toBeNull();
     });
@@ -370,7 +380,7 @@ describe('字體頁', () => {
     await userEvent.click(
       document.querySelector('[data-type-family-remove="f-latin"]') as HTMLElement,
     );
-    await userEvent.click(screen.getByRole('button', { name: '儲存（新增一版）' }));
+    await userEvent.click(screen.getByRole('button', { name: '儲存為新版本' }));
 
     await waitFor(() => {
       expect(api.count('brandPageSave')).toBe(1);
@@ -385,6 +395,9 @@ describe('字體頁', () => {
 
   it('印刷矩陣與錯誤用法：要填齊才加得入，加完看得到', async () => {
     openType(BOSS);
+
+    await whenEditable();
+    await enterEditMode();
 
     await waitFor(() => {
       expect(input('[data-type-print-item]')).not.toBeNull();

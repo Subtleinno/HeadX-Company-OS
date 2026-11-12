@@ -11,6 +11,7 @@ import {
   resetBrowserState,
   type FakeHandlers,
 } from './helpers/fake-api';
+import { enterEditMode, whenEditable } from './helpers/brand-page';
 
 /**
  * 色彩頁（issue #62，取代 #35）。
@@ -366,6 +367,9 @@ describe('色彩頁', () => {
   it('按「採用」真的改得動：色值變成建議值，儲存之後仍然在', async () => {
     const { api } = openColor(BOSS);
 
+    await whenEditable();
+    await enterEditMode();
+
     await waitFor(() => {
       expect(pairRow('brand.primary on paper')).not.toBeNull();
     });
@@ -379,7 +383,7 @@ describe('色彩頁', () => {
 
     expect(hexInput('brand.primary')?.value).toBe(suggested);
 
-    await userEvent.click(screen.getByRole('button', { name: '儲存（新增一版）' }));
+    await userEvent.click(screen.getByRole('button', { name: '儲存為新版本' }));
 
     await waitFor(() => {
       expect(api.count('brandPageSave')).toBe(1);
@@ -439,6 +443,9 @@ describe('色彩頁', () => {
 
   it('舊形狀（light／dark 兩張表）同樣讀不到，但可以一鍵由空白起手', async () => {
     openColor(BOSS, {}, JSON.stringify({ light: { ink: { hex: '#111111' } }, dark: {}, ramps: {} }));
+
+    await whenEditable();
+    await enterEditMode();
 
     expect(await screen.findByText('這一版內容不是色彩表，所以讀不到當中的角色。')).toBeTruthy();
     expect(document.querySelector('[data-color-reset]')).not.toBeNull();

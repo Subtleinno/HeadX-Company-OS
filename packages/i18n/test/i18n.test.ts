@@ -93,6 +93,8 @@ describe('字串表', () => {
       'brand.page.restored',
       'brand.page.deleted',
       'brand.page.pinned',
+      // v2.1 編輯態：一句講明「以第幾版為基礎」。
+      'brand.page.editingLead',
       'brand.page.policyVersionNo',
       // #53「這一頁」面板：現況的版本與時間、缺口數、引用清單、策略版號。
       'brand.guide.current',
