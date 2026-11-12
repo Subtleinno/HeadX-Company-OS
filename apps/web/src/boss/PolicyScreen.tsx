@@ -315,7 +315,7 @@ export function PolicyScreen() {
               <ul className="policy-side__pages">
                 {current?.usedBy.map((item) => (
                   <li key={`${item.brand}-${item.page}`}>
-                    {item.brand}　{item.page} v{item.versionNo}
+                    {`${item.brand} · ${item.page} v${item.versionNo}`}
                   </li>
                 ))}
               </ul>
