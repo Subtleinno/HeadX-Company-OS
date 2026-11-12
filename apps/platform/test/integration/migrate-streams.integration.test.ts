@@ -583,6 +583,7 @@ describe('舊資料庫升級', () => {
       '0016_brand_policy_v2.sql',
 
       '0017_brand_document.sql',
+      '0018_brand_gap.sql',
       ]);
 
       const after = await db.pool.query<{ name: string; checksum: string; applied_at: Date }>(
@@ -609,6 +610,7 @@ describe('舊資料庫升級', () => {
       '0016_brand_policy_v2.sql',
 
       '0017_brand_document.sql',
+      '0018_brand_gap.sql',
       ]);
 
       // 再跑一次才真的沒有待套用的，並且明講。
@@ -663,6 +665,7 @@ describe('舊資料庫升級', () => {
       '0016_brand_policy_v2.sql',
 
       '0017_brand_document.sql',
+      '0018_brand_gap.sql',
         'app_alpha/0001_alpha_one.sql',
       ]);
 

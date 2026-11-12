@@ -65,6 +65,7 @@
 | DELETE | `/brands/:id/pages/:key/versions/:vid` | 軟刪除舊版；現行 409 `current_version`、被成品釘住 409 `version_pinned` | 品牌編輯權 | ✅ |
 | GET | `/brands/:id/gaps` | 品牌缺口＋已建立的 Need 狀態（可 `?page=color`） | `requireUser` | ✅ 右側 Needs 欄、缺口對話框 |
 | POST | `/brands/:id/gaps/needs` | 一鍵建立 Need；同一個缺口只有一張（重複 200 `created:false`）；判斷型非老闆 403 `owner_only` | 品牌編輯權（判斷型另要老闆） | ✅ |
+| POST | `/brands/:id/check` | 跑驗證規則（`pageKey` 只回那一頁；可帶一份未儲存的 `document`）。只讀：不寫版本、不寫審計 | `requireUser` | ✅ `BrandCheckBar`（摘要條／橫幅／明細） |
 | GET | `/brands/:id/output/tokens.json` | W3C Design Tokens（淺／深兩套），由各頁現行版本組成 | `requireUser` | ⏳ #67 的「給 AI 用」卡 |
 | GET | `/brands/:id/output/prompt.md` | 品牌 prompt 包（Markdown），帶比例、對比下限、最小尺寸與缺口 | `requireUser` | ⏳ #67 |
 | GET | `/brands/:id/output/html` | 整本品牌書的 HTML（可 `?page=key`），由 layout 渲染 | `requireUser` | ⏳ #67 |
