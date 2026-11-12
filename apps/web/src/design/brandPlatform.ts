@@ -24,6 +24,11 @@ export type PlatformPositioning = {
 
 export type PlatformDoc = {
   stance: string;
+  /**
+   * 關鍵詞三到五個（v2.1）。由主頁搬過來：它是定位的一部分，擁有者是平台頁。
+   * 超過五個不截斷 —— 截斷等於靜靜丟資料，多出來的在檢查摘要講。
+   */
+  keywords: string[];
   positioning: PlatformPositioning;
   purpose: string;
   values: { name: string; do: string; dont: string }[];
@@ -37,6 +42,7 @@ export type PlatformDoc = {
 
 export const EMPTY_PLATFORM_DOC: PlatformDoc = {
   stance: '',
+  keywords: [],
   positioning: { for: '', who: '', category: '', benefit: '', unlike: '', because: '' },
   purpose: '',
   values: [],
@@ -70,6 +76,8 @@ export function buildPlatformDoc(raw: unknown): PlatformDoc {
 
   return {
     stance: text(source.stance),
+    // 去重、保序、不截斷。
+    keywords: [...new Set(list(source.keywords).filter((item): item is string => typeof item === 'string').map((item) => item.trim()).filter((item) => item !== ''))],
     positioning: {
       for: text(positioning.for),
       who: text(positioning.who),
@@ -139,6 +147,7 @@ export function serializePlatformDoc(doc: PlatformDoc): string {
 export function hasAnyValue(doc: PlatformDoc): boolean {
   return (
     doc.stance.trim() !== '' ||
+    doc.keywords.length > 0 ||
     doc.purpose.trim() !== '' ||
     doc.essence.trim() !== '' ||
     doc.audience.trim() !== '' ||
@@ -149,6 +158,16 @@ export function hasAnyValue(doc: PlatformDoc): boolean {
     doc.stance_candidates.length > 0 ||
     TESTS.some((test) => doc.tests[test.key].trim() !== '')
   );
+}
+
+/**
+ * 全空：除了「agent 交來的候選」之外，一個欄位都沒有內容。
+ *
+ * 為甚麼要把候選剔出去：候選不是這一頁的內容，是等老闆選的材料。有候選但
+ * 一個字都未填的頁，畫面應該仍然是「先選一句立場」，而不是八個空表。
+ */
+export function isBlank(doc: PlatformDoc): boolean {
+  return !hasAnyValue({ ...doc, stance_candidates: [] });
 }
 
 export const TESTS = [
@@ -176,14 +195,43 @@ export function missingTests(doc: PlatformDoc): string[] {
   return TESTS.filter((test) => doc.tests[test.key].trim() === '').map((test) => test.key);
 }
 
+/** 關鍵詞下限與上限（v2.1）：三個才算說得清，五個之後就是清單。 */
+export const KEYWORD_MIN = 3;
+export const KEYWORD_MAX = 5;
+
+/** 已經去到上限就唔再加：加落去只會令檢查摘要多一句「超出」。 */
+export function addKeyword(doc: PlatformDoc, raw: string): PlatformDoc {
+  const value = raw.trim();
+
+  if (value === '' || doc.keywords.includes(value) || doc.keywords.length >= KEYWORD_MAX) {
+    return doc;
+  }
+
+  return { ...doc, keywords: [...doc.keywords, value] };
+}
+
+export function removeKeyword(doc: PlatformDoc, value: string): PlatformDoc {
+  return { ...doc, keywords: doc.keywords.filter((item) => item !== value) };
+}
+
+/** 超出上限的關鍵詞（不截斷，只報告）。 */
+export function keywordsOverLimit(doc: PlatformDoc): boolean {
+  return doc.keywords.length > KEYWORD_MAX;
+}
+
 /**
- * 缺口數：立場句一句 ＋ 三檢每一項。與 `contracts` 的 `platform.gaps()` 同一組，
- * 因為兩邊講的必須是同一個數字（#53 的面板讀這一個）。
+ * 缺口數：立場句一句 ＋ 三檢每一項 ＋ 關鍵詞不足 ＋ 候選（只在立場空時）。
+ * 與 `contracts` 的 `platform.gaps()` 同一組，因為兩邊講的必須是同一個數字
+ * （#53 的面板讀這一個）。
  */
 export function platformGapCount(doc: PlatformDoc): number {
+  const stanceMissing = doc.stance.trim() === '';
+
   return (
-    (doc.stance.trim() === '' ? 1 : 0) +
+    (stanceMissing ? 1 : 0) +
     missingTests(doc).length +
-    (candidatesOf(doc).length < 3 ? 1 : 0)
+    (doc.keywords.length < KEYWORD_MIN ? 1 : 0) +
+    // 已經選定立場，候選就不再重要 —— 不再叫 agent 交一份沒有人會讀的稿。
+    (stanceMissing && candidatesOf(doc).length < 3 ? 1 : 0)
   );
 }

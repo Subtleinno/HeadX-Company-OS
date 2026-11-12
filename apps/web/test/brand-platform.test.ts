@@ -4,6 +4,7 @@ import {
   buildPlatformDoc,
   candidatesOf,
   hasAnyValue,
+  isBlank,
   missingTests,
   parsePlatformDoc,
   platformGapCount,
@@ -19,6 +20,7 @@ import {
 
 const FULL = {
   stance: '先白，後墨，再藍。',
+  keywords: ['安靜', '克制', '屬於你的時間'],
   positioning: {
     for: '想被認真看待的人',
     who: '一間做臨床與品牌的公司',
@@ -86,9 +88,9 @@ describe('讀現行內容', () => {
 });
 
 describe('缺口算得對', () => {
-  it('全空：立場一句＋三檢三項＋候選一項＝五個缺口', () => {
+  it('全空：立場 1 ＋ 三檢 3 ＋ 關鍵詞 1 ＋ 候選 1 ＝ 六個缺口', () => {
     expect(missingTests(EMPTY_PLATFORM_DOC)).toEqual(['real', 'relevant', 'unique']);
-    expect(platformGapCount(EMPTY_PLATFORM_DOC)).toBe(5);
+    expect(platformGapCount(EMPTY_PLATFORM_DOC)).toBe(6);
   });
 
   it('填齊了就是零', () => {
@@ -105,11 +107,35 @@ describe('缺口算得對', () => {
     expect(platformGapCount(doc)).toBe(2);
   });
 
-  it('候選少過三個也算一個缺口（交回 agent 出候選）', () => {
-    const doc = buildPlatformDoc({ ...FULL, stance_candidates: [{ text: '一句', reason: '因為' }] });
+  it('立場空時候選不足三個才算一個缺口（交回 agent 出候選）', () => {
+    const doc = buildPlatformDoc({
+      ...FULL,
+      stance: '',
+      stance_candidates: [{ text: '一句', reason: '因為' }],
+    });
 
     expect(candidatesOf(doc)).toHaveLength(1);
+    // 立場空 1 ＋ 候選 1。
+    expect(platformGapCount(doc)).toBe(2);
+  });
+
+  it('立場已選定：候選不足不再計缺口', () => {
+    const doc = buildPlatformDoc({ ...FULL, stance_candidates: [{ text: '一句', reason: '因為' }] });
+
+    expect(platformGapCount(doc)).toBe(0);
+  });
+
+  it('關鍵詞不足三個計一項，已經選定立場也照計', () => {
+    const doc = buildPlatformDoc({ ...FULL, keywords: ['安靜', '克制'] });
+
     expect(platformGapCount(doc)).toBe(1);
+  });
+
+  it('關鍵詞超過五個不截斷，缺口不因此增加（由人刪，不靜靜丟）', () => {
+    const doc = buildPlatformDoc({ ...FULL, keywords: ['一', '二', '三', '四', '五', '六'] });
+
+    expect(doc.keywords).toHaveLength(6);
+    expect(platformGapCount(doc)).toBe(0);
   });
 });
 
@@ -122,5 +148,15 @@ describe('全空判斷', () => {
     const doc = buildPlatformDoc({ positioning: { for: '誰' } });
 
     expect(hasAnyValue(doc)).toBe(true);
+  });
+
+  it('只有 agent 交來的候選：仍然算全空（候選不是這一頁的內容）', () => {
+    const doc = buildPlatformDoc({ stance_candidates: [{ text: '一句', reason: '因為' }] });
+
+    expect(isBlank(doc)).toBe(true);
+  });
+
+  it('有立場句就不再全空', () => {
+    expect(isBlank(buildPlatformDoc({ stance: '先白，後墨。' }))).toBe(false);
   });
 });

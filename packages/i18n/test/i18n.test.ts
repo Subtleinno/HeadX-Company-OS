@@ -199,6 +199,10 @@ describe('字串表', () => {
       'brand.check.pass',
       'brand.check.fail',
       'brand.check.undetermined',
+      // v2.1：關鍵詞與標籤輸入（下限、上限、移除時讀出被移除的值）。
+      'brand.platform.keywordsShort',
+      'brand.platform.keywordsOver',
+      'brand.platform.removeTag',
       // #61：Need 編號。
       'brand.platform.needCreated',
       // #60：建議的三項判斷、接受後的頁名、撞鍵，以及主頁過時的頁數。
