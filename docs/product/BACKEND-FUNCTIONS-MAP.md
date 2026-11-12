@@ -63,8 +63,8 @@
 | POST | `/brands/:id/pages/:key/versions` | 儲存＝新增一版（空內容 400） | 品牌編輯權（C103；老闆永遠可以） | ✅ |
 | POST | `/brands/:id/pages/:key/versions/:vid/restore` | 用回舊版：以舊內容新增一版，不改歷史 | 品牌編輯權 | ✅ |
 | DELETE | `/brands/:id/pages/:key/versions/:vid` | 軟刪除舊版；現行 409 `current_version`、被成品釘住 409 `version_pinned` | 品牌編輯權 | ✅ |
-| GET | `/policy` | 策略六個槽：現行全文＋版本列表 | `requireUser` | ✅ `PolicyScreen` |
-| POST | `/policy/:slot/versions` | 儲存＝新增一版（六個槽：home／logo／color／type／tone／custom） | **`requireOwner`** | ✅ |
+| GET | `/policy` | 策略九個槽：現行全文、版本列表、每個槽的規則 id 表（`rules.ts`）與「現行這一版正在支撐哪幾頁」 | `requireUser` | ✅ `PolicyScreen` |
+| POST | `/policy/:slot/versions` | 儲存＝新增一版（九個槽：platform／color／type／logo／image／tone／home／apply／custom） | **`requireOwner`** | ✅ |
 | GET | `/company` | 頁尾要顯示的公司識別（本機公司・公司名・城市） | `requireUser` | ✅ `AppFrame` |
 | GET | `/sites` | 據點目錄 | **`requireOwner`** | ✅ `MembersScreen` 之外，`SitesScreen` |
 | POST | `/sites` | 新增據點，回一次性邀請憑證 | **`requireOwner`** | ✅ |

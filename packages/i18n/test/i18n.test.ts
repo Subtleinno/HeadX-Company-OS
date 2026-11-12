@@ -71,6 +71,10 @@ describe('字串表', () => {
   'boss.members.brandEditRevoked',
   'boss.policy.saved',
   'boss.policy.versionNo',
+  // #56：規則卡要顯示閾值與三態，用的頁數是算出來的。
+  'boss.policy.ruleThreshold',
+  'boss.policy.ruleStates',
+  'boss.policy.usedByCount',
   'gate.body',
   'gate.departmentClosed.body',
   'design.brand.lead',

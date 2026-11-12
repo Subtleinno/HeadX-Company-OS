@@ -4,33 +4,38 @@ import {
   fetchPolicy,
   savePolicyVersion,
   type ApiFailure,
+  type BrandPolicyRule,
   type PolicySlotView,
 } from '../api';
 
 /**
- * 品牌頁策略（issue #34）。
+ * 品牌頁策略（#34、#56）。
  *
- * 六個槽、一份策略、只有老闆可以改。這一頁只做一件事：讓六份標準看得見、
+ * 九個槽、一份策略、只有老闆可以改。這一頁只做一件事：讓九份標準看得見、
  * 改得到，而每一次改動都留下一版。
  *
- * 三個誠實位：
- *   1. 沒有版本就講「未記錄＝缺」，不畫一個空的第 1 版。
- *   2. 沒有刪除鍵、沒有回滾鍵 —— 不是變灰，是不存在。策略只加不改：已出街
- *      成品可能引用某一版，那一版要永遠讀得返。
- *   3. 儲存之後重新讀：畫面永遠等於資料庫，不靠前端自己推算版號。
+ * 三欄（`09-strategy-boss-portal.md`）：槽列表、編輯區、右欄（這一槽的規則 id
+ * 與「現行這一版正在支撐哪些頁」）。
  *
- * 版型沿用品牌頁那一組 class（`.brand-page__*`）：同一個「頁籤＋編輯框＋
- * 版本列表」的形狀，不需要第二套 CSS。名字裡的 brand 是歷史，不是範圍。
+ * 四個誠實位：
+ *   1. 沒有版本就講「未記錄＝缺」，不畫一個空的第 1 版。
+ *   2. 沒有刪除鍵、沒有回滾鍵 —— 不是變灰，是不存在。策略只加不改。
+ *   3. 儲存之後重新讀：畫面永遠等於資料庫，不靠前端自己推算版號。
+ *   4. 規則 id 表由後端回（`rules.ts` 是唯一來源），前端不另存一份；這一槽
+ *      沒有可量化規則時講「靠判斷」，不假裝檢查過。
  */
 
 type LoadState = 'loading' | 'ready' | 'failed';
 
 const SLOT_LABEL: Record<string, MessageKey> = {
-  home: 'boss.policy.slot.home',
-  logo: 'boss.policy.slot.logo',
+  platform: 'boss.policy.slot.platform',
   color: 'boss.policy.slot.color',
   type: 'boss.policy.slot.type',
+  logo: 'boss.policy.slot.logo',
+  image: 'boss.policy.slot.image',
   tone: 'boss.policy.slot.tone',
+  home: 'boss.policy.slot.home',
+  apply: 'boss.policy.slot.apply',
   custom: 'boss.policy.slot.custom',
 };
 
@@ -73,7 +78,8 @@ function formatTime(value: string): string {
 
 export function PolicyScreen() {
   const [slots, setSlots] = useState<PolicySlotView[]>([]);
-  const [active, setActive] = useState<string>('home');
+  const [rules, setRules] = useState<BrandPolicyRule[]>([]);
+  const [active, setActive] = useState<string>('platform');
   const [state, setState] = useState<LoadState>('loading');
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState(false);
@@ -91,11 +97,12 @@ export function PolicyScreen() {
     }
 
     setSlots(result.data.slots);
+    setRules(result.data.rules);
 
     const target =
       keepActive !== null && result.data.slots.some((item) => item.slot === keepActive)
         ? keepActive
-        : (result.data.slots[0]?.slot ?? 'home');
+        : (result.data.slots[0]?.slot ?? 'platform');
 
     setActive(target);
     setDraft(result.data.slots.find((item) => item.slot === target)?.current?.content ?? '');
@@ -107,6 +114,7 @@ export function PolicyScreen() {
   }, [reload]);
 
   const current = slots.find((item) => item.slot === active) ?? null;
+  const activeRules = rules.filter((rule) => rule.slot === active);
 
   function select(slot: string): void {
     setActive(slot);
@@ -164,127 +172,177 @@ export function PolicyScreen() {
   }
 
   return (
-    <div className="brand-page" data-policy={active}>
-      <div className="brand-page__picker" role="tablist" aria-label={t('boss.policy.picker')}>
+    <div className="policy-layout" data-policy={active}>
+      <nav className="policy-rail" aria-label={t('boss.policy.picker')}>
         {slots.map((item) => (
           <button
             key={item.slot}
             type="button"
-            role="tab"
-            aria-selected={item.slot === active}
+            aria-current={item.slot === active ? 'page' : undefined}
             className={
-              item.slot === active
-                ? 'brand-page__tab brand-page__tab--active'
-                : 'brand-page__tab'
+              item.slot === active ? 'policy-rail__item policy-rail__item--active' : 'policy-rail__item'
             }
             data-policy-tab={item.slot}
             onClick={() => {
               select(item.slot);
             }}
           >
-            {slotLabel(item.slot)}
+            <span>{slotLabel(item.slot)}</span>
+            {item.current === null ? (
+              <span className="policy-rail__no policy-rail__no--missing">
+                {t('boss.policy.railMissing')}
+              </span>
+            ) : (
+              // 版號帶 v：`2` 會被讀成「兩頁」，`v2` 才是「第二版」。
+              <span className="policy-rail__no">{`v${item.current.versionNo}`}</span>
+            )}
           </button>
         ))}
-      </div>
+      </nav>
 
-      <header className="brand-page__head">
-        <h2 className="brand-page__title">{slotLabel(active)}</h2>
-        {current?.current != null ? (
-          <p className="brand-page__meta">
-            {t('boss.policy.versionNo', { no: current.current.versionNo })}
+      <div className="policy-main">
+        <header className="brand-page__head">
+          <h2 className="brand-page__title">{slotLabel(active)}</h2>
+          {current?.current != null ? (
+            <p className="brand-page__meta">
+              {t('boss.policy.versionNo', { no: current.current.versionNo })}
+            </p>
+          ) : (
+            <p className="brand-page__meta">{t('boss.policy.missing')}</p>
+          )}
+        </header>
+
+        <p className="design-footnote" data-policy-immutable>
+          {t('boss.policy.immutable')}
+        </p>
+
+        {notice !== null && (
+          <p className="design-note" role="status" data-policy-notice>
+            {notice}
           </p>
-        ) : (
-          <p className="brand-page__meta">{t('boss.policy.missing')}</p>
         )}
-      </header>
 
-      <p className="design-footnote" data-policy-immutable>
-        {t('boss.policy.immutable')}
-      </p>
+        {error !== null && (
+          <p className="design-note design-note--error" role="alert" data-policy-error>
+            {error}
+          </p>
+        )}
 
-      {notice !== null && (
-        <p className="design-note" role="status" data-policy-notice>
-          {notice}
-        </p>
-      )}
+        <label className="brand-page__editor">
+          <span className="design-field__label">{t('boss.policy.editorLabel')}</span>
+          <textarea
+            className="brand-page__textarea"
+            value={draft}
+            rows={18}
+            spellCheck={false}
+            onChange={(event) => {
+              setDraft(event.target.value);
+            }}
+          />
+          <span className="design-field__hint">{t('boss.policy.hint')}</span>
+        </label>
 
-      {error !== null && (
-        <p className="design-note design-note--error" role="alert" data-policy-error>
-          {error}
-        </p>
-      )}
+        <div className="design-form__actions">
+          <button
+            type="button"
+            className="design-btn design-btn--primary"
+            data-policy-save
+            disabled={busy || draft.trim() === ''}
+            onClick={() => {
+              void handleSave();
+            }}
+          >
+            {busy ? t('boss.policy.saving') : t('boss.policy.save')}
+          </button>
+        </div>
 
-      <label className="brand-page__editor">
-        <span className="design-field__label">{t('boss.policy.editorLabel')}</span>
-        <textarea
-          className="brand-page__textarea"
-          value={draft}
-          rows={14}
-          spellCheck={false}
-          onChange={(event) => {
-            setDraft(event.target.value);
-          }}
-        />
-        <span className="design-field__hint">{t('boss.policy.hint')}</span>
-      </label>
+        <section className="brand-page__versions">
+          <h3 className="brand-page__versionsTitle">{t('boss.policy.versions')}</h3>
 
-      <div className="design-form__actions">
-        <button
-          type="button"
-          className="design-btn design-btn--primary"
-          data-policy-save
-          disabled={busy || draft.trim() === ''}
-          onClick={() => {
-            void handleSave();
-          }}
-        >
-          {busy ? t('boss.policy.saving') : t('boss.policy.save')}
-        </button>
+          {(current?.versions.length ?? 0) === 0 ? (
+            <p className="design-empty">{t('boss.policy.noVersion')}</p>
+          ) : (
+            <ul className="brand-page__list">
+              {current?.versions.map((version) => {
+                const isCurrent = current.current?.id === version.id;
+
+                return (
+                  <li
+                    key={version.id}
+                    className="brand-page__version"
+                    data-policy-version={version.versionNo}
+                    data-current={isCurrent ? 'true' : 'false'}
+                  >
+                    <div className="brand-page__versionHead">
+                      <span className="brand-page__versionNo">
+                        {t('boss.policy.versionNo', { no: version.versionNo })}
+                      </span>
+                      {isCurrent && (
+                        <span className="brand-page__tag">{t('boss.policy.currentTag')}</span>
+                      )}
+                      <span className="brand-page__time">{formatTime(version.createdAt)}</span>
+                    </div>
+
+                    {version.note !== null && <p className="brand-page__note">{version.note}</p>}
+
+                    {version.preview !== '' && (
+                      <p className="brand-page__preview">{version.preview}</p>
+                    )}
+
+                    {/* 沒有「用回」與「刪除」：策略只加不改（#34）。 */}
+                    {isCurrent && (
+                      <p className="brand-page__currentNote">{t('boss.policy.currentNote')}</p>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
       </div>
 
-      <section className="brand-page__versions">
-        <h3 className="brand-page__versionsTitle">{t('boss.policy.versions')}</h3>
+      <aside className="policy-side">
+        <section className="policy-side__block" data-policy-used-by>
+          <h3 className="policy-side__title">{t('boss.policy.usedBy')}</h3>
 
-        {(current?.versions.length ?? 0) === 0 ? (
-          <p className="design-empty">{t('boss.policy.noVersion')}</p>
-        ) : (
-          <ul className="brand-page__list">
-            {current?.versions.map((version) => {
-              const isCurrent = current.current?.id === version.id;
+          {(current?.usedBy.length ?? 0) === 0 ? (
+            <p className="policy-side__empty">{t('boss.policy.usedByNone')}</p>
+          ) : (
+            <>
+              <p className="policy-side__count">
+                {t('boss.policy.usedByCount', { count: current?.usedBy.length ?? 0 })}
+              </p>
+              <ul className="policy-side__pages">
+                {current?.usedBy.map((item) => (
+                  <li key={`${item.brand}-${item.page}`}>
+                    {item.brand}　{item.page} v{item.versionNo}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </section>
+        <section className="policy-side__block" data-policy-rules>
+          <h3 className="policy-side__title">{t('boss.policy.rules')}</h3>
 
-              return (
-                <li
-                  key={version.id}
-                  className="brand-page__version"
-                  data-policy-version={version.versionNo}
-                  data-current={isCurrent ? 'true' : 'false'}
-                >
-                  <div className="brand-page__versionHead">
-                    <span className="brand-page__versionNo">
-                      {t('boss.policy.versionNo', { no: version.versionNo })}
-                    </span>
-                    {isCurrent && (
-                      <span className="brand-page__tag">{t('boss.policy.currentTag')}</span>
-                    )}
-                    <span className="brand-page__time">{formatTime(version.createdAt)}</span>
-                  </div>
-
-                  {version.note !== null && <p className="brand-page__note">{version.note}</p>}
-
-                  {version.preview !== '' && (
-                    <p className="brand-page__preview">{version.preview}</p>
-                  )}
-
-                  {/* 沒有「用回」與「刪除」：策略只加不改（#34）。 */}
-                  {isCurrent && (
-                    <p className="brand-page__currentNote">{t('boss.policy.currentNote')}</p>
-                  )}
+          {activeRules.length === 0 ? (
+            <p className="policy-side__empty">{t('boss.policy.rulesEmpty')}</p>
+          ) : (
+            <ul className="policy-side__rules">
+              {activeRules.map((rule) => (
+                <li key={rule.id} className="policy-side__rule" data-rule={rule.id}>
+                  <code className="policy-side__id">{rule.id}</code>
+                  <p className="policy-side__summary">{rule.summary}</p>
+                  <p className="policy-side__threshold">
+                    {t('boss.policy.ruleThreshold', { text: rule.threshold })}
+                  </p>
                 </li>
-              );
-            })}
-          </ul>
-        )}
-      </section>
+              ))}
+            </ul>
+          )}
+        </section>
+
+      </aside>
     </div>
   );
 }

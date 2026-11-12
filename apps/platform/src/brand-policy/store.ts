@@ -4,7 +4,7 @@ import type { Pool, PoolClient } from 'pg';
  * 品牌頁策略的讀寫（issue #34，決策 C102）。
  *
  * 三個決定：
- *   1. **一份策略，六個槽。** 不是逐品牌一份 —— 同一類專業標準不會因為換品牌
+ *   1. **一份策略，九個槽。** 不是逐品牌一份 —— 同一類專業標準不會因為換品牌
  *      而變成另一套；品牌之間的分別住在各品牌自己的頁。
  *   2. **只加不改。** 沒有軟刪除、沒有回滾：已經出街的成品可能引用某一版，
  *      那一版要永遠讀得返。migration 0014 的 trigger 擋住 UPDATE 與 DELETE。
@@ -15,15 +15,34 @@ import type { Pool, PoolClient } from 'pg';
  * 再由唯一索引其中一個失敗。
  */
 
-export type PolicySlot = 'home' | 'logo' | 'color' | 'type' | 'tone' | 'custom';
+/**
+ * 九個槽（#56，C112）。**槽名不改**：`tone` 就是語氣，不改成 `voice` ——
+ * `brand_policy_version` 有 trigger 擋 UPDATE，改名只會留下一個讀不到的舊槽，
+ * 或者兩個「現行」。
+ *
+ * 次序就是畫面上的次序（`09-strategy-boss-portal.md`）：識別五頁、語氣、
+ * 品牌主頁、應用、自定義頁通用。
+ */
+export type PolicySlot =
+  | 'platform'
+  | 'color'
+  | 'type'
+  | 'logo'
+  | 'image'
+  | 'tone'
+  | 'home'
+  | 'apply'
+  | 'custom';
 
-/** 次序就是畫面上的次序：五頁的次序，然後自定義頁通用。 */
 export const POLICY_SLOTS: readonly PolicySlot[] = [
-  'home',
-  'logo',
+  'platform',
   'color',
   'type',
+  'logo',
+  'image',
   'tone',
+  'home',
+  'apply',
   'custom',
 ];
 
@@ -34,8 +53,9 @@ export function isPolicySlot(value: string): value is PolicySlot {
 /**
  * 一頁屬於哪一個槽。
  *
- * 五個固定頁用自己的鍵；自定義頁一律用 `custom`（#34 的「自定義頁通用」）。
- * 這裡不看 kind，只看鍵：固定頁的鍵就那五個，其餘必然是 slug。
+ * 固定頁用自己的鍵（平台、色彩、字體、標誌、圖像、語氣、主頁、應用）；
+ * 自定義頁一律用 `custom`（#34 的「自定義頁通用」）。這裡不看 kind，只看鍵：
+ * 固定頁的鍵就是槽名，其餘必然是 slug。
  */
 export function slotForPageKey(pageKey: string): PolicySlot {
   return isPolicySlot(pageKey) && pageKey !== 'custom' ? pageKey : 'custom';
@@ -57,6 +77,13 @@ export type PolicySlotView = {
   /** 未有版本就是 null —— 畫面要如實講缺，不是畫一個空的第 1 版。 */
   current: PolicyVersionDetail | null;
   versions: PolicyVersionSummary[];
+  /**
+   * 現行那一版正在支撐哪些頁（最多五個）。
+   *
+   * 只算「頁的現行版本指著這個策略版本」的頁：改策略之後，舊頁仍然指著舊版，
+   * 這裡就不再列出它 —— 那正是要看見的事（有幾頁未跟上）。
+   */
+  usedBy: { brand: string; page: string; versionNo: number }[];
 };
 
 type VersionRow = {
@@ -80,10 +107,10 @@ function toSummary(row: VersionRow): PolicyVersionSummary {
 }
 
 /**
- * 六個槽連現行版本與版本列表，一次讀完。
+ * 九個槽連現行版本與版本列表，一次讀完。
  *
  * 分兩條查詢而不是逐槽查六次：槽的數目寫死在 `POLICY_SLOTS`，畫面一次要全部
- * 六個。現行那條只搬 content（六份），列表那條只搬 preview —— 版本多了之後，
+ * 九個。現行那條只搬 content（九份），列表那條只搬 preview —— 版本多了之後，
  * 列表不應該跟著搬整份文件。
  */
 export async function listPolicy(db: Pool): Promise<PolicySlotView[]> {
@@ -105,14 +132,50 @@ export async function listPolicy(db: Pool): Promise<PolicySlotView[]> {
     currentBySlot.set(row.slot, row);
   }
 
+  // 哪一頁的現行版本用了哪一版策略。一條查詢讀完，不在這裡逐頁問。
+  const usage = await db.query<{
+    slot: string;
+    version_no: number;
+    name: string;
+    brand_name: string;
+    page_version_no: number;
+  }>(
+    `select policy.slot, policy.version_no, page.name,
+            brand.name as brand_name, pv.version_no as page_version_no
+       from brand_page_version pv
+       join brand_page page on page.id = pv.page_id and page.deleted_at is null
+       join brand brand on brand.id = page.brand_id
+       join brand_policy_version policy on policy.id = pv.policy_version_id
+      where pv.deleted_at is null
+        and pv.version_no = (
+          select max(latest.version_no)
+            from brand_page_version latest
+           where latest.page_id = pv.page_id and latest.deleted_at is null
+        )
+      order by pv.created_at desc`,
+  );
+
   return POLICY_SLOTS.map((slot) => {
     const row = currentBySlot.get(slot);
+    const usedBy = usage.rows
+      .filter((item) => item.slot === slot && item.version_no === row?.version_no)
+      .map((item) => ({
+        brand: item.brand_name,
+        page: item.name,
+        versionNo: item.page_version_no,
+      }))
+      .filter(
+        (item, index, all) =>
+          all.findIndex((other) => other.brand === item.brand && other.page === item.page) === index,
+      )
+      .slice(0, 5);
 
     return {
       slot,
       current:
         row === undefined ? null : { ...toSummary(row), content: row.content ?? '' },
       versions: summaries.rows.filter((item) => item.slot === slot).map(toSummary),
+      usedBy,
     };
   });
 }

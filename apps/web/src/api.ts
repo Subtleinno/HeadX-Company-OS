@@ -1162,7 +1162,7 @@ export function deleteBrandPageVersion(
 }
 
 /**
- * 品牌頁策略（issue #34）：一份策略、六個槽，只加不改。
+ * 品牌頁策略（#34、#56）：一份策略、九個槽，只加不改。
  *
  * `current` 同樣由伺服器算（該槽最大版號），前端不推。`current === null` 代表
  * 這個槽真的沒有內容 —— 畫面要講缺，不要畫一個空的第 1 版。
@@ -1181,10 +1181,28 @@ export type PolicySlotView = {
   slot: string;
   current: PolicyVersionDetail | null;
   versions: PolicyVersionSummary[];
+  /** 現行這一版正在支撐哪些頁的現行版本（最多五個）。 */
+  usedBy: { brand: string; page: string; versionNo: number }[];
 };
 
-export function fetchPolicy(): Promise<ApiResult<{ slots: PolicySlotView[] }>> {
-  return request<{ slots: PolicySlotView[] }>('/api/policy');
+/**
+ * 規則 id 表（#56）。id 是「策略句」與「檢查器」之間唯一的契約 —— 前端只
+ * 顯示，不另存一份；後端換一條定義，畫面就跟著換。
+ */
+export type BrandPolicyRule = {
+  id: string;
+  slot: string;
+  summary: string;
+  threshold: string;
+  pass: string;
+  fail: string;
+  undetermined: string;
+};
+
+export function fetchPolicy(): Promise<
+  ApiResult<{ slots: PolicySlotView[]; rules: BrandPolicyRule[] }>
+> {
+  return request<{ slots: PolicySlotView[]; rules: BrandPolicyRule[] }>('/api/policy');
 }
 
 export function savePolicyVersion(
