@@ -1019,6 +1019,8 @@ export type BrandPageSummary = {
   name: string;
   brief: string | null;
   sortOrder: number;
+  /** 左側欄分組（#60）。由後端的固定頁表派生，前端不寫死一份次序。 */
+  group: 'home' | 'identity' | 'custom' | 'apply';
   current: BrandPageVersionSummary | null;
 };
 
@@ -1092,6 +1094,50 @@ export function runBrandCheck(brandId: string, pageKey?: string): Promise<ApiRes
     method: 'POST',
     body: JSON.stringify(pageKey === undefined ? {} : { pageKey }),
   });
+}
+
+/** 一個「值得獨立成頁」的建議（#60）。三項判斷皆是才會存在。 */
+export type BrandSuggestion = {
+  id: string;
+  signature: string;
+  name: string;
+  slug: string;
+  brief: string;
+  checks: { unique: string; repeated: string; noRoom: string };
+  refs: string[];
+  /** 其實屬於哪一頁（固定頁鍵或自定義頁 slug）；null＝真的是新系統。 */
+  belongsTo: string | null;
+  state: 'pending' | 'dismissed' | 'accepted';
+  createdAt: string;
+};
+
+export function fetchBrandSuggestions(
+  brandId: string,
+): Promise<ApiResult<{ items: BrandSuggestion[] }>> {
+  return request<{ items: BrandSuggestion[] }>(`/api/brands/${encodeURIComponent(brandId)}/suggestions`);
+}
+
+/** 接受：建立自定義頁並寫入 brief。撞頁鍵回 409 `page_key_taken`。 */
+export function acceptBrandSuggestion(
+  brandId: string,
+  suggestionId: string,
+  brief: string,
+): Promise<ApiResult<{ page: BrandPageSummary }>> {
+  return request<{ page: BrandPageSummary }>(
+    `/api/brands/${encodeURIComponent(brandId)}/suggestions/${encodeURIComponent(suggestionId)}/accept`,
+    { method: 'POST', body: JSON.stringify({ brief }) },
+  );
+}
+
+/** 略過是決定，不是取消：同一份內容之後不再提。 */
+export function dismissBrandSuggestion(
+  brandId: string,
+  suggestionId: string,
+): Promise<ApiResult<{ suggestion: BrandSuggestion }>> {
+  return request<{ suggestion: BrandSuggestion }>(
+    `/api/brands/${encodeURIComponent(brandId)}/suggestions/${encodeURIComponent(suggestionId)}/dismiss`,
+    { method: 'POST', body: JSON.stringify({}) },
+  );
 }
 
 /**

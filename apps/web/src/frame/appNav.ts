@@ -27,6 +27,12 @@ export type NavLeaf = {
   labelKey?: MessageKey;
   /** 已經是人看得懂的字（自定義頁的顯示名）。與 `labelKey` 二選一。 */
   label?: string;
+  /**
+   * 名稱右側的狀態小字（#60 的「缺」）。缺內容的頁不畫灰色假內容，但也不
+   * 從清單消失 —— 消失會令人以為這一頁不存在。
+   */
+  badge?: string;
+  badgeTone?: 'warning' | 'muted';
 };
 
 export type NavPage = NavLeaf & {
@@ -259,6 +265,10 @@ export type BrandNavPage = {
   key: string;
   name: string;
   kind: 'fixed' | 'custom';
+  /** 左側欄分組（#60）：品牌主頁、識別、品牌專屬、應用。 */
+  group?: 'home' | 'identity' | 'custom' | 'apply';
+  /** 這一頁未有版本。名稱右側顯示「缺」。 */
+  missing?: boolean;
 };
 
 /**
@@ -283,12 +293,37 @@ export function withBrandPages(
   const mapped: NavPage[] = pages.map((page) => ({
     key: page.kind === 'custom' ? `p/${page.key}` : page.key,
     label: page.name,
+    ...(page.missing === true ? { badge: t('brand.nav.missing'), badgeTone: 'warning' as const } : {}),
   }));
+
+  // 四組（#60）：品牌主頁／識別 IDENTITY／品牌專屬 CUSTOM／應用 APPLY。
+  // 空組不畫 —— 一個沒有頁的分組標題只是一個問題。次序寫死在這裡而不是由
+  // 後端的 `sort_order` 推：分組是一個決定，不是一個數。
+  const order = ['home', 'identity', 'custom', 'apply'] as const;
+  const titles: Record<(typeof order)[number], MessageKey | null> = {
+    home: null,
+    identity: 'design.group.identity',
+    custom: 'design.group.custom',
+    apply: 'design.group.apply',
+  };
+
+  const groups = order
+    .map((group) => {
+      const inGroup = pages
+        .map((page, index) => ({ page, nav: mapped[index] }))
+        .filter((entry) => (entry.page.group ?? (entry.page.kind === 'custom' ? 'custom' : 'identity')) === group)
+        .map((entry) => entry.nav as NavPage);
+
+      const titleKey = titles[group];
+
+      return { ...(titleKey === null ? {} : { titleKey }), pages: inGroup };
+    })
+    .filter((group) => group.pages.length > 0);
 
   return {
     ...nav,
     modules: nav.modules.map((navModule) =>
-      navModule.key === 'brand' ? { ...navModule, groups: [{ pages: mapped }] } : navModule,
+      navModule.key === 'brand' ? { ...navModule, groups } : navModule,
     ),
   };
 }

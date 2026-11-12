@@ -94,7 +94,10 @@ export type FakeHandlers = Partial<
     | 'policySave'
     | 'brandGaps'
     | 'brandGapNeed'
-    | 'brandCheck',
+    | 'brandCheck'
+    | 'brandSuggestions'
+    | 'brandSuggestionAccept'
+    | 'brandSuggestionDismiss',
     Handler
   >
 >;
@@ -345,6 +348,19 @@ function routeKey(path: string, method: string): keyof FakeHandlers | null {
     return method === 'POST' ? 'brandCheck' : null;
   }
 
+  // 專屬系統建議（issue #60）。三個更具體的路徑先配對，最後才是清單。
+  if (/\/brands\/[^/]+\/suggestions\/[^/]+\/accept$/.test(bare)) {
+    return method === 'POST' ? 'brandSuggestionAccept' : null;
+  }
+
+  if (/\/brands\/[^/]+\/suggestions\/[^/]+\/dismiss$/.test(bare)) {
+    return method === 'POST' ? 'brandSuggestionDismiss' : null;
+  }
+
+  if (/\/brands\/[^/]+\/suggestions$/.test(bare)) {
+    return method === 'GET' ? 'brandSuggestions' : null;
+  }
+
   // ── 品牌與「我上次做緊邊個品牌」（issue #15）。
   // `/me/brand-focus` 要放喺 `/me` 之前配對：兩者都係 GET。
   if (bare.endsWith('/me/brand-focus')) {
@@ -468,6 +484,11 @@ export function installFakeApi(handlers: FakeHandlers): FakeApi {
 
         // 檢查（#59）同理：每一頁都會跑一次。未有準備就回「沒有規則」那一組，
         // 摘要條因此不出現 —— 舊測試驗的是別的東西，不應該被一條新橫條影響。
+        // 建議清單（#60）也幾乎每一頁都會讀（主頁出卡、其他頁出提示）。
+        if (key === 'brandSuggestions') {
+          return jsonResponse(200, { items: [] });
+        }
+
         if (key === 'brandCheck') {
           return jsonResponse(200, {
             items: [],

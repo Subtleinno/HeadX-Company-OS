@@ -129,11 +129,19 @@ function open(options: {
   return api;
 }
 
-/** 左側欄目前的頁，按畫面次序。 */
+/** 左側欄目前的頁名，按畫面次序。「缺」是同一顆按鈕裡的狀態小字，斷言名之前剝走。 */
+function navText(node: Element): string {
+  const clone = node.cloneNode(true) as Element;
+
+  for (const badge of Array.from(clone.querySelectorAll('.frame-sidebar__badge'))) {
+    badge.remove();
+  }
+
+  return (clone.textContent ?? '').trim();
+}
+
 function sidebarPages(): string[] {
-  return Array.from(document.querySelectorAll('[data-frame-rail] .frame-sidebar__item')).map(
-    (node) => node.textContent ?? '',
-  );
+  return Array.from(document.querySelectorAll('[data-frame-rail] .frame-sidebar__item')).map(navText);
 }
 
 afterEach(() => {

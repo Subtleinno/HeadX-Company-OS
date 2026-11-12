@@ -25,7 +25,7 @@ describe('migration 執行器', () => {
     await db.drop();
   });
 
-  it('空資料庫套用全部 migration，schema_migrations 有 0001 至 0018', async () => {
+  it('空資料庫套用全部 migration，schema_migrations 有 0001 至 0019', async () => {
     const applied = await migrate({ pool: db.pool, dir: migrationsDir, log: silent });
 
     expect(applied).toEqual([
@@ -49,6 +49,7 @@ describe('migration 執行器', () => {
 
       '0017_brand_document.sql',
       '0018_brand_gap.sql',
+      '0019_brand_suggestion.sql',
     ]);
 
     const rows = await db.pool.query<{ name: string; checksum: string }>(
@@ -76,6 +77,7 @@ describe('migration 執行器', () => {
 
       '0017_brand_document.sql',
       '0018_brand_gap.sql',
+      '0019_brand_suggestion.sql',
     ]);
     expect(rows.rows[0]?.checksum).toMatch(/^[0-9a-f]{64}$/);
 
@@ -127,6 +129,7 @@ describe('migration 執行器', () => {
 
       '0017_brand_document.sql',
       '0018_brand_gap.sql',
+      '0019_brand_suggestion.sql',
       ]);
 
       const rows = await fresh.pool.query('select count(*)::int as n from schema_migrations');

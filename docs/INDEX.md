@@ -8,7 +8,7 @@
 |---|---|---|
 | **記起這套東西是什麼**（設計真相） | [`CONCEPT.md`](CONCEPT.md) | 一頁十節 |
 | **今日做到哪、怎樣跑起來、下一個做什麼** | [`product/HANDOFF.md`](product/HANDOFF.md) | 一頁八節 |
-| **某個決定為甚麼這樣定** | [`product/DECISIONS.md`](product/DECISIONS.md) | C1–C116，後者優先 |
+| **某個決定為甚麼這樣定** | [`product/DECISIONS.md`](product/DECISIONS.md) | C1–C117，後者優先 |
 
 其餘全部文件都是這三份的**細節或歷史**，不需要順序讀。
 
@@ -20,7 +20,7 @@
 |---|---|
 | `CONCEPT.md` | **設計真相**：七個原則、十二物件、Needs 閉環、公司層／品牌層、對外可達性 |
 | `product/HANDOFF.md` | **今日交接**：程式碼在哪、五分鐘跑起來、現有畫面、品牌模組 loop 次序（§5）、十一個坑 |
-| `product/DECISIONS.md` | **決策日誌** C1–C116，後者優先 |
+| `product/DECISIONS.md` | **決策日誌** C1–C117，後者優先 |
 | `product/FRAME-UIUX-HANDOFF.md` | 外殼行為規格 v1.4（四層導覽、據點目錄、權限門） |
 | `product/SCOPE-MODEL.md` | 範圍模型：公司／品牌、三種 app 模式、管寫 vs 管讀 |
 | `product/MULTI-MACHINE-ACCESS.md` | 跨機入口：總部＝登記／批准／入口中心，不是資料隧道 |

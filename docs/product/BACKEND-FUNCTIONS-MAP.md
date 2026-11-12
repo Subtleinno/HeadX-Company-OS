@@ -52,7 +52,7 @@
 | POST | `/brands` | 開新品牌 | **`requireOwner`** | ✅ 只有老闆見到表單（#19） |
 | GET | `/me/brand-focus` | 我上次工作的品牌，未揀過回 `null` | `requireUser` | ✅ `useDirectory` |
 | PUT | `/me/brand-focus` | 記住我這次的品牌（只寫自己那一行；品牌不存在 → `400 unknown_brand`） | `requireUser` | ✅ |
-| GET | `/brands/:id/pages` | 品牌頁清單＋`canEdit`（順手確保八個固定頁存在，C112） | `requireUser` | ✅ `DesignApp`／`useBrandPages` |
+| GET | `/brands/:id/pages` | 品牌頁清單（含 `group` 分組與 `current`）＋`canEdit`（順手確保八個固定頁存在，C112／C117） | `requireUser` | ✅ `DesignApp`／`useBrandPages`（左側四組、「缺」） |
 | POST | `/brands/:id/pages` | 建立自定義頁（名／slug／brief 三樣齊；撞鍵 409 `page_key_taken`、固定鍵 409 `page_key_reserved`） | 品牌編輯權（`canEditBrand`，C103） | ✅ `BrandPageCreate` |
 | PATCH | `/brands/:id/pages/:key` | 改顯示名（帶 `slug` 一律 400：slug 不可改） | 品牌編輯權 | ✅ `BrandPageScreen` |
 | DELETE | `/brands/:id/pages/:key` | 軟刪除自定義頁連版本；固定頁 409 `page_is_fixed`、被成品釘住 409 `page_pinned` | 品牌編輯權 | ✅ |
@@ -65,6 +65,10 @@
 | DELETE | `/brands/:id/pages/:key/versions/:vid` | 軟刪除舊版；現行 409 `current_version`、被成品釘住 409 `version_pinned` | 品牌編輯權 | ✅ |
 | GET | `/brands/:id/gaps` | 品牌缺口＋已建立的 Need 狀態（可 `?page=color`） | `requireUser` | ✅ 右側 Needs 欄、缺口對話框 |
 | POST | `/brands/:id/gaps/needs` | 一鍵建立 Need；同一個缺口只有一張（重複 200 `created:false`）；判斷型非老闆 403 `owner_only` | 品牌編輯權（判斷型另要老闆） | ✅ |
+| GET | `/brands/:id/suggestions` | 等決定的專屬系統建議（只有 pending） | `requireUser` | ✅ 主頁建議卡、各頁「這屬於這一頁」提示 |
+| POST | `/brands/:id/suggestions` | 記一個建議；三項判斷缺一項 422 `not_eligible`；同簽名已略過回 200 `created:false` | 品牌編輯權 | ✅ |
+| POST | `/brands/:id/suggestions/:sid/accept` | 接受＝建立自定義頁並寫入 brief（撞鍵 409 `page_key_taken`） | 品牌編輯權 | ✅ |
+| POST | `/brands/:id/suggestions/:sid/dismiss` | 略過＝留簽名，同一份內容不再提 | 品牌編輯權 | ✅ |
 | POST | `/brands/:id/check` | 跑驗證規則（`pageKey` 只回那一頁；可帶一份未儲存的 `document`）。只讀：不寫版本、不寫審計 | `requireUser` | ✅ `BrandCheckBar`（摘要條／橫幅／明細） |
 | GET | `/brands/:id/output/tokens.json` | W3C Design Tokens（淺／深兩套），由各頁現行版本組成 | `requireUser` | ⏳ #67 的「給 AI 用」卡 |
 | GET | `/brands/:id/output/prompt.md` | 品牌 prompt 包（Markdown），帶比例、對比下限、最小尺寸與缺口 | `requireUser` | ⏳ #67 |

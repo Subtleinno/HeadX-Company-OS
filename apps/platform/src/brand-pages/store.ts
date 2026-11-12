@@ -60,6 +60,13 @@ export type BrandPageView = {
   name: string;
   brief: string | null;
   sortOrder: number;
+  /**
+   * 左側欄的分組（issue #60）：品牌主頁、識別、品牌專屬、應用。
+   *
+   * 由 `BRAND_FIXED_PAGES` 派生，不由前端寫死一份次序 —— 前後端各寫一份，
+   * 早晚會有一邊多一頁。自定義頁一律 `custom`。
+   */
+  group: 'home' | 'identity' | 'custom' | 'apply';
   current: VersionSummary | null;
 };
 
@@ -193,6 +200,15 @@ export async function ensureFixedPages(db: Pool, brandId: string): Promise<void>
   }
 }
 
+/** 一頁屬於哪一組（issue #60）。自定義頁自己一組；其餘由固定頁表派生。 */
+export function groupOf(key: string, kind: PageKind): 'home' | 'identity' | 'custom' | 'apply' {
+  if (kind === 'custom') {
+    return 'custom';
+  }
+
+  return BRAND_FIXED_PAGES.find((page) => page.key === key)?.group ?? 'identity';
+}
+
 export async function listPages(db: Pool, brandId: string): Promise<BrandPageView[]> {
   const result = await db.query<PageRow & { version_id: string | null; version_no: number | null; version_created_at: Date | null; version_note: string | null; version_preview: string | null; version_policy_no: number | null }>(
     `select p.id, p.brand_id, p.kind, p.key, p.name, p.brief, p.sort_order,
@@ -226,6 +242,7 @@ export async function listPages(db: Pool, brandId: string): Promise<BrandPageVie
     name: row.name,
     brief: row.brief,
     sortOrder: row.sort_order,
+    group: groupOf(row.key, row.kind),
     current:
       row.version_id === null || row.version_no === null || row.version_created_at === null
         ? null

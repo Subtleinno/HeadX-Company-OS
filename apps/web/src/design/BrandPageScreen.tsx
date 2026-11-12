@@ -19,6 +19,12 @@ import { BrandLogoEditor } from './BrandLogoEditor';
 import { BrandGapDialog } from './BrandGapDialog';
 import { BrandNeedsRail } from './BrandNeedsRail';
 import { BrandCheckBanner, BrandCheckBar } from './BrandCheckBar';
+import {
+  SuggestionBelongsHint,
+  SuggestionCard,
+  SuggestionDialog,
+  useSuggestions,
+} from './BrandSuggestion';
 import { useBrandCheck } from './useBrandCheck';
 import { BrandPageGuide } from './BrandPageGuide';
 import { BrandToneEditor } from './BrandToneEditor';
@@ -61,6 +67,13 @@ type BrandPageScreenProps = {
   onPagesChanged: () => void;
   /** 刪完之後回品牌主頁：留在一個已經不存在的網址上只會見到「找不到」。 */
   onRemoved: () => void;
+  /**
+   * 在這一頁的現行版本之後改過的頁名（#60）。
+   *
+   * 品牌主頁由其他頁砌出來，所以它會過時。這不是一個 flag，是算出來的：
+   * 有哪一頁的現行版本比主頁的現行版本新，就是有東西未反映。空陣列＝未過時。
+   */
+  newerPages?: readonly string[];
 };
 
 /**
@@ -196,6 +209,7 @@ export function BrandPageScreen({
   isOwner,
   onPagesChanged,
   onRemoved,
+  newerPages = [],
 }: BrandPageScreenProps) {
   const [detail, setDetail] = useState<BrandPageDetail | null>(null);
   const [state, setState] = useState<LoadState>('loading');
@@ -218,6 +232,9 @@ export function BrandPageScreen({
    * 所以「上次檢查說合格」這種東西不存在。
    */
   const check = useBrandCheck(brandId, pageKey);
+  /** 專屬系統建議（#60）：等決定的那幾個。主頁出卡，其他頁出「這屬於這一頁」。 */
+  const suggestions = useSuggestions(brandId);
+  const [suggestionOpen, setSuggestionOpen] = useState<string | null>(null);
 
   /**
    * 讀這一頁。
@@ -454,6 +471,12 @@ export function BrandPageScreen({
   const page = detail.page;
   const isCustom = page.kind === 'custom';
 
+  const pending = suggestions.items;
+  const homeSuggestion = pageKey === 'home' ? pending.find((item) => item.belongsTo === null) : undefined;
+  const belongsSuggestion = pending.find((item) => item.belongsTo === pageKey);
+  const openedSuggestion =
+    suggestionOpen === null ? null : (pending.find((item) => item.id === suggestionOpen) ?? null);
+
   return (
     <div className="brand-frame" data-brand-page={page.key}>
       <div className="brand-page">
@@ -564,6 +587,29 @@ export function BrandPageScreen({
       {error !== null && (
         <p className="design-note design-note--error" role="alert" data-brand-page-error>
           {error}
+        </p>
+      )}
+
+      {/* 專屬系統建議（#60）。兩件事分得很清：
+          主頁：一個等決定的新系統（一張卡，按下去才開對話框）；
+          其他頁：agent 覺得「其實屬於這一頁」，一句提示就夠。 */}
+      {pageKey === 'home' && homeSuggestion !== undefined && (
+        <SuggestionCard
+          suggestion={homeSuggestion}
+          onOpen={() => {
+            setSuggestionOpen(homeSuggestion.id);
+          }}
+        />
+      )}
+
+      {belongsSuggestion !== undefined && (
+        <SuggestionBelongsHint suggestion={belongsSuggestion} pageName={page.name} />
+      )}
+
+      {/* 品牌主頁過時：有頁在它之後改過。不是一個 flag，是比版本時間算出來的。 */}
+      {pageKey === 'home' && newerPages.length > 0 && (
+        <p className="design-note" role="status" data-brand-home-stale={newerPages.length}>
+          {t('brand.home.stale', { count: newerPages.length, pages: newerPages.join('、') })}
         </p>
       )}
 
@@ -799,6 +845,23 @@ export function BrandPageScreen({
           setGapDialog(true);
         }}
       />
+
+      {openedSuggestion !== null && (
+        <SuggestionDialog
+          brandId={brandId}
+          suggestion={openedSuggestion}
+          onDecided={(message) => {
+            setSuggestionOpen(null);
+            setNotice(message);
+            suggestions.reload();
+            // 接受＝多了一頁：左側清單與頁數都要跟著變。
+            onPagesChanged();
+          }}
+          onClose={() => {
+            setSuggestionOpen(null);
+          }}
+        />
+      )}
 
       {gapDialog && (
         <BrandGapDialog

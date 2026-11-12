@@ -73,6 +73,7 @@ export function AppFrame({
     items: group.pages.map((page) => ({
       key: page.key,
       label: navLabel(page),
+      ...(page.badge === undefined ? {} : { badge: page.badge, badgeTone: page.badgeTone ?? 'muted' }),
       ...(page.sections === undefined
         ? {}
         : {

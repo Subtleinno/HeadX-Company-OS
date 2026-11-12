@@ -12,6 +12,7 @@ import { registerBrandPages } from './brand-pages/index.js';
 import { registerBrandOutput } from './brand-output/index.js';
 import { registerBrandGaps } from './brand-gaps/index.js';
 import { registerBrandCheck } from './brand-check/index.js';
+import { registerBrandSuggestions } from './brand-suggestions/index.js';
 import { registerBrandPolicy } from './brand-policy/index.js';
 import { registerStaff } from './staff/index.js';
 import { attachPoolErrorHandler, createDbCheck } from './db.js';
@@ -278,6 +279,9 @@ async function main(): Promise<void> {
 
   // 品牌驗證規則（issue #59）：一個規則 id 一個 checker，只報告不阻止儲存。
   registerBrandCheck(app, { pool });
+
+  // 品牌專屬系統建議（issue #60）：三項判斷皆是才是一頁；略過會記錄。
+  registerBrandSuggestions(app, { pool });
 
   // 品牌頁策略（issue #34）：六個槽，只加不改，寫只有老闆。
   registerBrandPolicy(app, { pool });

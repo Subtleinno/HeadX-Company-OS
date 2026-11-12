@@ -887,6 +887,7 @@ describe('舊資料庫升級（#80 的 0001–0004 → 0005 及之後）', () =>
 
       '0017_brand_document.sql',
       '0018_brand_gap.sql',
+      '0019_brand_suggestion.sql',
       ]);
 
       // 4. 既有資料一個字都沒動。
