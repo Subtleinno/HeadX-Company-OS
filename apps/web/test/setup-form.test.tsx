@@ -252,7 +252,9 @@ describe('建立老闆帳戶：送出流程', () => {
     await fill({ name: '陳老闆', email: 'boss@example.com', password: PASSWORD, confirm: PASSWORD });
     await submit();
 
-    expect(await screen.findByRole('heading', { name: '今日' })).toBeTruthy();
+    // 這一步要等登入後的首頁載入（多個 API 並行）。並行跑測試時 1 秒不夠，
+    // 會偶發紅 —— 放寬到 5 秒只影響慢機器，不會令壞掉的東西變綠。
+    expect(await screen.findByRole('heading', { name: '今日' }, { timeout: 5000 })).toBeTruthy();
     expect(screen.getByText('陳老闆')).toBeTruthy();
   });
 });
