@@ -15,6 +15,7 @@ import { BrandColorEditor } from './BrandColorEditor';
 import { BrandCustomEditor } from './BrandCustomEditor';
 import { BrandHomeEditor } from './BrandHomeEditor';
 import { introInText } from './brandHome';
+import { BrandImageEditor } from './BrandImageEditor';
 import { BrandLogoEditor } from './BrandLogoEditor';
 import { BrandPlatformEditor } from './BrandPlatformEditor';
 import { BrandGapDialog } from './BrandGapDialog';
@@ -35,6 +36,7 @@ import { useBrandGaps } from './useBrandGaps';
 import { hexesInText } from './brandColors';
 import { describeChanges } from './brandDiff';
 import { assetNamesInText } from './brandLogo';
+import { exampleLabelsInText } from './brandImage';
 import { leadingLineInText } from './brandCustom';
 import { traitNamesInText } from './brandTone';
 import { namesInText } from './brandType';
@@ -179,6 +181,30 @@ function ToneVersionPreview({ preview }: { preview: string }) {
 }
 
 /**
+ * 圖像頁的版本預覽：範例名，不印 JSON。
+ *
+ * 版本列表只拿到 160 字元的截斷內容；範例名寫在 JSON 中間（前面是立場與六格
+ * 攝影），所以常常抽不到。抽不到就講抽不到 —— 不會假裝那一版有範例。
+ */
+function ImageVersionPreview({ preview }: { preview: string }) {
+  const names = exampleLabelsInText(preview).slice(0, 5);
+
+  if (names.length === 0) {
+    return <p className="brand-page__preview">{t('brand.image.versionNoExample')}</p>;
+  }
+
+  return (
+    <span className="brand-page__assets" data-image-version-names>
+      {names.map((name) => (
+        <span className="brand-page__assetChip" key={name} data-image-version-name={name}>
+          {name}
+        </span>
+      ))}
+    </span>
+  );
+}
+
+/**
  * 自定義頁的版本預覽：第一句（這一頁決定什麼）。
  *
  * 每一張自定義頁的內容都不同，所以預覽不畫 chip，直接畫那一版開頭那一句 ——
@@ -297,6 +323,8 @@ export function BrandPageScreen({
               ? t('brand.logo.empty')
               : pageKey === 'tone'
                 ? t('brand.tone.empty')
+                : pageKey === 'image'
+                  ? t('brand.image.empty')
                 : detail?.page.kind === 'custom'
                   ? t('brand.custom.empty')
                   : pageKey === 'home'
@@ -706,6 +734,17 @@ export function BrandPageScreen({
           />
           {canEdit && <p className="design-field__hint">{t('brand.page.hint')}</p>}
         </div>
+      ) : pageKey === 'image' ? (
+        <div className="brand-page__body" data-brand-page-body="image">
+          <BrandImageEditor
+            brandId={brandId}
+            content={draft}
+            canEdit={canEdit}
+            onChange={setDraft}
+            onGapCount={setGapCount}
+          />
+          {canEdit && <p className="design-field__hint">{t('brand.page.hint')}</p>}
+        </div>
       ) : (
         <label className="brand-page__editor">
           <span className="design-field__label">{t('brand.page.editorLabel')}</span>
@@ -788,6 +827,8 @@ export function BrandPageScreen({
                     <LogoVersionPreview preview={version.preview} />
                   ) : pageKey === 'tone' ? (
                     <ToneVersionPreview preview={version.preview} />
+                  ) : pageKey === 'image' ? (
+                    <ImageVersionPreview preview={version.preview} />
                   ) : (
                     version.preview !== '' && (
                       <p className="brand-page__preview">{version.preview}</p>

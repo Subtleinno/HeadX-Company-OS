@@ -1614,6 +1614,10 @@ const image: PageSchema = {
       ['道具', photo.props],
     ].filter((entry) => entry[1] !== '');
 
+    if (typed.stance !== '') {
+      lines.push(`立場：${typed.stance}`);
+    }
+
     if (pairs.length > 0) {
       lines.push(`攝影：${pairs.map((entry) => `${entry[0]}＝${entry[1]}`).join('；')}`);
     }
@@ -1628,6 +1632,37 @@ const image: PageSchema = {
 
     if (typed.color_link.length > 0) {
       lines.push(`引用色彩角色：${typed.color_link.join('、')}`);
+    }
+
+    // 範例是這一頁最有力的部份：只給名字等於叫 agent 自己想像。
+    const examples = typed.approved_examples.filter((example) => example.label !== '');
+
+    if (examples.length > 0) {
+      lines.push(
+        `已核准範例：${examples
+          .map(
+            (example) =>
+              `${example.label}（${example.file_ref === '' ? '缺檔案' : example.file_ref}；用於${example.use === '' ? '未寫' : example.use}）`,
+          )
+          .join('、')}`,
+      );
+    }
+
+    if (typed.illustration !== '') {
+      lines.push(`插畫：${typed.illustration}`);
+    }
+
+    if (typed.banned.length > 0) {
+      lines.push(
+        `禁止：${typed.banned
+          .filter((item) => item.term !== '')
+          .map((item) => `${item.term}（${item.reason === '' ? '未寫原因' : item.reason}）`)
+          .join('、')}`,
+      );
+    }
+
+    if (typed.rights !== '') {
+      lines.push(`授權：${typed.rights}`);
     }
 
     return [{ title: '圖像', lines }];

@@ -42,7 +42,16 @@ function subListLabel(segment: string): string {
     return t('brand.page.diff.sub.allowed');
   }
 
-  return segment === 'forbidden' ? t('brand.page.diff.sub.forbidden') : segment;
+  if (segment === 'forbidden') {
+    return t('brand.page.diff.sub.forbidden');
+  }
+
+  // 陣列位置：印一個赤裸的 "1"，讀的人唔知係第幾條。
+  if (/^\d+$/.test(segment)) {
+    return t('brand.page.diff.sub.item', { index: Number(segment) + 1 });
+  }
+
+  return segment;
 }
 
 /**

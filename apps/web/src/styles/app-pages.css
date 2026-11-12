@@ -3654,3 +3654,185 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* ── 圖像頁（issue #66） ───────────────────────────────────── */
+
+/*
+ * 這一頁的閱讀次序是「立場句、攝影六格、真範例、要與不要、顏色引用、授權、
+ * 禁止」。六格排兩欄：它們是同一張照片的六個決定，橫排六格會變成六段互不相
+ * 關的文字。範例一件一行，因為「哪一件有檔案」是這一頁最重要的一格。
+ */
+.brand-image {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hx-space-5);
+}
+
+.brand-image__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hx-space-2);
+}
+
+.brand-image__missing {
+  margin: 0;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+}
+
+.brand-image__missing--gap {
+  color: var(--hx-danger-text);
+}
+
+.brand-image__photo {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--hx-space-3);
+}
+
+.brand-image__field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.brand-image__field .design-input {
+  max-width: 100%;
+}
+
+.brand-image__fieldLabel {
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-muted);
+}
+
+.brand-image__textarea {
+  min-height: 56px;
+  width: 100%;
+  max-width: 620px;
+}
+
+.brand-image__fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--hx-space-2) var(--hx-space-3);
+}
+
+.brand-image__field--wide {
+  flex: 1 1 260px;
+}
+
+.brand-image__example {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hx-space-2);
+  padding: var(--hx-space-3) 0;
+  border-top: 1px solid var(--hx-frame-border);
+}
+
+.brand-image__exampleHead {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+  flex-wrap: wrap;
+}
+
+.brand-image__exampleHead [data-image-example-remove] {
+  margin-left: auto;
+}
+
+.brand-image__badge {
+  flex: none;
+  border-radius: var(--hx-radius-sm);
+  padding: 1px 6px;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-danger-text);
+  border: 1px solid var(--hx-danger-text);
+}
+
+.brand-image__adder {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+  flex-wrap: wrap;
+}
+
+.brand-image__adder .design-input {
+  max-width: 260px;
+}
+
+.brand-image__list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: var(--hx-space-2) 0;
+  border-top: 1px solid var(--hx-frame-border);
+}
+
+.brand-image__head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--hx-space-2);
+}
+
+.brand-image__label {
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-ink);
+}
+
+.brand-image__count {
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-muted);
+}
+
+.brand-image__words {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.brand-image__word {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-sm);
+  padding: 1px 4px 1px 8px;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+}
+
+.brand-image__wordRemove {
+  border: none;
+  background: none;
+  padding: 0 2px;
+  cursor: pointer;
+  color: var(--hx-frame-muted);
+  font: var(--hx-frame-font-small);
+}
+
+/* 色樣：值來自色彩頁，所以這裡只畫一個方塊加 hex，不畫色值輸入。 */
+.brand-image__swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid var(--hx-frame-border);
+}
+
+.brand-image__hex {
+  font-variant-numeric: tabular-nums;
+  color: var(--hx-frame-ink);
+}
+
+.brand-image__note {
+  color: var(--hx-danger-text);
+}
+
+@media (max-width: 900px) {
+  .brand-image__photo {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
