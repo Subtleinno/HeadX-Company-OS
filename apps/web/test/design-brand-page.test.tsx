@@ -58,11 +58,15 @@ const DESIGN = {
 };
 
 /*
- * 這一支驗的是**版本鏈**，與內容是甚麼形狀無關，所以用一張自定義頁。
+ * 這一支驗的是**版本鏈**，與內容儲存成甚麼形狀無關，所以用一張自定義頁。
  *
- * 固定頁一個一個變成表（色彩 #35、字體 #38、標誌 #36、語氣 #37、主頁 #41），
- * 用完之後就沒有自由文字輸入框。自定義頁（#32）永遠是自由文字，所以拿它做
- * 版本機制的樣本不會因為某一頁改版而再紅一次。
+ * 固定頁一個一個變成表（色彩 #35、字體 #38、標誌 #36、語氣 #37、主頁 #39，
+ * 自定義頁 #41），自由文字的框已經沒有了 —— 原本這裡靠 `textarea` 抓「老闆
+ * 打到的那段字」，現在改用自定義頁的「這一頁決定什麼」（`data-custom-decided`），
+ * 它是整個品牌模組最後一個仍然是「打一段字」的欄位。
+ *
+ * 內容因此是自定義頁的 JSON（`{"decided":"…"}`）。這不影響這一支要驗的事：
+ * 送出去的就是打的那段字、空的就不送、員工只讀 —— 三件都仍然逐條驗得到。
  */
 const PAGES = [
   {
@@ -77,6 +81,21 @@ const PAGES = [
   },
 ];
 
+/** 自定義頁的一段內容：只填「決定什麼」，其餘留空，清空它就是真的空。 */
+function customContent(decided: string): string {
+  return JSON.stringify({
+    decided,
+    notDecided: '',
+    rules: [],
+    examples: [],
+    badExamples: [],
+    colorRoles: [],
+    typeRoles: [],
+  });
+}
+
+const V2_DOC = customContent('第二版內容');
+
 const V2 = { id: 'v2', versionNo: 2, createdAt: '2026-11-11T10:00:00.000Z', note: null, preview: '第二版內容', policyVersionNo: 2 };
 const V1 = { id: 'v1', versionNo: 1, createdAt: '2026-11-10T10:00:00.000Z', note: '第一次', preview: '第一版內容', policyVersionNo: 1 };
 
@@ -84,7 +103,7 @@ function pageDetail(overrides: { current?: unknown; versions?: unknown[] } = {})
   return {
     page: PAGES[0],
     versions: overrides.versions ?? [V2, V1],
-    current: overrides.current === undefined ? { ...V2, content: '第二版內容' } : overrides.current,
+    current: overrides.current === undefined ? { ...V2, content: V2_DOC } : overrides.current,
   };
 }
 
@@ -124,7 +143,11 @@ describe('品牌頁版本', () => {
       expect(document.querySelector('[data-brand-page="photography"]')).not.toBeNull();
     });
 
-    const editor = document.querySelector('textarea');
+    await waitFor(() => {
+      expect(document.querySelector('[data-custom-decided]')).not.toBeNull();
+    });
+
+    const editor = document.querySelector<HTMLTextAreaElement>('[data-custom-decided]');
     expect(editor?.value).toBe('第二版內容');
 
     expect(document.querySelectorAll('[data-brand-page-version]').length).toBe(2);
@@ -156,15 +179,15 @@ describe('品牌頁版本', () => {
     const api = openPage(BOSS, {
       brandPageSave: () =>
         jsonResponse(201, {
-          version: { ...V2, versionNo: 3, content: '第三版內容' },
+          version: { ...V2, versionNo: 3, content: customContent('第三版內容') },
         }),
     });
 
     await waitFor(() => {
-      expect(document.querySelector('textarea')).not.toBeNull();
+      expect(document.querySelector('[data-custom-decided]')).not.toBeNull();
     });
 
-    const editor = document.querySelector('textarea');
+    const editor = document.querySelector<HTMLTextAreaElement>('[data-custom-decided]');
 
     if (editor === null) {
       throw new Error('找不到輸入框');
@@ -180,17 +203,19 @@ describe('品牌頁版本', () => {
 
     const call = api.calls.find((item) => item.method === 'POST' && item.path.endsWith('/versions'));
     expect(call).toBeDefined();
-    expect(JSON.parse(call?.body ?? '{}')).toEqual({ content: '第三版內容' });
+
+    const body = JSON.parse(call?.body ?? '{}') as { content?: string };
+    expect(JSON.parse(body.content ?? '{}')).toMatchObject({ decided: '第三版內容' });
   });
 
   it('空內容：不送出，當場講明未有內容', async () => {
     const api = openPage(BOSS);
 
     await waitFor(() => {
-      expect(document.querySelector('textarea')).not.toBeNull();
+      expect(document.querySelector('[data-custom-decided]')).not.toBeNull();
     });
 
-    const editor = document.querySelector('textarea');
+    const editor = document.querySelector<HTMLTextAreaElement>('[data-custom-decided]');
 
     if (editor === null) {
       throw new Error('找不到輸入框');
@@ -272,10 +297,10 @@ describe('品牌頁版本', () => {
     openPage(WAI);
 
     await waitFor(() => {
-      expect(document.querySelector('textarea')).not.toBeNull();
+      expect(document.querySelector('[data-custom-decided]')).not.toBeNull();
     });
 
-    const editor = document.querySelector('textarea');
+    const editor = document.querySelector<HTMLTextAreaElement>('[data-custom-decided]');
     expect(editor?.readOnly).toBe(true);
     expect(document.querySelector('[data-brand-page-save]')).toBeNull();
     expect(document.querySelector('[data-brand-page-delete="1"]')).toBeNull();

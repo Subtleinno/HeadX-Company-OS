@@ -1847,3 +1847,164 @@
   font: var(--hx-frame-font-small);
   color: var(--hx-frame-secondary);
 }
+
+/* ── 自定義頁（issue #41） ─────────────────────────────────── */
+
+/*
+ * 這一頁的閱讀次序是「brief 講要決定什麼 → 內容回應它 → 引用哪些角色」。
+ * brief 用一個框登出來（它是這一頁的來源，不是標題），衝突與禁用詞各自
+ * 一句紅字，不與長長的「未填」混在一起。
+ */
+.brand-custom {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hx-space-5);
+}
+
+.brand-custom__brief {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--hx-space-3) var(--hx-space-4);
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-md);
+  background: var(--hx-frame-surface);
+}
+
+.brand-custom__briefLabel {
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-muted);
+}
+
+.brand-custom__briefText {
+  margin: 0;
+  font: var(--hx-frame-font-ui);
+  color: var(--hx-frame-ink);
+  line-height: 1.7;
+}
+
+.brand-custom__conflict {
+  padding: var(--hx-space-3) var(--hx-space-4);
+  border: 1px solid var(--hx-danger-text);
+  border-radius: var(--hx-radius-md);
+}
+
+.brand-custom__conflictTitle {
+  margin: 0 0 4px;
+  font: var(--hx-frame-font-ui);
+  font-weight: 600;
+  color: var(--hx-danger-text);
+}
+
+.brand-custom__conflictLine {
+  margin: 0;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+  line-height: 1.7;
+}
+
+.brand-custom__missing {
+  margin: 0;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+}
+
+.brand-custom__missing--gap {
+  color: var(--hx-danger-text);
+}
+
+.brand-custom__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hx-space-2);
+}
+
+.brand-custom__textarea {
+  min-height: 56px;
+}
+
+.brand-custom__lines {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.brand-custom__line {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+}
+
+.brand-custom__adder {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+  flex-wrap: wrap;
+}
+
+.brand-custom__adder .design-input {
+  max-width: 320px;
+}
+
+/* 引用角色：一件一行，左邊勾、右邊名字與值。值只用來顯示，不可以改。 */
+/* 九個色彩角色加四個文字層級：單欄排是一條十三行的表單，兩欄才像一份
+   可以掃的名單。視窗窄就自動落返一欄。 */
+.brand-custom__roles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 4px 16px;
+}
+
+.brand-custom__roleGroup {
+  grid-column: 1 / -1;
+  margin-top: var(--hx-space-2);
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-muted);
+}
+
+.brand-custom__role {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+}
+
+.brand-custom__roleName {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--hx-font-mono);
+  font-size: 13px;
+}
+
+.brand-custom__roleGap {
+  color: var(--hx-danger-text);
+  font-family: var(--hx-frame-font-small);
+}
+
+/* 逐句標出犯禁用詞的那一句：貼在句子後面，不另起一行搶走清單的節奏。 */
+.brand-custom__lineFlag {
+  margin-left: var(--hx-space-2);
+  color: var(--hx-danger-text);
+  font-family: var(--hx-frame-font-small);
+  white-space: nowrap;
+}
+
+.brand-custom__roleValue {
+  font-family: var(--hx-font-mono);
+  font-size: 13px;
+  color: var(--hx-frame-ink);
+}
+
+.brand-custom__swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid var(--hx-frame-border);
+}
