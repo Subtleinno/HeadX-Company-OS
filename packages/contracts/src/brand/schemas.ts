@@ -1220,6 +1220,15 @@ export type TonePayload = {
   hardest_line: { wrong: string; right: string };
 };
 
+/** 五個情境的顯示名。prompt 要講明是哪個場合，只印句子等於沒有場合。 */
+const CONTEXT_LABELS: { key: keyof TonePayload['contexts']; label: string }[] = [
+  { key: 'explain', label: '解釋' },
+  { key: 'invite', label: '邀請' },
+  { key: 'decline', label: '拒絕' },
+  { key: 'apologize', label: '道歉' },
+  { key: 'incident', label: '事故' },
+];
+
 const tone: PageSchema = {
   key: 'tone',
   name: '語氣',
@@ -1379,6 +1388,10 @@ const tone: PageSchema = {
     const typed = payload as TonePayload;
     const lines: string[] = [];
 
+    if (typed.stance !== '') {
+      lines.push(`立場：${typed.stance}`);
+    }
+
     for (const trait of typed.traits) {
       if (trait.name !== '') {
         lines.push(`語氣「${trait.name}」：會「${trait.do}」，不會「${trait.dont}」，示範：${trait.sentence}`);
@@ -1400,6 +1413,24 @@ const tone: PageSchema = {
 
     if (typed.samples.unlike.length > 0) {
       lines.push(`樣本（不像）：${typed.samples.unlike.join('／')}`);
+    }
+
+    const contextLines = CONTEXT_LABELS.filter(({ key }) => typed.contexts[key].trim() !== '').map(
+      ({ key, label }) => `${label}：${typed.contexts[key]}`,
+    );
+
+    if (contextLines.length > 0) {
+      lines.push(`同一把聲的五個場合：${contextLines.join('；')}`);
+    }
+
+    if (typed.hardest_line.wrong !== '' || typed.hardest_line.right !== '') {
+      lines.push(
+        `最難的一句（拒絕而不失禮）：錯的寫法「${typed.hardest_line.wrong === '' ? '未寫' : typed.hardest_line.wrong}」，對的寫法「${typed.hardest_line.right === '' ? '未寫' : typed.hardest_line.right}」`,
+      );
+    }
+
+    if (typed.language_policy !== '') {
+      lines.push(`語言政策：${typed.language_policy}`);
     }
 
     return [{ title: '語氣', lines }];

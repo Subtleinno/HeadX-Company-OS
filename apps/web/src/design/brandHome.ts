@@ -139,21 +139,21 @@ export function typeRows(type: TypeDoc | null, colour: ColorDoc | null): TypeSam
   return { rows, gaps: rows.filter((row) => row.familyName === '').map((row) => row.role) };
 }
 
-/** 語氣短例：拿第一個特質的「做的句子」。形容詞不是句子，所以不拿。 */
+/** 語氣短例：拿第一個特質的示範句。形容詞不是句子，所以不拿。 */
 export function toneSample(tone: ToneDoc | null): string {
   if (tone === null) {
     return '';
   }
 
-  const fromTrait = tone.traits.find((trait) => trait.doesExample.trim() !== '');
+  const fromTrait = tone.traits.find((trait) => trait.sentence.trim() !== '');
 
   if (fromTrait !== undefined) {
-    return fromTrait.doesExample.trim();
+    return fromTrait.sentence.trim();
   }
 
-  const fromSituation = Object.values(tone.situations).find((value) => value.trim() !== '');
+  const fromContext = Object.values(tone.contexts).find((value) => value.trim() !== '');
 
-  return fromSituation?.trim() ?? '';
+  return fromContext?.trim() ?? '';
 }
 
 export type LogoUsage = {

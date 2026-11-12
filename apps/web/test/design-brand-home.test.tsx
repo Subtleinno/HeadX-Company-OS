@@ -12,6 +12,7 @@ import {
   type FakeHandlers,
 } from './helpers/fake-api';
 import { colourDoc } from './fixtures/brandColour';
+import { emptyToneDoc } from '../src/design/brandTone';
 
 /**
  * 品牌主頁（issue #39）。
@@ -135,20 +136,15 @@ const TYPE_DOC = JSON.stringify({
 });
 
 const TONE_DOC = JSON.stringify({
+  ...emptyToneDoc(),
   traits: [
     {
-      id: 't-1',
       name: '直接',
-      does: '講清楚要對方做甚麼',
-      doesExample: '請你星期三之前回覆。',
-      doesNot: '轉彎',
-      doesNotExample: '唔知你方唔方便呢。',
+      do: '講清楚要對方做甚麼',
+      dont: '轉彎',
+      sentence: '請你星期三之前回覆。',
     },
   ],
-  banned: [],
-  bilingual: 'zhFirst',
-  bilingualNote: '',
-  situations: { explain: '', invite: '', refuse: '', apologise: '', incident: '' },
 });
 
 const POLICY = {

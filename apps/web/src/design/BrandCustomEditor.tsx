@@ -6,6 +6,7 @@ import { parseTypeDoc, type TypeDoc } from './brandType';
 import { parseToneDoc, type ToneDoc } from './brandTone';
 import {
   BRIEF_MIN_CHARS,
+  bannedInLine,
   briefState,
   colourRoleValue,
   customGaps,
@@ -470,7 +471,7 @@ export function BrandCustomEditor({
         title: t('brand.custom.examples'),
         hint: t('brand.custom.examplesHint'),
         empty: t('brand.custom.examplesEmpty'),
-        flagLine: (line) => tone?.banned.filter((word) => word !== '' && line.includes(word)) ?? [],
+        flagLine: (line) => bannedInLine(line, tone),
         addLabel: t('brand.custom.exampleAdd'),
         removeLabel: t('brand.custom.exampleRemove'),
         placeholder: t('brand.custom.examplePlaceholder'),
