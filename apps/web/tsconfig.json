@@ -7,6 +7,9 @@
     "moduleResolution": "Bundler",
     "jsx": "react-jsx",
     "noEmit": true,
+    // contracts 的內部 import 帶 .ts（NodeNext 寫法）。web 一定要讀同一份
+    // schema 才不會出現「畫面與 renderer 各一套」—— 所以這裡要開這個旗標。
+    "allowImportingTsExtensions": true,
     "types": ["vite/client"]
   },
   "include": ["src", "test", "vite.config.ts"]

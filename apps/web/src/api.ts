@@ -1007,6 +1007,11 @@ export type BrandPageVersionSummary = {
    * 畫面要如實講「未記錄」，不要當成第 1 版。
    */
   policyVersionNo: number | null;
+  /**
+   * 相對上一版改了哪幾欄（#62）。路徑由 payload 出發，例如 `roles.ink.hex`；
+   * 第一版是空陣列 —— 沒有上一版可以比，不是「改了零項」。
+   */
+  changed: string[];
 };
 
 export type BrandPageVersionDetail = BrandPageVersionSummary & { content: string };

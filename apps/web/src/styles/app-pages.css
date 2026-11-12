@@ -919,6 +919,34 @@
   color: var(--hx-frame-muted);
 }
 
+/* 版本差異（#62）：講改了哪一欄。細一級 —— 它是版本列表的註腳。 */
+.brand-page__changed {
+  display: flex;
+  align-items: baseline;
+  gap: var(--hx-space-2);
+  flex-wrap: wrap;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--hx-frame-secondary);
+}
+
+.brand-page__changedTitle {
+  color: var(--hx-frame-muted);
+}
+
+.brand-page__changedList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px var(--hx-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.brand-page__changedNone {
+  color: var(--hx-frame-muted);
+}
+
 /* 這一版當時用的策略版本（#34）。細一級：它是註腳，不是內容。 */
 .brand-page__policy {
   margin: 6px 0 0;
@@ -1080,13 +1108,23 @@
   color: var(--hx-frame-secondary);
 }
 
+/* 一個角色一張卡：角色名獨佔一行，下面幾個欄位自動排。
+   #62 之後一個角色有六七格（叫法、HEX、CMYK、深色值、用途、理由），
+   硬塞一行會令每一格窄到打不出一個色值。 */
 .brand-color__row {
   display: grid;
-  grid-template-columns: minmax(190px, 230px) 140px 120px minmax(160px, 280px);
-  justify-content: start;
-  align-items: center;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   gap: var(--hx-space-2);
-  padding: var(--hx-space-2) 0;
+  padding: var(--hx-space-3) 0;
+  border-top: 1px solid var(--hx-frame-border);
+}
+
+.brand-color__row:first-of-type {
+  border-top: 0;
+}
+
+.brand-color__row > .brand-color__roleHead {
+  grid-column: 1 / -1;
 }
 
 @media (max-width: 900px) {
@@ -1257,33 +1295,42 @@
   color: var(--hx-frame-ink);
 }
 
-.brand-color__check[data-color-body-pass='true'],
-.brand-color__check[data-color-large-pass='true'] {
-  color: var(--hx-frame-secondary);
-}
-
-/* 不過的門檻要看得見：同一個顏色用在不同地方，一個過一個不過是常態。 */
-.brand-color__check[data-color-body-pass='false'],
-.brand-color__check[data-color-large-pass='false'] {
+/* 不過的門檻要看得見：同一個色放在不同地方，一邊過一邊不過是常態。 */
+.brand-color__pair[data-color-pair-state='fail'] .brand-color__check {
   color: var(--hx-danger-text);
 }
 
-.brand-color__logoRoles {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--hx-space-2) var(--hx-space-4);
+.brand-color__pair[data-color-pair-state='pass'] .brand-color__check {
+  color: var(--hx-frame-secondary);
 }
 
-.brand-color__logoRole {
+/* 替代色（#62）：只講「不過」等於把問題丟回去；旁邊要有下一個可以按的決定，
+   而且要有實測數字 —— 一個沒有數字的建議只是另一個意見。 */
+.brand-color__alt {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--hx-space-2);
+  flex-wrap: wrap;
+  padding: 2px 8px;
+  border-radius: var(--hx-radius-sm);
+  background: var(--hx-frame-surface);
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
 }
 
-.brand-color__logoMark {
-  width: 14px;
-  text-align: center;
-  color: var(--hx-frame-secondary);
+.brand-color__altText {
+  color: var(--hx-frame-ink);
+}
+
+.brand-color__altRatio {
+  font-family: var(--hx-font-mono);
+}
+
+/* 立場句（#62）：這一頁的第一屏，沿用平台頁那句，所以字大、不加引號裝飾。 */
+.brand-color__stanceText {
+  margin: 4px 0;
+  font: var(--hx-frame-font-body);
+  color: var(--hx-frame-ink);
 }
 
 /* 版本列表的色彩頁：色點代表那一版有哪幾個色，不印 JSON。 */

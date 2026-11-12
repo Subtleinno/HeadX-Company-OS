@@ -56,10 +56,17 @@ function fromLegacyJson(pageKey: string, kind: 'fixed' | 'custom', raw: unknown)
   const schema = schemaForPage(pageKey, kind);
   const record = typeof raw === 'object' && raw !== null && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
 
-  // 自定義頁的舊形狀就係 v2 的欄位名（decided／notDecided／rules…），所以
-  // normalize 已經接得住；其餘頁的舊形狀不同，逐頁搬。
+  // 三種情況：
+  //   1. 自定義頁的舊形狀就係 v2 的欄位名（decided／notDecided／rules…）。
+  //   2. 內容本身已經是 v2 payload（例如 #62 之後色彩頁寫入的那一份）—— 它有
+  //      `roles`／`pairs`／`order` 這些段落名。這種要**原樣**讀，不可以當成
+  //      舊形狀再搬一次，否則每一次讀回自己寫的東西都會變成空表。
+  //   3. 其餘頁的舊形狀不同，逐頁搬。
+  const alreadyPayload = schema.sections.some(
+    (section) => section.path !== undefined && section.path in record,
+  );
   const payload =
-    schema.key === 'custom'
+    schema.key === 'custom' || alreadyPayload
       ? schema.normalize(record)
       : schema.normalize(convertKnown(pageKey, record));
 

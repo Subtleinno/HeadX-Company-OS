@@ -1,6 +1,7 @@
 import type { Pool, PoolClient } from 'pg';
 import {
   BRAND_FIXED_PAGES,
+  changedPaths,
   documentFromStored,
   parseBrandDocument,
   schemaForPage,
@@ -41,6 +42,14 @@ export type VersionSummary = {
    * 號碼就是虛構，所以畫面講「未記錄」，而不是講第 1 版。
    */
   policyVersionNo: number | null;
+  /**
+   * 相對**上一版**改了哪幾個欄位（issue #62）。路徑由 payload 出發，例如
+   * `roles.ink.hex`；陣列位置會換成身份（角色名、`fg on bg`），因為 `roles.0`
+   * 對人沒有意思。
+   *
+   * 第一版沒有上一版可以比，所以是空陣列 —— 不是「改了零項」。
+   */
+  changed: string[];
 };
 
 export type VersionDetail = VersionSummary & {
@@ -167,7 +176,68 @@ function toSummary(row: VersionRow): VersionSummary {
     note: row.note,
     preview: previewOf(document, row.preview ?? ''),
     policyVersionNo: row.policy_version_no ?? null,
+    changed: [],
   };
+}
+
+/**
+ * 陣列位置換成身份，令 `roles.0.hex` 變成 `roles.ink.hex`。
+ *
+ * 為甚麼要在伺服器做：文件在這裡，索引對得上；畫面只有一串路徑，`roles.0`
+ * 到底是哪一個角色，它查不到（列表不搬整份文件）。
+ */
+function identityOf(item: unknown): string {
+  if (typeof item !== 'object' || item === null) {
+    return '';
+  }
+
+  const record = item as Record<string, unknown>;
+  const id = typeof record['id'] === 'string' ? record['id'].trim() : '';
+
+  if (id !== '') {
+    return id;
+  }
+
+  const name = typeof record['name'] === 'string' ? record['name'].trim() : '';
+
+  if (name !== '') {
+    return name;
+  }
+
+  const fg = typeof record['fg'] === 'string' ? record['fg'].trim() : '';
+  const bg = typeof record['bg'] === 'string' ? record['bg'].trim() : '';
+
+  return fg !== '' && bg !== '' ? `${fg} on ${bg}` : '';
+}
+
+/** 把 `changedPaths` 出來的位置換成人讀得明的路徑。 */
+export function humanPaths(document: BrandDocument, paths: readonly string[]): string[] {
+  const root: unknown = document.payload;
+
+  return paths.map((path) => {
+    const parts = path.split('.');
+    const out: string[] = [];
+    let node: unknown = root;
+
+    for (const part of parts) {
+      if (Array.isArray(node) && /^\d+$/.test(part)) {
+        const item: unknown = node[Number(part)];
+        const identity = identityOf(item);
+
+        out.push(identity === '' ? part : identity);
+        node = item;
+        continue;
+      }
+
+      out.push(part);
+      node =
+        typeof node === 'object' && node !== null && !Array.isArray(node)
+          ? (node as Record<string, unknown>)[part]
+          : undefined;
+    }
+
+    return out.join('.');
+  });
 }
 
 function toDetail(row: VersionRow): VersionDetail {
@@ -253,6 +323,8 @@ export async function listPages(db: Pool, brandId: string): Promise<BrandPageVie
             note: row.version_note,
             preview: row.version_preview ?? '',
             policyVersionNo: row.version_policy_no,
+            // 頁清單不算差異（要打開那一頁才逐版比）。空陣列＝未計算。
+            changed: [],
           },
   }));
 }
@@ -268,8 +340,12 @@ export async function findPage(
 
 /** 版本列表，新的在前。已刪除的不會出現（歷史仍在資料庫）。 */
 export async function listVersions(db: Pool, pageId: string): Promise<VersionSummary[]> {
-  const result = await db.query<VersionRow>(
+  const result = await db.query<VersionRow & { content_hint: string }>(
+    // `content_hint`：舊版（`document` 是 null）要拿全文才讀得返那份文件，
+    // 新版只要 160 字元做預覽。全部版本都搬全文會令每一次開頁都背著整段歷史，
+    // 全部只搬 160 字元就令舊版算不出差異 —— 所以按需要拿。
     `select v.id, v.version_no, v.created_at, v.note, left(v.content, 160) as preview,
+            case when v.document is null then v.content else left(v.content, 160) end as content_hint,
             v.document, p.key as page_key, p.kind as page_kind,
             pv.version_no as policy_version_no
        from brand_page_version v
@@ -280,7 +356,21 @@ export async function listVersions(db: Pool, pageId: string): Promise<VersionSum
     [pageId],
   );
 
-  return result.rows.map(toSummary);
+  const rows = result.rows.map(toSummary);
+  const documents = result.rows.map((row) => documentOf({ ...row, content: row.content_hint }));
+
+  // 版本新的在前，所以「上一版」是 next(索引 +1)。第一版沒有得比。
+  return rows.map((row, index) => {
+    const previous = documents[index + 1] ?? null;
+
+    if (previous === null) {
+      return row;
+    }
+
+    const paths = changedPaths(previous.payload, documents[index]?.payload ?? {});
+
+    return { ...row, changed: humanPaths(documents[index] ?? previous, paths) };
+  });
 }
 
 export async function findCurrentVersion(

@@ -59,7 +59,7 @@
 | GET | `/brands/:id/editors` | 誰可以改這個品牌的頁 | `requireUser` | ✅ `BrandEditorsPanel` |
 | PUT | `/brands/:id/editors/:userId` | 授予品牌編輯權 | **`requireOwner`** | ✅ |
 | DELETE | `/brands/:id/editors/:userId` | 收回品牌編輯權 | **`requireOwner`** | ✅ |
-| GET | `/brands/:id/pages/:key` | 一頁的現行版本＋版本列表 | `requireUser` | ✅ |
+| GET | `/brands/:id/pages/:key` | 一頁的現行版本＋版本列表；每一版另有 `changed[]`（相對上一版改了哪些欄位，路徑由 payload 出發、陣列位置已換成角色名） | `requireUser` | ✅ |
 | POST | `/brands/:id/pages/:key/versions` | 儲存＝新增一版（交 `document`（v2）或 `content`（舊格式）；空白 400；順手寫一列 `brand_release`） | 品牌編輯權（C103；老闆永遠可以） | ✅ |
 | POST | `/brands/:id/pages/:key/versions/:vid/restore` | 用回舊版：以舊內容新增一版，不改歷史 | 品牌編輯權 | ✅ |
 | DELETE | `/brands/:id/pages/:key/versions/:vid` | 軟刪除舊版；現行 409 `current_version`、被成品釘住 409 `version_pinned` | 品牌編輯權 | ✅ |

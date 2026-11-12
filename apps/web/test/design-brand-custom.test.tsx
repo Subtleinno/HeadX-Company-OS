@@ -11,6 +11,7 @@ import {
   resetBrowserState,
   type FakeHandlers,
 } from './helpers/fake-api';
+import { colourDoc } from './fixtures/brandColour';
 
 /**
  * 自定義頁（issue #41）。
@@ -77,17 +78,13 @@ const PACKAGING_DOC = {
   typeRoles: ['heading'],
 };
 
-const COLOUR_DOC = JSON.stringify({
-  light: {
+const COLOUR_DOC = JSON.stringify(
+  colourDoc({
     'brand.primary': { hex: '#0057ff', cmyk: '100 90 0 0' },
     paper: { hex: '#ffffff', cmyk: '0 0 0 0' },
-  },
-  dark: { surface: { hex: '#17171d', cmyk: '0 0 0 90' } },
-  ramps: {},
-  allowed: [],
-  denied: [],
-  logoRoles: ['brand.primary'],
-});
+    surface: { hex: '#17171d', cmyk: '0 0 0 90' },
+  }),
+);
 
 const TONE_DOC = JSON.stringify({
   traits: [],

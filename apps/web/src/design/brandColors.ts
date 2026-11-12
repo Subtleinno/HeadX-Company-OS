@@ -1,144 +1,109 @@
 /**
- * 品牌色彩的**角色名**（issue #35）。
+ * 品牌色彩頁的**資料層**（issue #62，取代 #35 的舊形狀）。
  *
- * 這一支是角色名的唯一來源，而且刻意寫死在程式裡：
+ * 這一支不再是「自己一套表」，而是 `@company-os/contracts` 色彩 payload 的
+ * **編輯器轉接層**：儲存的是同一個 `ColorPayload`，所以 tokens.json、prompt
+ * 包、HTML 與這一頁看到的必然是同一份資料。舊版（#35）用 `light`／`dark`
+ * 兩張表加 `ramps`、`denied`、`logoRoles`，與 payload 對不上，四種輸出要靠
+ * 另一段程式翻譯 —— 翻譯一日存在，就有一日會不同步。
  *
- *   - 其他頁（標誌、字體、品牌主頁）只引用**名字**，所以名字必須穩定、公開。
- *     如果角色名可以由用戶自由新增，標誌頁寫 `brand.primary` 而色彩頁改叫
- *     「主色」，兩邊都覺得自己跟足規則，但接不上。
- *   - 角色分三組，**不准混用**（策略色彩槽原文）：品牌色（`brand.*`）、
- *     閱讀色（`ink`／`paper`／`muted`／`surface`）、功能色（`success` 等）。
- *     功能色不可用於標誌 —— 那是「系統在講話」的顏色，不是品牌的聲音。
- *   - 淺色與深色**共用同一批名字**，各有一套值。不發明 `light.ink`：標誌頁
- *     寫 `ink` 的時候，不會知道指哪一個。
- *   - 角色與階是兩件事：階只是同一個角色的深淺候選，不是第二套名字。
+ * 三條界線：
+ *   1. **色值只住在這一頁。** 其他頁（標誌、字體、品牌主頁）只引用角色**名字**。
+ *      所以「標誌用哪幾個色」不在這裡 —— 那是標誌頁的 `color_link`（#64）。
+ *   2. **角色名公開而且寫死。** 名字可以自由新增的話，標誌頁寫 `brand.primary`
+ *      而色彩頁改叫「主色」，兩邊都覺得自己跟足規則，但接不上。
+ *   3. **缺就是缺。** 沒有 HEX 就標缺，不填一個「差不多」的色；留白不擋儲存。
  *
- * 上面這幾條不是我自己想的，是 `brand_policy_version` 色彩槽的原文。策略正文
- * 只住在 Boss Portal（#34），這裡只有它的**結論**：哪幾個名字存在、哪兩個必須
- * 有值、哪一組不可以進標誌、對比門檻是多少。所以這一支要跟策略一起讀。
+ * 對比公式不在這裡重寫：`contrastRatio` 由 contracts 來，與後端 checker 用
+ * 同一條算式。兩邊各寫一次，早晚有一邊算錯而沒有人發現。
  *
- * **色值不住在這裡**。色值住在該品牌「色彩」頁的版本內容（#33 的版本鏈），
- * 所以換品牌不會互相污染，而舊版永遠讀得返。
- *
- * 注意：`apps/web/test/gates.test.ts` 不准 `src` 之內出現十六進位色碼或
- * 「r-g-b 括號」寫法（色碼只可以在 tokens.css）。所以這裡的色值一律是
- * **字串資料**：由人輸入、由版本內容讀入，不在原始碼裡寫死任何一個色。
- * RGB 也只輸出三個數字（`0 87 255`），前綴由畫面用標籤講。
+ * 注意：`apps/web/test/gates.test.ts` 不准 `src` 之內出現十六進位色碼。
+ * 所以這裡一個色都沒有：值由人輸入或由版本內容讀入，建議色由數字算出來。
  */
 
-export type ColorGroup = 'brand' | 'reading' | 'function';
+import {
+  BODY_FLOOR,
+  LARGE_FLOOR,
+  contrastRatio,
+  hexToRgb,
+  isHex,
+  schemaForPage,
+  type ColorGroup,
+  type ColorPayload,
+} from '@company-os/contracts';
 
-export type ColorRole = {
+export type { ColorGroup };
+/*
+ * 對比與色值工具由 contracts 轉出，不在這裡再寫一份。
+ *
+ * 有三個舊呼叫者（標誌、主頁、自定義頁）本來由這一支拿這些函式，所以這裡
+ * 保留同一個名字 —— 換的是來源，不是介面，那三頁一行都不用改。
+ */
+export { contrastRatio, hexToRgb, isHex };
+export type ColorDoc = ColorPayload;
+
+/** 一個角色在這一頁的身份。 */
+export type ColorRoleSpec = {
   /** 寫死的角色名。其他頁只准引用這一個字串。 */
   key: string;
   group: ColorGroup;
-  /**
-   * 冇值就一定要標「缺」的角色。`ink` 與 `paper` 是策略明講必須存在的兩個；
-   * `surface` 只在深色要求（淺色由 `paper` 承擔）。
-   */
-  requiredIn: 'both' | 'dark';
+  /** 一定要有值（`always`），還是只在深色模式要求（`dark`）。 */
+  requiredIn: 'always' | 'dark';
 };
 
-export const COLOR_ROLES: readonly ColorRole[] = [
-  { key: 'brand.primary', group: 'brand', requiredIn: 'both' },
-  { key: 'brand.secondary', group: 'brand', requiredIn: 'both' },
-  { key: 'ink', group: 'reading', requiredIn: 'both' },
-  { key: 'paper', group: 'reading', requiredIn: 'both' },
-  { key: 'muted', group: 'reading', requiredIn: 'both' },
-  { key: 'surface', group: 'reading', requiredIn: 'dark' },
-  { key: 'success', group: 'function', requiredIn: 'both' },
-  { key: 'warning', group: 'function', requiredIn: 'both' },
-  { key: 'danger', group: 'function', requiredIn: 'both' },
+/**
+ * 九個角色。三組不准混用（策略色彩槽原文）：品牌色、閱讀色、功能色。
+ * 功能色是「系統在講話」的顏色，不是品牌的聲音 —— 所以它不會進標誌。
+ */
+export const COLOR_ROLES: readonly ColorRoleSpec[] = [
+  { key: 'brand.primary', group: 'brand', requiredIn: 'always' },
+  { key: 'brand.secondary', group: 'brand', requiredIn: 'dark' },
+  { key: 'ink', group: 'reading', requiredIn: 'always' },
+  { key: 'paper', group: 'reading', requiredIn: 'always' },
+  { key: 'muted', group: 'reading', requiredIn: 'dark' },
+  { key: 'surface', group: 'reading', requiredIn: 'always' },
+  { key: 'success', group: 'function', requiredIn: 'dark' },
+  { key: 'warning', group: 'function', requiredIn: 'dark' },
+  { key: 'danger', group: 'function', requiredIn: 'dark' },
 ];
 
 export const COLOR_GROUPS: readonly ColorGroup[] = ['brand', 'reading', 'function'];
+
+/** 策略明講必須有的四個 —— 與 `color.r1` 一字不差。 */
+export const MUST_HAVE_ROLES: readonly string[] = ['brand.primary', 'ink', 'paper', 'surface'];
 
 export function isColorRole(key: string): boolean {
   return COLOR_ROLES.some((role) => role.key === key);
 }
 
-export function rolesOfGroup(group: ColorGroup): readonly ColorRole[] {
+export function roleSpec(key: string): ColorRoleSpec | undefined {
+  return COLOR_ROLES.find((role) => role.key === key);
+}
+
+export function rolesOfGroup(group: ColorGroup): readonly ColorRoleSpec[] {
   return COLOR_ROLES.filter((role) => role.group === group);
 }
 
-/**
- * 可以進標誌的角色：品牌色與閱讀色。功能色一律不可以（策略原文）。
- *
- * 這一個判斷要出現在三個地方 —— 畫面不畫那個勾、儲存前不再收、讀入時當作
- * 沒有 —— 所以只寫一次。三處各寫一次，早晚有一處會忘記。
- */
-export function logoEligibleRoles(): readonly ColorRole[] {
-  return COLOR_ROLES.filter((role) => role.group !== 'function');
+export function groupOfRole(key: string): ColorGroup | null {
+  return roleSpec(key)?.group ?? null;
 }
 
-/** 一組色值。`cmyk` 由人填（印刷），RGB 由 HEX 算出來，所以不另存。 */
-export type ColorValue = {
-  hex: string;
-  cmyk: string;
-};
-
-export type ColorPair = {
-  /** `ink on paper` ＝ 前景 `ink` 放在底色 `paper` 上。 */
-  text: string;
-};
-
-export type ColorDoc = {
-  light: Record<string, ColorValue>;
-  dark: Record<string, ColorValue>;
-  /** 階：同一個角色的深淺候選，`{ step, hex }`。不是第二套名字。 */
-  ramps: Record<string, { step: string; hex: string }[]>;
-  allowed: ColorPair[];
-  denied: ColorPair[];
-  /** 標誌用到哪幾個角色。功能色不可以進來（策略明講）。 */
-  logoRoles: string[];
-};
+const COLOR_SCHEMA = schemaForPage('color', 'fixed');
 
 export const EMPTY_DOC: ColorDoc = {
-  light: {},
-  dark: {},
-  ramps: {},
-  allowed: [],
-  denied: [],
-  logoRoles: [],
+  stance: '',
+  roles: [],
+  order: { text: '', reason: '' },
+  ratios: [],
+  contrast_floor: BODY_FLOOR,
+  large_floor: LARGE_FLOOR,
+  pairs: { allowed: [], forbidden: [] },
+  tints: [],
 };
 
-/** 這一份表有沒有任何東西。全空的話不應該佔一版（後端也會拒收空白內容）。 */
-export function hasAnyValue(doc: ColorDoc): boolean {
-  return (
-    Object.keys(doc.light).length > 0 ||
-    Object.keys(doc.dark).length > 0 ||
-    Object.keys(doc.ramps).length > 0 ||
-    doc.allowed.length > 0 ||
-    doc.denied.length > 0 ||
-    doc.logoRoles.length > 0
-  );
-}
+/* ── 讀寫 ─────────────────────────────────────────────────────── */
 
-/**
- * 版本列表只拿到 160 字元的截斷內容，不是完整 JSON，所以解析不到。
- *
- * 但截斷的字串裡仍然有值得看的東西：那一版有哪幾個色。抽出來畫成色點，
- * 總好過把 `{"light":{"ink"...` 這種東西直接印給人看。抽不到就一個點都
- * 沒有 —— 不會假裝有。
- */
-export function hexesInText(text: string): string[] {
-  const found = text.match(/#[0-9a-fA-F]{6}\b/g) ?? [];
-
-  return Array.from(new Set(found.map((value) => value.toLowerCase())));
-}
-
-/**
- * 版本內容是這一份 JSON 的字串。
- *
- * 為什麼不是自由 HTML：驗收要求「看到的是有角色的色」與「缺的角色標成缺」。
- * 自由文字裡沒有「哪個角色有值」這件事，畫面就只會把整段文字印出來 —— 那正是
- * 需要避免的「一排沒有名字的色塊」。舊版本（自由文字）解析不到就當作
- * `invalid`，畫面如實講讀不到，不假裝是「全部缺」。
- */
-export type ParseColorResult =
-  | { kind: 'ok'; doc: ColorDoc }
-  | { kind: 'empty' }
-  | { kind: 'invalid' };
+export type ParseColorResult = { kind: 'ok'; doc: ColorDoc } | { kind: 'empty' } | { kind: 'invalid' };
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -147,100 +112,12 @@ function asRecord(value: unknown): Record<string, unknown> | null {
 }
 
 /**
- * 讀一組角色值。
+ * 認得這份 JSON 是不是一張色彩表。
  *
- * HEX 與 CMYK 只要有一個非空就留著：先打 CMYK 再回頭打 HEX 是正常次序，
- * 如果這裡把「只有 CMYK」的丟掉，畫面下一次重繪就會把剛打的字吃掉 ——
- * 看起來像輸入框壞了。有沒有 HEX 是**另一個**判斷（`hasHex`），不是這一層。
+ * 一個任意 JSON（例如舊的 `{"note":"藍色"}`）雖然解析得到，但裡面沒有角色，
+ * 硬當成空表就會畫出九行「缺」—— 那是假話：這一份根本不是表。所以形狀不認
+ * 就講讀不到，不假裝是「全部缺」。
  */
-function readValues(raw: unknown): Record<string, ColorValue> {
-  const record = asRecord(raw);
-  const result: Record<string, ColorValue> = {};
-
-  if (record === null) {
-    return result;
-  }
-
-  for (const [key, value] of Object.entries(record)) {
-    if (!isColorRole(key)) {
-      continue;
-    }
-
-    const entry = asRecord(value);
-
-    if (entry === null) {
-      continue;
-    }
-
-    const hex = typeof entry.hex === 'string' ? entry.hex.trim() : '';
-    const cmyk = typeof entry.cmyk === 'string' ? entry.cmyk.trim() : '';
-
-    if (hex === '' && cmyk === '') {
-      continue;
-    }
-
-    result[key] = { hex, cmyk };
-  }
-
-  return result;
-}
-
-function readPairs(raw: unknown): ColorPair[] {
-  if (!Array.isArray(raw)) {
-    return [];
-  }
-
-  return raw
-    .map((item) => {
-      const entry = asRecord(item);
-
-      if (entry === null || typeof entry.text !== 'string') {
-        return null;
-      }
-
-      const text = entry.text.trim();
-
-      return text === '' ? null : { text };
-    })
-    .filter((item): item is ColorPair => item !== null);
-}
-
-function readRamps(raw: unknown): Record<string, { step: string; hex: string }[]> {
-  const record = asRecord(raw);
-  const result: Record<string, { step: string; hex: string }[]> = {};
-
-  if (record === null) {
-    return result;
-  }
-
-  for (const [key, value] of Object.entries(record)) {
-    if (!isColorRole(key) || !Array.isArray(value)) {
-      continue;
-    }
-
-    const steps = value
-      .map((item) => {
-        const entry = asRecord(item);
-
-        if (entry === null) {
-          return null;
-        }
-
-        const step = typeof entry.step === 'string' ? entry.step.trim() : '';
-        const hex = typeof entry.hex === 'string' ? entry.hex.trim() : '';
-
-        return step === '' || hex === '' ? null : { step, hex };
-      })
-      .filter((item): item is { step: string; hex: string } => item !== null);
-
-    if (steps.length > 0) {
-      result[key] = steps;
-    }
-  }
-
-  return result;
-}
-
 export function parseColorDoc(text: string): ParseColorResult {
   if (text.trim() === '') {
     return { kind: 'empty' };
@@ -260,204 +137,411 @@ export function parseColorDoc(text: string): ParseColorResult {
     return { kind: 'invalid' };
   }
 
-  // 認得這一份 JSON 的形狀才算「是色彩表」。一個任意 JSON（例如舊的
-  // `{"note":"藍色"}`）雖然解析得到，但裡面沒有角色，硬當成空表就會畫出
-  // 九行「缺」—— 那是假話：這一份根本不是表。
   const shapeOk =
-    'light' in record || 'dark' in record || 'ramps' in record || 'allowed' in record;
+    'roles' in record ||
+    'pairs' in record ||
+    'order' in record ||
+    'tints' in record ||
+    'ratios' in record ||
+    'contrast_floor' in record;
 
   if (!shapeOk) {
     return { kind: 'invalid' };
   }
 
-  const logoRoles = Array.isArray(record.logoRoles)
-    ? record.logoRoles.filter(
-        (item): item is string =>
-          typeof item === 'string' && logoEligibleRoles().some((role) => role.key === item),
-      )
-    : [];
-
-  return {
-    kind: 'ok',
-    doc: {
-      light: readValues(record.light),
-      dark: readValues(record.dark),
-      ramps: readRamps(record.ramps),
-      allowed: readPairs(record.allowed),
-      denied: readPairs(record.denied),
-      logoRoles,
-    },
-  };
+  return { kind: 'ok', doc: COLOR_SCHEMA.normalize(raw) as ColorDoc };
 }
 
 /**
  * 存進版本的內容。
  *
- * 刻意**不**縮排：版本列表只拿到內容的頭 160 字元做預覽
- * （`left(content, 160)`），每一行兩個空格縮排等於把預覽的一半用來裝空白，
- * 一版十幾個色就只看得到第一個。單行之後同樣 160 字元可以帶到六七個色。
- * 這一份是給機器讀的，人看的是畫面那一張表。
+ * 刻意**不**縮排：版本列表只拿到內容的頭 160 字元做預覽，每一行兩個空格
+ * 等於把預覽的一半用來裝空白。單行之後同樣 160 字元可以帶到幾個角色。
  */
 export function serializeColorDoc(doc: ColorDoc): string {
-  return JSON.stringify({
-    light: doc.light,
-    dark: doc.dark,
-    ramps: doc.ramps,
-    allowed: doc.allowed,
-    denied: doc.denied,
-    logoRoles: doc.logoRoles,
-  });
+  return JSON.stringify(COLOR_SCHEMA.normalize(doc));
 }
 
-/* ── 顏色計算 ─────────────────────────────────────────────── */
-
-/** 三碼或六碼。三碼會在 `normalizeHex` 展開。 */
-const HEX = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
-
-export function isHex(value: string): boolean {
-  return HEX.test(value.trim());
+/** 這一份表有沒有任何東西。全空就不應該佔一版（後端也會拒收空白內容）。 */
+export function hasAnyValue(doc: ColorDoc): boolean {
+  return (
+    doc.roles.some(
+      (role) => role.hex.trim() !== '' || role.cmyk.trim() !== '' || role.dark.trim() !== '',
+    ) ||
+    doc.order.text.trim() !== '' ||
+    doc.ratios.length > 0 ||
+    doc.pairs.allowed.length > 0 ||
+    doc.pairs.forbidden.length > 0 ||
+    doc.tints.length > 0
+  );
 }
 
-/** 三碼展開成六碼；不是 hex 就回 `null`。 */
-export function normalizeHex(value: string): string | null {
-  const trimmed = value.trim();
+/** 版本列表只拿到截斷內容，抽得出色值就畫色點，抽不到就一個都不畫。 */
+export function hexesInText(text: string): string[] {
+  const found = text.match(/#[0-9a-fA-F]{6}\b/g) ?? [];
 
-  if (!HEX.test(trimmed)) {
-    return null;
-  }
-
-  const body = trimmed.slice(1).toLowerCase();
-
-  if (body.length === 3) {
-    return `#${body[0]}${body[0]}${body[1]}${body[1]}${body[2]}${body[2]}`;
-  }
-
-  return `#${body}`;
+  return Array.from(new Set(found.map((value) => value.toLowerCase())));
 }
 
-export function hexToRgb(value: string): { r: number; g: number; b: number } | null {
-  const hex = normalizeHex(value);
+/* ── 角色 ─────────────────────────────────────────────────────── */
 
-  if (hex === null) {
-    return null;
-  }
+export type RoleEntry = ColorDoc['roles'][number];
 
+export function blankRole(key: string): RoleEntry {
   return {
-    r: Number.parseInt(hex.slice(1, 3), 16),
-    g: Number.parseInt(hex.slice(3, 5), 16),
-    b: Number.parseInt(hex.slice(5, 7), 16),
+    id: key,
+    group: groupOfRole(key) ?? 'brand',
+    name: '',
+    hex: '',
+    cmyk: '',
+    dark: '',
+    usage: '',
+    reason: '',
   };
 }
 
+export function roleEntry(doc: ColorDoc, key: string): RoleEntry {
+  return doc.roles.find((role) => role.id === key) ?? blankRole(key);
+}
+
 /**
- * 畫面上寫的 `0 87 255`（RGB 三個數字）。由 HEX 算，不另存一份會過時的數字。
+ * 改一個角色的一格。
  *
- * 這裡刻意不砌成 CSS 函式字串：色碼只可以在 tokens.css，而這一個是**資料**
- * 不是樣式。要貼進 CSS 的人，貼 HEX 那一個。
+ * 全部欄位都空了就把這一行刪走：留著一行空殼會令 `color.r1` 以為角色存在
+ * 但無值，畫面上又多一行「缺」，而實際上只是有人清空了它。
  */
-export function rgbChannels(value: string): string | null {
-  const rgb = hexToRgb(value);
+export function patchRole(
+  doc: ColorDoc,
+  key: string,
+  patch: Partial<Omit<RoleEntry, 'id' | 'group'>>,
+): ColorDoc {
+  const next: RoleEntry = { ...roleEntry(doc, key), ...patch };
+  const blank =
+    next.name.trim() === '' &&
+    next.hex.trim() === '' &&
+    next.cmyk.trim() === '' &&
+    next.dark.trim() === '' &&
+    next.usage.trim() === '' &&
+    next.reason.trim() === '';
 
-  return rgb === null ? null : `${rgb.r} ${rgb.g} ${rgb.b}`;
+  const others = doc.roles.filter((role) => role.id !== key);
+
+  return { ...doc, roles: blank ? others : [...others, next] };
 }
 
-function channel(value: number): number {
-  const ratio = value / 255;
-
-  return ratio <= 0.03928 ? ratio / 12.92 : ((ratio + 0.055) / 1.055) ** 2.4;
+/** 這一頁要有值而真的缺了的角色（`color.r1` 的四個）。 */
+export function missingRoles(doc: ColorDoc): string[] {
+  return MUST_HAVE_ROLES.filter((key) => roleEntry(doc, key).hex.trim() === '');
 }
 
-export function relativeLuminance(value: string): number | null {
+/** 未定的其他角色 —— 不是缺，只是未決定。 */
+export function undecidedRoles(doc: ColorDoc): string[] {
+  return COLOR_ROLES.filter(
+    (role) => role.requiredIn === 'dark' && roleEntry(doc, role.key).hex.trim() === '',
+  ).map((role) => role.key);
+}
+
+/* ── 對比與替代色 ─────────────────────────────────────────────── */
+
+/** 三碼展開成六碼；不是 HEX 就回 `null`（不打回原值，免得住一個壞字）。 */
+export function normalizeHexInput(value: string): string | null {
   const rgb = hexToRgb(value);
 
   if (rgb === null) {
     return null;
   }
 
-  return 0.2126 * channel(rgb.r) + 0.7152 * channel(rgb.g) + 0.0722 * channel(rgb.b);
+  return toHex(rgb);
 }
 
-/**
- * 對比（WCAG 2.1）。策略明講：內文至少 4.5:1、大字至少 3:1。
- *
- * 算出來給人看的，不是用來擋儲存的：低於標準是事實，畫面要講，但要不要
- * 還是一個設計決定 —— 把它變成「不可以儲存」只會令人亂填一個色。
- */
-export function contrastRatio(foreground: string, background: string): number | null {
-  const a = relativeLuminance(foreground);
-  const b = relativeLuminance(background);
+export function rgbChannels(value: string): string | null {
+  const rgb = hexToRgb(value);
 
-  if (a === null || b === null) {
+  return rgb === null ? null : `${rgb.r} ${rgb.g} ${rgb.b}`;
+}
+
+export function pairRatio(doc: ColorDoc, foreground: string, background: string): number | null {
+  const fg = roleEntry(doc, foreground).hex;
+  const bg = roleEntry(doc, background).hex;
+
+  if (fg.trim() === '' || bg.trim() === '') {
     return null;
   }
 
-  const light = Math.max(a, b);
-  const dark = Math.min(a, b);
-
-  return (light + 0.05) / (dark + 0.05);
+  return contrastRatio(fg, bg);
 }
 
-export const BODY_CONTRAST = 4.5;
-export const LARGE_CONTRAST = 3;
+/** 一個建議值：哪個色、實測多少、是現有角色還是算出來的新值。 */
+export type Alternative = {
+  hex: string;
+  ratio: number;
+  /** 用哪一個現有角色。`null`＝算出來的新值，不是任何現有角色。 */
+  role: string | null;
+};
+
+function channelText(value: number): string {
+  const clamped = Math.max(0, Math.min(255, Math.round(value)));
+
+  return clamped.toString(16).padStart(2, '0');
+}
+
+function toHex(channels: { r: number; g: number; b: number }): string {
+  return `#${channelText(channels.r)}${channelText(channels.g)}${channelText(channels.b)}`;
+}
+
+/**
+ * 把一個色沿著「向黑」或「向白」推，直到達到下限。
+ *
+ * 為什麼只動明度、不動色相：品牌色可以換，色相通常不可以 —— 換掉色相就是
+ * 另一個品牌。由原色出發一小步一小步推，取**最近**那個達標的值：改得越少，
+ * 越有可能真的被採用。
+ */
+function pushToFloor(foreground: string, background: string, floor: number): Alternative | null {
+  const rgb = hexToRgb(foreground);
+
+  if (rgb === null) {
+    return null;
+  }
+
+  let best: { alternative: Alternative; distance: number } | null = null;
+
+  for (const target of [0, 255]) {
+    for (let step = 1; step <= 100; step += 1) {
+      const distance = step / 100;
+      const mixed = {
+        r: rgb.r + (target - rgb.r) * distance,
+        g: rgb.g + (target - rgb.g) * distance,
+        b: rgb.b + (target - rgb.b) * distance,
+      };
+      const hex = toHex(mixed);
+      const measured = contrastRatio(hex, background);
+
+      if (measured === null || measured < floor) {
+        continue;
+      }
+
+      if (best === null || distance < best.distance) {
+        best = { alternative: { hex, ratio: measured, role: null }, distance };
+      }
+
+      break;
+    }
+  }
+
+  return best === null ? null : best.alternative;
+}
+
+/**
+ * 不達標的那一組，有沒有別的色可以用。
+ *
+ * 次序：先找**現有角色**（同組優先），真的沒有才用算出來的值。理由是「已經
+ * 在表上的色」比「一個新色」便宜 —— 新色要再解釋一次為甚麼存在，而品牌色
+ * 越少越好用。底色也未定就回 `null`：算不到就講算不到。
+ */
+export function suggestAlternative(
+  doc: ColorDoc,
+  foreground: string,
+  background: string,
+  floor: number,
+): Alternative | null {
+  const bg = roleEntry(doc, background).hex;
+
+  if (bg.trim() === '' || !isHex(bg)) {
+    return null;
+  }
+
+  const ownHex = roleEntry(doc, foreground).hex;
+  const ownGroup = groupOfRole(foreground);
+  let best: Alternative | null = null;
+  let bestGap = Number.POSITIVE_INFINITY;
+
+  // 1. 同組的現有角色。同組才是同一個用途：品牌色換成另一個品牌色是換色，
+  //    品牌色換成 ink 是換了整個用途。
+  // 2. 沒有同組的，就推同一個色的明度 —— 色相留住，改動最少。
+  // 3. 連推都推不到（例如下限調到 20:1），才用別組的色，有總好過沒有。
+  for (const role of doc.roles) {
+    if (role.group !== ownGroup || role.id === foreground || role.hex.trim() === '') {
+      continue;
+    }
+
+    const measured = contrastRatio(role.hex, bg);
+
+    if (measured === null || measured < floor) {
+      continue;
+    }
+
+    // 取「剛好夠用」的：用一個 18:1 的色去頂一個只需要 4.5:1 的位置，
+    // 畫面上看起來就像換了品牌。
+    const gap = measured - floor;
+
+    if (gap < bestGap) {
+      best = { hex: role.hex, ratio: measured, role: role.id };
+      bestGap = gap;
+    }
+  }
+
+  if (best !== null) {
+    return best;
+  }
+
+  const pushed = pushToFloor(ownHex, bg, floor);
+
+  if (pushed !== null) {
+    return pushed;
+  }
+
+  for (const role of doc.roles) {
+    if (role.id === foreground || role.hex.trim() === '') {
+      continue;
+    }
+
+    const measured = contrastRatio(role.hex, bg);
+
+    if (measured !== null && measured >= floor) {
+      return { hex: role.hex, ratio: measured, role: role.id };
+    }
+  }
+
+  return null;
+}
+
+/** 一組配對實測幾比幾，以及它在這一頁算不算達標。 */
+export type PairReading = {
+  ratio: number | null;
+  /** 沒有色值／格式錯／未定義角色 → 算不到，不是「通過」。 */
+  state: 'pass' | 'fail' | 'unknown';
+  /** 有色值但未填的角色。 */
+  missing: string[];
+  /** 未定義的角色名。 */
+  unknownRoles: string[];
+  /** 不達標時的替代色建議。 */
+  alternative: Alternative | null;
+  /** 這一組的門檻。 */
+  floor: number;
+};
+
+export function readPair(
+  doc: ColorDoc,
+  pair: { fg: string; bg: string; use?: 'body' | 'large' },
+): PairReading {
+  const keys = [pair.fg, pair.bg];
+  const unknownRoles = keys.filter((key) => key.trim() !== '' && !isColorRole(key));
+  const missing = keys.filter(
+    (key) => key.trim() !== '' && isColorRole(key) && roleEntry(doc, key).hex.trim() === '',
+  );
+  const floor = pair.use === 'large' ? doc.large_floor : doc.contrast_floor;
+  const ratio =
+    unknownRoles.length > 0 || missing.length > 0 ? null : pairRatio(doc, pair.fg, pair.bg);
+
+  if (ratio === null) {
+    return { ratio: null, state: 'unknown', missing, unknownRoles, alternative: null, floor };
+  }
+
+  if (ratio >= floor) {
+    return { ratio, state: 'pass', missing, unknownRoles, alternative: null, floor };
+  }
+
+  return {
+    ratio,
+    state: 'fail',
+    missing,
+    unknownRoles,
+    alternative: suggestAlternative(doc, pair.fg, pair.bg, floor),
+    floor,
+  };
+}
+
+/** 比例加起來是不是 100。未填任何比例時回 `null`（不是 0）。 */
+export function ratioTotal(doc: ColorDoc): number | null {
+  const used = doc.ratios.filter((item) => item.role.trim() !== '');
+
+  if (used.length === 0) {
+    return null;
+  }
+
+  return used.reduce((sum, item) => sum + item.percent, 0);
+}
+
+/**
+ * 這一頁現在有幾件未完成的事。給「這一頁」面板（#53）的數字。
+ *
+ * 只數**有規定的**：四個必要角色、內文配對、大字配對、比例合計 100。
+ * 「未定品牌次要色」這種不數 —— 那是設計決定，不是缺口；數進去會令數字
+ * 永遠大於零，於是沒有人再看它。
+ */
+export function gapCountOf(doc: ColorDoc): number {
+  const missing = missingRoles(doc).length;
+  const bodyPairs = doc.pairs.allowed.filter((pair) => pair.use === 'body').length;
+  const largePairs = doc.pairs.allowed.filter((pair) => pair.use === 'large').length;
+  const total = ratioTotal(doc);
+
+  return (
+    missing +
+    (bodyPairs === 0 ? 1 : 0) +
+    (largePairs === 0 ? 1 : 0) +
+    (total !== null && total !== 100 ? 1 : 0)
+  );
+}
+
+/* ── 給其他頁的轉接 ───────────────────────────────────────────── */
+
+/** 一組色值。`cmyk` 由人填（印刷），RGB 由 HEX 算出來，所以不另存。 */
+export type ColorValue = { hex: string; cmyk: string };
+
+/**
+ * 其他頁（標誌、主頁、自定義）要的形狀：`{ 角色名: { hex, cmyk } }`。
+ *
+ * 深色模式沒有另寫一個值，就沿用淺色那個 —— tokens 也是這樣做的（見
+ * contracts 的色彩 `tokens()`），所以在這一頁看到的與 renderer 出來的
+ * 是同一個結果。
+ */
+export function valuesOf(doc: ColorDoc, mode: 'light' | 'dark' = 'light'): Record<string, ColorValue> {
+  const values: Record<string, ColorValue> = {};
+
+  for (const role of doc.roles) {
+    if (role.id === '') {
+      continue;
+    }
+
+    const hex = mode === 'dark' && role.dark.trim() !== '' ? role.dark : role.hex;
+
+    if (hex.trim() === '' && role.cmyk.trim() === '') {
+      continue;
+    }
+
+    values[role.id] = { hex, cmyk: role.cmyk };
+  }
+
+  return values;
+}
+
+/** 可以進標誌的角色：品牌色與閱讀色。功能色是系統在講話，不是品牌的聲音。 */
+export function logoEligibleRoles(): readonly ColorRoleSpec[] {
+  return COLOR_ROLES.filter((role) => role.group !== 'function');
+}
+
+/**
+ * 「最少要有」而真的缺了的角色。
+ *
+ * `mode` 保留是為了舊呼叫者：新形狀只有一張表，深色值只是同一行的一個欄位，
+ * 所以兩個模式問「缺什麼」是同一個答案。
+ */
+export function missingMustHave(doc: ColorDoc, mode: 'light' | 'dark' = 'light'): string[] {
+  void mode;
+
+  return missingRoles(doc);
+}
+
+/** 三碼展開成六碼；不是 HEX 就回 `null`。舊名保留給既有呼叫者。 */
+export const normalizeHex = normalizeHexInput;
 
 /** `ink on paper` → `{ foreground: 'ink', background: 'paper' }`；格式不對回 `null`。 */
 export function parsePair(text: string): { foreground: string; background: string } | null {
   const match = /^(\S+)\s+on\s+(\S+)$/.exec(text.trim());
 
-  if (match === null) {
+  if (match === null || match[1] === undefined || match[2] === undefined) {
     return null;
   }
 
-  const foreground = match[1];
-  const background = match[2];
-
-  if (foreground === undefined || background === undefined) {
-    return null;
-  }
-
-  return { foreground, background };
-}
-
-export function valuesOf(doc: ColorDoc, mode: 'light' | 'dark'): Record<string, ColorValue> {
-  return mode === 'light' ? doc.light : doc.dark;
-}
-
-/**
- * 這個模式要求而未有值的角色 —— 畫面逐個標「缺」，不填近似色。
- *
- * 只算「有 HEX」：CMYK 是印刷數值，沒有 HEX 就沒有 RGB、沒有對比，
- * 對這一頁的用途（螢幕）來說仍然是缺。
- */
-export function missingRoles(doc: ColorDoc, mode: 'light' | 'dark'): string[] {
-  const values = valuesOf(doc, mode);
-
-  return COLOR_ROLES.filter((role) => {
-    if (role.requiredIn === 'dark' && mode === 'light') {
-      return false;
-    }
-
-    return (values[role.key]?.hex ?? '') === '';
-  }).map((role) => role.key);
-}
-
-/**
- * 策略與 issue 都明講「至少要有」的角色。少了就要用另一句話講（見
- * `missingMustHave`），但**仍然可以儲存** —— 見下面那個函式的註解。
- */
-const MUST_HAVE_ROLES = ['brand.primary', 'ink', 'paper'] as const;
-const MUST_HAVE_DARK_ROLES = ['surface'] as const;
-
-/**
- * 「最少要有」而真的缺了的角色。
- *
- * 為什麼不是擋儲存：一個品牌剛開，第一個設計師可能今晚只決定了主色。
- * 擋住只會令人隨便填一個色交差 —— 那正是策略禁止的事（「不要填一個差不多
- * 的色」）。所以留白是合法狀態，畫面如實講缺，版本照樣留得住。
- */
-export function missingMustHave(doc: ColorDoc, mode: 'light' | 'dark'): string[] {
-  const values = valuesOf(doc, mode);
-  const required: readonly string[] =
-    mode === 'dark' ? [...MUST_HAVE_ROLES, ...MUST_HAVE_DARK_ROLES] : MUST_HAVE_ROLES;
-
-  return required.filter((key) => (values[key]?.hex ?? '') === '');
+  return { foreground: match[1], background: match[2] };
 }

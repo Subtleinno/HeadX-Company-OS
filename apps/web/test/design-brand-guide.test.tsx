@@ -20,7 +20,7 @@ import {
  *   2. 策略只有老闆見到編輯鍵。員工見到同一份正文，但見到的是「只有老闆可以改」。
  *   3. 儲存策略打的是 `/api/policy/:slot/versions` —— 與 Boss Portal 同一條路，
  *      不是另一個副本。
- *   4. 缺口數字由表身上報：表身報 9，面板就寫 9；表身報 null，面板就不講數字。
+ *   4. 缺口數字由表身上報：表身報 6，面板就寫 6；表身報 null，面板就不講數字。
  */
 
 const BOSS = {
@@ -98,8 +98,9 @@ function colorDetail(current: unknown = COLOR_V3) {
         ? null
         : {
             ...(current as typeof COLOR_V3),
-            // 空表：九個角色全部未有 HEX，所以表身會報缺口 9 項。
-            content: JSON.stringify({ light: {}, dark: {}, pairs: { allowed: [], denied: [] } }),
+            // 空表：#62 之後缺口數只數「有規定的」—— 四個必要角色（各缺一項）
+            // 加上內文配對與大字配對各未指定，共 6 項。功能色未定不算缺。
+            content: JSON.stringify({ roles: [], pairs: { allowed: [], forbidden: [] } }),
           },
   };
 }
@@ -178,15 +179,15 @@ describe('「這一頁」面板', () => {
     expect(document.querySelector('.brand-guide__lead')?.textContent).toContain('每一個色的角色');
   });
 
-  it('缺口數字由表身上報：淺色模式有八個角色未有值（surface 只在深色要求）', async () => {
+  it('缺口數字由表身上報：四個必要角色加兩種配對，共六項', async () => {
     openColor(BOSS);
     await waitForGuide();
 
     await waitFor(() => {
-      expect(document.querySelector('[data-guide-gaps]')?.getAttribute('data-guide-gaps')).toBe('8');
+      expect(document.querySelector('[data-guide-gaps]')?.getAttribute('data-guide-gaps')).toBe('6');
     });
 
-    expect(screen.getByText('缺口 8 項，逐項在下面的表身。')).toBeTruthy();
+    expect(screen.getByText('缺口 6 項，逐項在下面的表身。')).toBeTruthy();
   });
 
   it('未有版本時講「仲未有版本」，不畫一個假的第 0 版', async () => {

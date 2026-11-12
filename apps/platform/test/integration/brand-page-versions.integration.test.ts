@@ -207,6 +207,42 @@ describe('品牌頁版本', () => {
     expect(body.versions.map((version) => version.versionNo)).toEqual([2, 1]);
   });
 
+  it('版本列表講改了哪一欄：路徑由 payload 出發，角色名不是索引（#62）', async () => {
+    const owner = await setupOwner();
+    const brandId = await createBrandRow('moonic', 'Moonic');
+
+    const colour = (inkHex: string): string =>
+      JSON.stringify({
+        roles: [
+          { id: 'ink', group: 'reading', name: '', hex: inkHex, cmyk: '', dark: '', usage: '', reason: '' },
+          { id: 'paper', group: 'reading', name: '', hex: '#ffffff', cmyk: '', dark: '', usage: '', reason: '' },
+        ],
+        order: { text: '', reason: '' },
+        ratios: [],
+        contrast_floor: 4.5,
+        large_floor: 3,
+        pairs: { allowed: [], forbidden: [] },
+        tints: [],
+      });
+
+    await save(owner.cookie, brandId, 'color', colour('#111111'));
+    await save(owner.cookie, brandId, 'color', colour('#222222'));
+
+    const page = await app.inject({
+      method: 'GET',
+      url: `/brands/${brandId}/pages/color`,
+      headers: { cookie: owner.cookie },
+    });
+
+    const body = page.json() as { versions: { versionNo: number; changed: string[] }[] };
+
+    // 新的一版：只改了墨色一格。索引已經換成角色名，因為 `roles.0.hex`
+    // 對人沒有意思。
+    expect(body.versions[0]?.changed).toEqual(['roles.ink.hex']);
+    // 第一版沒有上一版可以比 —— 空陣列，不是「改了零項」。
+    expect(body.versions[1]?.changed).toEqual([]);
+  });
+
   it('用回舊版：以舊內容建立新版本，歷史沒有被改寫', async () => {
     const owner = await setupOwner();
     const brandId = await createBrandRow('moonic', 'Moonic');
