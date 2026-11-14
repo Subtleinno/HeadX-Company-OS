@@ -1,5 +1,5 @@
 import { emptyBrandDocument, parseBrandDocument, type BrandDocument } from './document.ts';
-import { schemaForPage } from './schemas.ts';
+import { isFunctionColourRole, schemaForPage } from './schemas.ts';
 
 /**
  * 舊版（#35–#39）內容 → v2 文件的**單向讀取**（issue #57）。
@@ -87,7 +87,7 @@ function convertKnown(pageKey: string, raw: Record<string, unknown>): Record<str
 
       return {
         id,
-        group: id.startsWith('brand.') ? 'brand' : isFunctionRole(id) ? 'function' : 'reading',
+        group: id.startsWith('brand.') ? 'brand' : isFunctionColourRole(id) ? 'function' : 'reading',
         name: typeof pair.label === 'string' ? pair.label : '',
         hex: typeof pair.hex === 'string' ? pair.hex : '',
         cmyk: typeof pair.cmyk === 'string' ? pair.cmyk : '',
@@ -196,10 +196,6 @@ function convertKnown(pageKey: string, raw: Record<string, unknown>): Record<str
   }
 
   return {};
-}
-
-function isFunctionRole(id: string): boolean {
-  return id === 'success' || id === 'warning' || id === 'danger';
 }
 
 function asRecord(value: unknown): Record<string, unknown> {

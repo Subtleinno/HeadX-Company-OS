@@ -22,7 +22,7 @@
  * 這一欄的形狀。
  */
 
-/** 九個策略槽（C113）。`custom` 是自定義頁通用槽。 */
+/** 十一個策略槽（C113 ＋ v2.2）。`custom` 是自定義頁通用槽。 */
 export const BRAND_SLOTS = [
   'platform',
   'color',
@@ -30,6 +30,8 @@ export const BRAND_SLOTS = [
   'logo',
   'tone',
   'image',
+  'mascot',
+  'video',
   'home',
   'apply',
   'custom',
@@ -38,9 +40,9 @@ export const BRAND_SLOTS = [
 export type BrandSlot = (typeof BRAND_SLOTS)[number];
 
 /**
- * 八個固定頁的鍵，加上自定義頁（鍵由 slug 決定）。
+ * 十一個固定頁的鍵，加上自定義頁（鍵由 slug 決定）。
  *
- * 次序是左側欄的次序（`home` 在最前，`examples` 在 APPLY 組）。鍵是網址的
+ * 次序是左側欄的次序（`home` 在最前，`examples` 與影片在 APPLY 組）。鍵是網址的
  * 一部分，改一個字就會令舊書籤 404。
  */
 export const BRAND_FIXED_PAGES: readonly {
@@ -57,7 +59,10 @@ export const BRAND_FIXED_PAGES: readonly {
   { key: 'logo', name: '標誌', slot: 'logo', group: 'identity', order: 50 },
   { key: 'tone', name: '語氣', slot: 'tone', group: 'identity', order: 60 },
   { key: 'image', name: '圖像', slot: 'image', group: 'identity', order: 70 },
+  { key: 'mascot', name: '吉祥物', slot: 'mascot', group: 'identity', order: 72 },
   { key: 'examples', name: '已核准範例', slot: 'apply', group: 'apply', order: 90 },
+  { key: 'video-long', name: '長影片', slot: 'video', group: 'apply', order: 92 },
+  { key: 'video-short', name: '短影片', slot: 'video', group: 'apply', order: 94 },
 ];
 
 export const BRAND_FIXED_PAGE_KEYS: readonly string[] = BRAND_FIXED_PAGES.map((page) => page.key);

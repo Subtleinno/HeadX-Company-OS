@@ -2,14 +2,22 @@ import { contrastRatio, isHex, readableOn } from './contrast.ts';
 import { readPath, type BrandDocument, type BrandGapType } from './document.ts';
 import {
   schemaForPage,
+  typeSizePx,
+  voiceStack,
   type ColorPayload,
+  type CustomPayload,
   type HomePayload,
+  type ImagePayload,
+  type ExamplePayload,
   type LogoPayload,
+  type MascotPayload,
+  type PlatformPayload,
   type PromptSection,
   type Section,
   type TokenGroups,
   type TokenValue,
   type TypePayload,
+  type VideoPayload,
 } from './schemas.ts';
 
 /**
@@ -146,13 +154,27 @@ export function buildPromptPack(composed: ComposedBrand): PromptPack {
   ];
 
   for (const page of ordered) {
+    /**
+     * 未有一版的頁只寫「{頁名}：缺」（brand-home-backend-functions.md §5 B5）。
+     *
+     * 為咩不叫 `schema.prompt(空 payload)`：那會輸出策略常數（例如對比下限
+     * 4.5:1）—— 那不是品牌內容，agent 讀到會把它當成品牌決定。
+     */
+    if (page.versionNo === 0) {
+      sections.push({ title: `${page.name}：缺`, lines: [] });
+      continue;
+    }
+
     const schema = schemaForPage(page.key, page.kind);
     const payload = schema.normalize(page.document.payload);
     const pageSections = schema.prompt(payload);
 
     for (const section of pageSections) {
+      // 自定義頁每一段用自己的頁名（`## 包裝`），不是四段都叫「自定義頁」。
+      const title = page.kind === 'custom' ? page.name : section.title;
+
       if (section.lines.length > 0) {
-        sections.push({ title: section.title, lines: section.lines });
+        sections.push({ title, lines: section.lines });
       }
     }
   }
@@ -233,6 +255,12 @@ type Lookup = {
   ratios: Map<string, number>;
   voiceSamples: string[];
   logoAssets: { label: string; fileRef: string; className: string }[];
+  /** 平台頁的立場句。主頁只引用，不存副本。 */
+  stance: string;
+  /** 自定義頁：頁名＋一句 brief。主頁只放入口。 */
+  systems: { name: string; note: string }[];
+  /** 標誌頁的預設模式。 */
+  logoDefault: string;
 };
 
 function buildLookup(pages: readonly ComposedPage[]): Lookup {
@@ -241,6 +269,9 @@ function buildLookup(pages: readonly ComposedPage[]): Lookup {
   const ratios = new Map<string, number>();
   const voiceSamples: string[] = [];
   const logoAssets: { label: string; fileRef: string; className: string }[] = [];
+  const systems: { name: string; note: string }[] = [];
+  let stance = '';
+  let logoDefault = '';
 
   for (const page of pages) {
     const schema = schemaForPage(page.key, page.kind);
@@ -273,13 +304,24 @@ function buildLookup(pages: readonly ComposedPage[]): Lookup {
     }
 
     if (schema.key === 'logo') {
-      for (const asset of (payload as LogoPayload).assets) {
+      const logo = payload as LogoPayload;
+      logoDefault = logo.default_mode;
+      for (const asset of logo.assets) {
         logoAssets.push({ label: asset.label, fileRef: asset.file_ref, className: asset.class });
       }
     }
+
+    if (schema.key === 'platform') {
+      stance = (payload as PlatformPayload).stance;
+    }
+
+    if (page.kind === 'custom') {
+      const decided = (payload as CustomPayload).decided;
+      systems.push({ name: page.name, note: decided });
+    }
   }
 
-  return { colors, families, ratios, voiceSamples, logoAssets };
+  return { colors, families, ratios, voiceSamples, logoAssets, stance, systems, logoDefault };
 }
 
 function swatch(hex: string, label: string): string {
@@ -323,17 +365,24 @@ function renderRecords(section: Section, payload: unknown): string {
   const head = columns.map((column) => `<th>${escapeHtml(column.label)}</th>`).join('');
   const body = rows
     .map((row) => {
-      const cells = columns
-        .map((column) => {
+        const cells = columns
+          .map((column) => {
           const value = readPath(row, column.path);
 
           if (column.kind === 'hex') {
             return `<td>${swatch(typeof value === 'string' ? value : '', '')}<code>${escapeHtml(String(value ?? '')) || '缺'}</code></td>`;
           }
 
+          // 檔案欄：印人讀得明嘅檔名，唔印 raw UUID（UUID 喺 JSON／prompt 先有意義）。
+          if (column.path === 'file_ref' || column.path === 'output_ref') {
+            const fileName = readPath(row, 'file_name');
+            const label = typeof fileName === 'string' && fileName.trim() !== '' ? fileName.trim() : '資產檔';
+            return `<td>${escapeHtml(label)}</td>`;
+          }
+
           return `<td>${escapeHtml(String(value ?? '')) || '<span class="missing">缺</span>'}</td>`;
         })
-        .join('');
+          .join('');
 
       return `<tr>${cells}</tr>`;
     })
@@ -391,7 +440,7 @@ function renderTypeFamilies(section: Section, payload: unknown): string {
   return `<ul class="families">${typed.families
     .map(
       (family) =>
-        `<li data-family="${escapeHtml(family.id)}"><strong>${escapeHtml(family.name) || '缺'}</strong><span class="sub">${escapeHtml(family.script)} 網頁授權 ${escapeHtml(family.license_web) || '缺'} 印刷授權 ${escapeHtml(family.license_print) || '缺'}</span>${
+        `<li data-family="${escapeHtml(family.id)}" data-voice="${escapeHtml(family.voice)}"><strong>${escapeHtml(family.name) || '缺'}</strong><span class="sub">${escapeHtml(family.voice) || '聲部未定'} · ${escapeHtml(family.script)} 網頁授權 ${escapeHtml(family.license_web) || '缺'} 印刷授權 ${escapeHtml(family.license_print) || '缺'}</span>${
           family.file_ref === '' ? '<span class="missing">缺可嵌入檔</span>' : ''
         }</li>`,
     )
@@ -407,9 +456,17 @@ function renderTypeRoles(section: Section, payload: unknown): string {
 
   return `<div class="specimens">${typed.roles
     .map((role) => {
-      const size = /^\d+(\.\d+)?px$/.test(role.size) ? role.size : '16px';
-      return `<div class="specimen" data-role="${escapeHtml(role.role)}" style="font-family:${escapeHtml(role.family)};font-weight:${escapeHtml(role.weight) || '400'};font-size:${escapeHtml(size)};line-height:${escapeHtml(role.leading) || '1.4'}">
-<span class="specimen__meta">${escapeHtml(role.role)} ${escapeHtml(role.family)} ${escapeHtml(role.weight)} ${escapeHtml(role.size)}/${escapeHtml(role.leading)} 最小 ${role.min > 0 ? `${role.min}px` : '缺'}</span>
+      const stack = voiceStack(typed.families, role.voice);
+      const size = typeSizePx(role.size);
+
+      // 沒有家族就沒有樣本：不寫系統字名稱，寫缺。
+      if (stack.length === 0) {
+        return `<div class="specimen specimen--missing" data-role="${escapeHtml(role.role)}"><span class="specimen__meta">${escapeHtml(role.role)} 聲部 ${escapeHtml(role.voice) || '缺'}</span><span class="missing">缺家族，排不出樣本</span></div>`;
+      }
+
+      const printSize = size === null ? null : Math.min(size, 36);
+      return `<div class="specimen" data-role="${escapeHtml(role.role)}" data-voice="${escapeHtml(role.voice)}" style="font-family:${escapeHtml(stack.join(', '))};font-weight:${escapeHtml(role.weight) || '400'};${size === null || printSize === null ? '' : `--specimen-size:${size}px;--specimen-print-size:${printSize}px;`}--specimen-leading:${escapeHtml(role.leading) || '1.4'}">
+<span class="specimen__meta">${escapeHtml(role.role)} ${escapeHtml(role.voice)} ${escapeHtml(role.weight)} ${size === null ? '字級 缺' : `${size}px`}/${escapeHtml(role.leading) || '行高 缺'} 最小 ${role.min > 0 ? `${role.min}px` : '缺'}</span>
 <span class="specimen__text">${escapeHtml(typed.sentence_anatomy) || '先把話說清楚，再講風格。'}</span>
 </div>`;
     })
@@ -443,12 +500,17 @@ function renderLogoModes(section: Section, payload: unknown, lookup: Lookup): st
     return `<p class="missing">缺</p>`;
   }
 
+  const groupOf = (role: string): string => lookup.colors.get(role)?.group ?? 'unknown';
+
+  // 前景與底色都要是品牌色或閱讀色；任何一邊是功能色都不合格（color.r4）。
   return `<ul class="chips">${typed.modes
     .map((mode) => {
-      const colour = lookup.colors.get(mode.color_role);
-      const group = colour?.group ?? 'unknown';
-      const bad = group === 'function';
-      return `<li data-mode="${escapeHtml(mode.mode)}" data-role-group="${escapeHtml(group)}"${bad ? ' data-violation="true"' : ''}>${escapeHtml(mode.mode)} → ${escapeHtml(mode.color_role) || '缺'}${
+      const fgGroup = groupOf(mode.fg_role);
+      const bgGroup = groupOf(mode.bg_role);
+      const bad = fgGroup === 'function' || bgGroup === 'function';
+      const isDefault = typed.default_mode === mode.mode;
+
+      return `<li data-mode="${escapeHtml(mode.mode)}" data-role-group="${escapeHtml(fgGroup)}"${bad ? ' data-violation="true"' : ''}${isDefault ? ' data-default="true"' : ''}>${escapeHtml(mode.mode)} → 前景 ${escapeHtml(mode.fg_role) || '缺'}、底色 ${escapeHtml(mode.bg_role) || '缺'}${
         bad ? '<span class="violation">功能色不可用於標誌</span>' : ''
       }</li>`;
     })
@@ -486,7 +548,15 @@ function renderSection(
 
   switch (section.kind) {
     case 'stance': {
-      const stance = typeof payload['stance'] === 'string' ? payload['stance'] : page.document.stance ?? '';
+      // 立場句只有一個擁有者：平台頁。其他頁的 payload 不再存副本，
+      // 這裡一律讀平台頁那一句（`lookup.stance`）。
+      const stance =
+        lookup.stance !== ''
+          ? lookup.stance
+          : typeof payload['stance'] === 'string'
+            ? payload['stance']
+            : '';
+
       return `<p class="stance" data-stance>${escapeHtml(stance) || '<span class="missing">缺立場句</span>'}</p>`;
     }
     case 'fields':
@@ -545,10 +615,11 @@ function renderHomeBlocks(page: ComposedPage, lookup: Lookup, options: HtmlOptio
 
   for (const layoutBlock of page.document.layout.blocks) {
     if (layoutBlock.kind === 'stance') {
+      // 立場句的唯一出處是平台頁：主頁只引用，不存副本（v2.1 第 3 節）。
       blocks.push(
-        `<section class="block block--stance" data-block="stance"><p class="stance">${escapeHtml(payload.stance) || '<span class="missing">缺立場句</span>'}</p>${
-          payload.who === '' ? '' : `<p class="who">${escapeHtml(payload.who)}</p>`
-        }</section>`,
+        `<section class="block block--stance" data-block="stance"><p class="stance">${
+          lookup.stance === '' ? '<span class="missing">缺立場句</span>' : escapeHtml(lookup.stance)
+        }</p></section>`,
       );
       continue;
     }
@@ -567,57 +638,85 @@ function renderHomeBlocks(page: ComposedPage, lookup: Lookup, options: HtmlOptio
       continue;
     }
 
-    const section = schema.sections.find((item) => item.id === layoutBlock.source);
+    // `source` 是頁 key（v2.1）：主頁只放入口，內容由來源頁的現行版本砌。
+    const source = layoutBlock.source ?? '';
 
-    if (section === undefined) {
-      continue;
-    }
-
-    if (section.id === 'color_order') {
-      const order = payload.color_order.roles
-        .map((role) => {
+    if (source === 'color') {
+      const order = [...lookup.ratios.entries()]
+        .sort((left, right) => right[1] - left[1])
+        .map(([role, percent]) => {
           const colour = lookup.colors.get(role);
-          const percent = lookup.ratios.get(role);
-          return `<div class="order" data-order-role="${escapeHtml(role)}">${swatch(colour?.hex ?? '', colour?.name ?? role)}<span class="order__label">${escapeHtml(role)}${
-            percent === undefined ? '' : ` · ${percent}%`
-          }</span></div>`;
+          return `<div class="order" data-order-role="${escapeHtml(role)}">${swatch(colour?.hex ?? '', colour?.name ?? role)}<span class="order__label">${escapeHtml(role)} · ${percent}%</span></div>`;
         })
         .join('');
 
       blocks.push(
-        `<section class="block" data-block="color_order"><h3>${escapeHtml(layoutBlock.title ?? '用色順序')}</h3><div class="order-bar">${order}</div><p class="why">${escapeHtml(payload.color_order.note)}</p></section>`,
+        `<section class="block" data-block="color"><h3>${escapeHtml(layoutBlock.title ?? '用色順序')}</h3>${
+          order === '' ? '<p class="missing">缺</p>' : `<div class="order-bar">${order}</div>`
+        }<p class="why">${escapeHtml(layoutBlock.reason)}</p></section>`,
       );
       continue;
     }
 
-    if (section.id === 'type_split') {
-      const split = payload.type_split;
+    if (source === 'type') {
+      const latin = [...lookup.families.values()].filter((family) => family.script === 'latin');
+      const chinese = [...lookup.families.values()].filter((family) => family.script === 'chinese');
+      const sample = (name: string, label: string): string =>
+        `<div class="split"><span class="split__sample">${escapeHtml(name)}</span><span class="split__meta">${label}</span></div>`;
+
+      const cells = [
+        ...latin.slice(0, 2).map((family) => sample(family.name, '拉丁')),
+        ...chinese.slice(0, 2).map((family) => sample(family.name, '中文')),
+      ].join('');
+
       blocks.push(
-        `<section class="block" data-block="type_split"><h3>字體分工</h3><div class="two-col"><div class="split"><span class="split__sample split__sample--serif">${escapeHtml(split.serif)}</span><span class="split__meta">Serif 負責</span></div><div class="split"><span class="split__sample">${escapeHtml(split.sans)}</span><span class="split__meta">Sans 負責</span></div></div><p class="why">${escapeHtml(split.note)}</p></section>`,
+        `<section class="block" data-block="type"><h3>${escapeHtml(layoutBlock.title ?? '字體分工')}</h3>${
+          cells === '' ? '<p class="missing">缺</p>' : `<div class="two-col">${cells}</div>`
+        }<p class="why">${escapeHtml(layoutBlock.reason)}</p></section>`,
       );
       continue;
     }
 
-    if (section.id === 'systems') {
-      const systems = payload.systems
-        .map((system) => `<li><strong>${escapeHtml(system.name)}</strong><span class="sub">${escapeHtml(system.note)}</span></li>`)
-        .join('');
-
+    if (source === 'tone') {
       blocks.push(
-        `<section class="block" data-block="systems"><h3>品牌專屬系統</h3>${systems === '' ? '<p class="missing">缺</p>' : `<ul class="systems">${systems}</ul>`}</section>`,
-      );
-      continue;
-    }
-
-    if (section.id === 'voice_samples') {
-      const samples = payload.voice_samples.length > 0 ? payload.voice_samples : lookup.voiceSamples;
-      blocks.push(
-        `<section class="block" data-block="voice"><h3>語氣</h3>${
-          samples.length === 0
+        `<section class="block" data-block="tone"><h3>${escapeHtml(layoutBlock.title ?? '語氣')}</h3>${
+          lookup.voiceSamples.length === 0
             ? '<div class="missing-box">語氣頁尚未建立<span class="missing">缺</span></div>'
-            : `<ul class="quotes">${samples.map((sample) => `<li>${escapeHtml(sample)}</li>`).join('')}</ul>`
-        }</section>`,
+            : `<ul class="quotes">${lookup.voiceSamples
+                .slice(0, 5)
+                .map((sample) => `<li>${escapeHtml(sample)}</li>`)
+                .join('')}</ul>`
+        }<p class="why">${escapeHtml(layoutBlock.reason)}</p></section>`,
       );
+      continue;
+    }
+
+    if (source === 'logo') {
+      const asset = lookup.logoAssets[0];
+      blocks.push(
+        `<section class="block" data-block="logo"><h3>${escapeHtml(layoutBlock.title ?? '標誌')}</h3><p>${
+          asset === undefined ? '<span class="missing">缺</span>' : escapeHtml(asset.label)
+        }${lookup.logoDefault === '' ? '' : ` · 預設 ${escapeHtml(lookup.logoDefault)}`}</p><p class="why">${escapeHtml(layoutBlock.reason)}</p></section>`,
+      );
+      continue;
+    }
+
+    if (source === 'custom') {
+      blocks.push(
+        `<section class="block" data-block="custom"><h3>${escapeHtml(layoutBlock.title ?? '品牌專屬系統')}</h3>${
+          lookup.systems.length === 0
+            ? '<p class="missing">缺</p>'
+            : `<ul class="systems">${lookup.systems
+                .map((system) => `<li><strong>${escapeHtml(system.name)}</strong><span class="sub">${escapeHtml(system.note)}</span></li>`)
+                .join('')}</ul>`
+        }<p class="why">${escapeHtml(layoutBlock.reason)}</p></section>`,
+      );
+      continue;
+    }
+
+    const section = schema.sections.find((item) => item.id === source);
+
+    if (section === undefined) {
       continue;
     }
 
@@ -626,7 +725,125 @@ function renderHomeBlocks(page: ComposedPage, lookup: Lookup, options: HtmlOptio
     );
   }
 
+  // 設計師指示屬於主頁自己：不進版面（不是內容區塊），但要看得到。
+  if (payload.designer_notes.length > 0) {
+    blocks.push(
+      `<section class="block" data-block="designer_notes"><h3>設計師指示</h3><ul class="quotes">${payload.designer_notes
+        .map((note) => `<li>${escapeHtml(note.text)}</li>`)
+        .join('')}</ul></section>`,
+    );
+  }
+
   return blocks.join('');
+}
+
+function safeGradientCss(value: string | undefined): string | null {
+  const css = (value ?? '').trim();
+  if (css === '' || /url\s*\(|expression\s*\(|javascript:|[;{}]/i.test(css)) return null;
+  return /^(?:linear|radial|conic)-gradient\(/i.test(css) ? css : null;
+}
+
+function kitAssetFigure(ref: string, label: string, options: HtmlOptions): string {
+  const url = ref.trim() === '' ? null : (options.assetUrl?.(ref) ?? null);
+  return `<figure class="kit-asset">${
+    url === null
+      ? '<span class="missing-box">未有可讀圖檔</span>'
+      : `<img src="${escapeHtml(url)}" alt="${escapeHtml(label)}" />`
+  }<figcaption>${escapeHtml(label)}</figcaption></figure>`;
+}
+
+/** Brand Kit 的實物層：這些新增欄位不只進 JSON，也要出現在 HTML／A4。 */
+function renderBrandKitExtras(page: ComposedPage, options: HtmlOptions): string {
+  const payload = page.document.payload;
+
+  if (page.key === 'color') {
+    const colour = payload as ColorPayload;
+    if ((colour.gradients?.length ?? 0) === 0) return '';
+    const cards = (colour.gradients ?? [])
+      .map((gradient) => {
+        const custom = safeGradientCss(gradient.css);
+        const valid = custom !== null || (isHex(gradient.from) && isHex(gradient.to));
+        const style = valid
+          ? ` style="background-image:${custom ?? `linear-gradient(${gradient.angle}deg,${gradient.from},${gradient.to})`}"`
+          : '';
+        return `<figure class="kit-gradient"><div class="kit-gradient__field"${style}></div><figcaption><strong>${escapeHtml(gradient.name)}</strong><span>${escapeHtml(gradient.from)} → ${escapeHtml(gradient.to)} · ${gradient.angle}°</span><p>${escapeHtml(gradient.use)}</p></figcaption></figure>`;
+      })
+      .join('');
+    return `<section class="block" data-block="gradients"><h3>漸變與天色</h3><div class="kit-grid">${cards}</div>${
+      colour.gradient_note === undefined ? '' : `<p class="why">${escapeHtml(colour.gradient_note)}</p>`
+    }</section>`;
+  }
+
+  if (page.key === 'logo') {
+    const logo = payload as LogoPayload;
+    const lockups = logo.lockups.filter((row) => (row.file_ref ?? '').trim() !== '');
+    const marks = logo.service_marks ?? [];
+    if (lockups.length === 0 && marks.length === 0 && (logo.construction_ref ?? '') === '') return '';
+    return `${lockups.length === 0 ? '' : `<section class="block" data-block="lockup-assets"><h3>鎖定圖檔</h3><div class="kit-grid">${lockups.map((row) => kitAssetFigure(row.file_ref ?? '', `${row.name} · ${row.use}`, options)).join('')}</div></section>`}${
+      (logo.construction_ref ?? '') === '' ? '' : `<section class="block" data-block="construction-asset"><h3>結構圖</h3>${kitAssetFigure(logo.construction_ref ?? '', logo.construction, options)}</section>`
+    }${marks.length === 0 ? '' : `<section class="block" data-block="service-marks"><h3>服務標記</h3><div class="kit-grid">${marks.map((mark) => kitAssetFigure(mark.file_ref, `${mark.name} · ${mark.use}`, options)).join('')}</div></section>`}`;
+  }
+
+  if (page.key === 'image') {
+    const image = payload as ImagePayload;
+    const photos = image.reference_photos.filter((photo) => photo.file_ref.trim() !== '');
+    return `${photos.length === 0 ? '' : `<section class="block" data-block="reference-photo-assets"><h3>參考照片</h3><div class="kit-grid">${photos.map((photo) => kitAssetFigure(photo.file_ref, `${photo.label} · ${photo.use}`, options)).join('')}</div></section>`}`;
+  }
+
+  if (page.key === 'mascot') {
+    // 實物層只出角色圖檔。修正／核心一句／邊界／未決由 schema sections 畫，
+    // 喺度重複印一份只會令同一段文字出兩次（p24／p25 教訓）。
+    const mascot = payload as MascotPayload;
+    const figures = mascot.characters.filter((character) => character.file_ref.trim() !== '');
+    return figures.length === 0
+      ? ''
+      : `<section class="block" data-block="mascot"><h3>角色圖檔</h3><div class="kit-grid">${figures.map((character) => kitAssetFigure(character.file_ref, `${character.name} · ${character.role} · ${character.description}`, options)).join('')}</div></section>`;
+  }
+
+  if (page.key === 'video-long' || page.key === 'video-short') {
+    const video = payload as VideoPayload;
+    const examples = video.examples.filter((row) => row.file_ref.trim() !== '');
+    const thumb = (video.thumbnail ?? '').trim() === '' ? '' : `<section class="block" data-block="video-thumbnail"><h3>封面</h3>${kitAssetFigure(video.thumbnail, '影片封面', options)}</section>`;
+    return `${thumb}${examples.length === 0 ? '' : `<section class="block" data-block="video-examples"><h3>已核准影片範例</h3><div class="kit-grid">${examples.map((row) => kitAssetFigure(row.file_ref, `${row.title} · ${row.why}`, options)).join('')}</div></section>`}`;
+  }
+
+  // 自定義頁的鍵是 slug（`packaging`），不是 `custom` —— 要看 kind。
+  if (page.kind === 'custom') {
+    const custom = payload as CustomPayload;
+    const assets = custom.assets.filter((row) => row.file_ref.trim() !== '' || row.label.trim() !== '');
+    return `${assets.length === 0 ? '' : `<section class="block" data-block="custom-assets"><h3>資產</h3><div class="kit-grid">${assets.map((row) => kitAssetFigure(row.file_ref, `${row.label} · ${row.use}`, options)).join('')}</div></section>`}`;
+  }
+
+  if (page.key === 'examples') {
+    const examples = payload as ExamplePayload;
+    const rows = examples.examples.filter((row) => row.file_ref.trim() !== '');
+    const prompts = examples.prompts.filter((row) => row.output_ref.trim() !== '');
+    return `${
+      rows.length === 0
+        ? ''
+        : `<section class="block" data-block="example-assets"><h3>範例實物</h3><div class="kit-grid">${rows.map((row) => kitAssetFigure(row.file_ref, `${row.title} · ${row.why}`, options)).join('')}</div></section>`
+    }${
+      prompts.length === 0
+        ? ''
+        : `<section class="block" data-block="prompt-assets"><h3>成功 prompt 成品</h3><div class="kit-grid">${prompts.map((row) => kitAssetFigure(row.output_ref, `${row.note === '' ? '成功 prompt 成品' : row.note}${row.brand_ref === '' ? '' : ` · 品牌版本 ${row.brand_ref}`}`, options)).join('')}</div></section>`
+    }`;
+  }
+
+  return '';
+}
+
+function uploadedFontCss(composed: ComposedBrand, options: HtmlOptions): string {
+  const page = composed.pages.find((item) => item.key === 'type');
+  if (page === undefined) return '';
+  const payload = page.document.payload as TypePayload;
+  return payload.families
+    .map((family) => {
+      const url = family.file_ref.trim() === '' ? null : (options.assetUrl?.(family.file_ref) ?? null);
+      return url === null
+        ? ''
+        : `@font-face{font-family:"brand-${family.id}";src:url("${escapeHtml(url)}");font-display:swap}`;
+    })
+    .join('');
 }
 
 const STYLE = `
@@ -675,6 +892,7 @@ dl.fields dd { margin: 0; }
 .list li, .systems li { padding: 8px 0; border-bottom: 1px solid var(--line); }
 .specimens { display: grid; gap: 20px; }
 .specimen__meta { display: block; font-size: 12px; color: var(--muted); font-family: "Inter", system-ui, sans-serif; }
+.specimen__text { display: block; font-size: var(--specimen-size, inherit); line-height: var(--specimen-leading, 1.4); }
 .logo-grid { display: flex; gap: 16px; flex-wrap: wrap; }
 .logo-grid figure { margin: 0; }
 .logo-grid img { max-width: 220px; max-height: 120px; }
@@ -683,13 +901,23 @@ dl.fields dd { margin: 0; }
 .ok { color: var(--muted); }
 .sample { font-family: "Noto Serif HK", serif; font-size: 17px; }
 .sample--no { text-decoration: line-through; color: var(--muted); }
+.kit-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); gap: 16px; }
+.kit-asset, .kit-gradient { margin: 0; min-width: 0; }
+.kit-asset img { display: block; width: 100%; height: 150px; object-fit: contain; padding: 16px; border: 1px solid var(--line); border-radius: 16px; background: var(--paper); }
+.kit-asset figcaption, .kit-gradient figcaption { margin-top: 8px; font-size: 12px; line-height: 1.6; }
+.kit-gradient__field { height: 150px; border: 1px solid var(--line); border-radius: 16px; }
+.kit-gradient figcaption span { display: block; color: var(--muted); font-family: ui-monospace, monospace; font-size: 11px; }
+.kit-gradient figcaption p { margin: 6px 0 0; color: var(--muted); }
 @page { size: A4; margin: 18mm 16mm 20mm; }
 @media print {
   body { background: White; color: Black; }
   .book { max-width: none; padding: 0; }
   .page { break-after: page; margin-bottom: 0; }
   .page:last-of-type { break-after: auto; }
-  .block { break-inside: avoid; }
+  .page > h2, .page > .version, .block h3 { break-after: avoid; }
+  .block { break-inside: auto; }
+  .block--stance, .specimen, .kit-asset, .kit-gradient, .logo-grid figure, tr, .quotes li, .list li { break-inside: avoid; }
+  .specimen__text { font-size: var(--specimen-print-size, 32px); line-height: 1.25; }
   .book-head { break-after: page; }
   .folio { display: block; }
 }
@@ -726,13 +954,18 @@ export function renderBrandHtml(composed: ComposedBrand, options: HtmlOptions = 
   const pages = selected
     .map((page) => {
       const schema = schemaForPage(page.key, page.kind);
-      const body =
+      const baseBody =
         schema.key === 'home'
           ? renderHomeBlocks(page, lookup, options)
           : page.document.layout.blocks
               .map((layoutBlock) => {
                 if (layoutBlock.kind === 'stance') {
-                  const stance = typeof page.document.payload['stance'] === 'string' ? page.document.payload['stance'] : page.document.stance ?? '';
+                  const stance =
+                    lookup.stance !== ''
+                      ? lookup.stance
+                      : typeof page.document.payload['stance'] === 'string'
+                        ? page.document.payload['stance']
+                        : '';
                   return `<section class="block block--stance" data-block="stance"><p class="stance">${escapeHtml(stance) || '<span class="missing">缺立場句</span>'}</p></section>`;
                 }
 
@@ -757,6 +990,7 @@ export function renderBrandHtml(composed: ComposedBrand, options: HtmlOptions = 
                 }><h3>${escapeHtml(layoutBlock.title ?? section.label)}</h3>${renderSection(section, page, lookup, options)}</section>`;
               })
               .join('');
+      const body = baseBody + renderBrandKitExtras(page, options);
 
       return `<section class="page" data-page="${escapeHtml(page.key)}">
 <h2>${escapeHtml(page.name)}</h2>
@@ -774,7 +1008,7 @@ ${body}
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${escapeHtml(composed.name)} 品牌${options.print === true ? '手冊' : ''}</title>
-<style>${STYLE}</style>
+<style>${STYLE}${uploadedFontCss(composed, options)}</style>
 </head>
 <body data-print="${options.print === true ? 'true' : 'false'}">
 <div class="book" style="${rootStyle}">

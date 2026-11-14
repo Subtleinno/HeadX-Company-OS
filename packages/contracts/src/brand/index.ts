@@ -36,25 +36,62 @@ export type {
   DocumentParse,
 } from './document.ts';
 
+/* 品牌主題（整個 app 的皮膚）。同文件一樣是純資料，不讀資料庫。 */
+export {
+  BRAND_THEME_FONTS,
+  BRAND_THEME_PRESETS,
+  DEFAULT_BRAND_THEME,
+  parseBrandTheme,
+  sameBrandTheme,
+} from './theme.ts';
+
+export type { BrandTheme, BrandThemeFontId, BrandThemeWash, ThemeParse } from './theme.ts';
+
+/* 品牌手冊（重啟）：內容形狀與起始模板。同主題一樣係純資料。 */
+export { HANDBOOK_STARTER_SECTIONS, handbookSampleDoc } from './handbook.ts';
+export type { HandbookDoc, HandbookSection } from './handbook.ts';
+
 export {
   COLOR_GROUPS,
+  familyLicensed,
+  IMAGE_LIST_TARGET,
+  familyOfVoice,
+  familyReady,
+  homeLayoutIssues,
   PAGE_KEYS_ORDERED,
   PAGE_SCHEMAS,
   REQUIRED_COLOR_ROLES,
+  roleMissingFields,
   schemaForPage,
+  scriptsWithoutFamily,
+  TYPE_ROLES,
+  TYPE_SCRIPTS,
+  TYPE_VOICES,
+  typeSizePx,
+  voiceStack,
 } from './schemas.ts';
 
 export type {
   ColorGroup,
   ColorPayload,
   ColorRole,
+  CustomAsset,
   CustomPayload,
   ExamplePayload,
   Field,
   FieldKind,
+  HomeCompiledRef,
+  HomeDesignerNote,
+  HomeLayoutBlock,
   HomePayload,
+  ImageLike,
   ImagePayload,
+  ImageReferencePhoto,
+  ImageRights,
+  ImageUnlike,
   LogoPayload,
+  MascotCharacter,
+  MascotPayload,
   PageSchema,
   PlatformPayload,
   PromptSection,
@@ -62,8 +99,13 @@ export type {
   SectionKind,
   TokenGroups,
   TokenValue,
+  ToneBoundary,
   TonePayload,
+  TypeFamily,
   TypePayload,
+  TypeRole,
+  VideoExample,
+  VideoPayload,
 } from './schemas.ts';
 
 export { buildPromptPack, buildTokens, renderBrandHtml } from './output.ts';

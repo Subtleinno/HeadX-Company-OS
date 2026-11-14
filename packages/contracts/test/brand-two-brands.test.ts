@@ -18,7 +18,7 @@ import {
  * 由 payload 決定 —— tokens、字體、版面次序、語氣、HTML 立場。
  */
 
-function composedPage(key: 'home' | 'color' | 'type' | 'tone', payload: unknown): ComposedPage {
+function composedPage(key: 'home' | 'platform' | 'color' | 'type' | 'tone', payload: unknown): ComposedPage {
   const schema = schemaForPage(key, 'fixed');
   const normalized = schema.normalize(payload);
 
@@ -50,7 +50,6 @@ type BrandSpec = {
 
 function brand(spec: BrandSpec): ComposedBrand {
   const tone = {
-    stance: spec.stance,
     traits: [{ name: '直接', do: '講清楚要對方做甚麼', dont: '轉彎', sentence: spec.toneSentence }],
     banned: [{ term: '賦能', reason: '意思空' }],
     language_policy: '廣東話口語，書面用繁體。',
@@ -70,8 +69,8 @@ function brand(spec: BrandSpec): ComposedBrand {
     name: spec.name,
     releaseNo: 4,
     pages: [
+      composedPage('platform', { stance: spec.stance }),
       composedPage('color', {
-        stance: spec.stance,
         roles: [
           { id: 'paper', group: 'reading', name: 'Paper', hex: spec.paper, cmyk: '', dark: '', usage: '底', reason: '底' },
           { id: 'ink', group: 'reading', name: 'Ink', hex: spec.ink, cmyk: '', dark: '', usage: '字', reason: '字' },
@@ -89,7 +88,6 @@ function brand(spec: BrandSpec): ComposedBrand {
         tints: [],
       }),
       composedPage('type', {
-        stance: '',
         philosophy: '字要撐得住一整頁。',
         families: spec.families.map((family) => ({
           id: family.id,
@@ -122,7 +120,6 @@ function brand(spec: BrandSpec): ComposedBrand {
       }),
       composedPage('tone', tone),
       composedPage('home', {
-        stance: spec.stance,
         who: `${spec.name} 是這一間公司。`,
         keywords: ['甲', '乙', '丙'],
         color_order: { roles: ['paper', 'brand.primary'], note: '' },
@@ -229,8 +226,8 @@ describe('兩個品牌走同一條管線：差異可數', () => {
     const moonic = buildPromptPack(MOONIC).composed.map((item) => item.page);
     const cheongKee = buildPromptPack(CHEONG_KEE).composed.map((item) => item.page);
 
-    expect(moonic.length).toBe(4);
-    expect(cheongKee.length).toBe(4);
+    expect(moonic.length).toBe(5);
+    expect(cheongKee.length).toBe(5);
     expect(moonic).toEqual(cheongKee);
   });
 });

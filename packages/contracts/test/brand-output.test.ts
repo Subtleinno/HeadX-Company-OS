@@ -20,6 +20,30 @@ import {
  *      所以這裡只驗「色值由 payload 來」。
  */
 
+/**
+ * 平台頁：立場句的唯一擁有者。
+ *
+ * 色彩頁、字體頁都不再存立場句副本（v2.1），renderer 一律讀平台頁那一句。
+ * 所以任何驗「立場句出現在輸出」的測試，都要有一頁平台頁。
+ */
+function platformPage(stance: string): ComposedPage {
+  const schema = schemaForPage('platform', 'fixed');
+  const payload = { stance };
+
+  return {
+    key: 'platform',
+    name: '平台',
+    kind: 'fixed',
+    versionNo: 4,
+    policyVersionNo: 3,
+    document: {
+      ...emptyBrandDocument(schema.layout(schema.normalize(payload))),
+      stance,
+      payload,
+    },
+  };
+}
+
 function colorPage(overrides: { hex?: string; surface?: boolean } = {}): ComposedPage {
   const schema = schemaForPage('color', 'fixed');
   const payload = {
@@ -66,7 +90,7 @@ function composed(overrides: { hex?: string; surface?: boolean } = {}): Composed
     code: 'moonic',
     name: 'Moonic 滿月堂',
     releaseNo: 12,
-    pages: [colorPage(overrides)],
+    pages: [platformPage('先白，後墨，再藍。'), colorPage(overrides)],
     gaps: [],
   };
 }
@@ -96,7 +120,8 @@ describe('tokens.json', () => {
   });
 
   it('沒有 token 的頁會講明原因，不是靜靜失蹤', () => {
-    const tokens = buildTokens(composed());
+    // 只放色彩頁：平台頁沒有 tokens，它的 note 不應該混進來。
+    const tokens = buildTokens({ ...composed(), pages: [colorPage()] });
 
     expect(tokens.notes.length).toBe(0);
   });
@@ -116,7 +141,11 @@ describe('品牌 prompt 包', () => {
     const pack = buildPromptPack(composed());
 
     expect(pack.markdown).toContain('色彩 v7');
-    expect(pack.composed).toEqual([{ page: 'color', name: '色彩', versionNo: 7 }]);
+    // 立場句由平台頁提供，所以它也一定要列在組成裡（v2.1）。
+    expect(pack.composed).toEqual([
+      { page: 'platform', name: '平台', versionNo: 4 },
+      { page: 'color', name: '色彩', versionNo: 7 },
+    ]);
   });
 
   it('沒有缺口就講沒有，不假裝', () => {
@@ -156,6 +185,59 @@ describe('HTML 與印刷版', () => {
     const html = renderBrandHtml({ ...brand, pages: [...brand.pages] }, { pageKey: 'color' });
 
     expect(html).toContain('data-page="color"');
+  });
+
+  it('HTML 保留真實字級，A4 以獨立上限避免長樣張被裁開', () => {
+    const schema = schemaForPage('type', 'fixed');
+    const payload = schema.normalize({
+      families: [{
+        id: 'canto',
+        name: 'Canto',
+        voice: 'serif',
+        script: 'latin',
+        license_web: 'OFL 1.1',
+        file_ref: 'aaaaaaa1-1111-4111-8111-111111111111',
+      }],
+      roles: [{ role: 'display', voice: 'serif', weight: '400', size: '84px', leading: '1.02', min: 18 }],
+      sentence_anatomy: 'A long specimen must stay readable when printed.',
+    });
+    const page: ComposedPage = {
+      key: 'type',
+      name: '字體',
+      kind: 'fixed',
+      versionNo: 1,
+      policyVersionNo: 1,
+      document: { ...emptyBrandDocument(schema.layout(payload)), payload },
+    };
+    const html = renderBrandHtml({ ...composed(), pages: [page] }, { print: true });
+
+    expect(html).toContain('--specimen-size:84px');
+    expect(html).toContain('--specimen-print-size:36px');
+    expect(html).toContain('.specimen__text { display: block;');
+    expect(html).toContain('font-size: var(--specimen-print-size, 32px);');
+  });
+
+  it('成功 prompt 的成品圖也進 HTML／A4，不只留一個檔案引用', () => {
+    const schema = schemaForPage('examples', 'fixed');
+    const payload = schema.normalize({
+      prompts: [{ prompt: 'Blue Hour', output_ref: 'prompt-file', brand_ref: 'v12', note: '核准成品' }],
+    });
+    const page: ComposedPage = {
+      key: 'examples',
+      name: '已核准範例',
+      kind: 'fixed',
+      versionNo: 1,
+      policyVersionNo: 1,
+      document: { ...emptyBrandDocument(schema.layout(payload)), payload },
+    };
+    const html = renderBrandHtml(
+      { ...composed(), pages: [page] },
+      { print: true, assetUrl: (ref) => `/api/files/${ref}` },
+    );
+
+    expect(html).toContain('data-block="prompt-assets"');
+    expect(html).toContain('<img src="/api/files/prompt-file"');
+    expect(html).toContain('核准成品');
   });
 });
 
@@ -242,8 +324,8 @@ describe('兩個品牌的平台頁', () => {
       reason: '先把六格講清，立場句當成結論。',
     });
 
-    const a = htmlOf(moonic);
-    const b = htmlOf(other);
+    const a = htmlOf(moonic, '先白，後墨，再藍。');
+    const b = htmlOf(other, '先黑，後米，再赭。');
 
     expect(a).not.toBe(b);
     // 第一項差異：立場句。
@@ -329,24 +411,26 @@ describe('兩個品牌的色彩頁', () => {
     focusRole: 'ink',
   });
 
-  function htmlOf(page: ComposedPage): string {
+  function htmlOf(page: ComposedPage, stance: string): string {
     return renderBrandHtml(
-      { code: 'x', name: 'X', releaseNo: 1, pages: [page], gaps: [] },
+      { code: 'x', name: 'X', releaseNo: 1, pages: [platformPage(stance), page], gaps: [] },
       { pageKey: 'color' },
     );
   }
 
-  it('立場句、用色順序、比例重點三項都不同', () => {
-    const a = htmlOf(moonic);
-    const b = htmlOf(other);
+  it('用色順序與比例重點兩項都不同（v2.1：立場句只在平台頁）', () => {
+    const a = htmlOf(moonic, '先白，後墨，再藍。');
+    const b = htmlOf(other, '先黑，後米，再赭。');
 
     expect(a).not.toBe(b);
-    // 第一項：立場句。
-    expect(a).toContain('先白，後墨，再藍。');
-    expect(b).toContain('先黑，後米，再赭。');
-    // 第二項：用色順序（同一句 prompt 也會帶到）。
+    // 第一項：用色順序（同一句 prompt 也會帶到）。
     expect(a).toContain('紙佔七成，墨兩成，藍只點一下。');
     expect(b).toContain('黑是主角，米只是呼吸位。');
+    // 第二項：自己那幾個色（不是同一個模板換名字）。
+    expect(a).toContain('#0057FF');
+    expect(b).toContain('#8C3B1E');
+    // v2.1：色彩頁不再存立場句副本，所以它不會出現在色彩頁。
+    expect(a).not.toContain('先白，後墨，再藍。');
   });
 
   it('tokens 帶的是自己的色，不是同一個模板換名字', () => {
