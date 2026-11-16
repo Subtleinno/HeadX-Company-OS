@@ -12,18 +12,18 @@ import { BOSS_NAV, DESIGN_NAV, resolveNav } from '../src/frame/appNav';
  */
 
 describe('resolveNav', () => {
-  it('空路徑退回第一個模組第一頁', () => {
+  it('空路徑退回 Create／Projects', () => {
     const position = resolveNav(DESIGN_NAV, []);
 
-    expect(position.navModule.key).toBe('brand');
-    expect(position.page.key).toBe('home');
+    expect(position.navModule.key).toBe('create');
+    expect(position.page.key).toBe('projects');
     expect(position.section).toBeNull();
   });
 
   it('模組同頁都對得上', () => {
-    const position = resolveNav(DESIGN_NAV, ['material', 'licence']);
+    const position = resolveNav(DESIGN_NAV, ['material', 'library']);
 
-    expect(position.page.key).toBe('licence');
+    expect(position.page.key).toBe('library');
   });
 
   it('舊書籤指向已移走的頁（品牌設定）：退回品牌主頁，唔會白畫面', () => {
@@ -62,14 +62,14 @@ describe('resolveNav', () => {
     const position = resolveNav(DESIGN_NAV, ['create', 'not-a-page']);
 
     expect(position.navModule.key).toBe('create');
-    expect(position.page.key).toBe('board');
+    expect(position.page.key).toBe('projects');
   });
 
-  it('完全對唔上（例如手改網址）：退回第一個模組第一頁，唔會拋錯', () => {
+  it('完全對唔上（例如手改網址）：退回 Create／Projects，唔會拋錯', () => {
     const position = resolveNav(DESIGN_NAV, ['nonsense', 'nonsense', 'nonsense']);
 
-    expect(position.navModule.key).toBe('brand');
-    expect(position.page.key).toBe('home');
+    expect(position.navModule.key).toBe('create');
+    expect(position.page.key).toBe('projects');
   });
 
   it('Boss Portal 冇品牌範圍，模組係總覽／據點與機器／人員／策略／存取紀錄', () => {
@@ -91,14 +91,32 @@ describe('resolveNav', () => {
     expect(pages.filter((path) => path.endsWith('/members'))).toEqual(['people/members']);
   });
 
-  it('Design 有品牌範圍，四個模組齊全', () => {
+  it('Design 有品牌範圍，v3 五個模組依 Create／Brand／Materials／Knowledge／Templates 排列', () => {
     expect(DESIGN_NAV.scoped).toBe(true);
     expect(DESIGN_NAV.modules.map((item) => item.key)).toEqual([
+      'create',
       'brand',
       'material',
       'knowledge',
-      'create',
+      'templates',
     ]);
+  });
+
+  it('Create 只有 Projects／Outputs；Needs 不會變成第六個業務模組', () => {
+    const create = DESIGN_NAV.modules.find((item) => item.key === 'create');
+
+    expect(create?.groups.flatMap((group) => group.pages.map((page) => page.key))).toEqual([
+      'projects',
+      'outputs',
+    ]);
+    expect(DESIGN_NAV.modules.some((item) => item.key === 'needs')).toBe(false);
+  });
+
+  it('舊 Create 工作台深連結退回 Projects；舊 Brand 深連結仍然對到原頁', () => {
+    expect(resolveNav(DESIGN_NAV, ['create', 'board']).page.key).toBe('projects');
+    expect(resolveNav(DESIGN_NAV, ['brand', 'home']).page.key).toBe('home');
+    expect(resolveNav(DESIGN_NAV, ['brand', 'color']).page.key).toBe('color');
+    expect(resolveNav(DESIGN_NAV, ['brand', 'examples']).page.key).toBe('examples');
   });
 
   it('品牌模組七頁：品牌主頁、標誌、色彩、字體、語氣、圖像、已核准範例（#32、#66、#68）', () => {

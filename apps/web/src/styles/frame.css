@@ -1204,6 +1204,53 @@
   }
 }
 
+/* 768：所有 app 共用同一個平板模式。五個模組不再在 app 名與工具之間
+   被擠成横向捲動；頁面導覽堆在內容上方，避免只剩一條窄內容欄。 */
+@media (max-width: 768px) {
+  .frame-topbar {
+    flex-wrap: wrap;
+    height: auto;
+    min-height: var(--hx-chrome-bar-primary-height);
+    padding-top: var(--hx-space-2);
+    padding-bottom: var(--hx-space-2);
+  }
+
+  .frame-modules {
+    order: 10;
+    flex: 1 1 100%;
+  }
+
+  .frame-spacer {
+    display: none;
+  }
+
+  .frame-tools {
+    margin-left: auto;
+  }
+
+  .frame-body,
+  .frame-body[data-frame-has-rail='true'],
+  .frame-body[data-frame-has-rail='true'][data-frame-has-sidebar='false'] {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+  }
+
+  .frame-body[data-frame-has-sidebar='false'] {
+    grid-template-rows: 1fr;
+  }
+
+  .frame-sidebar {
+    padding: var(--hx-space-2) var(--hx-space-3);
+    border-right: 0;
+    border-bottom: 1px solid var(--hx-chrome-border);
+  }
+
+  .frame-sidebar__list {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}
+
 /* 360px 基本不破版：頂欄換行、主選單可見橫向捲動、側欄轉橫向條。
    唔收起捲軸、唔裁剪溢出內容、唔隱藏導覽。 */
 @media (max-width: 560px) {
