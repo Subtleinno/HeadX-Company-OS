@@ -5,6 +5,8 @@
 
 最後更新：2026-11-12 晚（品牌模組 v2：#55–#69 全部完成；整合驗收報告在 `BRAND-V2-ACCEPTANCE.md`，四項衝突待老闆決定，C126。另修 #87：既有品牌缺三個固定頁，migration `0020` 補齊，C127）
 
+> **2026-11-16 Marketing Design v3 規劃入口：**老闆已判定現有 Brand 方向失敗，要求重做整個 Marketing Design 閉環。新工作先讀 `MARKETING-DESIGN-BLUEPRINT.md`（#93）與 Ardot `https://ardot.tencent.com/file/748070210348880`，按新 issue 依賴施工；不要繼續把 #89 的未完成逐頁修補當成新一輪方向。本頁以下仍描述**目前程式現況**，不是 v3 已完成驗收。
+
 ## 開新 session 時，貼這一句就夠
 
 > 讀 `docs/product/HANDOFF.md`，然後按 §5 的頁面隊列，做我在 issue 指定的那一頁。只做那一頁。
@@ -169,6 +171,7 @@ Boss Portal 的導覽是五組：總覽｜據點與機器｜人員｜策略｜�
 | 想知道 | 去邊 |
 |---|---|
 | **這套東西是什麼**（設計真相） | `docs/CONCEPT.md` |
+| **Marketing Design v3 要做甚麼、為何重做、縱切片與施工次序** | `docs/product/MARKETING-DESIGN-BLUEPRINT.md`（#93） |
 | **登入落點與帳戶（C91、C92）** | `docs/product/LOGIN-AND-ACCOUNT.md` |
 | 外殼版面、四層導覽、據點目錄規則 | `docs/product/FRAME-UIUX-HANDOFF.md`（v1.5：品牌模組已改五頁，冇章節） |
 | 介面長成什麼樣 | **由老闆當面定**。`docs/design/frame/frame-0*.png` 是歷史參考稿，**不是真相** —— 2026-11-11 老闆明確講過，不要拿它們當規格 |
@@ -187,7 +190,30 @@ Boss Portal 的導覽是五組：總覽｜據點與機器｜人員｜策略｜�
 後端：`apps/platform/src/directory/`（品牌、據點、我的品牌）、`apps/platform/src/staff/`（帳戶與部門）、`apps/platform/src/needs/`、`apps/platform/src/modules/`。
 資料表：`db/migrations/0001`–`0015`，最近三支是 `0013_brand_pages.sql`、`0014_brand_policy.sql`、`0015_brand_editor.sql`。**真相以 `db/migrations/` 為準**，這一行只是指路。
 
-## 5. 下一步：品牌模組（夜間 loop 的次序）
+## 5. 下一步：Marketing Design v3（目前有效佇列）
+
+**開工總閘：#93 的本機藍圖、本頁更新與正確程式基線必須先經 PR 發布並合併。** 一次一張，前一張 PR 合併 `main` 才開下一張；本佇列本身不是無人值守 loop 授權。
+
+| 位 | issue | 交付 | 開工前額外閘 | 狀態 |
+|---|---|---|---|---|
+| 1 | #94 | Marketing Design 導覽、路由與誠實空狀態 | #93 文件基線已合併 | 待施工 |
+| 2 | #95 | Project／Brief 與外部 agent 接手狀態 | U3 agent 身份與授權 | 待施工 |
+| 3 | #96 | Need 詳情、交付／裁決與吸收閉環 | #95 已合併 | 待施工 |
+| 4 | #97 | Materials 相片入庫、權利與詳情 | U5 預設權利；Files 共享權限必須在本張明確補齊 | 待施工 |
+| 5 | #98 | Materials 檢索、L1／L2 與黃金查詢集 | 不以 pgvector 為前置 | 待施工 |
+| 6 | #99 | Knowledge 來源、核對權限、chunk 與 citation | #98 已合併 | 待施工 |
+| 7 | #100 | Templates manifest、fixtures、lint 與 Carousel 三件套 | #99 已合併 | 待施工 |
+| 8 | #101 | Composition、placeholder、Provenance 與修訂 | #100 已合併 | 待施工 |
+| 9 | #102 | HyperFrames carousel-png、Render Job 與 Output | U4 endpoint／認證／本機拓撲 | 待施工 |
+| 10 | #103 | Brand Home v3 品牌中樞 | 不重寫十一頁 payload | 待施工 |
+| 11 | #104 | Boss Portal 只讀摘要與來源 app 導向 | 不可直讀部門業務表 | 待施工 |
+| 12 | #105 | Moonic IG Carousel 全閉環與兩品牌驗收 | 真 agent／renderer；不得以 fixture 冒充 | 待施工 |
+
+**現況不要誤判：**Need 目前沒有完整 detail／event／absorption API；Files 不能假設已支援部門素材與 Output 共享；Boss 沒有四 shape 的現成 summary provider registry；repo 沒有正式 Playwright harness。各 issue 已列明程式範圍、範圍外與驗收；需要額外共享基礎設施時停下另開 issue，不夾帶。
+
+---
+
+以下 §5–§5.2 是**已完成的歷史記錄**，不再授權新工作；#89 已於 2026-11-16 標記由 v3 取代並關閉，未完成項目不應再開工。
 
 工作方式是**老闆逐頁定、AI 逐頁實作**。一頁一張 issue，一張分支一個 PR，做完關掉。
 
