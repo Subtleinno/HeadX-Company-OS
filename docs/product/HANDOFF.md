@@ -3,7 +3,7 @@
 > `docs/INDEX.md` 是文件地圖，`AGENTS.md` 是規則。這一頁只管四件事：
 > **現在有什麼、怎樣跑起來、下一步做什麼、哪幾個坑別踩。**
 
-最後更新：2026-11-16（Marketing Design v3 #95：Projects 真實列表／新增／詳情、原始要求、append-only Brief 版本、request-scoped agent HTTP token 與接手狀態；決策見 C129。#94 五模組導覽及既有 Brand 深連結保留）
+最後更新：2026-11-16（Marketing Design v3 #95：Projects 真實列表／新增／詳情、原始要求、append-only Brief 版本、request-scoped agent HTTP token 與接手狀態；Ardot `5:1`／`5:129` 已同步實作。決策見 C129–C131）
 
 > **2026-11-16 Marketing Design v3 規劃入口：**老闆已判定現有 Brand 方向失敗，要求重做整個 Marketing Design 閉環。新工作先讀 `MARKETING-DESIGN-BLUEPRINT.md`（#93）與 Ardot `https://ardot.tencent.com/file/748070210348880`，以新 issue 理解依賴與驗收背景；不要繼續把 #89 的未完成逐頁修補當成新一輪方向。本頁以下仍描述**目前程式現況**，不是 v3 已完成驗收。
 >
