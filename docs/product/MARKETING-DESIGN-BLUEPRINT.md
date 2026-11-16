@@ -125,23 +125,48 @@
 
 ## 4. 完整業務流程
 
+### 4.1 管線總圖
+
 ```text
-人輸入原始工作要求
-  → 建立 Project＋不可變 Project Request
-  → Agent 或人整理 Brief
-  → 選取目前 Brand，並在 Composition 建立時固定 Brand Release
-  → 搜尋及選擇 Materials
-  → 搜尋及選擇 Knowledge Doc／Version／Chunk
-  → 按 Project Format 選擇 Template versions
-  → 建立 Composition version
-  → Lint／來源檢查
-  → 建立 HyperFrames Render Job
-  → Renderer 讀取固定 Composition＋Brand Release＋原始素材
-  → 產生逐頁 PNG 與 ZIP
-  → Output／Output File 寫入 MinIO 與 Postgres
-  → Provenance 記錄所有來源、版本、actor 與 render 資訊
-  → 人預覽、下載或建立下一個 Composition revision
+[A 原料入庫]  Brand / Materials / Knowledge / Templates
+              ↓（版本只追加）
+[B 立案]      Project＋原始要求 → Brief
+              ↓
+[C 路由]      L0 地圖 → L1 卡片 → L2 詳情 → L3 原件，寫 Route Log
+              ↓
+[D 組稿]      Composition（typed slots＋refs＋placeholder）
+              ↓ 缺料 ──→ [N Needs] 開立 → 認領 → 交付／裁決 → 吸收 → 回填新版本
+              ↓ 齊料
+[E 檢查]      Lint（溢出、安全區、對比、引用、頁序、解像度）
+              ↓
+[F 渲染]      HyperFrames：1080×1350、五張 PNG＋ZIP
+              ↓
+[G 成品]      Output＋Provenance（MinIO＋Postgres）
+              ↓
+[H 回饋]      收回／局部修訂 → 新 Composition 版本 → 回到 E
+              ↓
+[P 投影]      Project State、Library 卡片、Boss Portal 摘要（可重建，不可寫）
 ```
+
+### 4.2 各階段輸入、輸出與硬規則
+
+| 階段 | 輸入 | 輸出（存哪裡） | 硬規則 |
+|---|---|---|---|
+| A1 Brand | 十一個固定頁的 typed payload | `brand_page_version`、`brand_release`（Postgres） | 只追加；色值只住 color 頁；檢查只報告，不阻止儲存 |
+| A2 Materials | PNG／JPEG／WebP 上載 | Asset → Segment → Description；原檔進 MinIO，WebP 預覽另存 | 第一版一張圖一個 Segment；權利不明預設「需確認」；去重、尺寸由程式處理 |
+| A3 Knowledge | Markdown＋frontmatter（來源、日期、地區、有效期） | Doc／Version／Chunk／Citation | AI 只能提交 unverified；人核對才可標 verified |
+| A4 Templates | cover／body／cta 三件套 | manifest、typed slots、fixtures、版本 | manifest、Composition 驗證、MCP 清單由同一個 contract 生成 |
+| B 立案 | 一句要求 | Project＋Brief，記錄 actor 與時間 | 沒有 agent 時只保存要求，畫面誠實顯示「等待接手」 |
+| C 路由 | Brief、硬條件 | Route Log（選了甚麼、為何拒絕） | 先用品牌、語言、地區、渠道收窄；不合用只重搜一次；索引只是投影 |
+| D 組稿 | 路由結果 | Composition 版本（slots、refs、template version、brand release、lint、basedOn） | placeholder 合法，必須含 need_id；舊版本不改寫 |
+| N Needs | 缺料或待裁決事項 | Need＋事件（只追加） | deliverable 要先給規格；decision 要先給建議方案；吸收完成才算關閉 |
+| E Lint | Composition | pass／fail／undetermined 結果 | Lint 通過不等於 Render 成功 |
+| F 渲染 | 通過檢查的 Composition | 五張 PNG、ZIP（MinIO）、render log | 單一 paused timeline、明確取格時間、等字體載入；失敗保存真錯誤並清理孤立檔 |
+| G 成品 | Render 結果 | Output＋Provenance | 釘住建立時的 Brand、Strategy、Knowledge、Material、Template、actor 版本 |
+| H 回饋 | 人的收回或修訂要求 | `received_at` 事實；新 Composition 版本與新 Output；明確收貨另記 `accepted_at` | 只重做受影響部分；舊 Composition 與 Output 保留 |
+| P 投影 | 各階段事實 | Project State、Library 卡片、Boss 摘要 | 由事實推導，不設可隨意寫入的 status 欄 |
+
+**P 不是另一份業務資料。** Project State、Library 卡片及 Boss 摘要必須能由 A–H／N 事實重建，任何 worker 不可直接寫投影來假裝工作完成。
 
 ### 沒有外部模型時
 
@@ -197,27 +222,31 @@
 
 ### Project State
 
-對外狀態由事實推導，建議推導規則如下（**實作須與此一致，若程式現行定義不同，先查明再改本表**）：
+對外狀態由事實推導。最新目標包含「需修訂」，由 #112 用單一純函式實作；Store 只提供事實，UI／Library／MCP／Boss 投影不可各自判斷：
 
 | 狀態 | 推導條件 |
 |---|---|
-| `awaiting_agent` | 有 Project Request，尚無 Agent Run 認領，也無 Brief |
-| `planning` | 已有 Agent Run 或 Brief，尚無 Composition |
-| `waiting_materials` | Brief 已有，但 Composition／Lint 回報缺 Material 或 Knowledge |
-| `ready_to_render` | 有通過來源檢查的 Composition，且無 active Render Job、無 Output |
-| `rendering` | 存在 queued／running 的 Render Job |
-| `produced` | 存在成功 Output，且尚未被人標記收到 |
-| `received` | 人已明確確認收到（下載或按「已收到」）；不代表對外發布 |
+| `awaiting_agent` | 有 Project Request，但沒有有效 Brief |
+| `planning` | Agent 正在路由或整理 Brief，尚未形成可輸出 Composition |
+| `waiting_materials` | 有未完成 Needs；包括 Composition／Lint 回報缺 Material 或 Knowledge |
+| `ready_to_render` | 必要 slots 齊、沒有阻塞缺口，且無 active Render Job |
+| `rendering` | 有 queued／running Render Job；新 revision 正在輸出時亦顯示此狀態 |
+| `produced` | 至少一個有效 Output，且沒有進行中的 Revision |
+| `needs_revision` | 有進行中的 Revision；局部修訂建立新 Composition，舊 Output 保留 |
+| `received` | 最新相關 Output 有明確 `accepted_at`；代表人已收貨，不代表對外發布 |
 
-Composition、active Render Job 及 Output 必須參與推導；UI 不可自行維護另一份狀態。有新的 Composition revision 時，狀態依最新 Composition 重新推導，但舊 Output 仍可在 Outputs 找到。
+同一時間有多項事實時，#112 必須以「目前最新工作」定義並測試固定優先次序：active Render → active Revision → 最新 Output 的 accepted／produced → open Needs → ready Composition → planning → awaiting。`received_at` 只記人取得／收回成品的事實；`accepted_at` 才是 `received` 狀態依據，兩者不可混用。
+
+Composition、Revision、active Render Job 及 Output 必須參與推導；UI 不可自行維護另一份狀態。新 Composition revision 後重新推導，舊 Output 仍可在 Outputs 找到。
 
 **程式核對（2026-11-17，[本機工作樹]）：**上表是產品目標，不是現況驗收。目前 `deriveProjectState()` 的實際優先次序為 `received → produced → rendering → waiting_materials → ready_to_render → planning → awaiting_agent`，並有以下未接通差距：
 
 1. Store 傳入的 `openNeedCount` 目前固定為 `0`；Composition／Lint 缺料也未轉成 Needs，因此 `waiting_materials` 尚未按上表工作。
 2. `hasCompleteComposition` 目前只檢查是否有 Composition id，沒有證明來源檢查或 Lint 通過。
-3. `receivedAt` 目前固定為 `null`；下載與「已收到」都尚未形成收回事實，因此實際 Project 不會由 Store 進入 `received`。
+3. `receivedAt` 目前固定為 `null`；下載與「已收到」都尚未形成收回事實，亦沒有 `accepted_at`，因此實際 Project 不會由 Store 進入 `received`。
 4. `hasOutput` 的判斷先於 active Render Job；有舊 Output 時，新 revision 正在 Render 仍會顯示 `produced`。
 5. 目前只查 latest Output 是否存在，沒有比較它與最新 Composition revision，因此「新 revision 後重新推導」尚未實作。
+6. 現行 enum 沒有 `needs_revision`，也沒有 Revision／`accepted_at` facts；上述八狀態目標尚未成立。
 
 施工時應先補事實來源與測試，再把這段標為已接通；不可只改狀態文字。
 
@@ -622,7 +651,7 @@ Transaction 內建立資料後，讀回必須使用同一 DB client；不可改�
 7. Presentation／Video／Reels 只有共同 Project 骨架，尚未有各自完整 Renderer。
 8. 完整 Needs 交付／吸收、完整 Materials 權利系統、Posts／WordPress、Boss 跨模組摘要不是本條 Carousel 閉環已完成能力。
 9. MCP SDK 套件版已在本機 lockfile 核對為 1.32.2；實際協商的協議版本仍未記錄（見 10.2）。
-10. Project State 目標與現行 Store 有五項已查明的差距（見第 5 節程式核對），不得以狀態名存在就當流程已接通。
+10. Project State 目標與現行 Store 有六項已查明的差距（見第 5 節程式核對），不得以狀態名存在就當流程已接通。
 
 ---
 
