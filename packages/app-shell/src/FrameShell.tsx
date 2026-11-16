@@ -61,6 +61,14 @@ export type FrameSidebarGroup = {
   items: readonly FrameSidebarItem[];
 };
 
+/** 可選的左欄搜尋；搜尋值與目前列表共用同一個控制狀態。 */
+export type FrameSidebarSearch = {
+  label: string;
+  placeholder: string;
+  value: string;
+  onChange: (value: string) => void;
+};
+
 /** 阻塞狀態：標題同說明都係呼叫端傳入嘅如實文字。 */
 export type FrameBlocked = {
   title: string;
@@ -153,6 +161,8 @@ export type FrameShellProps = {
 
   /** 左側：服務第二層選中頁嘅子頁，支援分組標題。 */
   sidebarGroups?: readonly FrameSidebarGroup[];
+  /** Library 搜尋放在左欄，與格式／來源／狀態資料夾一起收窄結果。 */
+  sidebarSearch?: FrameSidebarSearch;
 
   /** Needs 入口（issue 184）。Needs 屬外殼，唔屬任何一個 app。 */
   needs?: FrameNeedsEntry;
@@ -218,6 +228,7 @@ export function FrameShell({
   currentSectionKey,
   onSelectSection,
   sidebarGroups,
+  sidebarSearch,
   needs,
   needsRail,
   breadcrumbs,
@@ -440,6 +451,18 @@ export function FrameShell({
             {/* 左側欄最頂嘅小標：講明「呢條欄列嘅係頁」。佢同下面嘅分組
                 標題（據點 MACHINES／權限與稽核）係兩層唔同嘅意思。 */}
             <p className="frame-sidebar__legend">{t('frame.sidebar.legend')}</p>
+
+            {sidebarSearch !== undefined && (
+              <div className="frame-sidebar__search">
+                <input
+                  type="search"
+                  aria-label={sidebarSearch.label}
+                  placeholder={sidebarSearch.placeholder}
+                  value={sidebarSearch.value}
+                  onChange={(event) => sidebarSearch.onChange(event.target.value)}
+                />
+              </div>
+            )}
 
             {groups.map((group, index) => (
               <section className="frame-sidebar__group" key={group.title ?? `group-${index}`}>

@@ -7,8 +7,11 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** DesignApp 收到的是去掉 `/design` 之後的 hash 段。 */
 export function parseProjectRoute(path: readonly string[]): ProjectRoute | null {
-  if (path[0] !== 'create' || path[1] !== 'projects') return null;
-  if (path.length === 2) return { kind: 'list' };
+  if (path[0] !== 'create') return null;
+  if (path.length === 2 && ['projects', 'carousel', 'presentation', 'video'].includes(path[1] ?? '')) {
+    return { kind: 'list' };
+  }
+  if (path[1] !== 'projects') return null;
 
   const id = path[2];
   if (

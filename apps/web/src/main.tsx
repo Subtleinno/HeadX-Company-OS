@@ -7,6 +7,7 @@ import './styles/admin.css';
 import './styles/files.css';
 import './styles/needs.css';
 import './styles/projects.css';
+import './styles/creative.css';
 import './styles/app-pages.css';
 import { App } from './App';
 

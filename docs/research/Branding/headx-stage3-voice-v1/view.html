@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-Hant"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Stage 03 · 語言系統 (View)</title><link rel="stylesheet" href="shared.css"/>
+<style>
+.spec{max-width:1080px;margin:0 auto;padding:64px 28px 120px}
+.eyebrow{font-family:var(--mono);font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.stmt{font-family:var(--serif);font-size:clamp(1.5rem,3.2vw,2.4rem);line-height:1.55;margin:14px 0 14px;max-width:34ch}
+.empty{color:var(--muted)}.src{font-family:var(--mono);font-size:.72rem;color:var(--muted)}
+.prog{display:inline-block;margin:14px 0 0;font-family:var(--mono);font-size:.76rem;border:1px solid var(--line);border-radius:999px;padding:4px 12px;background:#fff}
+.sec{border-top:1px solid var(--line);margin-top:54px;padding-top:26px}
+.sec h3{font-family:var(--mono);font-size:.74rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:0 0 6px}
+.sec .lead{font-size:.88rem;color:var(--muted);margin:0 0 18px;max-width:68ch}
+.pers{display:flex;flex-wrap:wrap;gap:10px 28px;margin:6px 0 16px}.pers b{font-family:var(--serif);font-weight:500;font-size:clamp(1.8rem,4vw,3rem);letter-spacing:.04em}
+.pairs{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}.pairs div{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px}.pairs b{display:block;font-size:.95rem}.pairs p{margin:2px 0 0;font-size:.78rem;color:var(--muted)}
+.dial{display:grid;grid-template-columns:120px 1fr 120px;gap:14px;align-items:center;padding:12px 0 4px}.dial .r{text-align:right}.dial .l.on,.dial .r.on{font-weight:700}
+.track{position:relative;height:2px;background:var(--line);margin:0 8px}.track i{position:absolute;top:-4px;width:10px;height:10px;border-radius:50%;background:var(--line);transform:translateX(-50%)}.track b{position:absolute;top:-8px;width:18px;height:18px;border-radius:50%;background:var(--ink);transform:translateX(-50%);border:3px solid var(--bg)}.track.none b{display:none}
+.eg{font-family:var(--serif);font-size:.92rem;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin:2px 0 8px}
+table{width:100%;border-collapse:collapse;font-size:.85rem;background:#fff;border:1px solid var(--line)}th,td{border-bottom:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}th{font-family:var(--mono);font-size:.7rem;color:var(--muted);font-weight:500;text-transform:uppercase}
+td.ex{font-family:var(--serif);color:#333}
+.risk{background:#fff7ed}
+.say{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}.say div{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 14px}.say small{font-family:var(--mono);font-size:.68rem;color:var(--muted);display:block}.say b{font-family:var(--serif);font-size:1.1rem}
+.bw{display:flex;flex-wrap:wrap;gap:6px}.bw span{font-size:.82rem;background:var(--danger-bg);color:var(--danger);border-radius:999px;padding:2px 12px;text-decoration:line-through}
+.gt{font-family:var(--mono);font-size:.68rem;color:var(--muted);margin:14px 0 6px}
+.dis{list-style:none;padding:0;margin:0;display:grid;gap:8px}.dis li{background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 14px;font-size:.88rem}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:16px}@media(max-width:760px){.cmp{grid-template-columns:1fr}}
+.cmp .y,.cmp .n{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px}.cmp h4{margin:0 0 8px;font-family:var(--mono);font-size:.72rem;text-transform:uppercase;letter-spacing:.08em}.cmp .y h4{color:var(--ok)}.cmp .n h4{color:var(--danger)}
+.cmp p{margin:0 0 10px;font-family:var(--serif);font-size:1rem}.cmp .n p{text-decoration:line-through;text-decoration-color:rgba(220,38,38,.4)}
+.lab{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px}
+.lab textarea{width:100%;min-height:130px;padding:12px;border:1px solid var(--line);border-radius:10px;font-family:var(--serif);font-size:1rem;background:var(--bg);resize:vertical}
+.out{margin-top:12px;padding:12px;border:1px dashed var(--line);border-radius:10px;font-family:var(--serif);font-size:1rem;white-space:pre-wrap;min-height:48px}
+mark{background:#fecaca;color:#7f1d1d;border-radius:4px;padding:0 2px}
+.stats{display:flex;gap:16px;flex-wrap:wrap;font-family:var(--mono);font-size:.72rem;color:var(--muted);margin-top:10px}
+.iss{list-style:none;padding:0;margin:10px 0 0;font-size:.84rem}.iss li{margin-bottom:4px}.iss .error{color:var(--danger)}.iss .warn{color:var(--warn)}.iss .info{color:var(--muted)}.iss .ok{color:var(--ok)}
+.ck li{margin-bottom:6px;font-size:.86rem}.ck .warn{color:var(--warn)}.ck .error{color:var(--danger)}.ck .info{color:var(--muted)}
+.btn-ai{background:var(--soft);color:var(--accent);border:1px solid #BFDBFE;padding:5px 11px;border-radius:7px;font-size:.76rem;font-weight:600;cursor:pointer;font-family:inherit}
+</style></head><body>
+<nav class="topbar"><div class="brand-tag">COMPANY OS · BRAND STAGE 03 / 06</div>
+<div class="nav-links"><a class="nav-pill" href="edit.html">Edit</a><a class="nav-pill active" href="view.html">View</a><a class="nav-pill" href="agent.html">AI Agent</a></div></nav>
+<main class="spec" id="m"></main>
+<script src="options.js"></script><script src="core.js"></script>
+<script>
+const s=load(),c=completeness(s),esc=t=>String(t).replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[m]));
+const nm=(s.s1&&s.s1.name)||"";const st=s.statement||draft(s);
+const pers=labels("personality",s),pairs=items("pairs",s);
+const dialsHTML=DIALS.map(d=>{const v=s.dials[d.id],set=v!==undefined;return `<div class="dial"><div class="l ${set&&v<0?"on":""}">◀ ${d.l}</div><div class="track ${set?"":"none"}">${[-2,-1,0,1,2].map(p=>`<i style="left:${(p+2)*25}%"></i>`).join("")}${set?`<b style="left:${(v+2)*25}%"></b>`:""}</div><div class="r ${set&&v>0?"on":""}">${d.r} ▶</div></div>${set?`<div class="eg">${v<0?esc(d.ls):v>0?esc(d.rs):esc(d.ls)+" ／ "+esc(d.rs)}</div>`:""}`}).join("");
+const setTbl=set=>{const r=setRows(s,set);return r.length?`<table><thead><tr><th>項目</th><th>選擇</th><th>示範</th></tr></thead><tbody>${r.map(x=>`<tr><td>${esc(x.title)}</td><td><b>${esc(x.choice)}</b><br><small class="empty">${esc(x.note)}</small></td><td class="ex">${esc(x.example).replace(/\n/g,"<br>")}</td></tr>`).join("")}</tbody></table>`:`<p class="empty">尚未選擇</p>`};
+const sitTbl=`<table><thead><tr><th>情境</th><th>語氣調整</th><th>說明</th></tr></thead><tbody>${sitTable(s).map(r=>{const hi=["complaint","error","health","crisis"].includes(r.id);return `<tr class="${hi?"risk":""}"><td>${esc(r.situation)}${hi?' <small class="empty">高風險</small>':""}</td><td>${r.tone?`<b>${esc(r.tone)}</b>`:'<span class="empty">未設定</span>'}</td><td>${esc(r.note||"")}</td></tr>`}).join("")}</tbody></table>`;
+const wr=setRows(s,"words");
+const bGroups=CAT.banned.groups.map(g=>{const w=g.items.filter(i=>s.banned.includes(i.id));return w.length?`<div class="gt">${g.g}</div><div class="bw">${w.map(i=>`<span title="${esc(i.desc)}">${esc(i.zh)}</span>`).join("")}</div>`:""}).join("")+(s.custom.banned.length?`<div class="gt">自訂</div><div class="bw">${s.custom.banned.map(x=>`<span>${esc(x)}</span>`).join("")}</div>`:"");
+const ys=s.yes.filter(x=>x.trim()),ns=s.no.filter(x=>x.trim());
+const ck=checks(s);
+document.getElementById("m").innerHTML=`
+<span class="eyebrow">03 / Voice &amp; Verbal Identity${nm?" · "+esc(nm):""}</span>
+<p class="stmt ${s.statement||pers.length?"":"empty"}">${esc(st)}</p><span class="src">${s.statement?"人工撰寫":"由選擇自動組合的草稿"}</span><br/>
+<span class="prog">完成度 ${c.pct}%（${c.done}/${c.total}）${c.missing.length?" · 未完成："+c.missing.map(m=>m.label.replace(/（.*/,"")).join("、"):""}</span>
+<div class="sec"><h3>聲音（Voice）：永遠不變</h3><div class="pers">${pers.length?pers.map(x=>`<b>${esc(x)}</b>`).join(""):'<span class="empty">尚未選擇</span>'}</div>
+<div class="pairs">${pairs.map(p=>`<div><b>${esc(p.zh)}</b><p>${esc(p.desc)}</p></div>`).join("")}</div></div>
+<div class="sec"><h3>語氣刻度</h3><p class="lead">圓點越靠中間，代表兩邊都要。下方句子是該位置的示範。</p>${dialsHTML}</div>
+<div class="sec"><h3>語言規則</h3>${setTbl("lang")}</div>
+<div class="sec"><h3>情境語氣（Tone 隨情境調整）</h3><p class="lead">橙底是高風險情境：太輕鬆最容易出事。</p>${sitTbl}</div>
+<div class="sec"><h3>用語偏好：我們說…</h3><div class="say">${wr.length?wr.map(x=>`<div><small>${esc(x.title)}</small><b>${esc(x.choice)}</b></div>`).join(""):'<span class="empty">尚未選擇</span>'}</div></div>
+<div class="sec"><h3>寫作模式</h3>${setTbl("patterns")}</div>
+<div class="sec"><h3>禁用詞彙（${count("banned",s)}）</h3>${bGroups||'<p class="empty">尚未選擇</p>'}</div>
+<div class="sec"><h3>必備提示句</h3><ul class="dis">${items("disclosure",s).map(i=>`<li><b>${esc(i.zh)}</b>${i.desc?`<small class="empty"> · ${esc(i.desc)}</small>`:""}</li>`).join("")||'<li class="empty">尚未選擇</li>'}</ul><p class="lead" style="margin-top:10px">常見做法，不是法律意見。香港《不良廣告(醫藥)條例》(Cap. 231) 的實際限制以條文與衞生署指引為準，發布前請諮詢專業人士。</p></div>
+<div class="sec"><h3>範例：像我們 vs 不像我們</h3><div class="cmp"><div class="y"><h4>✓ 像我們</h4>${ys.map(x=>`<p>${esc(x)}</p>`).join("")||'<p class="empty">未填</p>'}</div><div class="n"><h4>✕ 不像我們</h4>${ns.map(x=>`<p>${esc(x)}</p>`).join("")||'<p class="empty">未填</p>'}</div></div></div>
+<div class="sec"><h3>文案檢查器（貼上任何一段文字）</h3><p class="lead">用你設定的禁用詞、人稱、驚嘆號、Emoji、句長與書寫形態即時檢查。僅在你的瀏覽器內運行，不會上傳。</p>
+<div class="lab"><textarea id="lab" placeholder="貼上要審的文案，例如網頁文字、客服回覆或社群貼文…"></textarea><div class="out" id="out"></div><div class="stats" id="stats"></div><ul class="iss" id="iss"></ul></div></div>
+<div class="sec"><h3>一致性檢查</h3><ul class="ck" style="padding-left:18px">${ck.length?ck.map(x=>`<li class="${x.level}">${x.level==="error"?"✕":x.level==="warn"?"⚠":"ℹ"} ${esc(x.msg)}</li>`).join(""):"<li class='info'>目前沒有衝突。</li>"}</ul></div>`;
+function runLab(){const t=document.getElementById("lab").value,r=checkText(t,s);let html="",pos=0;const hs=[...r.hits].sort((a,b)=>a.idx-b.idx);
+  hs.forEach(h=>{if(h.idx<pos)return;html+=esc(t.slice(pos,h.idx))+"<mark>"+esc(t.slice(h.idx,h.idx+h.len))+"</mark>";pos=h.idx+h.len});html+=esc(t.slice(pos));
+  document.getElementById("out").innerHTML=t.trim()?html:'<span class="empty">檢查結果會顯示在這裡，禁用詞會被標紅。</span>';
+  document.getElementById("stats").innerHTML=t.trim()?`<span>字數 ${r.stats.chars}</span><span>句數 ${r.stats.sentences}</span><span>平均句長 ${r.stats.avg}</span><span>驚嘆號 ${r.stats.exclaims}</span><span>Emoji ${r.stats.emoji}</span>`:"";
+  document.getElementById("iss").innerHTML=t.trim()?(r.issues.length?r.issues.map(x=>`<li class="${x.level}">${x.level==="error"?"✕":x.level==="warn"?"⚠":"ℹ"} ${esc(x.msg)}</li>`).join(""):'<li class="ok">✓ 沒有發現問題</li>'):""}
+document.getElementById("lab").addEventListener("input",runLab);runLab();
+</script></body></html>

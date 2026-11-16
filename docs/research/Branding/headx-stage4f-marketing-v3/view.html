@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-Hant"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Stage 04F · 行銷內容與廣告 v3 (View)</title><link rel="stylesheet" href="shared.css"/>
+<style>
+.spec{max-width:1120px;margin:0 auto;padding:60px 28px 120px}
+.eyebrow{font-family:var(--mono);font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.title{font-family:var(--serif);font-size:clamp(2rem,5vw,3.2rem);line-height:1.15;margin:12px 0 18px}
+.empty{color:var(--muted)}.prog{display:inline-block;margin:10px 0 0;font-family:var(--mono);font-size:.76rem;border:1px solid var(--line);border-radius:999px;padding:4px 12px;background:#fff}
+.sec{border-top:1px solid var(--line);margin-top:46px;padding-top:22px}.sec h3{font-family:var(--mono);font-size:.74rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:0 0 6px}.lead{font-size:.86rem;color:var(--muted);margin:0 0 14px;max-width:76ch}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}.c{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 16px}.c b{display:block;font-size:.95rem}.c p{margin:4px 0 0;font-size:.8rem;color:var(--muted)}
+.c .tg{display:inline-block;font-size:.64rem;font-family:var(--mono);border:1px solid var(--line);border-radius:999px;padding:0 6px;margin:6px 4px 0 0;color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:.82rem;background:#fff;border:1px solid var(--line)}th,td{border-bottom:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}th{font-family:var(--mono);font-size:.68rem;color:var(--muted);font-weight:500}.ok{color:var(--ok)}.no{color:var(--danger)}.wn{color:var(--warn)}.tw{overflow-x:auto}
+.strip{display:flex;gap:12px;overflow-x:auto;padding:10px;background:#E9E9E4;border-radius:12px;border:1px solid var(--line)}.strip figure{margin:0;flex:none;text-align:center}.strip svg{height:300px;width:auto;display:block;box-shadow:0 1px 8px rgba(0,0,0,.15);background:#fff}.strip figcaption{font-size:.7rem;color:var(--muted);margin-top:4px}
+.sb{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}.sb>div{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;min-height:100px}.sb small{font-family:var(--mono);font-size:.68rem;color:var(--muted);text-transform:uppercase;display:block;margin-bottom:6px}
+.tpc{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin-bottom:10px}.tpc h4{margin:0 0 2px;font-size:.92rem}.tpc small{color:var(--muted)}
+.hi{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}.hi>div{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 16px}.hi h4{margin:0 0 8px;font-family:var(--mono);font-size:.74rem;color:var(--accent)}.hi li{font-size:.82rem;margin-bottom:6px}.hi small{display:block;color:var(--muted)}.hi ul{margin:0;padding-left:16px}
+.ck li{margin-bottom:6px;font-size:.86rem}.ck .warn{color:var(--warn)}.ck .error{color:var(--danger)}.ck .info{color:var(--muted)}
+.avoid{display:flex;flex-wrap:wrap;gap:8px}.avoid span{background:var(--danger-bg);border:1px solid #FECACA;color:#991B1B;border-radius:999px;padding:3px 12px;font-size:.84rem}
+.draft{background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;padding:8px 14px;font-size:.8rem;margin-top:14px}
+@media(max-width:700px){table{display:block;overflow-x:auto}}
+</style></head><body>
+<nav class="topbar"><div class="brand-tag">COMPANY OS · BRAND STAGE 04F · 行銷內容與廣告 v3</div>
+<div class="nav-links"><a class="nav-pill" href="edit.html">Edit</a><a class="nav-pill active" href="view.html">View</a><a class="nav-pill" href="agent.html">AI Agent</a></div></nav>
+<main class="spec" id="m"></main>
+<script src="options.js"></script><script src="tpl-data.js"></script><script src="core.js"></script><script src="tpl-logic.js"></script>
+<script>
+const s=load(),cmp=completeness(s),E=esc;
+const X=id=>T_(s,id);
+const cardsOf=k=>{const it=items(k,s);return it.length?`<div class="cards">${it.map(i=>`<div class="c"><b>${E(i.zh)}</b>${i.desc?`<p>${E(i.desc)}</p>`:""}${i.avoid&&i.avoid!=="-"?`<p>風險：${E(i.avoid)}</p>`:""}${i.risk?`<span class="tg">高風險／須注意</span>`:""}${i.pro?`<span class="tg">須人類合規審核</span>`:""}</div>`).join("")}</div>`:'<p class="empty">尚未選擇</p>'};
+const dimRow=d=>{const dm=DIM(d),o=picked(s,d);return `<tr><th>${dm.title}</th><td>${o?`<b>${E(o.zh)}</b><br><small>${E(o.desc)}</small>`:'<span class="empty">尚未選擇</span>'}</td></tr>`};
+const sub=(t,k)=>`<p class="lead" style="margin:12px 0 6px"><b>${t}</b></p>${cardsOf(k)}`;
+const strip=a=>a.length?`<div class="strip">${a.map(x=>`<figure>${x.svg.replace(/width="\d+" height="\d+"/,"")}<figcaption>${E(x.cap)}</figcaption></figure>`).join("")}</div>`:'<p class="empty">尚無內容</p>';
+const pack=templatePack(s);const tplMain=pack.filter(t=>/^tpl-/.test(t.file)).map(t=>({svg:t.svg,cap:t.name}));
+const car=carouselSVGs(s).map(x=>({svg:x.svg,cap:`${x.i+1}（${x.role}）`})),ban=bannerSVGs(s).map(x=>({svg:x.svg,cap:x.name})),ppt=pptSVGs(s).map(x=>({svg:x.svg,cap:x.name}));
+const k=kpiCalc(s),kH=k?`<table><tr><th>預算</th><td>${k.b.toLocaleString()} HKD</td></tr><tr><th>曝光／點擊／轉化</th><td>${Math.round(k.imp).toLocaleString()}／${Math.round(k.clicks).toLocaleString()}／${k.conv.toFixed(1)}</td></tr><tr><th>CPA／ROAS</th><td>${k.cpa!=null?k.cpa.toFixed(0)+" HKD":"—"}／${k.roas!=null?k.roas.toFixed(2):"—"}</td></tr>${k.profit!=null?`<tr><th>扣除廣告費後</th><td class="${k.profit<0?"no":""}">${Math.round(k.profit).toLocaleString()} HKD</td></tr>`:""}</table><p class="lead" style="margin-top:6px">全部是你輸入的假設，不是行業基準或承諾。</p>`:'<p class="empty">尚未填寫預算與假設</p>';
+const scan=scanAll(s),scH=scan.length?`<div class="tw"><table><tr><th>欄位</th><th>類別</th><th>字詞</th></tr>${scan.map(h=>`<tr><td>${h.field}</td><td class="${h.cat==="health"?"no":""}">${{health:"健康宣稱",absolute:"絕對／最高級",urgency:"限時限量",price:"價格優惠",testimonial:"見證／前後",compare:"比較",award:"獎項認證"}[h.cat]}</td><td>${E(h.words.join("、"))}</td></tr>`).join("")}</table></div><p class="lead" style="margin-top:6px">關鍵字提示，不是法律判斷。</p>`:'<p class="empty">沒有命中關鍵字（不代表合規）</p>';
+const ut=utmRows(s),uH=ut.length?`<div class="tw"><table><tr><th>渠道</th><th>URL</th></tr>${ut.map(x=>`<tr><td>${E(x.channel)}</td><td style="word-break:break-all;font-size:.74rem">${E(x.url)}</td></tr>`).join("")}</table></div>`:'<p class="empty">尚未填寫</p>';
+const st=selTpls(s),stH=st.length?st.map(t=>`<div class="tpc"><h4>${E(t.id)}｜${E(t.name)}${t.hr?' <span class="wn">須人類合規審核</span>':""}</h4><small>${E(chName(t.ch))}・${E(t.purpose)}・${E(t.fmt)}</small><div class="tw" style="margin-top:6px"><table><tr><th>時間／區塊</th><th>內容</th></tr>${t.frames.map(f=>`<tr><td>${E(f[0])}</td><td>${E(f[1])}</td></tr>`).join("")}</table></div><p class="lead" style="margin:6px 0 0">欄位：${E(t.slots.map(a=>a[1]).join("、"))}｜合規：${E(t.comp||"—")}</p></div>`).join(""):'<p class="empty">尚未選用模板</p>';
+const ps=pubSummary(s),psH=ps.length?`<div class="tw"><table><tr><th>模板</th><th>篇數</th><th>觸及</th><th>互動率</th><th>點擊率</th><th>轉化率</th><th>判讀</th></tr>${ps.map(e=>`<tr><td>${E(e.tpl)}</td><td>${e.n}</td><td>${e.reach}</td><td>${e.engRate!=null?e.engRate.toFixed(2)+"%":"—"}</td><td>${e.ctr!=null?e.ctr.toFixed(2)+"%":"—"}</td><td>${e.cvr!=null?e.cvr.toFixed(2)+"%":"—"}</td><td class="${e.small?"wn":""}">${e.small?"樣本太少，不要下結論":"可初步比較"}</td></tr>`).join("")}</table></div>`:'<p class="empty">還沒有成效紀錄</p>';
+const ck=checks(s),hs=hints(s),stages=[...new Set(hs.map(h=>h.stage))].sort();
+const hi=stages.map(sg=>`<div><h4>${E(sg)}</h4><ul>${hs.filter(h=>h.stage===sg).map(h=>`<li><b>${E(h.field)}</b>：${E(h.text)}<small>原因：${E(h.why)}</small></li>`).join("")}</ul></div>`).join("");
+document.getElementById("m").innerHTML=`
+<span class="eyebrow">04F / Marketing &amp; Advertising · v3 · 草稿 · 未核准</span>
+<h1 class="title">${E(brandName(s))}</h1><p style="font-family:var(--serif);font-size:1.1rem;max-width:64ch">${E(X("statement")||draft(s))}</p>
+<span class="prog">完成度 ${cmp.pct}%（${cmp.done}/${cmp.total}）${cmp.missing.length?" · 未完成："+cmp.missing.map(m=>m.label.replace(/（.*/,"")).join("、"):""}</span>
+<div class="draft">狀態：草稿。關鍵字掃描與合規提醒不是法律意見；高風險內容發布前須人類合規審核。成效數字是假設。平台規格以最新說明為準。</div>
+<div class="sec"><h3>策略</h3><p style="font-family:var(--serif);font-size:1.05rem">${E(X("pos_line")||"（尚未填寫定位）")}</p><p class="lead">受眾：${E(X("aud")||"—")}</p>${cardsOf("adGoal")}${sub("漏斗","funnel")}${sub("受眾策略","targeting")}${sub("市場定位類型","positioning")}${sub("影片策略","videoStrategy")}${sub("廣告策略","adStrategy")}</div>
+<div class="sec"><h3>渠道、格式與模板類型</h3>${cardsOf("channels")}${sub("廣告格式","adFormats")}${sub("模板類型","templateTypes")}</div>
+<div class="sec"><h3>已選渠道模板（${st.length} 個）</h3>${stH}</div>
+<div class="sec"><h3>模板規則與預覽</h3><table style="margin-bottom:12px">${["tplBg","tplAlign","ctaStyle","safeMargin","headlineScale","patOverlay","logoPos"].map(dimRow).join("")}</table>${strip(tplMain)}</div>
+<div class="sec"><h3>文案</h3><table><tr><th>Hook</th><td>${E(X("hook")||"—")}</td></tr><tr><th>副標</th><td>${E(X("sub")||"—")}</td></tr><tr><th>CTA</th><td>${E(X("cta_text")||"—")}</td></tr><tr><th>條款與披露</th><td>${E(X("disc_text")||"—")}</td></tr></table>${sub("Hook 類型","hooks")}${sub("CTA 類型","ctas")}${sub("文案框架","copyFramework")}${sub("內容支柱","pillars")}<p class="lead" style="margin:12px 0 6px"><b>關鍵字掃描</b></p>${scH}</div>
+<div class="sec"><h3>Carousel</h3>${sub("排版策略","layoutStrategy")}<div style="margin-top:12px">${strip(car)}</div></div>
+<div class="sec"><h3>展示廣告尺寸組</h3>${strip(ban)}</div>
+<div class="sec"><h3>簡報</h3>${cardsOf("slides")}<div style="margin-top:12px">${strip(ppt)}</div></div>
+<div class="sec"><h3>披露、宣稱與審稿</h3>${cardsOf("claimTypes")}${sub("披露","disclosures")}<table style="margin-top:12px">${["reviewFlow","altText","emojiPolicy","adLang"].map(dimRow).join("")}</table></div>
+<div class="sec"><h3>成效與試算（假設）</h3>${cardsOf("kpis")}<div style="margin-top:12px">${kH}</div></div>
+<div class="sec"><h3>UTM 連結</h3>${uH}</div>
+<div class="sec"><h3>發佈與成效紀錄（${s.pubs.length} 筆）</h3>${psH}</div>
+<div class="sec"><h3>3 個代表性內容</h3><div class="sb">${ADS.map(([id,l])=>`<div><small>${l}</small>${X(id)?E(X(id)):'<span class="empty">尚未填寫</span>'}</div>`).join("")}</div><p class="lead" style="margin-top:10px">備註：${E(X("st_note")||"—")}</p></div>
+<div class="sec"><h3>禁區（合併 Stage 1／2／4A／4B／4C）</h3><div class="avoid">${negatives(s).map(x=>`<span>${E(x)}</span>`).join("")||'<span style="background:none;border:0;color:var(--muted)">尚未選擇</span>'}</div></div>
+<div class="sec"><h3>一致性與硬限制檢查</h3><ul class="ck" style="padding-left:18px">${ck.length?ck.map(x=>`<li class="${x.level}">${x.level==="error"?"✕":x.level==="warn"?"⚠":"ℹ"} ${E(x.msg)}</li>`).join(""):"<li class='info'>目前沒有發現問題。</li>"}</ul></div>
+<div class="sec"><h3>給 4G–4H 的建議</h3><p class="lead">請匯出 stage4f-brief.json 帶過去。</p><div class="hi">${hi}</div></div>`;
+</script></body></html>

@@ -1,17 +1,19 @@
 import { useRef, useState } from 'react';
 import { t } from '@company-os/i18n';
-import { createProject, type ProjectDetail } from '../api';
+import { createProject, type ProjectDetail, type ProjectFormat } from '../api';
 import { failureMessage } from './apiFailure';
 
 type Props = {
   brandId: string;
+  initialFormat?: ProjectFormat;
   onCreated: (project: ProjectDetail) => void;
   onCancel: () => void;
 };
 
-export function ProjectCreateForm({ brandId, onCreated, onCancel }: Props) {
+export function ProjectCreateForm({ brandId, initialFormat = 'carousel', onCreated, onCancel }: Props) {
   const [title, setTitle] = useState('');
   const [request, setRequest] = useState('');
+  const [format, setFormat] = useState<ProjectFormat>(initialFormat);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const requestKey = useRef<string | null>(null);
@@ -30,7 +32,7 @@ export function ProjectCreateForm({ brandId, onCreated, onCancel }: Props) {
     setBusy(true);
     setError(null);
     const result = await createProject(
-      { brandId, title: cleanTitle, request: cleanRequest },
+      { brandId, title: cleanTitle, request: cleanRequest, format },
       requestKey.current,
     );
     setBusy(false);
@@ -57,6 +59,25 @@ export function ProjectCreateForm({ brandId, onCreated, onCancel }: Props) {
           void submit();
         }}
       >
+        <div className="design-field">
+          <label className="design-field__label" htmlFor="project-format">
+            {t('design.project.formatLabel')}
+          </label>
+          <select
+            id="project-format"
+            className="design-input"
+            value={format}
+            onChange={(event) => {
+              requestKey.current = null;
+              setFormat(event.target.value as ProjectFormat);
+            }}
+          >
+            {(['carousel', 'presentation', 'video'] as const).map((item) => (
+              <option key={item} value={item}>{t(`design.project.format.${item}`)}</option>
+            ))}
+          </select>
+        </div>
+
         <div className="design-field">
           <label className="design-field__label" htmlFor="project-title">
             {t('design.project.title')}

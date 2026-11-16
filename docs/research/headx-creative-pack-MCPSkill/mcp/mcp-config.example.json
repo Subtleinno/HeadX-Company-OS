@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "headx-creative": {
+      "command": "python",
+      "args": ["/ABSOLUTE/PATH/headx-creative-pack/mcp/headx_creative/server.py"],
+      "env": {"HEADX_DATA": "/ABSOLUTE/PATH/headx_data", "BLENDER_BIN": "/Applications/Blender.app/Contents/MacOS/Blender"}
+    }
+  }
+}

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it } from 'vitest';
 import type { ProjectDetail } from '@company-os/contracts';
@@ -34,6 +34,8 @@ function project(over: Partial<ProjectDetail> = {}): ProjectDetail {
     brandId: 'b-moonic',
     brandName: 'Moonic',
     title: '經期前日常照顧 Carousel',
+    format: 'carousel',
+    previewUrl: null,
     state: 'awaiting_agent',
     briefVersionNo: null,
     agentRun: null,
@@ -59,6 +61,10 @@ function open(hash = '/#/design/create/projects', handlers: FakeHandlers = {}) {
     brandFocus: () => jsonResponse(200, { brandId: 'b-moonic' }),
     brandPages: () => jsonResponse(200, { items: [], canEdit: true }),
     projects: () => jsonResponse(200, { projects: [], total: 0 }),
+    projectCreative: () => jsonResponse(200, { workspace: {
+      brand: { brandId: 'b-moonic', brandName: 'Moonic', releaseId: null, releaseNo: null, colors: { primary: '#171717', ink: '#171717', paper: '#F7F6F3', accent: '#171717' }, fonts: { display: 'Inter', body: 'Inter' }, tone: { traits: [], banned: [], languagePolicy: '' }, image: { composition: '', light: '', space: '' }, pages: [] },
+      materials: [], knowledge: [], templates: [], compositions: [], outputs: [],
+    } }),
     ...handlers,
   });
   render(<App />);
@@ -94,6 +100,7 @@ describe('Marketing Design Projects', () => {
     await waitFor(() => {
       expect(window.location.hash).toBe(`#/design/create/projects/${PROJECT_ID}/brief`);
     });
+    await userEvent.click(await screen.findByRole('tab', { name: 'Brief' }));
     expect(await screen.findByText('為 Moonic 建立五頁 IG Carousel，語氣溫暖，不可作醫療保證。')).toBeTruthy();
     const call = api.calls.find((item) => item.path === '/api/projects' && item.method === 'POST');
     expect(call?.headers['idempotency-key']).toMatch(/^[0-9a-f-]{36}$/);
@@ -101,6 +108,7 @@ describe('Marketing Design Projects', () => {
       brandId: 'b-moonic',
       title: '經期前日常照顧 Carousel',
       request: '為 Moonic 建立五頁 IG Carousel。',
+      format: 'carousel',
     });
     expect(api.count('projectDetail')).toBe(1);
     expect(screen.getAllByText('等待外部 agent 接手').length).toBeGreaterThan(0);
@@ -126,7 +134,32 @@ describe('Marketing Design Projects', () => {
 
     await waitFor(() => expect(window.location.hash).toBe(`#/design/create/projects/${PROJECT_ID}/brief`));
     expect(api.count('projectDetail')).toBe(1);
+    await userEvent.click(await screen.findByRole('tab', { name: 'Brief' }));
     expect(await screen.findByText(first.originalRequest.body)).toBeTruthy();
+  });
+
+  it('左欄搜尋與格式資料夾共用真 Project 列表', async () => {
+    const carousel = project();
+    const deck = project({
+      id: 'fa66c1f0-3db1-4f21-a462-b91215ef3c1f',
+      title: '品牌季度簡報',
+      format: 'presentation',
+    });
+    open('/#/design/create/projects', {
+      projects: () => jsonResponse(200, { projects: [carousel, deck], total: 2 }),
+    });
+
+    const search = await screen.findByRole('searchbox', { name: 'Search projects and folders' });
+    await userEvent.type(search, '季度');
+    expect(screen.queryByRole('button', { name: carousel.title })).toBeNull();
+    expect(screen.getByRole('button', { name: deck.title })).toBeTruthy();
+
+    await userEvent.clear(search);
+    const subbar = document.querySelector('[data-frame-subbar]') as HTMLElement;
+    await userEvent.click(within(subbar).getByRole('button', { name: 'Presentation' }));
+    await waitFor(() => expect(window.location.hash).toBe('#/design/create/presentation'));
+    expect(screen.queryByRole('button', { name: carousel.title })).toBeNull();
+    expect(screen.getByRole('button', { name: deck.title })).toBeTruthy();
   });
 
   it('Brief 版本可切換閱讀，來源 actor、request identity 和原始要求分開保存', async () => {
@@ -158,8 +191,11 @@ describe('Marketing Design Projects', () => {
       }),
     });
 
+    await userEvent.click(await screen.findByRole('tab', { name: 'Brief' }));
     expect(await screen.findByText('經期前五天日常照顧')).toBeTruthy();
+    await userEvent.click(screen.getByRole('tab', { name: 'AI Agent' }));
     expect(screen.getByText('已由外部 agent 接手')).toBeTruthy();
+    await userEvent.click(screen.getByRole('tab', { name: 'Brief' }));
     await userEvent.click(screen.getByRole('button', { name: /版本 1/ }));
     expect(await screen.findByText('初版目的')).toBeTruthy();
     expect(screen.queryByText('經期前五天日常照顧')).toBeNull();

@@ -17,6 +17,7 @@ export type {
   FrameShellProps,
   FrameSidebarGroup,
   FrameSidebarItem,
+  FrameSidebarSearch,
 } from './FrameShell.js';
 export { Icon } from './icons.js';
 export type { IconName } from './icons.js';

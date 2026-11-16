@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import type { FrameSidebarGroup } from '@company-os/app-shell';
+import type { FrameSidebarGroup, FrameSidebarSearch } from '@company-os/app-shell';
 import { t } from '@company-os/i18n';
 import type { PublicUser } from '../api';
 import { navigate, navigatePath, type Route } from '../router';
@@ -34,6 +34,9 @@ export type AppFrameProps = {
   primaryAction?: ReactNode;
   /** Needs 之外，呢一頁要唔要右側欄。 */
   withRail?: boolean;
+  sidebarSearch?: FrameSidebarSearch;
+  /** 由目前列表事實推出的資料夾數量，例如各格式的 Project 數。 */
+  sidebarBadges?: Readonly<Record<string, string>>;
   children: (position: NavPosition) => ReactNode;
 };
 
@@ -51,6 +54,8 @@ export function AppFrame({
   pageSubtitle,
   primaryAction,
   withRail = false,
+  sidebarSearch,
+  sidebarBadges,
   children,
 }: AppFrameProps) {
   const chrome = useFrameChrome();
@@ -65,7 +70,9 @@ export function AppFrame({
   // 第二層模組頁頂欄嘅頁籤。由 nav 模型直接推，`onSelectPage` 同左側欄
   // 用同一個 key，所以兩邊點選結果一定一致。
   const modulePages = position.navModule.groups.flatMap((group) =>
-    group.pages.map((page) => ({ key: page.key, label: navLabel(page) })),
+    group.pages
+      .filter((page) => page.subbar !== false)
+      .map((page) => ({ key: page.key, label: navLabel(page) })),
   );
 
   const sidebarGroups: FrameSidebarGroup[] = position.navModule.groups.map((group) => ({
@@ -73,7 +80,9 @@ export function AppFrame({
     items: group.pages.map((page) => ({
       key: page.key,
       label: navLabel(page),
-      ...(page.badge === undefined ? {} : { badge: page.badge, badgeTone: page.badgeTone ?? 'muted' }),
+      ...(page.badge === undefined && sidebarBadges?.[page.key] === undefined
+        ? {}
+        : { badge: page.badge ?? sidebarBadges?.[page.key], badgeTone: page.badgeTone ?? 'muted' }),
       ...(page.sections === undefined
         ? {}
         : {
@@ -134,6 +143,7 @@ export function AppFrame({
         navigatePath(base, position.navModule.key, pageKey, sectionKey);
       }}
       sidebarGroups={sidebarGroups}
+      {...(sidebarSearch === undefined ? {} : { sidebarSearch })}
       sidebarOpen={chrome.sidebarOpen}
       onToggleSidebar={chrome.onToggleSidebar}
       theme={chrome.theme}

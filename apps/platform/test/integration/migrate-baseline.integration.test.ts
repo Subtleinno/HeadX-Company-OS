@@ -45,9 +45,10 @@ const BASELINE = [
   ['0020_brand_fixed_pages_backfill.sql', '8ae8702c277fbdf1f8c537cd48b6689950613764736cbadbc5464dca472c139f'],
   ['0021_agent_http_tokens.sql', '7da820bcf7eea2597014a4ec472cd0c59a5c8b3ca93423eae6b5cb9ab865f838'],
   ['design/0001_projects.sql', '47c45bab2389a444a1745657433e9bf6cfaa148d4246b4917688c8af522d0c7b'],
+  ['design/0002_carousel.sql', '68f2939bf82037885cc3424d406c7a7efea69572a721fb5796b55ab0bc677ac2'],
 ] as const;
 
-describe('基準線：現有執行器套用 platform 0001 至 0021 與 design 0001 之後的 ledger', () => {
+describe('基準線：現有執行器套用 platform 0001 至 0021 與 design 0001–0002 之後的 ledger', () => {
   let db: TempDatabase;
 
   beforeAll(async () => {

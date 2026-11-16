@@ -18,6 +18,7 @@ export type CreateProjectInput = {
   brandId: string;
   title: string;
   request: string;
+  format: 'carousel' | 'presentation' | 'video';
 };
 
 export function parseCreateProjectInput(body: unknown): ParseResult<CreateProjectInput> {
@@ -34,9 +35,11 @@ export function parseCreateProjectInput(body: unknown): ParseResult<CreateProjec
   if (!UUID.test(brandId)) errors.push('brandId 必須是有效品牌 ID');
   if (title === '' || title.length > 120) errors.push('title 必須是 1 至 120 個字元');
   if (request === '' || request.length > 20000) errors.push('request 必須是 1 至 20000 個字元');
+  const format = raw.format === undefined ? 'carousel' : raw.format;
+  if (format !== 'carousel' && format !== 'presentation' && format !== 'video') errors.push('format 必須是 carousel、presentation 或 video');
 
   return errors.length === 0
-    ? { ok: true, value: { brandId, title, request } }
+    ? { ok: true, value: { brandId, title, request, format: format as 'carousel' | 'presentation' | 'video' } }
     : { ok: false, errors };
 }
 

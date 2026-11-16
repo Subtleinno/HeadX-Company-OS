@@ -83,7 +83,7 @@ const LOCALES: readonly string[] = [DEFAULT_LOCALE];
 // 「建立時一律是員工、沒有部門」改為「部門可以即刻揀，亦可以之後再改」。
 // 原因：建立員工時真的可以選部門了，舊句變成一句錯的說明。除此之外
 // 其餘既有鍵逐字不變（鍵數不變，只是那一條的值改了）。
-const FROZEN_ALL_SHA256 = '0f068bfc8e4b3e448fad4bd2635aaf69e54656fd9ca5b3e8c1c880cfbdabeb5d';
+const FROZEN_ALL_SHA256 = '4af9f8e145020638a2b141f52026861eed7031250932204b5a38ab583a0ccdb4';
 
 /**
  * 呢張之後嘅施工張所新增嘅鍵前綴（#13／#14 起）。
@@ -99,7 +99,16 @@ const LATER_EXACT_KEYS = [
   'design.page.brandLogo', 'design.page.brandColor', 'design.page.brandType',
   'design.page.brandTone','design.page.brandImage','design.page.brandExamples','design.brand.ownerOnly',
   // 2026-11-12（issue #87 之後）：品牌 v2.1 補上平台頁的名。新增鍵，不是改既有鍵。
-  'design.page.brandPlatform'];
+  'design.page.brandPlatform',
+  // 2026-11-17（Carousel 閉環，HXD 批次）：Library 的格式與來源資料夾名，
+  // 以及 Knowledge 狀態過濾名。都是新增鍵。
+  'design.page.projects', 'design.page.outputs', 'design.page.carousel',
+  'design.page.presentation', 'design.page.video', 'design.page.materialHuman',
+  'design.page.materialAi', 'design.page.materialStock', 'design.page.materialClient',
+  'design.page.knowledgeUnverified', 'design.page.knowledgeVerified',
+  'design.page.knowledgeOutdated', 'design.page.templates',
+  // 模組左欄名（品牌／創作／素材／知識四個是既有鍵，只用精確鍵加 templates）。
+  'design.module.templates'];
 
 const LATER_KEY_PREFIXES = ['brand.page.', 'brand.color.', 'brand.type.', 'brand.logo.', 'brand.image.', 'brand.examples.', 'brand.tone.', 'brand.custom.', 'brand.home.', 'brand.gap.', 'brand.check.', 'brand.platform.', 'brand.empty.', 'brand.guide.', 'brand.suggest.', 'brand.nav.', 'design.group.', 
   'boss.members.',
@@ -114,6 +123,11 @@ const LATER_KEY_PREFIXES = ['brand.page.', 'brand.color.', 'brand.type.', 'brand
   'gate.noDepartment.',
   'gate.departmentClosed.',
   'gate.signOut',
+  // 2026-11-17（Carousel 閉環，HXD 批次）：Create／Library／Editor／Materials／
+  // Knowledge／Templates 模組新增的介面文字，不屬本檔要守的既有鍵。
+  'design.project.', 'design.studio.', 'design.knowledge.', 'design.material.',
+  'design.template.', 'design.outputs.', 'design.sidebar.', 'design.common.',
+  'agent.tokens.',
 ];
 
 function hashExcluding(msgs: Record<string, string>, excluded: ReadonlySet<string>): string {

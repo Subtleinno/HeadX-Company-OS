@@ -7,6 +7,8 @@ import { registerAuth } from '../../src/auth/routes';
 import { createHashLimiter, type HashLimiter } from '../../src/auth/hash-limits';
 import { registerAgents } from '../../src/agents/index';
 import { registerProjects } from '../../src/projects/index';
+import { registerCarousel, registerCarouselMcp } from '../../src/carousel/index';
+import type { Storage } from '../../src/storage/index';
 import { registerGrants } from '../../src/grants/index';
 import { registerStaff } from '../../src/staff/index';
 import type { StaffHooks } from '../../src/staff/store';
@@ -77,7 +79,7 @@ function testRegistry(includeDesign = false): ModuleRegistry {
   };
 }
 
-export async function createHarness(options: { design?: boolean } = {}): Promise<Harness> {
+export async function createHarness(options: { design?: boolean; carouselStorage?: Storage } = {}): Promise<Harness> {
   const db = await createTempDatabase();
   await migrate({ pool: db.pool, dir: migrationsDir, log: silent });
 
@@ -120,6 +122,16 @@ export async function createHarness(options: { design?: boolean } = {}): Promise
       registry,
       resolveEntry: () => entry.trusted,
     });
+    if (options.carouselStorage !== undefined) {
+      const carousel = {
+        pool: db.pool,
+        storage: options.carouselStorage,
+        registry,
+        resolveEntry: () => entry.trusted,
+      };
+      registerCarousel(app, carousel);
+      registerCarouselMcp(app, carousel);
+    }
   }
   await app.ready();
 

@@ -67,7 +67,7 @@ const FRAME_MESSAGES: Record<string, string> = {
 // 原因：建立員工時真的可以選部門了，舊句變成一句錯的說明。除此之外
 // 其餘既有鍵逐字不變（鍵數不變，只是那一條的值改了）。
 const FROZEN_NON_FRAME_SHA256 =
-  '0fa830f657356e402a1d7c24334ae5a2578888645d81d39bce38fa6c29a7687e';
+  'd870f58308893198313eb458c3af74d4caf745b59191302f4c4bef1330a091da';
 
 // #163 新增 files.* 前綴；同 #161 嘅 policy.* 一樣，唔屬 #155 要守嘅既有鍵。
 // issue 168 新增 5 個 grant.detail.* 鍵，同樣唔屬 #155 要守嘅既有鍵；
@@ -76,7 +76,12 @@ const FROZEN_NON_FRAME_SHA256 =
 // 帳戶的路），唔屬 #155 要守嘅既有鍵；凍結值不變，只係明確排除新鍵。
 const LATER_KEY_PREFIXES = ['brand.page.', 'brand.color.', 'brand.type.', 'brand.logo.', 'brand.image.', 'brand.examples.', 'brand.tone.', 'brand.custom.', 'brand.home.', 'brand.gap.', 'brand.check.', 'brand.platform.', 'brand.empty.', 'brand.guide.', 'brand.suggest.', 'brand.nav.', 'design.group.', 'policy.', 'files.', 'grant.detail.', 'boss.members.', 'staff.enable', 'boss.module.people', 'boss.page.people', 'gate.noDepartment.', 'gate.departmentClosed.', 'gate.signOut',
   // 2026-11-12（issue #34）：品牌頁策略是新增的介面，不屬本檔要守的既有鍵。
-  'boss.policy.', 'boss.module.policy', 'boss.page.brandPolicy'];
+  'boss.policy.', 'boss.module.policy', 'boss.page.brandPolicy',
+  // 2026-11-17（Carousel 閉環，HXD 批次）：Create／Library／Editor／Materials／
+  // Knowledge／Templates 模組新增的介面文字，不屬本檔要守的既有鍵。
+  'design.project.', 'design.studio.', 'design.knowledge.', 'design.material.',
+  'design.template.', 'design.outputs.', 'design.sidebar.', 'design.common.',
+  'agent.tokens.'];
 const LATER_EXACT_KEYS = [
   'design.page.brandPage',
   // 2026-11-12（issue #32）：品牌模組五頁的頁名。舊的 `design.page.brandPage`
@@ -84,7 +89,16 @@ const LATER_EXACT_KEYS = [
   'design.page.brandLogo', 'design.page.brandColor', 'design.page.brandType',
   'design.page.brandTone','design.page.brandImage','design.page.brandExamples','admin.page.policy', 'design.brand.ownerOnly',
   // 2026-11-12（品牌 v2.1）：補上平台頁的名。新增鍵，不是改既有鍵。
-  'design.page.brandPlatform'];
+  'design.page.brandPlatform',
+  // 2026-11-17（Carousel 閉環，HXD 批次）：Library 的格式與來源資料夾名，
+  // 以及 Knowledge 狀態過濾名。都是新增鍵。
+  'design.page.projects', 'design.page.outputs', 'design.page.carousel',
+  'design.page.presentation', 'design.page.video', 'design.page.materialHuman',
+  'design.page.materialAi', 'design.page.materialStock', 'design.page.materialClient',
+  'design.page.knowledgeUnverified', 'design.page.knowledgeVerified',
+  'design.page.knowledgeOutdated', 'design.page.templates',
+  // 模組左欄名（品牌／創作／素材／知識四個是既有鍵，只用精確鍵加 templates）。
+  'design.module.templates'];
 
 function hashNonFrame(msgs: Record<string, string>): string {
   const entries = Object.entries(msgs)

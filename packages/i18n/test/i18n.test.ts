@@ -78,6 +78,8 @@ describe('字串表', () => {
   'gate.body',
   'gate.departmentClosed.body',
   'design.brand.lead',
+  'design.project.searchResults',
+  'design.template.formatTitle',
       'policy.scope.unit',
       'policy.scope.unitNameUnknown',
       'policy.condition.eq',

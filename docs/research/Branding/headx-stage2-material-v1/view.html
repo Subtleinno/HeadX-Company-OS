@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-Hant"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Stage 02 · 材質隱喻 (View)</title><link rel="stylesheet" href="shared.css"/><style id="phys"></style>
+<style>
+.spec{max-width:1080px;margin:0 auto;padding:64px 28px 120px}
+.eyebrow{font-family:var(--mono);font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.hero{display:grid;grid-template-columns:1.2fr 1fr;gap:36px;align-items:stretch;margin-top:16px}
+@media(max-width:820px){.hero{grid-template-columns:1fr}}
+.plate{min-height:340px;border-radius:24px;border:1px solid rgba(0,0,0,.08);display:flex;align-items:flex-end;padding:20px;position:relative;overflow:hidden}
+.plate span{background:rgba(255,255,255,.82);backdrop-filter:blur(8px);padding:6px 14px;border-radius:999px;font-size:.8rem}
+.stmt{font-family:var(--serif);font-size:clamp(1.4rem,2.8vw,2.1rem);line-height:1.55;margin:0 0 14px}
+.empty{color:var(--muted)}.src{font-family:var(--mono);font-size:.72rem;color:var(--muted)}
+.prog{display:inline-block;margin:14px 0 0;font-family:var(--mono);font-size:.76rem;border:1px solid var(--line);border-radius:999px;padding:4px 12px;background:#fff}
+.sec{border-top:1px solid var(--line);margin-top:54px;padding-top:26px}
+.sec h3{font-family:var(--mono);font-size:.74rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:0 0 6px}
+.sec .lead{font-size:.88rem;color:var(--muted);margin:0 0 18px;max-width:66ch}
+.sws{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+.s{border-radius:14px;overflow:hidden;border:1px solid var(--line);background:#fff}.s i{display:block;height:96px}.s div{padding:10px 12px}.s b{display:block;font-size:.9rem}.s p{margin:2px 0 0;font-size:.76rem;color:var(--muted)}
+.s.no{position:relative}.s.no::after{content:"✕";position:absolute;top:8px;right:12px;color:#fff;font-size:1.2rem;text-shadow:0 1px 3px rgba(0,0,0,.5)}
+.kw{display:flex;flex-wrap:wrap;gap:10px 26px;margin:6px 0 18px}.kw b{font-family:var(--serif);font-weight:500;font-size:clamp(1.8rem,4vw,3rem);letter-spacing:.02em}
+.akw{display:flex;flex-wrap:wrap;gap:8px}.akw span{text-decoration:line-through;color:var(--danger);background:var(--danger-bg);border-radius:999px;padding:3px 12px;font-size:.84rem}
+.tags{display:flex;flex-wrap:wrap;gap:8px}.tags span{background:#fff;border:1px solid var(--line);border-radius:999px;padding:3px 12px;font-size:.82rem}
+.stage{border-radius:24px;padding:48px 28px;display:flex;gap:28px;flex-wrap:wrap;align-items:center;justify-content:center;border:1px solid var(--line)}
+.demo{background:var(--surface-bg,#fff);border:var(--surface-border,none);box-shadow:var(--surface-shadow,none);border-radius:var(--radius,12px);-webkit-backdrop-filter:blur(var(--surface-blur,0px));backdrop-filter:blur(var(--surface-blur,0px));padding:calc(var(--space-unit,8px)*3);width:260px;line-height:var(--line-height,1.65);transition:transform var(--motion-duration,150ms) var(--motion-easing,linear),box-shadow var(--motion-duration,150ms) var(--motion-easing,linear);color:#141413}
+.demo:hover{transform:translateY(-6px)}.demo h4{margin:0 0 6px;font-family:var(--serif)}.demo p{margin:0 0 12px;font-size:.85rem}
+.demo .b{display:inline-block;padding:6px 16px;background:#141413;color:#fff;border-radius:var(--radius,12px);font-size:.8rem}
+.demo img,.demo .im{display:block;width:100%;height:80px;border-radius:calc(var(--radius,12px)/1.5);margin-bottom:10px;background:linear-gradient(135deg,#f6a,#6bf,#fc6);filter:var(--img-filter,none)}
+table{width:100%;border-collapse:collapse;font-size:.82rem;background:#fff;border:1px solid var(--line)}th,td{border-bottom:1px solid var(--line);padding:8px 12px;text-align:left}th{font-family:var(--mono);font-size:.72rem;color:var(--muted);font-weight:500}td code{font-family:var(--mono);font-size:.76rem;word-break:break-all}
+.ck li{margin-bottom:6px;font-size:.86rem}.ck .warn{color:var(--warn)}.ck .error{color:var(--danger)}.ck .info{color:var(--muted)}
+.rl{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}.rl div{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px}.rl small{font-family:var(--mono);font-size:.68rem;color:var(--muted);display:block}.rl b{font-size:.92rem}.rl p{margin:2px 0 0;font-size:.76rem;color:var(--muted)}
+</style></head><body>
+<nav class="topbar"><div class="brand-tag">COMPANY OS · BRAND STAGE 02 / 06</div>
+<div class="nav-links"><a class="nav-pill" href="edit.html">Edit</a><a class="nav-pill active" href="view.html">View</a><a class="nav-pill" href="agent.html">AI Agent</a></div></nav>
+<main class="spec" id="m"></main>
+<script src="options.js"></script><script src="core.js"></script>
+<script>
+const s=load(),c=completeness(s),esc=t=>String(t).replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[m]));
+const hexA=(h,a)=>{h=h.replace("#","");return `rgba(${[0,2,4].map(i=>parseInt(h.slice(i,i+2),16)).join(",")},${a})`};
+const t=buildTokens(s);let css=tokensCSS(s);
+if(t["--surface-alpha"]&&t["--surface-bg"]&&t["--surface-bg"][0]==="#")css+=`:root{--surface-bg:${hexA(t["--surface-bg"],t["--surface-alpha"])}}`;
+document.getElementById("phys").textContent=css;
+const mats=items("material",s),prim=mats[0],lights=items("light",s);
+const bg=prim&&prim.sw?prim.sw:"linear-gradient(135deg,#ECECE8,#D9D9D3)";
+const st=s.statement||draft(s);
+const sw=(a,cls)=>a.length?`<div class="sws">${a.map(i=>`<div class="s ${cls||""}"><i style="background:${i.sw||"#ddd"}"></i><div><b>${esc(i.zh)}</b><p>${esc(i.desc)}</p></div></div>`).join("")}</div>`:`<p class="empty">尚未選擇</p>`;
+const tg=k=>{const l=labels(k,s);return l.length?`<div class="tags">${l.map(x=>`<span>${esc(x)}</span>`).join("")}</div>`:`<p class="empty">尚未選擇</p>`};
+const kw=labels("keywords",s),akw=labels("antiKeywords",s);
+const ck=checks(s);
+const rules=DIMS.map(d=>{const o=s.rules[d.id]&&OPT(d.id,s.rules[d.id]);return `<div><small>${d.title}</small><b>${o?esc(o.zh):'<span class="empty">未選</span>'}</b>${o?`<p>${esc(o.desc)}</p>`:""}</div>`}).join("");
+const rows=Object.entries(t).map(([k,v])=>`<tr><td><code>${esc(k)}</code></td><td><code>${esc(v)}</code></td></tr>`).join("");
+const hasRules=rulesDone(s)>0;
+document.getElementById("m").innerHTML=`
+<span class="eyebrow">02 / Material &amp; Sensory Metaphor${s.s1&&s.s1.name?" · "+esc(s.s1.name):""}</span>
+<div class="hero"><div><p class="stmt ${s.statement||count("material",s)?"":"empty"}">${esc(st)}</p><span class="src">${s.statement?"人工撰寫":"由選擇自動組合的草稿"}</span><br/>
+<span class="prog">完成度 ${c.pct}%（${c.done}/${c.total}）${c.missing.length?" · 未完成："+c.missing.map(m=>m.label.replace(/（.*/,"")).join("、"):""}</span></div>
+<div class="plate" style="background:${bg}"><span>${prim?esc(prim.zh):"尚未選擇主材質"}${lights[0]?" · "+esc(lights[0].zh):""}</span></div></div>
+<div class="sec"><h3>材質與光線</h3><p class="lead">品牌如果是一件物件，它是這些材質做的，在這些光之下最好看。${s.materialNote?esc(s.materialNote):""}</p>${sw(mats)}<div style="height:16px"></div>${sw(lights)}</div>
+<div class="sec"><h3>觸感・空氣・動態與聲音</h3><p class="lead">摸起來、呼吸起來、動起來的感覺。</p><p class="lead" style="margin-bottom:6px"><b>觸感</b></p>${tg("tactile")}<p class="lead" style="margin:16px 0 6px"><b>空氣與氛圍</b></p>${sw(items("atmosphere",s))}<p class="lead" style="margin:16px 0 6px"><b>動態與聲音</b></p>${tg("motionsound")}</div>
+<div class="sec"><h3>情緒關鍵字（檢查所有素材的尺）</h3><div class="kw">${kw.length?kw.map(x=>`<b>${esc(x)}</b>`).join(""):'<span class="empty">尚未選擇</span>'}</div><div class="akw">${akw.map(x=>`<span>${esc(x)}</span>`).join("")}</div></div>
+<div class="sec"><h3>視覺物理規則（即時預覽）</h3><p class="lead">這是用你選的規則轉成設計 token 後，實際長出來的卡片。把滑鼠移上去，看動態手感。</p>
+<div class="stage" style="background:${bg}"><div class="demo"><div class="im"></div><h4>${esc((s.s1&&s.s1.name)||"品牌")}</h4><p>${esc(kw.slice(0,3).join("・")||"請先選關鍵字")}</p><span class="b">開始</span></div><div class="demo"><h4>第二張卡片</h4><p>留白、圓角、陰影與模糊都來自同一組 token。</p><span class="b">了解更多</span></div></div>
+${hasRules?"":'<p class="empty" style="margin-top:12px">尚未選擇規則，預覽使用預設值。</p>'}
+<div class="rl" style="margin-top:20px">${rules}</div>
+<h3 style="margin:28px 0 8px">Design tokens</h3><table><thead><tr><th>變數</th><th>值</th></tr></thead><tbody>${rows||'<tr><td colspan="2" class="empty">尚無 token</td></tr>'}</tbody></table></div>
+<div class="sec"><h3>物理禁區</h3><p class="lead">絕對不能看起來像這些材質。</p>${sw(items("avoidMaterials",s),"no")}</div>
+<div class="sec"><h3>一致性檢查</h3><ul class="ck" style="padding-left:18px">${ck.length?ck.map(x=>`<li class="${x.level}">${x.level==="error"?"✕":x.level==="warn"?"⚠":"ℹ"} ${esc(x.msg)}</li>`).join(""):"<li class='info'>目前沒有衝突。</li>"}</ul></div>`;
+</script></body></html>

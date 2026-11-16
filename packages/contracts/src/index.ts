@@ -336,3 +336,4 @@ export * from './brand/index.ts';
 
 /** Marketing Design Project／Brief：API、Web 與外部 client 共用同一份契約。 */
 export * from './project/index.ts';
+export * from './carousel/index.ts';

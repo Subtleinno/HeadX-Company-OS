@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-Hant"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Stage 00 · 業務基礎 (View)</title><link rel="stylesheet" href="shared.css"/>
+<style>
+.spec{max-width:1120px;margin:0 auto;padding:60px 28px 120px}
+.eyebrow{font-family:var(--mono);font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.title{font-family:var(--serif);font-size:clamp(2.2rem,5vw,3.6rem);line-height:1.1;margin:12px 0 18px;letter-spacing:-.01em}
+.three{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin:10px 0 0}
+.three div{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px}.three small{font-family:var(--mono);font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);display:block;margin-bottom:4px}.three p{margin:0;font-family:var(--serif);font-size:1.15rem;line-height:1.5}
+.empty{color:var(--muted)}.prog{display:inline-block;margin:16px 0 0;font-family:var(--mono);font-size:.76rem;border:1px solid var(--line);border-radius:999px;padding:4px 12px;background:#fff}
+.sec{border-top:1px solid var(--line);margin-top:50px;padding-top:24px}.sec h3{font-family:var(--mono);font-size:.74rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:0 0 6px}.sec .lead{font-size:.86rem;color:var(--muted);margin:0 0 16px;max-width:72ch}
+.bmc{display:grid;grid-template-columns:repeat(10,1fr);grid-template-rows:auto auto auto;gap:8px}
+.bmc>div{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:.82rem}
+.bmc h4{margin:0 0 6px;font-size:.78rem}.bmc h4 small{display:block;font-family:var(--mono);font-size:.62rem;color:var(--muted);font-weight:400}.bmc p{margin:0 0 4px}.bmc .e{color:var(--muted)}
+.b-kp{grid-column:1/3;grid-row:1/3}.b-ka{grid-column:3/5;grid-row:1}.b-kr{grid-column:3/5;grid-row:2}.b-vp{grid-column:5/7;grid-row:1/3}.b-cr{grid-column:7/9;grid-row:1}.b-ch{grid-column:7/9;grid-row:2}.b-cs{grid-column:9/11;grid-row:1/3}.b-co{grid-column:1/6;grid-row:3}.b-rv{grid-column:6/11;grid-row:3}
+@media(max-width:860px){.bmc{display:block}.bmc>div{margin-bottom:8px}}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}.c{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 16px}.c b{display:block;font-size:.95rem}.c p{margin:4px 0 0;font-size:.8rem;color:var(--muted)}
+.formula{font-family:var(--mono);font-size:.9rem;background:#fff;border:1px dashed var(--line);border-radius:12px;padding:14px 18px;margin:0 0 16px}
+.lv{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin-bottom:10px}.lv h4{margin:0 0 8px;font-size:.95rem}.lv .tg{display:flex;flex-wrap:wrap;gap:6px}.lv .tg span{background:var(--soft);border:1px solid #BFDBFE;border-radius:999px;padding:2px 12px;font-size:.8rem}
+.lv small{color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:.85rem;background:#fff;border:1px solid var(--line)}th,td{border-bottom:1px solid var(--line);padding:9px 14px;text-align:left;vertical-align:top}th{width:260px;font-family:var(--mono);font-size:.7rem;color:var(--muted);font-weight:500}td small{display:block;color:var(--muted);font-size:.72rem}td b{font-family:var(--mono)}
+.cl{display:grid;gap:10px}.cl>div{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 16px;display:grid;grid-template-columns:110px 1fr;gap:14px}
+@media(max-width:700px){.cl>div{grid-template-columns:1fr}}
+.st{font-family:var(--mono);font-size:.7rem;border-radius:999px;padding:2px 10px;align-self:start;text-align:center;border:1px solid var(--line)}
+.st.todo{background:#fff7ed;color:#9a3412;border-color:#fed7aa}.st.doing{background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe}.st.done{background:#f0fdf4;color:#166534;border-color:#bbf7d0}.st.later{background:#f4f4f5;color:#52525b}.st.check{background:#fefce8;color:#854d0e;border-color:#fde68a}
+.cl b{display:block;margin-bottom:2px}.cl p{margin:0;font-size:.82rem;color:#444;white-space:pre-wrap}.cl a{font-size:.78rem;margin-right:12px}
+.hi{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}.hi>div{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 16px}.hi h4{margin:0 0 8px;font-family:var(--mono);font-size:.74rem;color:var(--accent)}.hi li{font-size:.82rem;margin-bottom:6px}.hi small{display:block;color:var(--muted)}.hi ul{margin:0;padding-left:16px}
+.tags{display:flex;flex-wrap:wrap;gap:8px}.tags span{background:#fff;border:1px solid var(--line);border-radius:999px;padding:3px 12px;font-size:.84rem}
+.ln{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin-bottom:8px;font-size:.9rem;white-space:pre-wrap}.ln small{display:block;font-family:var(--mono);font-size:.68rem;color:var(--muted);text-transform:uppercase;margin-bottom:2px}
+.ck li{margin-bottom:6px;font-size:.86rem}.ck .warn{color:var(--warn)}.ck .error{color:var(--danger)}.ck .info{color:var(--muted)}
+</style></head><body>
+<nav class="topbar"><div class="brand-tag">COMPANY OS · BRAND STAGE 00 / 06 · 業務基礎</div>
+<div class="nav-links"><a class="nav-pill" href="edit.html">Edit</a><a class="nav-pill active" href="view.html">View</a><a class="nav-pill" href="agent.html">AI Agent</a></div></nav>
+<main class="spec" id="m"></main>
+<script src="options.js"></script><script src="core.js"></script>
+<script>
+const s=load(),c=completeness(s),esc=t=>String(t).replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[m]));
+const X=id=>T_(s,id),L=k=>labels(k,s),P=id=>{const o=picked(s,id);return o?o.zh:""};
+const name=X("trading")||X("legalZh")||X("legalEn")||"尚未命名的業務";
+const three=[["我們做什麼","what"],["主要給誰","who"],["怎麼收錢","how"]].map(([l,k])=>`<div><small>${l}</small><p class="${X(k)?"":"empty"}">${esc(X(k)||"尚未填寫")}</p></div>`).join("");
+const cv=canvas(s),cls={customer_segments:"b-cs",value_propositions:"b-vp",channels:"b-ch",customer_relationships:"b-cr",revenue_streams:"b-rv",key_resources:"b-kr",key_activities:"b-ka",key_partners:"b-kp",cost_structure:"b-co"};
+const bmc=cv.map(b=>`<div class="${cls[b.id]}"><h4>${b.zh}<small>${b.en}</small></h4>${b.lines.length?b.lines.map(x=>`<p>${esc(x)}</p>`).join(""):'<p class="e">尚未填寫</p>'}</div>`).join("");
+const cardsOf=(k,cls)=>{const it=items(k,s);return it.length?`<div class="cards">${it.map(i=>`<div class="c ${cls||""}"><b>${esc(i.zh)}</b>${i.desc?`<p>${esc(i.desc)}</p>`:""}</div>`).join("")}</div>`:'<p class="empty">尚未選擇</p>'};
+const lvHTML=items("levers",s).map(l=>{const t=s.tactics.map(id=>byId("tactics",id)).filter(x=>x&&x.lv===l.id);return `<div class="lv"><h4>${esc(l.zh)} <small>${esc(l.desc||"")}</small></h4>${t.length?`<div class="tg">${t.map(x=>`<span title="${esc(x.desc)}">${esc(x.zh)}</span>`).join("")}</div>`:'<small class="empty">尚未選擇對應的具體做法</small>'}</div>`}).join("")||'<p class="empty">尚未選擇槓桿</p>';
+const orphan=s.tactics.map(id=>byId("tactics",id)).filter(x=>x&&!s.levers.includes(x.lv));
+const orphanHTML=orphan.length?`<div class="lv"><h4>未對應到所選槓桿的做法</h4><div class="tg">${orphan.map(x=>`<span>${esc(x.zh)}</span>`).join("")}</div></div>`:"";
+const econDims=["grossMargin","cacLevel","paybackPeriod","cashflow","seasonality","capacity","concentration"].map(id=>{const d=dimInfo(id),o=picked(s,id);return `<tr><th>${d.title}</th><td>${o?`<b style="font-family:inherit">${esc(o.zh)}</b>${o.desc?`<small>${esc(o.desc)}</small>`:""}`:'<span class="empty">尚未選擇</span>'}</td></tr>`}).join("");
+const u=unitEcon(s);
+const econTbl=u.any?`<table>${econRows(s).map(r=>`<tr><th>${r[0]}</th><td><b>${esc(r[3])}</b><small>${esc(r[2])}</small></td></tr>`).join("")}</table>`:'<p class="empty">尚未填寫計算器數字（Edit 頁卡片 09）。</p>';
+const ST={todo:"待辦",doing:"進行中",done:"已完成",later:"稍後",check:"待核對"};
+const cl=checklist(s).map(i=>`<div><span class="st ${i.status}">${ST[i.status]}</span><div><b>${esc(i.title)}</b><p>${esc(i.detail)}</p>${i.links.map(l=>`<a href="${l[1]}" target="_blank" rel="noopener">${esc(l[0])} ↗</a>`).join("")}</div></div>`).join("");
+const hs=hints(s),stages=[...new Set(hs.map(h=>h.stage))].sort();
+const hi=stages.map(st=>`<div><h4>${st}</h4><ul>${hs.filter(h=>h.stage===st).map(h=>`<li><b>${esc(h.field)}</b>：${esc(h.text)}<small>原因：${esc(h.why)}</small></li>`).join("")}</ul></div>`).join("");
+const tg=(a)=>a.length?`<div class="tags">${a.map(x=>`<span>${esc(x)}</span>`).join("")}</div>`:'<p class="empty">尚未選擇</p>';
+const ln=(l,t)=>`<div class="ln"><small>${l}</small>${t?esc(t):'<span class="empty">尚未填寫</span>'}</div>`;
+const ck=checks(s);
+const prof=[["公司註冊名稱（中）","legalZh"],["公司註冊名稱（英）","legalEn"],["營業名稱","trading"],["營業地址","address"],["聯絡電郵","email"],["聯絡電話","phone"],["網站","website"],["社群帳號","social"],["貨幣","currency"],["時區","timezone"],["財政年度結束日","fiscalEnd"]].map(([l,k])=>`<tr><th>${l}</th><td>${X(k)?esc(X(k)).replace(/\n/g,"<br>"):'<span class="empty">—</span>'}</td></tr>`).join("");
+document.getElementById("m").innerHTML=`
+<span class="eyebrow">00 / Business Foundation · ${esc(P("status")||"狀態未選")}</span>
+<h1 class="title">${esc(name)}</h1><div class="three">${three}</div>
+<span class="prog">完成度 ${c.pct}%（${c.done}/${c.total}）${c.missing.length?" · 未完成："+c.missing.map(m=>m.label.replace(/（.*/,"")).join("、"):""}</span>
+<div class="sec"><h3>業務畫布（Business Model Canvas）</h3><p class="lead">九個區塊一頁看清楚這門生意怎麼運作。空白的地方就是還沒想清楚的地方。</p><div class="bmc">${bmc}</div></div>
+<div class="sec"><h3>賺錢策略</h3><p class="lead">錢主要靠哪種型態賺、價格怎麼定、要先推動哪些槓桿。收入可以拆成下面的公式，找出最弱的一環最划算。</p>
+<div class="formula">收入 ＝ 流量 × 轉化率 × 客單價 × 回購頻率</div>
+<p class="lead" style="margin-bottom:6px"><b>賺錢策略型態</b></p>${cardsOf("bmodel")}
+<p class="lead" style="margin:18px 0 6px"><b>定價策略</b></p>${cardsOf("pricingStrategy")}
+<p class="lead" style="margin:18px 0 6px"><b>收入槓桿與具體做法</b></p>${lvHTML}${orphanHTML}</div>
+<div class="sec"><h3>單位經濟與現金流</h3><p class="lead">由你填入的數字自動計算。LTV÷獲客成本 3 倍以上、回本 12 個月內只是常見經驗法則，不是定律；數字請與會計師或實際紀錄核對。</p>${econTbl}<div style="height:12px"></div><table>${econDims}</table></div>
+<div class="sec"><h3>業務概況</h3><div class="three"><div><small>行業</small><p>${esc(L("industry").join("、")||"尚未選擇")}</p></div><div><small>價格與客單價</small><p>${esc([P("priceTier"),P("avgTicket")?"客單價 HKD "+P("avgTicket"):""].filter(Boolean).join("｜")||"尚未選擇")}</p></div><div><small>市場與語言</small><p>${esc([L("markets").join("、"),L("languages").join("、")].filter(Boolean).join("｜")||"尚未選擇")}</p></div></div></div>
+<div class="sec"><h3>起步清單（香港）</h3><p class="lead">依你的選擇自動產生。只是提醒，不是法律意見，請以官方網站與專業人士意見為準。</p><div class="cl">${cl}</div></div>
+<div class="sec"><h3>準備度與一致性檢查</h3><ul class="ck" style="padding-left:18px">${ck.length?ck.map(x=>`<li class="${x.level}">${x.level==="error"?"✕":x.level==="warn"?"⚠":"ℹ"} ${esc(x.msg)}</li>`).join(""):"<li class='info'>目前沒有發現問題。</li>"}</ul></div>
+<div class="sec"><h3>給之後各階段的建議</h3><p class="lead">這些是根據你的業務資料推導出來的預設建議，到各階段時可直接參考。目前各階段還不會自動讀取，請用 Edit 頁的「複製『業務背景』給 AI」帶過去。</p><div class="hi">${hi||'<p class="empty">資料不足，暫時沒有建議。</p>'}</div></div>
+<div class="sec"><h3>品牌目的與價值觀</h3>${ln("為什麼做",X("purpose"))}${ln("願景",X("vision"))}${ln("起源故事",X("story"))}${ln("創辦人／團隊",X("founder"))}${tg(L("values"))}</div>
+<div class="sec"><h3>競爭對手與欣賞的品牌</h3>${[1,2,3].map(i=>X("comp"+i)?ln("競爭對手 "+i,X("comp"+i)):"").join("")||'<p class="empty">尚未填寫</p>'}${[1,2,3].map(i=>X("admire"+i)?ln("欣賞 "+i,X("admire"+i)):"").join("")}</div>
+<div class="sec"><h3>目標、限制與底線</h3><p class="lead" style="margin-bottom:6px">12 個月目標</p>${tg(L("goals"))}<p class="lead" style="margin:14px 0 6px">限制</p>${tg(L("constraints"))}<div style="height:12px"></div>${ln("一定要做到",X("mustHave"))}${ln("絕對不接受",X("dealBreaker"))}</div>
+<div class="sec"><h3>公司基本資料</h3><table>${prof}</table></div>`;
+</script></body></html>

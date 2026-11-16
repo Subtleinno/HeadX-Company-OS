@@ -39,6 +39,7 @@ type SummaryRow = {
   brand_id: string;
   brand_name: string;
   title: string;
+  format: 'carousel' | 'presentation' | 'video';
   created_at: Date;
   brief_version_no: number | null;
   run_id: string | null;
@@ -46,13 +47,21 @@ type SummaryRow = {
   agent_name: string | null;
   run_request_id: string | null;
   run_claimed_at: Date | null;
+  composition_id: string | null;
+  active_render_id: string | null;
+  output_id: string | null;
+  preview_file_id: string | null;
 };
 
 const SUMMARY_SELECT = `
-  select p.id, p.brand_id, b.name as brand_name, p.title, p.created_at,
+  select p.id, p.brand_id, b.name as brand_name, p.title, p.format, p.created_at,
          latest_brief.version_no as brief_version_no,
          latest_run.id as run_id, latest_run.agent_id, latest_run.agent_name,
-         latest_run.request_id as run_request_id, latest_run.claimed_at as run_claimed_at
+         latest_run.request_id as run_request_id, latest_run.claimed_at as run_claimed_at,
+         latest_composition.id as composition_id,
+         active_render.id as active_render_id,
+         latest_output.id as output_id,
+         latest_output.preview_file_id
     from design.project p
     join public.brand b on b.id = p.brand_id
     left join lateral (
@@ -64,7 +73,20 @@ const SUMMARY_SELECT = `
         from design.agent_run ar
         join public.agent_identity a on a.id = ar.agent_id
        where ar.project_id = p.id order by ar.claimed_at desc, ar.id desc limit 1
-    ) latest_run on true`;
+    ) latest_run on true
+    left join lateral (
+      select c.id from design.composition c where c.project_id = p.id order by c.version_no desc limit 1
+    ) latest_composition on true
+    left join lateral (
+      select j.id from design.render_job j where j.project_id = p.id and j.status in ('queued', 'running') order by j.created_at desc limit 1
+    ) active_render on true
+    left join lateral (
+      select o.id,
+             (select f.id from design.output_file f
+               where f.output_id = o.id and f.kind = 'page'
+               order by f.name asc, f.id asc limit 1) as preview_file_id
+        from design.output o where o.project_id = p.id order by o.created_at desc limit 1
+    ) latest_output on true`;
 
 function runOf(row: RunRow): ProjectAgentRun {
   return {
@@ -112,14 +134,15 @@ function summaryOf(row: SummaryRow): ProjectSummary {
     brandId: row.brand_id,
     brandName: row.brand_name,
     title: row.title,
+    format: row.format,
+    previewUrl: row.preview_file_id === null ? null : `/api/output-files/${encodeURIComponent(row.preview_file_id)}`,
     state: deriveProjectState({
       hasAgentRun: agentRun !== null,
       hasBrief: row.brief_version_no !== null,
-      // Needs／Composition／Render／Output 尚未在這一刀建立，不能憑空當成事實。
       openNeedCount: 0,
-      hasCompleteComposition: false,
-      hasActiveRender: false,
-      hasOutput: false,
+      hasCompleteComposition: row.composition_id !== null,
+      hasActiveRender: row.active_render_id !== null,
+      hasOutput: row.output_id !== null,
       receivedAt: null,
     }),
     briefVersionNo: row.brief_version_no,
@@ -223,6 +246,7 @@ export async function createProject(
     brandId: string;
     title: string;
     request: string;
+    format: 'carousel' | 'presentation' | 'video';
     actorId: string;
     idempotencyKey: string;
     requestHash: string;
@@ -234,10 +258,10 @@ export async function createProject(
 
     const inserted = await client.query<{ id: string }>(
       `insert into design.project
-        (brand_id, title, created_by, idempotency_key, idempotency_hash)
-       values ($1, $2, $3, $4, $5)
+        (brand_id, title, format, created_by, idempotency_key, idempotency_hash)
+       values ($1, $2, $3, $4, $5, $6)
        on conflict (created_by, idempotency_key) do nothing returning id`,
-      [input.brandId, input.title, input.actorId, input.idempotencyKey, input.requestHash],
+      [input.brandId, input.title, input.format, input.actorId, input.idempotencyKey, input.requestHash],
     );
 
     let projectId = inserted.rows[0]?.id;

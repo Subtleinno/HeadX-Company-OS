@@ -3,9 +3,21 @@
 > `docs/INDEX.md` 是文件地圖，`AGENTS.md` 是規則。這一頁只管四件事：
 > **現在有什麼、怎樣跑起來、下一步做什麼、哪幾個坑別踩。**
 
-最後更新：2026-11-16（Marketing Design v3 #95：Projects 真實列表／新增／詳情、原始要求、append-only Brief 版本、request-scoped agent HTTP token 與接手狀態；Ardot `5:1`／`5:129` 已同步實作。決策見 C129–C131）
+最後更新：2026-11-17（Marketing Design 完整產品總圖已由老闆修訂為 `MARKETING-DESIGN-BLUEPRINT.md` v4.1；本頁部分路由與空殼描述仍是舊施工記錄，待目前工作樹驗證及部署後同步）
 
-> **2026-11-16 Marketing Design v3 規劃入口：**老闆已判定現有 Brand 方向失敗，要求重做整個 Marketing Design 閉環。新工作先讀 `MARKETING-DESIGN-BLUEPRINT.md`（#93）與 Ardot `https://ardot.tencent.com/file/748070210348880`，以新 issue 理解依賴與驗收背景；不要繼續把 #89 的未完成逐頁修補當成新一輪方向。本頁以下仍描述**目前程式現況**，不是 v3 已完成驗收。
+> **新 session 的產品入口：**先讀 `MARKETING-DESIGN-BLUEPRINT.md` v4.1。它已整合完整 Carousel 業務鏈、最新 Project Library／Knowledge 截圖資訊架構、五模組專用左欄、多格式骨架、HyperFrames、MCP／Skills、App／Brand selector、Boss／Super Admin、據點與機器，以及真實完成／未完成狀態。不要再由舊對話重新推測產品。
+>
+> **目前核心事實：**Carousel 資料模型、HTTP API、正式 MCP、創作工作台與 Library 已有本機程式及多項歷史測試記錄；但 HyperFrames 真實五張 PNG／ZIP 仍未驗收，最新工作樹亦未完成最後 lint／全量測試與 Docker 部署。不得把本頁舊「未做 MCP」或空殼描述當作最新決定，也不得宣稱完整生成閉環已完成。
+>
+> **本機依賴核對（不是執行驗收）：**`package-lock.json` 鎖定 HyperFrames `0.9.56` 與 `@modelcontextprotocol/sdk` `1.32.2`。HyperFrames Docker CLI／Render 可用性仍待實測；MCP initialize 實際協商的 protocol version 尚未記錄，不得由 SDK 版本推斷。Project State 的目標與本機程式差距見藍圖第 5 節。
+>
+> **2026-11-17 GitHub 施工佇列已重置：**老闆指示主要 agent 停止實作、只作規劃與管理，由 DeepSeek V4.1 Flash 執行。舊 53 張 issues（open＋closed）已全部刪除；完整備份在 `.workbuddy/github-backup/issues-before-v4.1-reset-2026-11-17.json`。新總控是 **#110**，批次為 #111–#120。每張已詳列 `docs/research/`（由既定研究稿正式提交）的必讀方案、程式範圍、施工步驟與驗收；這是**無人值守自主 loop**：前置未完成就自行完成，規格空白用 v4.1＋研究稿＋程式收斂，不向老闆提問或等待批准。每個可見增量都要即時更新 Docker UI，並在 issue 回報畫面、真實問題、證據與下一動作，讓老闆不靠程式碼也能持續看到進度。
+>
+> **v4.1 基線已正式進 main：**PR #121 六項 checks 全綠後 squash merge，merge commit `192fd97560ddd294307450dbc25e12260fa6385f`。已直接由 `origin/main` 驗證 v4.1、owner-reviewed 原稿、`docs/research/` 與 stage4f；DeepSeek 不需要本機 `Perplexity idea/` 或文件分支。藍圖 §4 已加入 A–H／N／P 管線及階段輸入輸出表，§5 最新目標為八狀態（含 `needs_revision`、`accepted_at`）。
+>
+> **老闆審閱原稿：**未修改副本保存於 `docs/product/reviewed/MARKETING-DESIGN-BLUEPRINT-v4.1-owner-reviewed.md`；產品正本仍是上層 `MARKETING-DESIGN-BLUEPRINT.md`。
+>
+> **2026-11-16 Marketing Design v3 歷史入口：**舊規劃追蹤 #93–#105；實際範圍與收斂次序已由上述 v4.1 總圖取代。舊 Ardot：`https://ardot.tencent.com/file/748070210348880`；本輪創作工作台 Ardot：`https://ardot.tencent.com/file/748129148813297`。
 >
 > **2026-11-16 全產品施工邊界：**產品範圍是整個 HeadX-Company-OS，包括 Boss Portal、共享外殼與其他部門 app；Marketing Design 只是第一條逐塊交付線，不是唯一可修改的程式區域。老闆已授權主要 agent 管理整個項目並以新規則取代舊範圍鎖，詳見 `AGENTS.md`「項目管理與施工規則」及 C128。若正確實作必須改共享導覽、權限、Frame、Boss Portal 或其他 app，可以直接施工，不必用局部 workaround 避開；但要保持單一業務真相與對象擁有權，並補上受影響 app 的測試及真瀏覽器驗收。#94 已把 768 平板導覽收回共享 `frame.css`，Design 與 Boss Portal 都以真瀏覽器驗證五個入口完整可見。交付仍一次完成一個可驗收縱切片，不把「全產品由同一位 agent 開發」理解成同時重寫所有模組。
 

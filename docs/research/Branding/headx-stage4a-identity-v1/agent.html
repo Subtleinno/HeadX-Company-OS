@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="zh-Hant"><head><meta charset="UTF-8"/><title>Stage 04A · AI Agent Contract</title><link rel="stylesheet" href="shared.css"/>
+<style>body{background:#0D0E11;color:#F4F4F6}.topbar{background:rgba(13,14,17,.9);border-bottom-color:#252932}.nav-pill{background:#15171C;border-color:#252932;color:#8B929E}.nav-pill.active{background:#F4F4F6;color:#0D0E11}
+.wrap{max-width:1000px;margin:0 auto;padding:40px 24px 100px}.panel{background:#15171C;border:1px solid #252932;border-radius:12px;padding:22px;margin-bottom:20px}.t{font-family:var(--mono);font-size:.76rem;color:#60A5FA;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px;flex-wrap:wrap}
+pre{margin:0;font-family:var(--mono);font-size:.78rem;line-height:1.6;overflow:auto;color:#E2E8F0;white-space:pre-wrap;word-break:break-word;max-height:480px}.b{background:#0D0E11;color:#F4F4F6;border:1px solid #252932;border-radius:6px;padding:4px 10px;font:inherit;font-size:.72rem;cursor:pointer}.st{font-family:var(--mono);font-size:.8rem;margin-bottom:16px}.ok{color:#10B981}.no{color:#F59E0B}</style></head><body>
+<nav class="topbar"><div class="brand-tag" style="color:#10B981">● AI AGENT CONTRACT // STAGE 04A</div><div class="nav-links"><a class="nav-pill" href="edit.html">Edit</a><a class="nav-pill" href="view.html">View</a><a class="nav-pill active" href="agent.html">AI Agent</a></div></nav>
+<main class="wrap"><div class="st" id="st"></div><div id="panels"></div></main><div class="toast" id="toast"></div>
+<script src="color.js"></script><script src="options.js"></script><script src="core.js"></script>
+<script>
+const s=load(),b=buildBrief(s);
+const prompt="你是這個品牌的識別設計 Agent。請只依據下面的識別背景與決策記錄工作。\n\n【硬性規則】\n"+b.agent_rules.map(r=>"- "+r).join("\n")+"\n\n【目前仍待處理的檢查（warn／error）】\n"+(b.consistency_checks.filter(x=>x.level!=="info").map(x=>"- "+x.msg).join("\n")||"- 無")+"\n\n【識別背景】\n"+b.identity_context+"\n\n【不確定時】請回報人類，不要自行補寫授權、商標、測試結果、核准者或日期。";
+const FILES=[["ctx","identity-context.txt","text/plain","【我的識別背景】\n"+ctxIdentity(s)],["ap","design-agent-prompt.txt","text/plain",prompt],["br","stage4a-brief.json","application/json",JSON.stringify(b,null,2)]];
+document.getElementById("panels").innerHTML=FILES.map(f=>`<div class="panel"><div class="t"><span>${f[1]}</span><span><button class="b" data-c="${f[0]}">複製</button> <button class="b" data-d="${f[0]}">下載</button></span></div><pre id="p-${f[0]}"></pre></div>`).join("");
+FILES.forEach(f=>document.getElementById("p-"+f[0]).textContent=f[3]);
+document.getElementById("st").innerHTML=`status: <span class="${b.status==="complete"?"ok":"no"}">${b.status}</span> · completeness ${b.completeness}% · approval_enforced: false${b.missing.length?" · missing: "+b.missing.map(m=>m.key).join(", "):""}`;
+const tmsg=m=>{const t=document.getElementById("toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1600)};
+document.addEventListener("click",e=>{const c=e.target.closest("[data-c]"),d=e.target.closest("[data-d]");const find=k=>FILES.find(f=>f[0]===k);
+ if(c)navigator.clipboard.writeText(find(c.dataset.c)[3]).then(()=>tmsg("已複製"),()=>tmsg("無法寫入剪貼簿"));
+ if(d){const f=find(d.dataset.d),bl=new Blob([f[3]],{type:f[2]}),a=document.createElement("a");a.href=URL.createObjectURL(bl);a.download=f[1];a.click()}});
+</script></body></html>

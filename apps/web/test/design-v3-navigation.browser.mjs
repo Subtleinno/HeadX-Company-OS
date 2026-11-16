@@ -169,7 +169,7 @@ try {
   await page.locator('[data-frame-subbar]').getByRole('button', { name: 'Outputs', exact: true }).click();
   await page.waitForURL(/#\/design\/create\/outputs$/);
   await page.locator('[data-design-page="outputs"]').waitFor();
-  await page.locator('[data-frame-subbar]').getByRole('button', { name: 'Projects', exact: true }).click();
+  await page.locator('[data-frame-rail]').getByRole('button', { name: 'All projects', exact: true }).click();
   await page.waitForURL(/#\/design\/create\/projects$/);
 
   for (const [label, hash] of [

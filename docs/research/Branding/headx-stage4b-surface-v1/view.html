@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-Hant"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Stage 04B · 圖形與表面系統 (View)</title><link rel="stylesheet" href="shared.css"/>
+<style>
+.spec{max-width:1120px;margin:0 auto;padding:60px 28px 120px}
+.eyebrow{font-family:var(--mono);font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.title{font-family:var(--serif);font-size:clamp(2rem,5vw,3.2rem);line-height:1.15;margin:12px 0 18px}
+.empty{color:var(--muted)}.prog{display:inline-block;margin:10px 0 0;font-family:var(--mono);font-size:.76rem;border:1px solid var(--line);border-radius:999px;padding:4px 12px;background:#fff}
+.sec{border-top:1px solid var(--line);margin-top:46px;padding-top:22px}.sec h3{font-family:var(--mono);font-size:.74rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:0 0 6px}.lead{font-size:.86rem;color:var(--muted);margin:0 0 14px;max-width:76ch}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}.c{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 16px}.c b{display:block;font-size:.95rem}.c p{margin:4px 0 0;font-size:.8rem;color:var(--muted)}
+.pal{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}.pal>div{border-radius:14px;border:1px solid var(--line);min-height:100px;padding:12px;display:flex;flex-direction:column;justify-content:space-between;font-family:var(--mono);font-size:.74rem}
+.rampbar div{min-width:0;overflow:hidden}.rampbar{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;margin-top:10px}.rampbar div{height:64px;border-radius:8px;font-family:var(--mono);font-size:.62rem;padding:4px;display:flex;flex-direction:column;justify-content:space-between}
+.prev{border-radius:14px;border:1px solid var(--line);min-height:150px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.5rem}
+table{width:100%;border-collapse:collapse;font-size:.82rem;background:#fff;border:1px solid var(--line)}th,td{border-bottom:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}th{font-family:var(--mono);font-size:.68rem;color:var(--muted);font-weight:500}.ok{color:var(--ok)}.no{color:var(--danger)}.tw{overflow-x:auto}
+.shp{display:flex;gap:14px;flex-wrap:wrap}.shp>div{width:130px;height:78px;background:#fff;border:2px solid #333;display:flex;align-items:center;justify-content:center;font-size:.72rem}
+.bgs{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}.bgs>div{height:84px;border-radius:12px;border:1px solid var(--line);display:flex;align-items:flex-end;padding:8px;font-size:.72rem}.bgs span{background:rgba(255,255,255,.85);padding:1px 8px;border-radius:99px}
+.ln{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin-bottom:8px;font-size:.9rem}.ln small{display:block;font-family:var(--mono);font-size:.68rem;color:var(--muted);text-transform:uppercase;margin-bottom:2px}
+.hi{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}.hi>div{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 16px}.hi h4{margin:0 0 8px;font-family:var(--mono);font-size:.74rem;color:var(--accent)}.hi li{font-size:.82rem;margin-bottom:6px}.hi small{display:block;color:var(--muted)}.hi ul{margin:0;padding-left:16px}
+.ck li{margin-bottom:6px;font-size:.86rem}.ck .warn{color:var(--warn)}.ck .error{color:var(--danger)}.ck .info{color:var(--muted)}
+.avoid{display:flex;flex-wrap:wrap;gap:8px}.avoid span{background:var(--danger-bg);border:1px solid #FECACA;color:#991B1B;border-radius:999px;padding:3px 12px;font-size:.84rem}
+@media(max-width:700px){.pal{grid-template-columns:repeat(2,1fr)}.rampbar{grid-template-columns:repeat(5,1fr)}table{display:block;overflow-x:auto}}
+.draft{background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;padding:8px 14px;font-size:.8rem;margin-top:14px}
+</style></head><body>
+<nav class="topbar"><div class="brand-tag">COMPANY OS · BRAND STAGE 04B · 圖形與表面系統</div>
+<div class="nav-links"><a class="nav-pill" href="edit.html">Edit</a><a class="nav-pill active" href="view.html">View</a><a class="nav-pill" href="agent.html">AI Agent</a></div></nav>
+<main class="spec" id="m"></main>
+<script src="options.js"></script><script src="core.js"></script>
+<script>
+const s=load(),cmp=completeness(s),E=t=>String(t).replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[m]));
+const L=k=>labels(k,s),X=id=>T_(s,id),PK=d=>{const o=picked(s,d);return o?o.zh:""};
+const cardsOf=k=>{const it=items(k,s);return it.length?`<div class="cards">${it.map(i=>`<div class="c"><b>${E(i.zh)}</b>${i.desc?`<p>${E(i.desc)}</p>`:""}${i.avoid&&i.avoid!=="-"?`<p>風險：${E(i.avoid)}</p>`:""}</div>`).join("")}</div>`:'<p class="empty">尚未選擇</p>'};
+const dimRow=d=>{const dm=DIM(d),o=picked(s,d);return `<tr><th>${dm.title}</th><td>${o?`<b>${E(o.zh)}</b><br><small>${E(o.desc)}</small>`:'<span class="empty">尚未選擇</span>'}</td></tr>`};
+const pal=palette(s),fgc=h=>lum(h)<.4?"#fff":"#111";
+const palH=COLS.map(([id,l])=>{const h=pal[id];return `<div style="background:${h||"#fff"};color:${h?fgc(h):"#111"}"><b>${l}</b><span>${h||"未填"}</span></div>`}).join("");
+const rampH=pal.c_primary?`<div class="rampbar">${ramp(pal.c_primary).map(r=>`<div style="background:${r.hex};color:${fgc(r.hex)}"><b>${r.n}</b><span>${r.hex}</span></div>`).join("")}</div>`:"";
+const gcss=gradCSS(s),gs=gradSamples(s);
+const gradH=gcss?`<div class="prev" style="background:${gcss};color:${hex(s.text.g_txt)||"#fff"}">Sample 範例文字 123</div><p class="lead" style="margin-top:8px"><code>${E(gcss)}</code></p>${gs&&hex(s.text.g_txt)?`<div class="tw"><table><tr><th>位置</th>${gs.map(x=>`<th>${x.t}%</th>`).join("")}</tr><tr><td>對比</td>${gs.map(x=>`<td class="${x.ratio>=4.5?"ok":x.ratio<3?"no":""}">${fr(x.ratio)}</td>`).join("")}</tr></table></div>`:""}`:'<p class="empty">尚未填寫漸變色值</p>';
+const rs=picked(s,"radiusScale"),el=picked(s,"elevation"),rt=rs?rs.tok:{},et=el?el.tok:{};
+const shapeH=`<div class="shp">${[["sm","小"],["md","中"],["lg","大"]].map(([k,l])=>`<div style="border-radius:${rt["--radius-"+k]||"8px"};box-shadow:${et["--shadow-"+k]||"none"}">${l} ${E(rt["--radius-"+k]||"—")}</div>`).join("")}</div>`;
+const bgOf=k=>items(k,s).filter(i=>i.sw).map(i=>`<div style="background:${i.sw}"><span>${E(i.zh)}</span></div>`).join("")||'<p class="empty">尚未選擇</p>';
+const cw=cwRows(s),cwH=cw.length?`<div class="tw"><table><tr><th>變體</th><th>預覽</th><th>背景</th><th>前景</th><th>強調</th><th>文字對比</th><th>強調對比</th></tr>${cw.map(r=>`<tr><td>${E(r.name)}</td><td><div style="width:84px;height:30px;border-radius:6px;background:${r.bg};color:${r.fg};border:1px solid #ccc;display:flex;align-items:center;justify-content:center;font-weight:700">Aa <span style="color:${r.ac};margin-left:4px">●</span></div></td><td>${r.bg}</td><td>${r.fg}</td><td>${r.ac}</td><td class="${r.textRatio>=4.5?"ok":"no"}">${fr(r.textRatio)}:1</td><td class="${r.accRatio>=3?"ok":"no"}">${fr(r.accRatio)}:1</td></tr>`).join("")}</table></div>`:'<p class="empty">尚未選擇</p>';
+const co=colorOutRows(s),coH=co.length?`<div class="tw"><table><tr><th>角色</th><th>HEX</th><th>OKLCH</th><th>Display P3</th><th>CMYK 近似（不可作官方）</th><th>打樣 CMYK</th><th>專色</th><th>狀態</th></tr>${co.map(r=>`<tr><td>${r.label}</td><td>${r.hex}</td><td>${r.oklch}</td><td style="font-size:.72rem">${r.p3}</td><td>${r.cmyk.c}/${r.cmyk.m}/${r.cmyk.y}/${r.cmyk.k}</td><td>${E(r.proof.cmyk||"—")}</td><td>${E(r.proof.pms||"—")}</td><td>${E(r.proof.st||"未打樣")}</td></tr>`).join("")}</table></div>`:'<p class="empty">尚未填寫色值</p>';
+const PR=procs(s),prH=PR.length?`<div class="tw"><table><tr><th>工藝</th><th>成本等級</th><th>最小線寬（保守值）</th><th>漸變</th><th>向量</th><th>螢幕不準</th></tr>${PR.map(x=>`<tr><td>${E(x.zh)}</td><td>${COST[x.cost]}</td><td>${x.minLine?x.minLine+"mm":"未查證"}</td><td>${x.grad===1?"可":x.grad===0?"不可":"未確定"}</td><td>${x.vec?"是":"否"}</td><td>${x.shift?"是":"否"}</td></tr>`).join("")}</table></div>`:'<p class="empty">尚未選擇</p>';
+const ck=checks(s),hs=hints(s),stages=[...new Set(hs.map(h=>h.stage))].sort();
+const hi=stages.map(st=>`<div><h4>${E(st)}</h4><ul>${hs.filter(h=>h.stage===st).map(h=>`<li><b>${E(h.field)}</b>：${E(h.text)}<small>原因：${E(h.why)}</small></li>`).join("")}</ul></div>`).join("");
+document.getElementById("m").innerHTML=`
+<span class="eyebrow">04B / Graphics &amp; Surface System · 草稿 · 未核准</span>
+<h1 class="title">${E(brandName(s))}</h1><p style="font-family:var(--serif);font-size:1.1rem;max-width:64ch">${E(X("statement")||draft(s))}</p>
+<span class="prog">完成度 ${cmp.pct}%（${cmp.done}/${cmp.total}）${cmp.missing.length?" · 未完成："+cmp.missing.map(m=>m.label.replace(/（.*/,"")).join("、"):""}</span>
+<div class="draft">狀態：草稿。AI 提案與表單填寫不等於人類核准。CMYK 為近似值；工藝數值為常見保守值；螢幕無法準確呈現專色、金屬、螢光、燙箔與壓凸，一律以印刷廠打樣為準。</div>
+<div class="sec"><h3>色值與色階</h3><div class="pal">${palH}</div>${rampH}</div>
+<div class="sec"><h3>漸變</h3>${cardsOf("gradType")}<p class="lead" style="margin:12px 0 6px"><b>用途</b></p>${cardsOf("gradUse")}<table style="margin:12px 0">${["gradStops","gradFallback"].map(dimRow).join("")}</table>${gradH}</div>
+<div class="sec"><h3>填色、邊框與焦點</h3>${cardsOf("fillType")}<table style="margin-top:12px">${["fillOpacity","fillStates","borderWidth","borderColor","focusRing"].map(dimRow).join("")}</table><p class="lead" style="margin:12px 0 6px"><b>邊框風格</b></p>${cardsOf("borderStyle")}</div>
+<div class="sec"><h3>形狀、圓角與陰影</h3>${cardsOf("shapeKit")}<div style="margin-top:12px">${shapeH}</div><table style="margin-top:12px">${["radiusScale","elevation"].map(dimRow).join("")}</table></div>
+<div class="sec"><h3>紋理</h3><div class="bgs">${bgOf("texSpec")}</div><table style="margin-top:12px">${["texBlend","texBudget"].map(dimRow).join("")}</table></div>
+<div class="sec"><h3>無縫圖案</h3>${s.patMotif.length?`<div style="border:1px solid var(--line);border-radius:12px;overflow:hidden">${patternPreviewSVG(s,640,260,"ppv")}</div>`:'<p class="empty">尚未選擇母題</p>'}<table style="margin-top:12px"><tr><th>母題</th><td>${E(L("patMotif").join("、")||"—")}</td></tr><tr><th>重複方式</th><td>${E(L("repeat").join("、")||"—")}</td></tr>${["patDensity","patContrast","patFill"].map(dimRow).join("")}</table></div>
+<div class="sec"><h3>配色變體</h3>${cwH}</div>
+<div class="sec"><h3>色彩空間與輸出</h3><table style="margin-bottom:12px"><tr><th>輸出</th><td>${E(L("colorOut").join("、")||"—")}</td></tr>${["p3Policy","cmykPolicy","tacLimit","bleed"].map(dimRow).join("")}</table>${coH}</div>
+<div class="sec"><h3>承印物與工藝</h3><p class="lead"><b>承印物：</b>${E(subs(s).map(x=>x.zh).join("、")||"尚未選擇")}</p>${prH}<div class="ln" style="margin-top:10px"><small>印刷廠與打樣備註</small>${E(X("st_note")||"尚未填寫")}</div></div>
+<div class="sec"><h3>表面禁區（合併 4A／Stage 1／Stage 2）</h3><div class="avoid">${negatives(s).map(x=>`<span>${E(x)}</span>`).join("")||'<span style="background:none;border:0;color:var(--muted)">尚未選擇</span>'}</div></div>
+<div class="sec"><h3>一致性與硬限制檢查</h3><ul class="ck" style="padding-left:18px">${ck.length?ck.map(x=>`<li class="${x.level}">${x.level==="error"?"✕":x.level==="warn"?"⚠":"ℹ"} ${E(x.msg)}</li>`).join(""):"<li class='info'>目前沒有發現問題。</li>"}</ul></div>
+<div class="sec"><h3>給 4C–4H 的建議</h3><p class="lead">依你的選擇推導。各階段目前還不會自動讀取，請匯出 stage4b-brief.json 帶過去。</p><div class="hi">${hi}</div></div>`;
+</script></body></html>

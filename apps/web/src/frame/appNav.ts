@@ -38,6 +38,8 @@ export type NavLeaf = {
 export type NavPage = NavLeaf & {
   /** 呢一頁之下的章節。冇就唔會有第二層。 */
   sections?: readonly NavLeaf[];
+  /** false = 只做左欄入口；Create 的第二行因此可專心切換作品格式。 */
+  subbar?: boolean;
 };
 
 export type NavGroup = {
@@ -151,9 +153,18 @@ export const DESIGN_NAV: AppNav = {
       labelKey: 'design.module.create',
       groups: [
         {
+          titleKey: 'design.group.library',
           pages: [
-            { key: 'projects', labelKey: 'design.page.projects' },
-            { key: 'outputs', labelKey: 'design.page.outputs' },
+            { key: 'projects', labelKey: 'design.page.projects', subbar: false },
+            { key: 'outputs', labelKey: 'design.page.outputs', subbar: false },
+          ],
+        },
+        {
+          titleKey: 'design.group.formats',
+          pages: [
+            { key: 'carousel', labelKey: 'design.page.carousel' },
+            { key: 'presentation', labelKey: 'design.page.presentation' },
+            { key: 'video', labelKey: 'design.page.video' },
           ],
         },
       ],
@@ -182,7 +193,17 @@ export const DESIGN_NAV: AppNav = {
       labelKey: 'design.module.material',
       groups: [
         {
+          titleKey: 'design.group.library',
           pages: [{ key: 'library', labelKey: 'design.page.materialLibrary' }],
+        },
+        {
+          titleKey: 'design.group.sources',
+          pages: [
+            { key: 'human', labelKey: 'design.page.materialHuman', subbar: false },
+            { key: 'ai', labelKey: 'design.page.materialAi', subbar: false },
+            { key: 'stock', labelKey: 'design.page.materialStock', subbar: false },
+            { key: 'client', labelKey: 'design.page.materialClient', subbar: false },
+          ],
         },
       ],
     },
@@ -191,7 +212,16 @@ export const DESIGN_NAV: AppNav = {
       labelKey: 'design.module.knowledge',
       groups: [
         {
+          titleKey: 'design.group.library',
           pages: [{ key: 'list', labelKey: 'design.page.knowledgeList' }],
+        },
+        {
+          titleKey: 'design.group.status',
+          pages: [
+            { key: 'unverified', labelKey: 'design.page.knowledgeUnverified', subbar: false },
+            { key: 'verified', labelKey: 'design.page.knowledgeVerified', subbar: false },
+            { key: 'outdated', labelKey: 'design.page.knowledgeOutdated', subbar: false },
+          ],
         },
       ],
     },
@@ -200,7 +230,13 @@ export const DESIGN_NAV: AppNav = {
       labelKey: 'design.module.templates',
       groups: [
         {
-          pages: [{ key: 'library', labelKey: 'design.page.templates' }],
+          titleKey: 'design.group.formats',
+          pages: [
+            { key: 'library', labelKey: 'design.page.templates' },
+            { key: 'carousel', labelKey: 'design.page.carousel', subbar: false },
+            { key: 'presentation', labelKey: 'design.page.presentation', subbar: false },
+            { key: 'video', labelKey: 'design.page.video', subbar: false },
+          ],
         },
       ],
     },
@@ -314,6 +350,37 @@ export function withBrandPages(
     modules: nav.modules.map((navModule) =>
       navModule.key === 'brand' ? { ...navModule, groups } : navModule,
     ),
+  };
+}
+
+export type KnowledgeNavDocument = {
+  id: string;
+  title: string;
+  status: 'unverified' | 'verified' | 'outdated';
+};
+
+/** Knowledge 左欄是一份可按狀態展開的文件樹；文件仍是頁的章節，不另造 app 路由。 */
+export function withKnowledgeDocuments(
+  nav: AppNav,
+  documents: readonly KnowledgeNavDocument[],
+): AppNav {
+  return {
+    ...nav,
+    modules: nav.modules.map((navModule) => navModule.key !== 'knowledge' ? navModule : {
+      ...navModule,
+      groups: navModule.groups.map((group) => ({
+        ...group,
+        pages: group.pages.map((page) => {
+          const inFolder = page.key === 'list'
+            ? documents
+            : documents.filter((document) => document.status === page.key);
+          return {
+            ...page,
+            sections: inFolder.map((document) => ({ key: document.id, label: document.title })),
+          };
+        }),
+      })),
+    }),
   };
 }
 

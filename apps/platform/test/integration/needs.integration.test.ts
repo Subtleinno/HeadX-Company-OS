@@ -37,9 +37,10 @@ describe('needs store（真 SQL）', () => {
       `insert into need (code, title, detail, kind, app_id, page_key, due_at, created_at)
        values
          ('COS-HK-001', '未有人認領而且已逾期', '詳情一', 'deliverable', null, null,
-          now() - interval '3 days', now() - interval '5 days'),
+          $1::timestamptz - interval '3 days', $1::timestamptz - interval '5 days'),
          ('COS-HK-002', '未有人認領，未到期', null, 'decision', 'design', 'brand-kit',
-          now() + interval '2 days', now() - interval '1 day')`,
+          $1::timestamptz + interval '2 days', $1::timestamptz - interval '1 day')`,
+      [NOW.toISOString()],
     );
   });
 

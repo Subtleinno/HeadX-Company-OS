@@ -148,8 +148,8 @@
 
 .project-state--produced,
 .project-state--received {
-  background: var(--hx-success-bg, #e8f5ee);
-  color: var(--hx-success-text, #246b47);
+  background: var(--hx-design-success-bg);
+  color: var(--hx-design-success-text);
 }
 
 .project-detail__topline {

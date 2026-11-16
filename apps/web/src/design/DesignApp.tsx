@@ -1,6 +1,13 @@
-import { useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { t } from '@company-os/i18n';
-import { createBrand, type BrandItem, type PublicUser } from '../api';
+import {
+  createBrand,
+  type BrandItem,
+  type KnowledgeDocView,
+  type MaterialView,
+  type ProjectFormat,
+  type PublicUser,
+} from '../api';
 import { AppFrame } from '../frame/AppFrame';
 import {
   DESIGN_NAV,
@@ -8,6 +15,8 @@ import {
   pageApiKey,
   resolveNav,
   withBrandPages,
+  withKnowledgeDocuments,
+  type KnowledgeNavDocument,
   type NavPosition,
 } from '../frame/appNav';
 import { useBrands, useSelectedBrand } from '../frame/useDirectory';
@@ -16,7 +25,11 @@ import { BrandPageCreate } from './BrandPageCreate';
 import { BrandPageScreen } from './BrandPageScreen';
 import { DesignModuleState } from './DesignModuleState';
 import { ProjectDetailScreen } from './ProjectDetailScreen';
-import { ProjectsScreen } from './ProjectsScreen';
+import { ProjectsScreen, type ProjectCounts } from './ProjectsScreen';
+import { MaterialsScreen } from './MaterialsScreen';
+import { KnowledgeScreen } from './KnowledgeScreen';
+import { TemplatesScreen } from './TemplatesScreen';
+import { OutputsScreen } from './OutputsScreen';
 import { parseProjectRoute } from './projectRoute';
 import { useBrandPages } from './useBrandPages';
 
@@ -162,6 +175,21 @@ function CreateBrandForm(props: { onCreated: () => void }) {
   );
 }
 
+function projectFormatOf(pageKey: string): ProjectFormat | 'all' {
+  return pageKey === 'carousel' || pageKey === 'presentation' || pageKey === 'video' ? pageKey : 'all';
+}
+
+function materialSourceOf(pageKey: string): MaterialView['source'] | 'all' {
+  const sources: Record<string, MaterialView['source']> = {
+    human: 'human_shot', ai: 'ai_generated', stock: 'stock', client: 'client_provided',
+  };
+  return sources[pageKey] ?? 'all';
+}
+
+function knowledgeStatusOf(pageKey: string): KnowledgeDocView['status'] | 'all' {
+  return pageKey === 'unverified' || pageKey === 'verified' || pageKey === 'outdated' ? pageKey : 'all';
+}
+
 export function DesignApp({ user, onSignedOut }: DesignAppProps) {
   const path = useHashPath();
   const brands = useBrands(true);
@@ -169,8 +197,12 @@ export function DesignApp({ user, onSignedOut }: DesignAppProps) {
   const { brandId } = useSelectedBrand(brands.state);
   const selected = items.find((item) => item.id === brandId) ?? null;
   const pages = useBrandPages(brandId);
+  const [knowledgeDocuments, setKnowledgeDocuments] = useState<readonly KnowledgeNavDocument[]>([]);
+  const handleKnowledgeDocuments = useCallback((documents: readonly KnowledgeNavDocument[]) => {
+    setKnowledgeDocuments(documents);
+  }, []);
 
-  const nav = withBrandPages(
+  const nav = withKnowledgeDocuments(withBrandPages(
     DESIGN_NAV,
     pages.items.map((page) => ({
       key: page.key,
@@ -179,7 +211,7 @@ export function DesignApp({ user, onSignedOut }: DesignAppProps) {
       group: page.group,
       missing: page.current === null,
     })),
-  );
+  ), knowledgeDocuments);
 
   /**
    * 品牌主頁過時之頁（#60）：主頁之後改過的頁。算出來，不存 flag。
@@ -194,6 +226,16 @@ export function DesignApp({ user, onSignedOut }: DesignAppProps) {
     .map((page) => page.name);
   const position = resolveNav(nav, path);
   const inBrand = position.navModule.key === 'brand';
+  const inCreateLibrary = position.navModule.key === 'create' && position.page.key !== 'outputs';
+  const [libraryQuery, setLibraryQuery] = useState('');
+  const [projectCounts, setProjectCounts] = useState<ProjectCounts | null>(null);
+  const handleProjectCounts = useCallback((counts: ProjectCounts) => setProjectCounts(counts), []);
+
+  useEffect(() => {
+    setLibraryQuery('');
+    setProjectCounts(null);
+    setKnowledgeDocuments([]);
+  }, [brandId]);
 
   const [panel, setPanel] = useState<'page' | 'brand' | null>(null);
   /**
@@ -274,6 +316,9 @@ export function DesignApp({ user, onSignedOut }: DesignAppProps) {
           brandId={brandId}
           brandsKind={brands.state.kind}
           onReloadBrands={brands.reload}
+          format={projectFormatOf(current.page.key)}
+          query={libraryQuery}
+          onCountsChange={handleProjectCounts}
         />
       );
     }
@@ -282,6 +327,24 @@ export function DesignApp({ user, onSignedOut }: DesignAppProps) {
     }
     if (projectRoute?.kind === 'invalid') {
       return <ProjectDetailScreen projectId={null} />;
+    }
+    if (current.navModule.key === 'create' && current.page.key === 'outputs') {
+      return <OutputsScreen brandId={brandId} />;
+    }
+    if (current.navModule.key === 'material') {
+      return <MaterialsScreen brandId={brandId} sourceFilter={materialSourceOf(current.page.key)} />;
+    }
+    if (current.navModule.key === 'knowledge') {
+      return <KnowledgeScreen
+        brandId={brandId}
+        status={knowledgeStatusOf(current.page.key)}
+        selectedDocumentId={current.section?.key ?? null}
+        onDocumentsChange={handleKnowledgeDocuments}
+        onSelectDocument={(id) => navigatePath('/design', 'knowledge', current.page.key, id)}
+      />;
+    }
+    if (current.navModule.key === 'templates') {
+      return <TemplatesScreen format={projectFormatOf(current.page.key)} />;
     }
 
     return (
@@ -292,6 +355,13 @@ export function DesignApp({ user, onSignedOut }: DesignAppProps) {
       />
     );
   }
+
+  const projectBadges = projectCounts === null ? undefined : {
+    projects: String(projectCounts.projects),
+    carousel: String(projectCounts.carousel),
+    presentation: String(projectCounts.presentation),
+    video: String(projectCounts.video),
+  };
 
   const headerActions =
     inBrand && (user.role === 'owner' || pages.canEdit) ? (
@@ -326,6 +396,7 @@ export function DesignApp({ user, onSignedOut }: DesignAppProps) {
     ) : undefined;
 
   return (
+    <div className="design-modern">
     <AppFrame
       nav={nav}
       user={user}
@@ -333,6 +404,13 @@ export function DesignApp({ user, onSignedOut }: DesignAppProps) {
       onSignOut={onSignedOut}
       pageTitle={navLabel(position.page)}
       pageSubtitle={inBrand && selected !== null ? selected.name : undefined}
+      {...(inCreateLibrary ? { sidebarSearch: {
+        label: t('design.sidebar.searchProjects'),
+        placeholder: t('design.sidebar.searchProjects'),
+        value: libraryQuery,
+        onChange: setLibraryQuery,
+      } } : {})}
+      {...(projectBadges === undefined ? {} : { sidebarBadges: projectBadges })}
       {...(headerActions === undefined ? {} : { primaryAction: headerActions })}
     >
       {(current: NavPosition) => (
@@ -383,5 +461,6 @@ export function DesignApp({ user, onSignedOut }: DesignAppProps) {
         </>
       )}
     </AppFrame>
+    </div>
   );
 }

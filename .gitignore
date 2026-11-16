@@ -175,6 +175,9 @@ secrets/
 .workbuddy/
 .zcode/
 
+# 研究稿的原始落地位置；正式可讀位置是 docs/research/，原始副本不入庫。
+Perplexity idea/
+
 # macOS 的 Finder 產物，不進版控。
 .DS_Store
 

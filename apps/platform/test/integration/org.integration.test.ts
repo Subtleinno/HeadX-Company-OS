@@ -888,6 +888,10 @@ describe('舊資料庫升級（#80 的 0001–0004 → 0005 及之後）', () =>
       '0017_brand_document.sql',
       '0018_brand_gap.sql',
       '0019_brand_suggestion.sql',
+      '0020_brand_fixed_pages_backfill.sql',
+      '0021_agent_http_tokens.sql',
+      'design/0001_projects.sql',
+      'design/0002_carousel.sql',
       ]);
 
       // 4. 既有資料一個字都沒動。

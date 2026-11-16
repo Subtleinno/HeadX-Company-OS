@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh-Hant"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Stage 04D · 3D 與產品視覺 (Edit)</title><link rel="stylesheet" href="shared.css"/>
+<style>
+.layout{max-width:1220px;margin:0 auto;padding:40px 24px 100px;display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:36px;align-items:start}
+@media(max-width:960px){.layout{grid-template-columns:minmax(0,1fr)}.side{position:static!important}}
+.layout main{min-width:0}
+.kicker{font-family:var(--mono);font-size:.75rem;color:var(--accent);text-transform:uppercase;letter-spacing:.1em}
+h1{font-size:2rem;margin:8px 0 8px;letter-spacing:-.02em}.sub{color:var(--muted);margin:0 0 24px;font-size:.93rem}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:24px;margin-bottom:22px;scroll-margin-top:70px}
+.card h2{margin:0;font-size:1.06rem}.card .num{font-family:var(--mono);font-size:.72rem;color:var(--muted);display:block;margin-bottom:2px}
+.head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;margin-bottom:10px}
+.part{border-top:1px solid var(--line);margin-top:16px;padding-top:14px}.part:first-of-type{border-top:0;margin-top:4px;padding-top:0}
+.part h3{margin:0 0 2px;font-size:.92rem}.hint{font-size:.8rem;color:var(--muted);margin:0 0 10px;max-width:80ch}
+.btn-ai{background:var(--soft);color:var(--accent);border:1px solid #BFDBFE;padding:5px 11px;border-radius:7px;font-size:.76rem;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit}
+.btn-ai:hover{background:#DBEAFE}.btn-ai.ghost{background:#fff;color:var(--muted);border-color:var(--line)}
+.count{font-size:.76rem;color:var(--muted);font-family:var(--mono)}
+.gt{font-family:var(--mono);font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:14px 0 8px;padding-top:10px;border-top:1px dashed var(--line)}.gt:first-child{border-top:0;margin-top:2px;padding-top:0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}.grid.wide{grid-template-columns:repeat(auto-fill,minmax(270px,1fr))}
+.opt{border:1px solid var(--line);border-radius:10px;padding:9px 12px;background:var(--bg);text-align:left;cursor:pointer;font-family:inherit;color:inherit}
+.opt:hover{border-color:#b8b8b0}.opt[aria-pressed=true]{background:var(--ink);color:#FFF;border-color:var(--ink);box-shadow:0 0 0 3px rgba(37,99,235,.25)}
+.opt b{display:block;font-size:.85rem}.opt span.d{display:block;font-size:.73rem;opacity:.78;margin-top:2px}.opt .tagrow{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}.opt .tg{font-size:.62rem;font-family:var(--mono);border:1px solid currentColor;border-radius:999px;padding:0 6px;opacity:.85}
+.row{display:flex;gap:8px;margin-top:10px}.row input{flex:1}
+input[type=text],textarea,select{width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--line);background:var(--bg);font-family:inherit;font-size:.88rem;color:var(--ink);outline:none}
+textarea{resize:vertical}input:focus,textarea:focus,select:focus{border-color:var(--accent);background:#FFF}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.chip{font-size:.78rem;padding:3px 10px;border-radius:999px;background:var(--bg);border:1px solid var(--line)}.chip button{border:0;background:none;cursor:pointer;color:var(--muted)}
+.tf{margin-bottom:12px}.tf label{display:block;font-size:.8rem;font-weight:600;margin-bottom:3px}.tf small{display:block;color:var(--muted);font-size:.72rem;margin-bottom:4px}
+.numgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px 14px}
+.hexrow{display:flex;gap:8px;align-items:center}.sw{width:34px;height:34px;border-radius:8px;border:1px solid var(--line);flex:none;background:repeating-conic-gradient(#ddd 0 25%,#fff 0 50%) 0 0/10px 10px}
+.note{background:var(--soft);border:1px solid #BFDBFE;border-radius:12px;padding:10px 14px;font-size:.8rem;margin-bottom:14px}
+.det{margin-top:12px;display:grid;gap:8px}.det>div{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-size:.8rem}.det b{font-size:.84rem}.det dl{margin:6px 0 0;display:grid;grid-template-columns:70px 1fr;gap:2px 10px}.det dt{color:var(--muted)}.det dd{margin:0}
+table.ct{width:100%;border-collapse:collapse;font-size:.78rem;background:var(--bg);border-radius:10px;overflow:hidden}.ct td,.ct th{border-bottom:1px solid var(--line);padding:6px 10px;text-align:left;vertical-align:middle}.ct th{font-family:var(--mono);font-size:.66rem;color:var(--muted);font-weight:500}.ct .ok{color:var(--ok);font-weight:600}.ct .no{color:var(--danger);font-weight:600}.ct input,.ct select{padding:5px 8px;font-size:.78rem;min-width:100px}
+.tw{overflow-x:auto;max-width:100%}.ctl{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0}.ctl label{font-size:.78rem;display:flex;gap:6px;align-items:center}
+.scene3{perspective:700px;height:200px;display:flex;align-items:center;justify-content:center;background:linear-gradient(#F4F4F0,#E6E6E0);border-radius:12px;border:1px solid var(--line);overflow:hidden}
+.cube{width:90px;height:90px;position:relative;transform-style:preserve-3d;transform:rotateX(-18deg) rotateY(32deg)}
+.cube .f{position:absolute;width:90px;height:90px;border-radius:6px;backface-visibility:visible;border:1px solid rgba(0,0,0,.08)}
+.f.fr{transform:translateZ(45px)}.f.bk{transform:rotateY(180deg) translateZ(45px)}.f.rt{transform:rotateY(90deg) translateZ(45px)}.f.lf{transform:rotateY(-90deg) translateZ(45px)}.f.tp{transform:rotateX(90deg) translateZ(45px)}.f.bt{transform:rotateX(-90deg) translateZ(45px)}
+.cm{display:grid;grid-template-columns:minmax(0,1fr) 230px;gap:14px;align-items:start}@media(max-width:700px){.cm{grid-template-columns:1fr}}
+.side{position:sticky;top:70px;display:flex;flex-direction:column;gap:14px}
+.meter{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
+.bar{height:8px;background:var(--line);border-radius:99px;overflow:hidden;margin:8px 0 12px}.bar>i{display:block;height:100%;background:var(--ink);transition:width .25s}
+.meter ul{list-style:none;margin:0;padding:0;font-size:.8rem}.meter li{padding:2px 0}.meter a{color:var(--muted);text-decoration:none}.meter li.done a{color:var(--ok)}
+.meter li.done::before{content:"✓ ";color:var(--ok)}.meter li:not(.done)::before{content:"○ ";color:var(--muted)}
+.side .btn-ai{display:block;width:100%;margin-top:8px;text-align:center}
+.chk li{font-size:.76rem;margin-bottom:6px;line-height:1.45}.chk .warn{color:var(--warn)}.chk .error{color:var(--danger)}.chk .info{color:var(--muted)}
+.stg{font-size:.76rem;display:grid;grid-template-columns:1fr auto;gap:2px 8px}.stg .y{color:var(--ok)}.stg .n{color:var(--muted)}
+dialog{border:1px solid var(--line);border-radius:16px;padding:24px;max-width:640px;width:92%}dialog::backdrop{background:rgba(0,0,0,.35)}
+dialog textarea{min-height:200px;font-family:var(--mono);font-size:.78rem}dialog .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+dialog .res{font-size:.8rem;margin-top:10px;color:var(--ok)}dialog .err{color:var(--danger)}
+</style></head><body>
+<nav class="topbar"><div class="brand-tag">COMPANY OS · BRAND STAGE 04D · 3D 與產品視覺</div>
+<div class="nav-links"><a class="nav-pill active" href="edit.html">Edit</a><a class="nav-pill" href="view.html">View</a><a class="nav-pill" href="agent.html">AI Agent</a></div></nav>
+<div class="layout"><main>
+<span class="kicker">Stage 04D · 3D &amp; Product Visual</span>
+<h1>3D 與產品視覺</h1>
+<p class="sub">把 4A–4C 的視覺、表面與動態延伸到 3D 資產與產品：3D 風格、材質、角色、場景、燈光、運鏡、動畫與交付形式（含渲染時間、貼圖記憶體、轉盤與爆炸圖計算）；產品外觀、使用情境、尺寸、CMF 色樣表（附立方體示意）、物料、表面處理、製程、工程用料與零件、零件清單草稿、認證提醒、測試與樣機階段。每個決策有討論提示詞；完成後輸出 render-spec、product-spec、CMF 表、BOM 草稿、3D Prompt 與設計 Agent 規則。</p>
+<div class="note"><b>注意：</b>原型資料只存在你的瀏覽器。選項內容是通用知識的起始草案，尚未逐項查證。<b>工程規格（結構、材料、製程、電子、認證、測試）只作方向記錄，必須由工程師與合資格專業人士驗證，不能因風格配對而自動批准；本原型不是工程圖、BOM 或認證文件。</b>模具成本、起訂量、認證要求因供應商、產品與市場而異；成本與效能是相對等級，渲染預算是你自己輸入的目標。CMF 以實物色樣為準，螢幕與立方體示意只是示意。沒有風格相符度分數。AI 提案不等於核准。</div>
+<div id="cards"></div>
+</main>
+<aside class="side"><div class="meter"><b id="pct"></b><div class="bar"><i id="barfill"></i></div><ul id="mlist"></ul></div>
+<div class="meter"><b style="font-size:.84rem">前階段匯入</b><div class="stg" id="stg" style="margin-top:8px"></div><button class="btn-ai" id="impstage">匯入 Stage 0–4C brief JSON（可多選）</button><input type="file" id="stagefile" accept="application/json" multiple hidden/></div>
+<div class="meter chk"><b style="font-size:.84rem">一致性與硬限制檢查</b><ul id="chk" style="margin-top:8px"></ul></div>
+<div class="meter"><button class="btn-ai" id="copyctx" style="margin:0">複製『前階段＋目前選擇』給 AI</button><button class="btn-ai" id="paste">貼回 AI 結果</button><button class="btn-ai" id="expb">匯出 stage4d-brief.json</button><button class="btn-ai" id="imp">匯入 4D JSON</button><button class="btn-ai" id="reset" style="color:var(--danger);border-color:#f3c0c0;background:#fff">全部清空</button><input type="file" id="file" accept="application/json" hidden/></div></aside></div>
+<dialog id="dlg"><b>貼回 AI 結果</b><p class="hint" style="margin:6px 0 12px">把 AI 討論結尾附的 JSON 整段貼上。選項會自動對應，清單沒有的會加為自訂項；單選規則、文字欄與 CMF 表會直接填入。</p>
+<textarea id="pt" placeholder='{"style3d":["寫實 Photoreal"],"cmfApproval":"實物色樣待核准"}'></textarea><div class="res" id="pres"></div>
+<div class="actions"><button class="btn-ai ghost" id="pc">關閉</button><button class="btn-ai" id="pa">套用</button></div></dialog>
+<div class="toast" id="toast"></div>
+<script src="options.js"></script><script src="core.js"></script><script src="prompts.js"></script>
+<script>
+const $=id=>document.getElementById(id);const S=load();
+const esc=t=>String(t).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+function toast(m){const t=$("toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2200)}
+const persist=()=>{save(S);meter()};
+const CARDS=[
+ {id:"style",num:"01",title:"3D 風格與材質",prompt:"style",parts:[{text:["brandName"]},{cat:"style3d"},{cat:"mat3d"},{dim:"quality3d"},{dim:"lens"},{dim:"bgKind"}]},
+ {id:"mascot",num:"02",title:"角色／吉祥物",prompt:"mascot",parts:[{cat:"mascot"},{text:["ma_heads","ma_expr","ma_pose"],grid:1},{dim:"ipStatus"}]},
+ {id:"scene",num:"03",title:"場景、燈光與運鏡",prompt:"scene",parts:[{cat:"scene3d"},{cat:"light3d"},{cat:"cam3d"}]},
+ {id:"anim",num:"04",title:"3D 動畫、交付與效能預算",prompt:"anim",parts:[{cat:"anim3d"},{cat:"delivery3d"},{dim:"turntable"},{dim:"reduced3d"},{text:["tt_sec","r_w","r_h","r_fps","r_sec","r_spf","r_machines","w_tri","w_tex_n","w_tex_px","w_mem"],grid:1},{dyn:"calc"}]},
+ {id:"product",num:"05",title:"產品外觀、使用與尺寸",prompt:"product",parts:[{cat:"appearance"},{cat:"usage"},{dim:"sizeClass"},{dim:"powerType"},{text:["p_l","p_w","p_h","p_wt"],grid:1},{dyn:"dims"}]},
+ {id:"cmf",num:"06",title:"CMF：顏色、材料、表面與色樣核准",prompt:"cmf",parts:[{text:["c_primary","c_secondary","c_accent","c_ink","c_paper"],grid:1},{dim:"cmfApproval"},{dim:"lightBox"},{dyn:"cmf"}]},
+ {id:"material",num:"07",title:"物料、表面處理與製程",prompt:"material",parts:[{cat:"prodMat"},{cat:"finish"},{cat:"mfg"},{dim:"supply"},{dim:"sustainClaim"},{text:["p_logo_mm"]}]},
+ {id:"parts",num:"08",title:"工程用料與零件（含 BOM 草稿）",prompt:"parts",parts:[{cat:"parts"},{text:["bom"]},{dyn:"bom"}]},
+ {id:"compliance",num:"09",title:"認證提醒、測試與樣機階段",prompt:"parts",parts:[{cat:"compliance"},{cat:"proto"},{dim:"protoStage"}]},
+ {id:"display",num:"10",title:"產品展示動畫",prompt:"display",parts:[{cat:"displayAnim"},{text:["ex_parts","ex_stag"],grid:1},{dyn:"explode"}]},
+ {id:"avoid",num:"11",title:"禁區、3 張代表性渲染與一句話",prompt:"avoid",parts:[{cat:"avoid3d"},{text:["ps1","ps2","ps3","st_note","statement"]}]}
+];
+function textPart(ids,grid){const h=ids.map(id=>{const t=TEXT_BY[id];const isHex=/^c_/.test(id);return `<div class="tf"><label for="t-${id}">${t.label}</label>${t.help?`<small>${t.help}</small>`:""}${isHex?`<div class="hexrow"><div class="sw" id="sw-${id}"></div><input type="text" id="t-${id}" data-t="${id}" placeholder="${esc(t.ph)}"/></div>`:t.rows>1?`<textarea id="t-${id}" data-t="${id}" rows="${t.rows}" placeholder="${esc(t.ph)}"></textarea>`:`<input type="text" id="t-${id}" data-t="${id}" placeholder="${esc(t.ph)}"/>`}</div>`}).join("");return grid?`<div class="numgrid">${h}</div>`:h}
+function catPart(k){const c=CAT[k];return `<div class="part"><h3>${c.title}</h3><p class="hint">${c.hint||""}</p><div class="count" id="cnt-${k}"></div><div id="cat-${k}"></div><div class="det" id="det-${k}"></div><div class="row"><input type="text" data-cust="${k}" placeholder="沒有適合的？自訂一項（Enter 新增）"/><button class="btn-ai" data-add="${k}" type="button">新增</button></div><div class="chips" id="chips-${k}"></div></div>`}
+function dimPart(id){const d=DIM(id);return `<div class="part"><h3>${d.title}</h3>${d.q?`<p class="hint">${d.q}</p>`:""}<div class="grid wide" id="dim-${id}" role="group"></div></div>`}
+const DYNT={calc:"渲染時間、貼圖記憶體、轉盤與無縫循環計算",dims:"尺寸與比例換算",cmf:"CMF 色樣表與立方體示意（不是渲染，也不是色樣）",bom:"零件清單草稿（BOM-lite）解析",explode:"爆炸圖展開時間"};
+const cardsEl=$("cards");
+CARDS.forEach(c=>{const el=document.createElement("section");el.className="card";el.id="c-"+c.id;
+  el.innerHTML=`<div class="head"><div><span class="num">${c.num}</span><h2>${c.title}</h2></div><button class="btn-ai" data-p="${c.prompt}">複製討論提示詞</button></div>`+c.parts.map(p=>p.cat?catPart(p.cat):p.dim?dimPart(p.dim):p.dyn?`<div class="part"><h3>${DYNT[p.dyn]}</h3><div id="dyn-${p.dyn}"></div></div>`:`<div class="part">${textPart(p.text,p.grid)}</div>`).join("");cardsEl.appendChild(el)});
+function tagsHTML(k,i){const a=[];if(i.cost)a.push("成本 "+COST[i.cost]);if(i.perf)a.push("效能 "+PERF[i.perf]);if(i.tool)a.push("需模具");if(i.val)a.push("須工程師驗證");if(k==="cam3d"&&i.n1===1)a.push("暈眩風險");return a.length?`<div class="tagrow">${a.map(x=>`<span class="tg">${x}</span>`).join("")}</div>`:""}
+function renderCat(k){const c=CAT[k];
+  $("cat-"+k).innerHTML=c.groups.map(g=>`<div class="gt">${g.g}</div><div class="grid">${g.items.map(i=>`<button type="button" class="opt" aria-pressed="${S[k].includes(i.id)}" data-k="${k}" data-id="${i.id}"><b>${esc(i.zh)}</b><span class="d">${esc(i.desc)}</span>${tagsHTML(k,i)}</button>`).join("")}</div>`).join("");
+  $("cnt-"+k).textContent=`已選 ${count(k,S)}${c.max<90?" / 建議最多 "+c.max:""}`;
+  $("chips-"+k).innerHTML=S.custom[k].map((t,i)=>`<span class="chip">${esc(t)} <button data-del="${k}:${i}" aria-label="移除">✕</button></span>`).join("");
+  $("det-"+k).innerHTML=S[k].map(id=>byId(k,id)).filter(i=>i&&i.fit&&i.fit!=="-").map(i=>`<div><b>${esc(i.zh)}</b><dl><dt>適用</dt><dd>${esc(i.fit)}</dd><dt>風險</dt><dd>${esc(i.avoid||"—")}</dd><dt>配搭</dt><dd>${esc(i.pair||"—")}</dd>${i.note?`<dt>備註</dt><dd>${esc(i.note)}</dd>`:""}</dl></div>`).join("")}
+function renderDim(id){const d=DIM(id);$("dim-"+id).innerHTML=d.opts.map(o=>`<button type="button" class="opt" aria-pressed="${S.dims[id]===o.id}" data-dim="${id}" data-o="${o.id}"><b>${esc(o.zh)}</b><span class="d">${esc(o.desc)}</span></button>`).join("")}
+function fillTexts(){document.querySelectorAll("[data-t]").forEach(t=>{t.value=S.text[t.dataset.t]||""});swatches()}
+function swatches(){document.querySelectorAll(".sw").forEach(e=>{const h=hex(S.text[e.id.slice(3)]);e.style.background=h||""})}
+// ---- 計算 ----
+function dynCalc(){const rc=renderCalc(S),wm=webMem(S),tr=turntable(S);let h="";
+  h+=rc?`<div class="tw"><table class="ct"><tr><th>總幀數</th><th>每幀（秒）</th><th>機器</th><th>估算渲染時間</th></tr><tr><td>${rc.frames}（${rc.fps} fps × ${rc.sec} 秒）</td><td>${rc.spf!=null?rc.spf:"—"}</td><td>${rc.mach}</td><td class="${rc.hours!=null&&rc.hours>24?"no":""}">${rc.hours!=null?rc.hours.toFixed(1)+" 小時":"請填每幀渲染時間"}</td></tr></table></div><p class="hint" style="margin-top:6px">估算 ＝ 幀數 × 每幀時間 ÷ 機器數，未含重渲染、修改、合成與編碼；請用小段實測得出每幀時間。</p>`:'<p class="hint">填入幀率與動畫長度後顯示渲染時間估算。</p>';
+  h+=wm?`<div class="tw" style="margin-top:8px"><table class="ct"><tr><th>貼圖</th><th>估算記憶體（含 mipmap，未計壓縮）</th><th>你的預算</th><th>面數目標</th></tr><tr><td>${wm.n} 張 × ${wm.px}px</td><td class="${wm.over?"no":""}">${wm.mb.toFixed(0)} MB</td><td>${wm.budget!=null?wm.budget+" MB":"—"}</td><td>${wm.tri!=null?wm.tri.toLocaleString()+" 三角面":"—"}</td></tr></table></div><p class="hint" style="margin-top:6px">記憶體 ＝ 張數 × 邊長² × 4 位元組 × 約 1.33。預算與面數沒有統一標準，請依目標裝置自行設定並用裝置實測。</p>`:"";
+  h+=tr?`<div class="tw" style="margin-top:8px"><table class="ct"><tr><th>轉盤一圈</th><th>角速度</th><th>幀數（@${S.text.r_fps||"?"} fps）</th><th>每幀角度</th><th>整幀</th></tr><tr><td class="${tr.sec<4?"no":""}">${tr.sec} 秒</td><td>${tr.dps.toFixed(0)}°/秒</td><td>${tr.frames!=null?tr.frames:"—"}</td><td>${tr.perFrame!=null?tr.perFrame.toFixed(2)+"°":"—"}</td><td class="${tr.whole===false?"no":""}">${tr.whole==null?"—":tr.whole?"是":"否"}</td></tr></table></div><p class="hint" style="margin-top:6px">無縫循環：最後一幀不要與第一幀重複（360° 即第 0 幀）；自動旋轉須可暫停並有減少動態版本。</p>`:"";
+  $("dyn-calc").innerHTML=h}
+function dynDims(){const d=productDims(S);$("dyn-dims").innerHTML=d?`<div class="tw"><table class="ct"><tr><th>外框尺寸</th><th>外框體積</th><th>最長／最短</th><th>目標重量</th><th>以外框計的平均密度</th></tr><tr><td>${d.L}×${d.W}×${d.H} mm</td><td>${d.vol.toFixed(0)} cm³</td><td>${d.aspect.toFixed(1)}:1</td><td>${d.wt!=null?d.wt+" g":"—"}</td><td>${d.density!=null?d.density.toFixed(2)+" g/cm³":"—"}</td></tr></table></div><p class="hint" style="margin-top:6px">只是外框的粗略換算，用來抓出明顯輸入錯誤；真實體積、重量與重心須由 CAD 與樣機量測。</p>`:'<p class="hint">填入長、寬、高後顯示換算。</p>'}
+function dynBom(){const r=bomRows(S);$("dyn-bom").innerHTML=r.length?`<div class="tw"><table class="ct"><tr><th>零件</th><th>材料</th><th>製程</th><th>供應商</th><th>狀態</th></tr>${r.map(x=>`<tr><td>${esc(x.part)}</td><td class="${x.mat?"":"no"}">${esc(x.mat||"缺")}</td><td class="${x.proc?"":"no"}">${esc(x.proc||"缺")}</td><td>${esc(x.supplier||"—")}</td><td>${esc(x.status||"—")}</td></tr>`).join("")}</table></div><p class="hint" style="margin-top:6px">紅色代表欄位缺漏。這只是草稿，正式 BOM（含料號、規格、公差、數量、供應商）須由工程師建立。</p>`:'<p class="hint">在上面逐行填入零件。</p>'}
+function dynExplode(){const e=exploded(S);$("dyn-explode").innerHTML=e?`<div class="tw"><table class="ct"><tr><th>零件數</th><th>錯開（ms）</th><th>單件動畫（假設）</th><th>總時長</th></tr><tr><td>${e.n}</td><td>${e.st}</td><td>${e.per}ms</td><td class="${e.total>8000?"no":""}">${(e.total/1000).toFixed(1)} 秒</td></tr></table></div><p class="hint" style="margin-top:6px">總時長 ＝ (零件數 − 1) × 錯開時間 ＋ 單件動畫時間（假設 600ms）。超過約 8 秒時，建議減少零件或分段（這是自訂的審稿門檻，不是標準）。</p>`:'<p class="hint">填入零件數與錯開時間後顯示。</p>'}
+// ---- CMF ----
+let CUBEANIM=null,CUBEROLE=null;
+function finishStyle(fin){if(/拋光|電鍍/.test(fin))return "linear-gradient(135deg,rgba(255,255,255,.75) 0,rgba(255,255,255,0) 38%,rgba(255,255,255,.28) 70%,rgba(0,0,0,.12) 100%)";if(/拉絲/.test(fin))return "repeating-linear-gradient(90deg,rgba(255,255,255,.2) 0 1px,rgba(0,0,0,.06) 1px 3px)";if(/陽極/.test(fin))return "radial-gradient(rgba(255,255,255,.22) 1px,transparent 1px) 0 0/3px 3px,linear-gradient(135deg,rgba(255,255,255,.2),rgba(0,0,0,.08))";if(/軟觸/.test(fin))return "radial-gradient(rgba(0,0,0,.08) 1px,transparent 1px) 0 0/2px 2px";if(/皮紋|咬花/.test(fin))return "radial-gradient(rgba(0,0,0,.18) 1.2px,transparent 1.4px) 0 0/5px 5px";if(/霧面/.test(fin))return "linear-gradient(135deg,rgba(255,255,255,.06),rgba(0,0,0,.04))";return "none"}
+function dynCMF(){const rows=cmfRows(S);if(!rows.length){$("dyn-cmf").innerHTML='<p class="hint">填入色值（匯入 4A 會自動帶入）後顯示 CMF 表。</p>';return}
+  const mats=S.prodMat.map(id=>byId("prodMat",id).zh),fins=S.finish.map(id=>byId("finish",id).zh);if(!CUBEROLE||!rows.find(r=>r.id===CUBEROLE))CUBEROLE=rows[0].id;
+  const sel=(id,f,opts,cur)=>`<select data-cmf="${id}|${f}"><option value="">—</option>${opts.map(o=>`<option ${o===cur?"selected":""}>${esc(o)}</option>`).join("")}${cur&&!opts.includes(cur)?`<option selected>${esc(cur)}</option>`:""}</select>`;
+  $("dyn-cmf").innerHTML=`<div class="cm"><div class="tw"><table class="ct"><tr><th>角色</th><th>HEX</th><th>物料</th><th>表面處理</th><th>色樣編號</th></tr>${rows.map(r=>`<tr><td>${r.label}</td><td><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:${r.hex};vertical-align:-2px;border:1px solid #ccc"></span> ${r.hex}</td><td>${sel(r.id,"mat",mats,r.mat)}</td><td>${sel(r.id,"fin",fins,r.fin)}</td><td><input type="text" data-cmf="${r.id}|sid" value="${esc(r.sid)}" placeholder="例 CMF-001"/></td></tr>`).join("")}</table></div><div><div class="scene3"><div class="cube" id="cube">${["fr","bk","rt","lf","tp","bt"].map(f=>`<div class="f ${f}"></div>`).join("")}</div></div><div class="ctl"><select id="cubeRole" style="width:auto">${rows.map(r=>`<option value="${r.id}" ${r.id===CUBEROLE?"selected":""}>${r.label}</option>`).join("")}</select><button class="btn-ai" id="cubePlay">轉動／暫停</button><label><input type="checkbox" id="cubeReduce"/> 模擬減少動態</label></div></div></div><p class="hint" style="margin-top:6px">立方體只用你填的顏色與表面處理的粗略示意，<b>不是渲染，也不是色樣</b>；實物顏色、光澤與質感須由實物色樣核准。『同色異譜』：同一個顏色在不同材料、表面與光源下看起來不同。</p>`;
+  paintCube();$("cubeRole").onchange=e=>{CUBEROLE=e.target.value;paintCube()};$("cubePlay").onclick=()=>{if(CUBEANIM){CUBEANIM.playState==="running"?CUBEANIM.pause():CUBEANIM.play()}else spinCube()};$("cubeReduce").onchange=()=>spinCube(true)}
+function paintCube(){const r=cmfRows(S).find(x=>x.id===CUBEROLE);if(!r)return;const shade={fr:1,bk:.7,rt:.82,lf:.76,tp:1.12,bt:.6};document.querySelectorAll("#cube .f").forEach(f=>{const k=f.className.split(" ")[1];f.style.background=`${finishStyle(r.fin)},${r.hex}`;f.style.filter=`brightness(${shade[k]})`});spinCube()}
+function spinCube(){const c=$("cube");if(!c)return;if(CUBEANIM){CUBEANIM.cancel();CUBEANIM=null}const reduce=$("cubeReduce")&&$("cubeReduce").checked,rd=picked(S,"reduced3d");if(reduce){c.style.transform="rotateX(-18deg) rotateY(32deg)";return}
+  const sec=Math.max(num(S,"tt_sec",12),2);CUBEANIM=c.animate([{transform:"rotateX(-18deg) rotateY(0deg)"},{transform:"rotateX(-18deg) rotateY(360deg)"}],{duration:sec*1000,iterations:Infinity,easing:"linear"})}
+function renderStages(){const L={s0:"Stage 0 業務",s1:"Stage 1 定位",s2:"Stage 2 感官",s3:"Stage 3 語言",s4a:"Stage 4A 視覺語言",s4b:"Stage 4B 表面系統",s4c:"Stage 4C 動態影片"};$("stg").innerHTML=Object.entries(L).map(([k,l])=>`<span>${l}</span><span class="${S[k]?"y":"n"}">${S[k]?"已匯入":"未匯入"}</span>`).join("")}
+function renderDyn(skipCmf){dynCalc();dynDims();dynBom();dynExplode();if(!skipCmf)dynCMF()}
+function renderAll(){CAT_KEYS.forEach(renderCat);DIMS.forEach(d=>renderDim(d.id));fillTexts();renderDyn();renderStages()}
+document.addEventListener("input",e=>{const t=e.target.closest("[data-t]");if(t){S.text[t.dataset.t]=t.value;persist();swatches();renderDyn(!/^c_/.test(t.dataset.t));return}
+  const cm=e.target.closest("[data-cmf]");if(cm&&cm.tagName==="INPUT"){const[id,f]=cm.dataset.cmf.split("|");S.cmf[id]=S.cmf[id]||{};S.cmf[id][f]=cm.value;persist()}});
+document.addEventListener("change",e=>{const cm=e.target.closest("select[data-cmf]");if(cm){const[id,f]=cm.dataset.cmf.split("|");S.cmf[id]=S.cmf[id]||{};S.cmf[id][f]=cm.value;persist();if(id===CUBEROLE)paintCube()}});
+document.addEventListener("keydown",e=>{const c=e.target.closest("[data-cust]");if(c&&e.key==="Enter"){e.preventDefault();addCust(c.dataset.cust)}});
+function addCust(k){const i=document.querySelector(`[data-cust="${k}"]`),v=i.value.trim();if(v&&!S.custom[k].includes(v)){S.custom[k].push(v);i.value="";persist();renderCat(k)}}
+document.addEventListener("click",e=>{
+  const o=e.target.closest(".opt[data-k]");if(o){const k=o.dataset.k,id=o.dataset.id,a=S[k],i=a.indexOf(id);if(i>-1)a.splice(i,1);else{if(CAT[k].max<90&&count(k,S)>=CAT[k].max){toast(`此項建議最多 ${CAT[k].max} 個，請先取消一個`);return}a.push(id)}persist();renderCat(k);renderDyn();return}
+  const dm=e.target.closest(".opt[data-dim]");if(dm){const id=dm.dataset.dim,v=dm.dataset.o;if(S.dims[id]===v)delete S.dims[id];else S.dims[id]=v;persist();renderDim(id);renderDyn();return}
+  const ad=e.target.closest("[data-add]");if(ad){addCust(ad.dataset.add);return}
+  const del=e.target.closest("[data-del]");if(del){const[k,i]=del.dataset.del.split(":");S.custom[k].splice(+i,1);persist();renderCat(k);return}
+  const p=e.target.closest("[data-p]");if(p)navigator.clipboard.writeText(PROMPTS[p.dataset.p](S)).then(()=>toast("已複製完整討論提示詞，貼給 AI 即可開始"),()=>toast("無法寫入剪貼簿，請檢查瀏覽器權限"))});
+function meter(){const c=completeness(S);$("pct").textContent=`完成度 ${c.pct}%（${c.done}/${c.total}）`;$("barfill").style.width=c.pct+"%";const miss=c.missing.map(m=>m.key);
+  const LIST=[["style","3D 風格與材質","style"],["mascot","角色","mascot"],["scene","場景燈光運鏡","scene"],["anim","動畫與交付","anim"],["setup","品質與轉盤","style"],["appearance","產品外觀與使用","product"],["dims","尺寸與重量","product"],["cmf","CMF","cmf"],["material","物料表面製程","material"],["parts","零件與供電","parts"],["compliance","認證與測試","compliance"],["proto","樣機與供應鏈","compliance"],["display","展示動畫","display"],["avoid","禁區","avoid"],["shots","3 張渲染","avoid"]];
+  $("mlist").innerHTML=LIST.map(([k,l,a])=>`<li class="${miss.includes(k)?"":"done"}"><a href="#c-${a}">${l}</a></li>`).join("");
+  const ck=checks(S);$("chk").innerHTML=ck.length?ck.map(x=>`<li class="${x.level}">${x.level==="error"?"✕":x.level==="warn"?"⚠":"ℹ"} ${esc(x.msg)}</li>`).join(""):"<li class='info'>目前沒有發現問題。</li>";renderStages()}
+$("copyctx").onclick=()=>navigator.clipboard.writeText("【我的品牌背景與目前 3D 與產品選擇】\n"+ctxStages(S)+"\n\n"+ctx3d(S)).then(()=>toast("已複製，貼在任何 AI 對話的開頭"),()=>toast("無法寫入剪貼簿"));
+function handle(text){const r=applyPaste(text,S);if(r.applied.length){persist();renderAll()}return r}
+$("paste").onclick=()=>{$("pres").textContent="";$("pt").value="";$("dlg").showModal()};$("pc").onclick=()=>$("dlg").close();
+$("pa").onclick=()=>{const r=handle($("pt").value);$("pres").className="res"+(r.errors.length&&!r.applied.length?" err":"");$("pres").innerHTML=(r.applied.length?"已套用：<br>"+r.applied.map(esc).join("<br>"):"")+(r.custom.length?"<br>加入自訂項："+r.custom.map(esc).join("、"):"")+(r.errors.length?"<br><span class='err'>"+r.errors.map(esc).join("<br>")+"</span>":"")};
+$("expb").onclick=()=>{const b=new Blob([JSON.stringify(buildBrief(S),null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="stage4d-brief.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+$("imp").onclick=()=>$("file").click();
+$("file").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const o=handle(r.result);toast(o.applied.length?"已匯入":"匯入失敗："+o.errors.join("；"))};r.readAsText(f);e.target.value=""};
+$("impstage").onclick=()=>$("stagefile").click();
+$("stagefile").onchange=async e=>{const fs=[...e.target.files];let ok=[],bad=[];for(const f of fs){const t=await f.text();const k=importBrief(t,S);if(k)ok.push(k);else bad.push(f.name)}persist();fillTexts();renderDyn();renderStages();toast((ok.length?"已匯入 "+ok.join("、"):"")+(bad.length?"｜無法辨識："+bad.join("、"):""));e.target.value=""};
+$("reset").onclick=()=>{if(confirm("確定清空 Stage 4D 的所有答案？（前階段匯入也會清除）此動作無法復原。")){Object.assign(S,emptyState());save(S);location.reload()}};
+renderAll();meter();
+</script></body></html>

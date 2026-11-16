@@ -4,6 +4,8 @@
  * Project 沒有可寫入的萬能 status；API 與 UI 都由同一個純函式推導顯示狀態。
  */
 
+export type ProjectFormat = 'carousel' | 'presentation' | 'video';
+
 export type ProjectState =
   | 'awaiting_agent'
   | 'planning'
@@ -69,6 +71,9 @@ export type ProjectSummary = {
   brandId: string;
   brandName: string;
   title: string;
+  format: ProjectFormat;
+  /** 最新真 Output 的第一頁；未產出時為 null，畫面使用 Project 封面而非假圖。 */
+  previewUrl: string | null;
   state: ProjectState;
   briefVersionNo: number | null;
   agentRun: ProjectAgentRun | null;

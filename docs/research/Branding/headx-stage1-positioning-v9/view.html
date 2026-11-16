@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-Hant"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Stage 01 · 品牌定位 (View)</title><link rel="stylesheet" href="shared.css"/>
+<style>
+.spec{max-width:1040px;margin:0 auto;padding:72px 28px 120px}
+.eyebrow{font-family:var(--mono);font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.name{font-family:var(--serif);font-weight:500;font-size:clamp(3rem,7vw,5.4rem);line-height:1.02;letter-spacing:-.02em;margin:14px 0 8px}
+.tens{font-family:var(--serif);font-size:clamp(1.4rem,3vw,2.2rem);color:var(--accent);margin:0 0 30px}
+.stmt{font-size:clamp(1.15rem,2.2vw,1.55rem);line-height:1.6;max-width:44ch;margin:0 0 20px}
+.empty{color:var(--muted)}.src{font-family:var(--mono);font-size:.72rem;color:var(--muted)}
+.prog{display:inline-block;margin:18px 0 0;font-family:var(--mono);font-size:.76rem;border:1px solid var(--line);border-radius:999px;padding:4px 12px;background:#fff}
+.sec{border-top:1px solid var(--line);margin-top:54px;padding-top:26px}
+.sec h3{font-family:var(--mono);font-size:.74rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:0 0 6px}
+.sec .lead{font-size:.88rem;color:var(--muted);margin:0 0 18px;max-width:64ch}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.c{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px}.c b{display:block;font-size:.95rem}.c p{margin:4px 0 0;font-size:.8rem;color:var(--muted)}
+.c.a{background:var(--danger-bg);border-color:rgba(220,38,38,.25)}.c.a b{color:var(--danger)}
+.flow{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff}
+.flow>div{padding:16px 18px;border-right:1px solid var(--line)}.flow>div:last-child{border-right:0}
+.flow h4{font-family:var(--mono);font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 8px;font-weight:500}
+.flow li{font-size:.86rem;margin-bottom:4px}.flow ul{margin:0;padding-left:16px}
+.dial{display:grid;grid-template-columns:130px 1fr 130px;gap:14px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:.86rem}
+.dial .r{text-align:right}.track{position:relative;height:2px;background:var(--line);margin:0 8px}
+.track i{position:absolute;top:-4px;width:10px;height:10px;border-radius:50%;background:var(--line);transform:translateX(-50%)}
+.track b{position:absolute;top:-8px;width:18px;height:18px;border-radius:50%;background:var(--ink);transform:translateX(-50%);border:3px solid var(--bg)}
+.track.none b{display:none}.dial .l.on,.dial .r.on{font-weight:700}
+</style></head><body>
+<nav class="topbar"><div class="brand-tag">COMPANY OS · BRAND STAGE 01 / 06</div>
+<div class="nav-links"><a class="nav-pill" href="edit.html">Edit</a><a class="nav-pill active" href="view.html">View</a><a class="nav-pill" href="agent.html">AI Agent</a></div></nav>
+<main class="spec" id="m"></main>
+<script src="options.js"></script><script src="core.js"></script>
+<script>
+const s=load(),c=completeness(s),esc=t=>String(t).replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[m]));
+const cards=(k,cls)=>{const it=items(k,s);return it.length?`<div class="cards">${it.map(i=>`<div class="c ${cls||""}"><b>${cls?"✕ ":""}${esc(i.zh)}</b><p>${esc(i.desc)}</p></div>`).join("")}</div>`:`<p class="empty">尚未選擇</p>`};
+const ul=k=>{const l=labels(k,s);return l.length?`<ul>${l.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:`<span class="empty">尚未選擇</span>`};
+const note=k=>s[k+"Note"]?`<p class="lead" style="margin-top:12px">${esc(s[k+"Note"])}</p>`:"";
+const st=s.statement||draft(s);
+const dialRows=DIALS.map(d=>{const v=s.dials[d.id];const set=v!==undefined;return `<div class="dial"><div class="l ${set&&v<0?"on":""}">◀ ${d.l}</div><div class="track ${set?"":"none"}">${[-2,-1,0,1,2].map(p=>`<i style="left:${(p+2)*25}%"></i>`).join("")}${set?`<b style="left:${(v+2)*25}%"></b>`:""}</div><div class="r ${set&&v>0?"on":""}">${d.r} ▶</div></div>`}).join("");
+const pt=TENSIONS.find(t=>t.id===s.tensionPrimary);
+document.getElementById("m").innerHTML=`
+<span class="eyebrow">01 / Positioning &amp; Core Tension</span>
+<h1 class="name ${s.name?"":"empty"}">${esc(s.name||"尚未命名")}</h1>
+${pt?`<p class="tens">${esc(pt.zh)}</p>`:`<p class="tens empty">尚未設定核心張力</p>`}
+<p class="stmt">${esc(st)}</p><span class="src">${s.statement?"人工撰寫":"由選擇自動組合的草稿"}</span><br/>
+<span class="prog">完成度 ${c.pct}%（${c.done}/${c.total}）${c.missing.length?" · 未完成："+c.missing.map(m=>m.label.replace(/（.*/,"")).join("、"):""}</span>
+<div class="sec"><h3>定位邏輯一覽</h3><p class="lead">客人面對痛點 → 現在怎麼解決 → 你用什麼差異 → 帶來什麼價值 → 憑什麼相信。</p>
+<div class="flow"><div><h4>最適客群</h4>${ul("audience")}</div><div><h4>痛點</h4>${ul("pain")}</div><div><h4>現有替代</h4>${ul("alternatives")}</div><div><h4>獨特屬性</h4>${ul("diff")}</div><div><h4>價值</h4>${ul("value")}</div><div><h4>信任理由</h4>${ul("rtb")}</div></div></div>
+<div class="sec"><h3>你服務誰</h3>${cards("audience")}${note("audience")}</div>
+<div class="sec"><h3>痛點</h3>${cards("pain")}${note("pain")}</div>
+<div class="sec"><h3>市場類別</h3>${cards("category")}</div>
+<div class="sec"><h3>核心張力刻度</h3><p class="lead">圓點越靠中間，代表兩邊都要。${pt?esc(pt.desc):""}</p>${dialRows}</div>
+<div class="sec"><h3>Anti-Persona · 絕對不要像</h3>${cards("anti","a")}</div>`;
+</script></body></html>

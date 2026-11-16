@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="zh-Hant"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Stage 04A · 核心品牌識別 (View)</title><link rel="stylesheet" href="shared.css"/>
+<style>
+.spec{max-width:1120px;margin:0 auto;padding:60px 28px 120px}.eyebrow{font-family:var(--mono);font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.title{font-family:var(--serif);font-size:clamp(2rem,4.6vw,3.4rem);line-height:1.1;margin:12px 0 10px}.stmt{font-family:var(--serif);font-size:1.2rem;line-height:1.6;max-width:44ch;margin:0 0 14px}.empty{color:var(--muted)}
+.prog{display:inline-block;margin:6px 0 0;font-family:var(--mono);font-size:.76rem;border:1px solid var(--line);border-radius:999px;padding:4px 12px;background:#fff}
+.draft{background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:10px 14px;font-size:.8rem;margin:16px 0 0;max-width:80ch}
+.sec{border-top:1px solid var(--line);margin-top:48px;padding-top:24px}.sec h3{font-family:var(--mono);font-size:.74rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:0 0 6px}.sec .lead{font-size:.86rem;color:var(--muted);margin:0 0 14px;max-width:74ch}
+.tags{display:flex;flex-wrap:wrap;gap:8px}.tags span{background:#fff;border:1px solid var(--line);border-radius:999px;padding:3px 12px;font-size:.84rem}
+.kv{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px}.kv div{background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:.82rem}.kv small{display:block;font-family:var(--mono);font-size:.64rem;color:var(--muted)}
+.ln{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin-bottom:8px;font-size:.9rem;white-space:pre-wrap}.ln small{display:block;font-family:var(--mono);font-size:.68rem;color:var(--muted);text-transform:uppercase;margin-bottom:2px}
+.dials{display:grid;gap:8px}.dl{display:grid;grid-template-columns:120px 1fr 120px;gap:10px;align-items:center;font-size:.8rem}.dl .l{text-align:right;color:var(--muted)}.dl .tr{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}.dl .tr i{height:10px;border-radius:5px;background:var(--line)}.dl .tr i.on{background:var(--ink)}
+.sw{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}.sc{border-radius:14px;overflow:hidden;border:1px solid var(--line);background:#fff}.sc i{display:block;height:70px}.sc div{padding:8px 10px}.sc b{font-size:.82rem;display:block}.sc small{display:block;font-family:var(--mono);font-size:.64rem;color:var(--muted)}
+.ck li{margin-bottom:6px;font-size:.86rem}.ck .warn{color:var(--warn)}.ck .error{color:var(--danger)}.ck .info{color:var(--muted)}
+</style></head><body>
+<nav class="topbar"><div class="brand-tag">COMPANY OS · BRAND STAGE 04A · 核心品牌識別</div><div class="nav-links"><a class="nav-pill" href="edit.html">Edit</a><a class="nav-pill active" href="view.html">View</a><a class="nav-pill" href="agent.html">AI Agent</a></div></nav>
+<main class="spec" id="m"></main>
+<script src="color.js"></script><script src="options.js"></script><script src="core.js"></script><script src="ui.js"></script>
+<script>
+const s=load(),c=completeness(s),X=id=>T_(s,id),P=id=>{const o=picked(s,id);return o?o.zh:""};
+const name=X("brandName")||(s.s0&&s.s0.name)||(s.s1&&s.s1.name)||"尚未命名的品牌";
+const ln=(l,t)=>`<div class="ln"><small>${l}</small>${t?esc(t):'<span class="empty">尚未填寫</span>'}</div>`;
+const tags=k=>{const it=items(k,s);return it.length?`<div class="tags">${it.map(i=>`<span>${esc(i.zh)}</span>`).join("")}</div>`:'<p class="empty">尚未選擇</p>'};
+const kv=ids=>`<div class="kv">${ids.map(id=>{const d=dimInfo(id);return `<div><small>${d.title}</small>${P(id)?esc(P(id)):'<span class="empty">未選</span>'}</div>`}).join("")}</div>`;
+const details=k=>items(k,s).map(i=>detailHTML(byId(k,i.id)||{zh:i.zh,desc:"（自訂）"})).join("")||'<p class="empty">尚未選擇</p>';
+const dials=DIAL_IDS.map(id=>{const d=dimInfo(id),p=dialPos(s,id);return `<div class="dl"><span class="l">${esc(d.left)}</span><span class="tr">${[-2,-1,0,1,2].map(n=>`<i class="${p===n?"on":""}"></i>`).join("")}</span><span>${esc(d.right)}</span></div>`}).join("");
+const swatches=PAL_ROLES.map(r=>isHex(s.pal[r.id])?`<div class="sc"><i style="background:${s.pal[r.id]}"></i><div><b>${r.zh}</b><small>${normHex(s.pal[r.id])}</small></div></div>`:`<div class="sc"><i style="background:repeating-linear-gradient(45deg,#f4f4f4 0 8px,#fff 8px 16px)"></i><div><b>${r.zh}</b><small>未設定</small></div></div>`).join("");
+const hs=hints(s),ck=checks(s);
+document.getElementById("m").innerHTML=`
+<span class="eyebrow">04A / Core Brand Identity</span><h1 class="title">${esc(name)}</h1>
+<p class="stmt ${X("statement")?"":"empty"}">${esc(X("statement")||"尚未寫識別宣言")}</p>
+<span class="prog">完成度 ${c.pct}%（${c.done}/${c.total}）${c.missing.length?" · 未完成："+c.missing.map(m=>m.label.replace(/（.*/,"")).join("、"):""}</span>
+<div class="draft"><b>草稿，不是發布版。</b>此頁只呈現目前記錄的選擇、理由與狀態。選項內容是設計慣例的起始簡報，不是已查證的結論；來源、授權、商標與測試結果需由人類補上。『已核准』只是本機記錄，不是正式審批。</div>
+<div class="sec"><h3>識別任務與架構</h3>${kv(["archModel","idJob"])}<div style="height:12px"></div>${ln("識別任務",X("idBrief"))}${ln("一定要保留",X("mustKeep"))}${ln("絕對要避免",X("mustAvoid"))}<p class="lead" style="margin:10px 0 6px">保留的現有資產</p>${tags("keepAssets")}<p class="lead" style="margin:10px 0 6px">更新或放棄的現有資產</p>${tags("dropAssets")}</div>
+<div class="sec"><h3>視覺方向</h3><div class="dials">${dials}</div><p class="lead" style="margin:14px 0 6px">視覺關鍵字</p>${tags("keywords")}</div>
+<div class="sec"><h3>Logo 類型（結構）</h3>${details("logoType")}${ln("商標查證備註",X("tmNote"))}</div>
+<div class="sec"><h3>Logo 風格（方法）</h3>${details("logoStyle")}${ln("標誌概念與故事",X("logoConcept"))}</div>
+<div class="sec"><h3>標誌系統</h3>${kv(["langLockup","clearSpace","vectorStatus","minSizeStatus"])}<div style="height:12px"></div>${logoRegTable(s,false)}${ln("補充說明",X("logoNotes"))}</div>
+<div class="sec"><h3>字體</h3><p class="lead">個性方向</p>${details("typePers")}<div style="height:10px"></div>${typeRegTable(s,false)}<div style="height:12px"></div>${kv(SETS.typeSys.dims.map(d=>d.id))}${ln("補充說明",X("typeNotes"))}</div>
+<div class="sec"><h3>色彩</h3><p class="lead">風格方向</p>${details("colorStyle")}<p class="lead" style="margin:14px 0 6px">色票</p><div class="sw">${swatches}</div><div style="height:12px"></div>${palTable(s)}<div style="height:12px"></div>${kv(SETS.colorSys.dims.map(d=>d.id))}<p class="lead" style="margin:14px 0 6px">使用規則</p>${tags("colorRules")}<p class="lead" style="margin:14px 0 6px">配色組合</p>${cwTiles(s)}${ln("補充說明",X("colorNotes"))}</div>
+<div class="sec"><h3>輸出需求與後續模組</h3><p class="lead" style="margin-bottom:6px">輸出需求</p>${tags("outputNeeds")}<div style="height:10px"></div>${kv(["printProfile","proofStatus"])}<div style="height:10px"></div>${colorRegTable(s,false)}<p class="lead" style="margin:14px 0 6px">後續專業模組</p>${tags("nextModules")}</div>
+<div class="sec"><h3>候選方向比較</h3><p class="lead">所有候選用相同內容與相同觸點比較；不提供風格相符度分數。目前傾向：${esc(P("finalDir")||"未選")}</p>${candTable(s)}</div>
+<div class="sec"><h3>核准記錄</h3>${approvalTable(s,false)}</div>
+<div class="sec"><h3>識別就緒清單</h3>${readyHTML(s)}</div>
+<div class="sec"><h3>給後續階段的建議</h3>${hs.length?`<table class="mx"><thead><tr><th>去向</th><th>項目</th><th>建議</th><th>原因</th></tr></thead><tbody>${hs.map(x=>`<tr><td>${esc(x.stage)}</td><td>${esc(x.field)}</td><td>${esc(x.text)}</td><td>${esc(x.why)}</td></tr>`).join("")}</tbody></table>`:'<p class="empty">資料不足</p>'}</div>
+<div class="sec"><h3>一致性與準備度檢查</h3><ul class="ck" style="padding-left:18px">${ck.length?ck.map(x=>`<li class="${x.level}">${x.level==="error"?"✕":x.level==="warn"?"⚠":"ℹ"} ${esc(x.msg)}</li>`).join(""):"<li class='info'>目前沒有發現問題。</li>"}</ul></div>`;
+</script></body></html>

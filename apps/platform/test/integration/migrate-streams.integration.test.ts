@@ -588,6 +588,7 @@ describe('舊資料庫升級', () => {
       '0020_brand_fixed_pages_backfill.sql',
       '0021_agent_http_tokens.sql',
       'design/0001_projects.sql',
+      'design/0002_carousel.sql',
       ]);
 
       const after = await db.pool.query<{ name: string; checksum: string; applied_at: Date }>(
@@ -619,6 +620,7 @@ describe('舊資料庫升級', () => {
       '0020_brand_fixed_pages_backfill.sql',
       '0021_agent_http_tokens.sql',
       'design/0001_projects.sql',
+      'design/0002_carousel.sql',
       ]);
 
       // 再跑一次才真的沒有待套用的，並且明講。
@@ -638,11 +640,13 @@ describe('舊資料庫升級', () => {
       }
       // 已套用的 design 串也要保留在重建目錄，否則會被正確判定為 migration 失踪。
       await mkdir(resolve(dir, 'design'), { recursive: true });
-      await writeFile(
-        resolve(dir, 'design/0001_projects.sql'),
-        await readFile(resolve(FLAT_DIR, 'design/0001_projects.sql'), 'utf8'),
-        'utf8',
-      );
+      for (const name of ['0001_projects.sql', '0002_carousel.sql']) {
+        await writeFile(
+          resolve(dir, `design/${name}`),
+          await readFile(resolve(FLAT_DIR, `design/${name}`), 'utf8'),
+          'utf8',
+        );
+      }
       await mkdir(resolve(dir, 'app_alpha'), { recursive: true });
       await writeFile(
         resolve(dir, 'app_alpha/0001_alpha_one.sql'),
@@ -686,6 +690,7 @@ describe('舊資料庫升級', () => {
       '0021_agent_http_tokens.sql',
         'app_alpha/0001_alpha_one.sql',
         'design/0001_projects.sql',
+        'design/0002_carousel.sql',
       ]);
 
       const audit = await db.pool.query<{ n: number }>(

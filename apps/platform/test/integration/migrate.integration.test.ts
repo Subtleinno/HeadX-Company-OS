@@ -53,6 +53,7 @@ describe('migration 執行器', () => {
       '0020_brand_fixed_pages_backfill.sql',
       '0021_agent_http_tokens.sql',
       'design/0001_projects.sql',
+      'design/0002_carousel.sql',
     ]);
 
     const rows = await db.pool.query<{ name: string; checksum: string }>(
@@ -84,6 +85,7 @@ describe('migration 執行器', () => {
       '0020_brand_fixed_pages_backfill.sql',
       '0021_agent_http_tokens.sql',
       'design/0001_projects.sql',
+      'design/0002_carousel.sql',
     ]);
     expect(rows.rows[0]?.checksum).toMatch(/^[0-9a-f]{64}$/);
 
@@ -139,6 +141,7 @@ describe('migration 執行器', () => {
       '0020_brand_fixed_pages_backfill.sql',
       '0021_agent_http_tokens.sql',
       'design/0001_projects.sql',
+      'design/0002_carousel.sql',
       ]);
 
       const rows = await fresh.pool.query('select count(*)::int as n from schema_migrations');

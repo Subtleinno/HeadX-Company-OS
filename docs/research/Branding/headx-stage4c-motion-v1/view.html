@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-Hant"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Stage 04C · 動態、聲音與影片 (View)</title><link rel="stylesheet" href="shared.css"/>
+<style>
+.spec{max-width:1120px;margin:0 auto;padding:60px 28px 120px}
+.eyebrow{font-family:var(--mono);font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.title{font-family:var(--serif);font-size:clamp(2rem,5vw,3.2rem);line-height:1.15;margin:12px 0 18px}
+.empty{color:var(--muted)}.prog{display:inline-block;margin:10px 0 0;font-family:var(--mono);font-size:.76rem;border:1px solid var(--line);border-radius:999px;padding:4px 12px;background:#fff}
+.sec{border-top:1px solid var(--line);margin-top:46px;padding-top:22px}.sec h3{font-family:var(--mono);font-size:.74rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:0 0 6px}.lead{font-size:.86rem;color:var(--muted);margin:0 0 14px;max-width:76ch}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}.c{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 16px}.c b{display:block;font-size:.95rem}.c p{margin:4px 0 0;font-size:.8rem;color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:.82rem;background:#fff;border:1px solid var(--line)}th,td{border-bottom:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}th{font-family:var(--mono);font-size:.68rem;color:var(--muted);font-weight:500}.ok{color:var(--ok)}.no{color:var(--danger)}.tw{overflow-x:auto}
+.gst{height:140px;border-radius:14px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.3rem}
+.sb{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}.sb>div{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;min-height:120px}.sb small{font-family:var(--mono);font-size:.68rem;color:var(--muted);text-transform:uppercase;display:block;margin-bottom:6px}
+.ln{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin-bottom:8px;font-size:.9rem}.ln small{display:block;font-family:var(--mono);font-size:.68rem;color:var(--muted);text-transform:uppercase;margin-bottom:2px}
+.hi{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}.hi>div{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 16px}.hi h4{margin:0 0 8px;font-family:var(--mono);font-size:.74rem;color:var(--accent)}.hi li{font-size:.82rem;margin-bottom:6px}.hi small{display:block;color:var(--muted)}.hi ul{margin:0;padding-left:16px}
+.ck li{margin-bottom:6px;font-size:.86rem}.ck .warn{color:var(--warn)}.ck .error{color:var(--danger)}.ck .info{color:var(--muted)}
+.avoid{display:flex;flex-wrap:wrap;gap:8px}.avoid span{background:var(--danger-bg);border:1px solid #FECACA;color:#991B1B;border-radius:999px;padding:3px 12px;font-size:.84rem}
+.draft{background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;padding:8px 14px;font-size:.8rem;margin-top:14px}
+pre.code{background:#15171C;color:#E2E8F0;border-radius:10px;padding:12px 14px;font-family:var(--mono);font-size:.74rem;overflow:auto;max-height:260px;white-space:pre-wrap;word-break:break-word}
+@media(max-width:700px){table{display:block;overflow-x:auto}}
+</style></head><body>
+<nav class="topbar"><div class="brand-tag">COMPANY OS · BRAND STAGE 04C · 動態、聲音與影片</div>
+<div class="nav-links"><a class="nav-pill" href="edit.html">Edit</a><a class="nav-pill active" href="view.html">View</a><a class="nav-pill" href="agent.html">AI Agent</a></div></nav>
+<main class="spec" id="m"></main>
+<script src="options.js"></script><script src="core.js"></script>
+<script>
+const s=load(),cmp=completeness(s),E=t=>String(t).replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[m]));
+const L=k=>labels(k,s),X=id=>T_(s,id),PK=d=>{const o=picked(s,d);return o?o.zh:""};
+const cardsOf=k=>{const it=items(k,s);return it.length?`<div class="cards">${it.map(i=>`<div class="c"><b>${E(i.zh)}</b>${i.desc?`<p>${E(i.desc)}</p>`:""}${i.avoid&&i.avoid!=="-"?`<p>風險：${E(i.avoid)}</p>`:""}</div>`).join("")}</div>`:'<p class="empty">尚未選擇</p>'};
+const dimRow=d=>{const dm=DIM(d),o=picked(s,d);return `<tr><th>${dm.title}</th><td>${o?`<b>${E(o.zh)}</b><br><small>${E(o.desc)}</small>`:'<span class="empty">尚未選擇</span>'}</td></tr>`};
+const ur=useRows(s),useH=ur.length?`<div class="tw"><table><tr><th>用法</th><th>時長</th><th>緩動</th><th>位移</th><th>前庭</th><th>效能</th><th>減少動態版本</th></tr>${ur.map(x=>`<tr><td>${E(x.name)}</td><td>${x.duration_ms}ms${x.loop?"（循環）":""}</td><td>${x.easing_token||"—"}</td><td>${x.distance||"—"}</td><td>${x.vestibular?"有":"—"}</td><td>${PERF[x.perf]||"—"}</td><td>${E(x.reduced)}</td></tr>`).join("")}</table></div>`:'<p class="empty">尚未選擇</p>';
+const css=gradCSS(s),ac=animContrast(s);
+const gH=css?`<div class="gst" style="background:${css};color:${hex(s.text.g_txt)||"#fff"}">Sample 範例文字 123</div>`+(ac?`<div class="tw" style="margin-top:10px"><table><tr><th>狀態</th><th>最差位置</th><th>對比</th></tr>${ac.map(r=>`<tr><td>${E(r.label)}</td><td>${r.at}%（${r.color}）</td><td class="${r.ratio>=4.5?"ok":r.ratio<3?"no":""}">${fr(r.ratio)}:1</td></tr>`).join("")}</table></div>`:""):'<p class="empty">尚未填寫漸變色值</p>';
+const pc=pace(s),pcH=pc?`<table><tr><th>BPM</th><td>${pc.bpm}</td></tr><tr><th>每次剪接</th><td>${pc.beats} 拍 ＝ ${pc.sec.toFixed(3)} 秒${pc.frames!=null?`（${pc.frames.toFixed(2)} 幀 @ ${pc.fps} fps，${pc.whole?"整幀":"非整幀"}）`:""}</td></tr>${pc.cuts!=null?`<tr><th>${pc.len} 秒內約</th><td>${pc.cuts} 刀</td></tr>`:""}</table>`:'<p class="empty">尚未填寫 BPM 與拍數</p>';
+const ck=checks(s),hs=hints(s),stages=[...new Set(hs.map(h=>h.stage))].sort();
+const hi=stages.map(st=>`<div><h4>${E(st)}</h4><ul>${hs.filter(h=>h.stage===st).map(h=>`<li><b>${E(h.field)}</b>：${E(h.text)}<small>原因：${E(h.why)}</small></li>`).join("")}</ul></div>`).join("");
+const ln=(l,t)=>`<div class="ln"><small>${l}</small>${t?E(t):'<span class="empty">尚未填寫</span>'}</div>`;
+document.getElementById("m").innerHTML=`
+<span class="eyebrow">04C / Motion, Sound &amp; Video · 草稿 · 未核准</span>
+<h1 class="title">${E(brandName(s))}</h1><p style="font-family:var(--serif);font-size:1.1rem;max-width:64ch">${E(X("statement")||draft(s))}</p>
+<span class="prog">完成度 ${cmp.pct}%（${cmp.done}/${cmp.total}）${cmp.missing.length?" · 未完成："+cmp.missing.map(m=>m.label.replace(/（.*/,"")).join("、"):""}</span>
+<div class="draft">狀態：草稿。AI 提案與表單填寫不等於人類核准。時長、緩動與效能等級是起點；影片規格與響度以最新平台說明為準；聲音設計與影片製作須由專業人士完成；授權須書面確認。</div>
+<div class="sec"><h3>動態風格與 token</h3>${cardsOf("motionStyle")}<p class="lead" style="margin:12px 0 6px"><b>任務</b></p>${cardsOf("motionRole")}<table style="margin-top:12px">${["easeStyle","motionScale","choreo","distance","reducedPolicy","autoplayPolicy"].map(dimRow).join("")}</table><pre class="code" style="margin-top:12px">${E(tokensCSS(s))}</pre></div>
+<div class="sec"><h3>動態用法規格</h3>${useH}</div>
+<div class="sec"><h3>漸變、紋理與形狀的動態</h3>${cardsOf("gradMotion")}<table style="margin:12px 0">${["gradProp","gradLoop","gradReduced"].map(dimRow).join("")}<tr><th>週期</th><td>${E(X("gm_dur")||"—")} 秒</td></tr></table>${gH}</div>
+<div class="sec"><h3>影片</h3>${cardsOf("videoStyle")}<p class="lead" style="margin:12px 0 6px"><b>故事</b></p>${cardsOf("storyStyle")}<p class="lead" style="margin:12px 0 6px"><b>動畫</b></p>${cardsOf("animStyle")}<p class="lead" style="margin:12px 0 6px"><b>格式</b></p>${cardsOf("videoFormat")}<table style="margin-top:12px">${dimRow("hookRule")}<tr><th>長度／幀率</th><td>${E(X("v_len")||"—")} 秒／${E(X("v_fps")||"—")} fps</td></tr></table></div>
+<div class="sec"><h3>鏡頭語言</h3>${["shot","composition","lighting","mood"].map(k=>`<p class="lead" style="margin:12px 0 6px"><b>${E(CAT[k].title.replace(/（.*/,""))}</b></p>${cardsOf(k)}`).join("")}</div>
+<div class="sec"><h3>剪接與節奏</h3>${cardsOf("editStyle")}<p class="lead" style="margin:12px 0 6px"><b>節奏</b></p>${cardsOf("rhythm")}<p class="lead" style="margin:12px 0 6px"><b>表演與服裝</b></p>${cardsOf("perform")}<div style="margin-top:12px">${pcH}</div></div>
+<div class="sec"><h3>字幕與無障礙</h3><table>${["capStyle","capContrast","audioDesc"].map(dimRow).join("")}</table></div>
+<div class="sec"><h3>聲音</h3>${["soundEl","musicStyle","instrument","timbre"].map(k=>`<p class="lead" style="margin:12px 0 6px"><b>${E(CAT[k].title.replace(/（.*/,""))}</b></p>${cardsOf(k)}`).join("")}<table style="margin-top:12px">${["silence","audioLogoLen","loudness"].map(dimRow).join("")}<tr><th>音訊標誌長度</th><td>${E(X("a_len")||"—")} 秒</td></tr><tr><th>調性與音色備註</th><td>${E(X("a_key")||"—")}</td></tr></table></div>
+<div class="sec"><h3>旁白、介面音效與授權</h3>${["voice","voiceLang","uiSound","licenseSrc"].map(k=>`<p class="lead" style="margin:12px 0 6px"><b>${E(CAT[k].title.replace(/（.*/,""))}</b></p>${cardsOf(k)}`).join("")}<table style="margin-top:12px">${["uiSoundPolicy","licensePolicy"].map(dimRow).join("")}</table>${ln("示範旁白",X("vo_line"))}${ln("授權、製作與供應商備註",X("st_note"))}</div>
+<div class="sec"><h3>3 格分鏡</h3><div class="sb">${TOUCH.map(([id,l])=>`<div><small>${l}</small>${X(id)?E(X(id)):'<span class="empty">尚未填寫</span>'}</div>`).join("")}</div></div>
+<div class="sec"><h3>禁區（合併 Stage 1／2／4A／4B）</h3><div class="avoid">${negatives(s).map(x=>`<span>${E(x)}</span>`).join("")||'<span style="background:none;border:0;color:var(--muted)">尚未選擇</span>'}</div></div>
+<div class="sec"><h3>一致性與硬限制檢查</h3><ul class="ck" style="padding-left:18px">${ck.length?ck.map(x=>`<li class="${x.level}">${x.level==="error"?"✕":x.level==="warn"?"⚠":"ℹ"} ${E(x.msg)}</li>`).join(""):"<li class='info'>目前沒有發現問題。</li>"}</ul></div>
+<div class="sec"><h3>給 4D–4H 的建議</h3><p class="lead">依你的選擇推導。各階段目前還不會自動讀取，請匯出 stage4c-brief.json 帶過去。</p><div class="hi">${hi}</div></div>`;
+</script></body></html>

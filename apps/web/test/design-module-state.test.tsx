@@ -5,7 +5,7 @@ import './helpers/rtl';
 import { DesignModuleState } from '../src/design/DesignModuleState';
 
 const PAGES = [
-  { moduleKey: 'create', pageKey: 'projects', emptyTitle: 'Projects 未提供' },
+  { moduleKey: 'create', pageKey: 'projects', emptyTitle: 'All projects 未提供' },
   { moduleKey: 'create', pageKey: 'outputs', emptyTitle: 'Outputs 未提供' },
   { moduleKey: 'material', pageKey: 'library', emptyTitle: '素材庫 未提供' },
   { moduleKey: 'knowledge', pageKey: 'list', emptyTitle: '內容清單 未提供' },

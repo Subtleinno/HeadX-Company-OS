@@ -13,8 +13,14 @@
     "@company-os/contracts": "*",
     "@company-os/edition-profile": "*",
     "@company-os/policy": "*",
+    "@modelcontextprotocol/sdk": "^1.32.2",
     "fastify": "^5.12.8",
-    "pg": "^8.23.1"
+    "fflate": "^0.8.3",
+    "gsap": "^3.15.0",
+    "hyperframes": "^0.9.56",
+    "pg": "^8.23.1",
+    "sharp": "^0.35.5",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/pg": "^8.23.1"

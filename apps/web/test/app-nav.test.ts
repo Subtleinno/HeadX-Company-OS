@@ -102,12 +102,15 @@ describe('resolveNav', () => {
     ]);
   });
 
-  it('Create 只有 Projects／Outputs；Needs 不會變成第六個業務模組', () => {
+  it('Create 有 Library、Outputs 與三種格式；Needs 不會變成第六個業務模組', () => {
     const create = DESIGN_NAV.modules.find((item) => item.key === 'create');
 
     expect(create?.groups.flatMap((group) => group.pages.map((page) => page.key))).toEqual([
       'projects',
       'outputs',
+      'carousel',
+      'presentation',
+      'video',
     ]);
     expect(DESIGN_NAV.modules.some((item) => item.key === 'needs')).toBe(false);
   });

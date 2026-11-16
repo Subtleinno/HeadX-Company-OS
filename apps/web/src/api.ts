@@ -1,21 +1,37 @@
 import type {
   ProjectDetail,
   ProjectList,
+  ProjectFormat,
   ProjectSummary,
   ProjectState,
   ProjectBriefDocument,
   ProjectBriefVersion,
   ProjectAgentRun,
+  CarouselSlide,
+  CarouselOutput,
+  CompositionView,
+  KnowledgeDocView,
+  MaterialView,
+  ProjectCreativeWorkspace,
+  CarouselTemplate,
 } from '@company-os/contracts';
 
 export type {
   ProjectDetail,
   ProjectList,
+  ProjectFormat,
   ProjectSummary,
   ProjectState,
   ProjectBriefDocument,
   ProjectBriefVersion,
   ProjectAgentRun,
+  CarouselSlide,
+  CarouselOutput,
+  CompositionView,
+  KnowledgeDocView,
+  MaterialView,
+  ProjectCreativeWorkspace,
+  CarouselTemplate,
 };
 
 /**
@@ -1101,7 +1117,7 @@ export function fetchProjects(brandId?: string): Promise<ApiResult<ProjectList>>
 }
 
 export function createProject(
-  input: { brandId: string; title: string; request: string },
+  input: { brandId: string; title: string; request: string; format: ProjectFormat },
   idempotencyKey: string,
 ): Promise<ApiResult<{ project: ProjectDetail; created: boolean }>> {
   return request<{ project: ProjectDetail; created: boolean }>('/api/projects', {
@@ -1113,6 +1129,69 @@ export function createProject(
 
 export function fetchProject(id: string): Promise<ApiResult<{ project: ProjectDetail }>> {
   return request<{ project: ProjectDetail }>(`/api/projects/${encodeURIComponent(id)}`);
+}
+
+export function fetchProjectCreative(id: string): Promise<ApiResult<{ workspace: ProjectCreativeWorkspace }>> {
+  return request<{ workspace: ProjectCreativeWorkspace }>(`/api/projects/${encodeURIComponent(id)}/creative`);
+}
+
+export function fetchMaterials(brandId: string, query = ''): Promise<ApiResult<{ materials: MaterialView[]; total: number }>> {
+  return request<{ materials: MaterialView[]; total: number }>(`/api/materials?brandId=${encodeURIComponent(brandId)}&q=${encodeURIComponent(query)}`);
+}
+
+export function uploadMaterial(input: {
+  brandId: string; file: File; description: string; tags: string[]; source: MaterialView['source'];
+}): Promise<ApiResult<{ material: MaterialView; created: boolean }>> {
+  return request<{ material: MaterialView; created: boolean }>(`/api/materials?brandId=${encodeURIComponent(input.brandId)}`, {
+    method: 'POST',
+    headers: {
+      'content-type': input.file.type,
+      'x-file-name': encodeURIComponent(input.file.name),
+      'x-material-description': encodeURIComponent(input.description),
+      'x-material-tags': encodeURIComponent(input.tags.join(',')),
+      'x-material-source': input.source,
+    },
+    body: input.file,
+  });
+}
+
+export type KnowledgeInput = {
+  brandId: string | null; title: string; summary: string; bodyMd: string;
+  sources: { title: string; url: string; retrieved: string }[]; jurisdiction: string[]; reviewBy: string | null;
+};
+export function fetchKnowledge(brandId: string, query = ''): Promise<ApiResult<{ knowledge: KnowledgeDocView[]; total: number }>> {
+  return request<{ knowledge: KnowledgeDocView[]; total: number }>(`/api/knowledge?brandId=${encodeURIComponent(brandId)}&q=${encodeURIComponent(query)}`);
+}
+export function createKnowledge(input: KnowledgeInput): Promise<ApiResult<{ knowledge: KnowledgeDocView }>> {
+  return request<{ knowledge: KnowledgeDocView }>('/api/knowledge', { method: 'POST', body: JSON.stringify(input) });
+}
+export function appendKnowledgeVersion(id: string, input: KnowledgeInput): Promise<ApiResult<{ knowledge: KnowledgeDocView }>> {
+  return request<{ knowledge: KnowledgeDocView }>(`/api/knowledge/${encodeURIComponent(id)}/versions`, { method: 'POST', body: JSON.stringify(input) });
+}
+export function reviewKnowledge(id: string, status: KnowledgeDocView['status']): Promise<ApiResult<{ knowledge: KnowledgeDocView }>> {
+  return request<{ knowledge: KnowledgeDocView }>(`/api/knowledge/${encodeURIComponent(id)}/review`, { method: 'POST', body: JSON.stringify({ status }) });
+}
+export function fetchTemplates(): Promise<ApiResult<{ templates: CarouselTemplate[]; total: number }>> {
+  return request<{ templates: CarouselTemplate[]; total: number }>('/api/templates');
+}
+export function createComposition(id: string, input: {
+  slides?: CarouselSlide[]; basedOnId?: string | null; materialIds?: string[]; knowledgeIds?: string[];
+}, key: string): Promise<ApiResult<{ composition: CompositionView; created: boolean }>> {
+  return request<{ composition: CompositionView; created: boolean }>(`/api/projects/${encodeURIComponent(id)}/compositions`, {
+    method: 'POST', headers: { 'idempotency-key': key }, body: JSON.stringify(input),
+  });
+}
+export function renderProjectCarousel(id: string, compositionId: string, key: string): Promise<ApiResult<{ output: CarouselOutput; created: boolean }>> {
+  return request<{ output: CarouselOutput; created: boolean }>(`/api/projects/${encodeURIComponent(id)}/render`, {
+    method: 'POST', headers: { 'idempotency-key': key }, body: JSON.stringify({ compositionId }),
+  });
+}
+export function fetchOutputs(filter: { brandId?: string; projectId?: string } = {}): Promise<ApiResult<{ outputs: CarouselOutput[] }>> {
+  const params = new URLSearchParams();
+  if (filter.brandId !== undefined) params.set('brandId', filter.brandId);
+  if (filter.projectId !== undefined) params.set('projectId', filter.projectId);
+  const query = params.size === 0 ? '' : `?${params.toString()}`;
+  return request<{ outputs: CarouselOutput[] }>(`/api/outputs${query}`);
 }
 
 /**

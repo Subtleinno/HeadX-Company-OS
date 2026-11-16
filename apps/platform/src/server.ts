@@ -29,6 +29,7 @@ import type { Storage } from './storage/index.js';
 import { createStorageDiagnosis } from './storage/diagnose.js';
 import { createMinioStorage } from './storage/minio.js';
 import { registerProjects } from './projects/index.js';
+import { registerCarousel, registerCarouselMcp } from './carousel/index.js';
 
 const port = Number(process.env.PORT ?? 4420);
 const host = process.env.HOST ?? '0.0.0.0';
@@ -272,6 +273,19 @@ async function main(): Promise<void> {
   // 每一條都重新經現有 app_grant／policy 判斷 design 存取權。
   registerProjects(app, {
     pool,
+    registry,
+    resolveEntry: (request) => entryOfRequest(request),
+  });
+  registerCarousel(app, {
+    pool,
+    storage,
+    registry,
+    resolveEntry: (request) => entryOfRequest(request),
+    maxUploadBytes: readMaxUploadBytes(),
+  });
+  registerCarouselMcp(app, {
+    pool,
+    storage,
     registry,
     resolveEntry: (request) => entryOfRequest(request),
   });

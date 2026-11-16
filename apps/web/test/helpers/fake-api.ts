@@ -68,6 +68,17 @@ export type FakeHandlers = Partial<
     | 'projects'
     | 'projectCreate'
     | 'projectDetail'
+    | 'projectCreative'
+    | 'compositionCreate'
+    | 'render'
+    | 'materials'
+    | 'materialUpload'
+    | 'knowledge'
+    | 'knowledgeCreate'
+    | 'knowledgeVersion'
+    | 'knowledgeReview'
+    | 'templates'
+    | 'outputs'
     | 'appGrants'
     | 'appGrantDetail'
     | 'appGrantCreate'
@@ -332,9 +343,18 @@ function routeKey(path: string, method: string): keyof FakeHandlers | null {
     return method === 'GET' ? 'modules' : null;
   }
 
+  if (/\/projects\/[^/]+\/creative$/.test(bare)) return method === 'GET' ? 'projectCreative' : null;
+  if (/\/projects\/[^/]+\/compositions$/.test(bare)) return method === 'POST' ? 'compositionCreate' : null;
+  if (/\/projects\/[^/]+\/render$/.test(bare)) return method === 'POST' ? 'render' : null;
   if (/\/projects\/[^/]+$/.test(bare)) {
     return method === 'GET' ? 'projectDetail' : null;
   }
+  if (bare.endsWith('/materials')) return method === 'GET' ? 'materials' : method === 'POST' ? 'materialUpload' : null;
+  if (/\/knowledge\/[^/]+\/versions$/.test(bare)) return method === 'POST' ? 'knowledgeVersion' : null;
+  if (/\/knowledge\/[^/]+\/review$/.test(bare)) return method === 'POST' ? 'knowledgeReview' : null;
+  if (bare.endsWith('/knowledge')) return method === 'GET' ? 'knowledge' : method === 'POST' ? 'knowledgeCreate' : null;
+  if (bare.endsWith('/templates')) return method === 'GET' ? 'templates' : null;
+  if (bare.endsWith('/outputs')) return method === 'GET' ? 'outputs' : null;
 
   if (bare.endsWith('/projects')) {
     return method === 'GET' ? 'projects' : method === 'POST' ? 'projectCreate' : null;
@@ -529,6 +549,10 @@ export function installFakeApi(handlers: FakeHandlers): FakeApi {
             pageKey: null,
           });
         }
+        if (key === 'materials') return jsonResponse(200, { materials: [], total: 0 });
+        if (key === 'knowledge') return jsonResponse(200, { knowledge: [], total: 0 });
+        if (key === 'templates') return jsonResponse(200, { templates: [], total: 0 });
+        if (key === 'outputs') return jsonResponse(200, { outputs: [] });
 
         throw new Error(`測試沒有為 ${key} 準備回應`);
       }

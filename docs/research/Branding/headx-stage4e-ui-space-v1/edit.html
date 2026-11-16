@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-Hant"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Stage 04E · UI／UX 與空間體驗 (Edit)</title><link rel="stylesheet" href="shared.css"/>
+<style>
+.layout{max-width:1220px;margin:0 auto;padding:40px 24px 100px;display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:36px;align-items:start}
+@media(max-width:960px){.layout{grid-template-columns:minmax(0,1fr)}.side{position:static!important}}
+.layout main{min-width:0}
+.kicker{font-family:var(--mono);font-size:.75rem;color:var(--accent);text-transform:uppercase;letter-spacing:.1em}
+h1{font-size:2rem;margin:8px 0 8px;letter-spacing:-.02em}.sub{color:var(--muted);margin:0 0 24px;font-size:.93rem}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:24px;margin-bottom:22px;scroll-margin-top:70px}
+.card h2{margin:0;font-size:1.06rem}.card .num{font-family:var(--mono);font-size:.72rem;color:var(--muted);display:block;margin-bottom:2px}
+.head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;margin-bottom:10px}
+.part{border-top:1px solid var(--line);margin-top:16px;padding-top:14px}.part:first-of-type{border-top:0;margin-top:4px;padding-top:0}
+.part h3{margin:0 0 2px;font-size:.92rem}.hint{font-size:.8rem;color:var(--muted);margin:0 0 10px;max-width:80ch}
+.btn-ai{background:var(--soft);color:var(--accent);border:1px solid #BFDBFE;padding:5px 11px;border-radius:7px;font-size:.76rem;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit}
+.btn-ai:hover{background:#DBEAFE}.btn-ai.ghost{background:#fff;color:var(--muted);border-color:var(--line)}
+.count{font-size:.76rem;color:var(--muted);font-family:var(--mono)}
+.gt{font-family:var(--mono);font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:14px 0 8px;padding-top:10px;border-top:1px dashed var(--line)}.gt:first-child{border-top:0;margin-top:2px;padding-top:0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}.grid.wide{grid-template-columns:repeat(auto-fill,minmax(270px,1fr))}
+.opt{border:1px solid var(--line);border-radius:10px;padding:9px 12px;background:var(--bg);text-align:left;cursor:pointer;font-family:inherit;color:inherit}
+.opt:hover{border-color:#b8b8b0}.opt[aria-pressed=true]{background:var(--ink);color:#FFF;border-color:var(--ink);box-shadow:0 0 0 3px rgba(37,99,235,.25)}
+.opt b{display:block;font-size:.85rem}.opt span.d{display:block;font-size:.73rem;opacity:.78;margin-top:2px}.opt .tagrow{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}.opt .tg{font-size:.62rem;font-family:var(--mono);border:1px solid currentColor;border-radius:999px;padding:0 6px;opacity:.85}
+.row{display:flex;gap:8px;margin-top:10px}.row input{flex:1}
+input[type=text],textarea,select{width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--line);background:var(--bg);font-family:inherit;font-size:.88rem;color:var(--ink);outline:none}
+textarea{resize:vertical}input:focus,textarea:focus,select:focus{border-color:var(--accent);background:#FFF}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.chip{font-size:.78rem;padding:3px 10px;border-radius:999px;background:var(--bg);border:1px solid var(--line)}.chip button{border:0;background:none;cursor:pointer;color:var(--muted)}
+.tf{margin-bottom:12px}.tf label{display:block;font-size:.8rem;font-weight:600;margin-bottom:3px}.tf small{display:block;color:var(--muted);font-size:.72rem;margin-bottom:4px}
+.numgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px 14px}
+.hexrow{display:flex;gap:8px;align-items:center}.sw{width:34px;height:34px;border-radius:8px;border:1px solid var(--line);flex:none;background:repeating-conic-gradient(#ddd 0 25%,#fff 0 50%) 0 0/10px 10px}
+.note{background:var(--soft);border:1px solid #BFDBFE;border-radius:12px;padding:10px 14px;font-size:.8rem;margin-bottom:14px}
+.det{margin-top:12px;display:grid;gap:8px}.det>div{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-size:.8rem}.det b{font-size:.84rem}.det dl{margin:6px 0 0;display:grid;grid-template-columns:70px 1fr;gap:2px 10px}.det dt{color:var(--muted)}.det dd{margin:0}
+table.ct{width:100%;border-collapse:collapse;font-size:.78rem;background:var(--bg);border-radius:10px;overflow:hidden}.ct td,.ct th{border-bottom:1px solid var(--line);padding:6px 10px;text-align:left;vertical-align:middle}.ct th{font-family:var(--mono);font-size:.66rem;color:var(--muted);font-weight:500}.ct .ok{color:var(--ok);font-weight:600}.ct .no{color:var(--danger);font-weight:600}.ct input,.ct select,.ct textarea{padding:5px 8px;font-size:.78rem;min-width:110px}.ct textarea{min-height:44px}
+.tw{overflow-x:auto;max-width:100%}.sc{display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:-2px;border:1px solid #ccc;margin-right:4px}
+.cmp{border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px;background:var(--surface)}.cmp h4{margin:0 0 8px;font-size:.88rem}.cmp small{color:var(--muted)}
+.side{position:sticky;top:70px;display:flex;flex-direction:column;gap:14px}
+.meter{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
+.bar{height:8px;background:var(--line);border-radius:99px;overflow:hidden;margin:8px 0 12px}.bar>i{display:block;height:100%;background:var(--ink);transition:width .25s}
+.meter ul{list-style:none;margin:0;padding:0;font-size:.8rem}.meter li{padding:2px 0}.meter a{color:var(--muted);text-decoration:none}.meter li.done a{color:var(--ok)}
+.meter li.done::before{content:"✓ ";color:var(--ok)}.meter li:not(.done)::before{content:"○ ";color:var(--muted)}
+.side .btn-ai{display:block;width:100%;margin-top:8px;text-align:center}
+.chk li{font-size:.76rem;margin-bottom:6px;line-height:1.45}.chk .warn{color:var(--warn)}.chk .error{color:var(--danger)}.chk .info{color:var(--muted)}
+.stg{font-size:.76rem;display:grid;grid-template-columns:1fr auto;gap:2px 8px}.stg .y{color:var(--ok)}.stg .n{color:var(--muted)}
+dialog{border:1px solid var(--line);border-radius:16px;padding:24px;max-width:640px;width:92%}dialog::backdrop{background:rgba(0,0,0,.35)}
+dialog textarea{min-height:200px;font-family:var(--mono);font-size:.78rem}dialog .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+dialog .res{font-size:.8rem;margin-top:10px;color:var(--ok)}dialog .err{color:var(--danger)}
+</style></head><body>
+<nav class="topbar"><div class="brand-tag">COMPANY OS · BRAND STAGE 04E · UI／UX 與空間體驗</div>
+<div class="nav-links"><a class="nav-pill active" href="edit.html">Edit</a><a class="nav-pill" href="view.html">View</a><a class="nav-pill" href="agent.html">AI Agent</a></div></nav>
+<div class="layout"><main>
+<span class="kicker">Stage 04E · UI/UX &amp; Space Experience</span>
+<h1>UI／UX 與空間體驗</h1>
+<p class="sub">把 4B 的圓角比例尺、陰影、邊框、焦點外框與填色狀態，轉成<b>元件規範</b>，並逐狀態做顏色對比檢查（文字 4.5:1、元件與焦點 3:1、目標大小）；再延伸到 UX 模式、客戶旅程與服務藍圖、空間（分區、材質、燈光、感官、客流容量、尋路與無障礙，附香港建築署手冊公開數值對照）。每個決策有討論提示詞；完成後輸出 UI tokens CSS、component-spec、無障礙測試計畫、旅程 CSV、space-spec、UI／空間 Prompt 與設計 Agent 規則。</p>
+<div class="note"><b>注意：</b>原型資料只存在你的瀏覽器。選項內容是通用知識的起始草案，尚未逐項查證。<b>對比檢查只涵蓋顏色；鍵盤、螢幕閱讀器、焦點行為與真人測試必須由人類執行，原型不能宣稱「已符合 WCAG」。</b>WCAG 2.2 數值（4.5:1、3:1、24×24 CSS px 等）只是設計門檻。<b>實體空間的建築、消防、電氣、衛生、無障礙與規管要求須由註冊專業人士確認</b>；建築署手冊數值是公開摘錄，以最新版為準，不是法律意見。旅程表的內容須來自真實觀察或標示為假設。沒有風格相符度分數。AI 提案不等於核准。</div>
+<div id="cards"></div>
+</main>
+<aside class="side"><div class="meter"><b id="pct"></b><div class="bar"><i id="barfill"></i></div><ul id="mlist"></ul></div>
+<div class="meter"><b style="font-size:.84rem">前階段匯入</b><div class="stg" id="stg" style="margin-top:8px"></div><button class="btn-ai" id="impstage">匯入 Stage 0–4D brief JSON（可多選）</button><input type="file" id="stagefile" accept="application/json" multiple hidden/></div>
+<div class="meter chk"><b style="font-size:.84rem">一致性與硬限制檢查</b><ul id="chk" style="margin-top:8px"></ul></div>
+<div class="meter"><button class="btn-ai" id="copyctx" style="margin:0">複製『前階段＋目前選擇』給 AI</button><button class="btn-ai" id="paste">貼回 AI 結果</button><button class="btn-ai" id="expb">匯出 stage4e-brief.json</button><button class="btn-ai" id="imp">匯入 4E JSON</button><button class="btn-ai" id="reset" style="color:var(--danger);border-color:#f3c0c0;background:#fff">全部清空</button><input type="file" id="file" accept="application/json" hidden/></div></aside></div>
+<dialog id="dlg"><b>貼回 AI 結果</b><p class="hint" style="margin:6px 0 12px">把 AI 討論結尾附的 JSON 整段貼上。選項會自動對應，清單沒有的會加為自訂項；單選規則、文字欄與旅程表會直接填入。</p>
+<textarea id="pt" placeholder='{"uiStyle":["極簡扁平"],"density":"標準（40px）"}'></textarea><div class="res" id="pres"></div>
+<div class="actions"><button class="btn-ai ghost" id="pc">關閉</button><button class="btn-ai" id="pa">套用</button></div></dialog>
+<div class="toast" id="toast"></div>
+<script src="options.js"></script><script src="core.js"></script><script src="prompts.js"></script>
+<script>
+const $=id=>document.getElementById(id);const S=load();
+const esc=t=>String(t).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+function toast(m){const t=$("toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2200)}
+const persist=()=>{save(S);meter()};
+const CARDS=[
+ {id:"ui",num:"01",title:"UI 風格、色值與基礎設定",prompt:"ui",parts:[{text:["brandName"]},{cat:"uiStyle"},{dim:"density"},{dim:"spacingBase"},{dim:"typeBase"},{dim:"themeMode"},{dim:"iconStyle"},{dim:"a11yTarget"},{text:["c_primary","c_secondary","c_accent","c_ink","c_paper"],grid:1},{text:["c_error","c_success","c_warning","c_info"],grid:1},{text:["u_radius","u_border","u_focus"],grid:1}]},
+ {id:"ux",num:"02",title:"UX 模式、導覽、標籤與錯誤",prompt:"ux",parts:[{cat:"uxPattern"},{dim:"navPattern"},{dim:"labelPos"},{dim:"errorPattern"}]},
+ {id:"components",num:"03",title:"元件規範與狀態（含對比檢查）",prompt:"components",parts:[{cat:"components"},{cat:"uiStates"},{dim:"targetPolicy"},{dim:"focusPolicy"},{dyn:"lab"}]},
+ {id:"a11y",num:"04",title:"無障礙測試計畫",prompt:"a11y",parts:[{cat:"a11yTests"},{dyn:"plan"}]},
+ {id:"journey",num:"05",title:"觸點、客戶旅程與服務藍圖",prompt:"journey",parts:[{cat:"touchpoints"},{cat:"serviceMoments"},{dyn:"journey"}]},
+ {id:"space",num:"06",title:"空間類型、室內風格與分區",prompt:"space",parts:[{cat:"spaceType"},{cat:"interiorStyle"},{cat:"zones"}]},
+ {id:"material",num:"07",title:"空間材質、燈光與感官",prompt:"material",parts:[{cat:"spaceMat"},{cat:"spaceLight"},{cat:"spaceSensory"},{dim:"cctPolicy"},{dim:"cleanPolicy"},{text:["sp_cct"]}]},
+ {id:"flow",num:"08",title:"客流、容量與等候",prompt:"flow",parts:[{dim:"crowdPolicy"},{text:["sp_area","sp_rooms","sp_session","sp_buffer","sp_hours","sp_peak","sp_wait"],grid:1},{dyn:"queue"}]},
+ {id:"way",num:"09",title:"尋路與無障礙空間",prompt:"way",parts:[{cat:"wayfinding"},{cat:"spaceAccess"},{dim:"signageLang"},{text:["sp_door","sp_corr","sp_turn"],grid:1},{dyn:"bd"}]},
+ {id:"avoid",num:"10",title:"禁區、3 個關鍵時刻與一句話",prompt:"avoid",parts:[{cat:"avoidUX"},{text:["ks1","ks2","ks3","st_note","statement"]}]}
+];
+function textPart(ids,grid){const h=ids.map(id=>{const t=TEXT_BY[id];const isHex=/^c_/.test(id);return `<div class="tf"><label for="t-${id}">${t.label}</label>${t.help?`<small>${t.help}</small>`:""}${isHex?`<div class="hexrow"><div class="sw" id="sw-${id}"></div><input type="text" id="t-${id}" data-t="${id}" placeholder="${esc(t.ph)}"/></div>`:t.rows>1?`<textarea id="t-${id}" data-t="${id}" rows="${t.rows}" placeholder="${esc(t.ph)}"></textarea>`:`<input type="text" id="t-${id}" data-t="${id}" placeholder="${esc(t.ph)}"/>`}</div>`}).join("");return grid?`<div class="numgrid">${h}</div>`:h}
+function catPart(k){const c=CAT[k];return `<div class="part"><h3>${c.title}</h3><p class="hint">${c.hint||""}</p><div class="count" id="cnt-${k}"></div><div id="cat-${k}"></div><div class="det" id="det-${k}"></div><div class="row"><input type="text" data-cust="${k}" placeholder="沒有適合的？自訂一項（Enter 新增）"/><button class="btn-ai" data-add="${k}" type="button">新增</button></div><div class="chips" id="chips-${k}"></div></div>`}
+function dimPart(id){const d=DIM(id);return `<div class="part"><h3>${d.title}</h3>${d.q?`<p class="hint">${d.q}</p>`:""}<div class="grid wide" id="dim-${id}" role="group"></div></div>`}
+const DYNT={lab:"元件實驗室：依你的色值與 4B tokens 預覽並逐狀態檢查對比",plan:"無障礙測試計畫預覽",journey:"客戶旅程與服務藍圖（可編輯）",queue:"容量與等候計算（Little's law）",bd:"與建築署《設計手冊：暢通無阻的通道》公開數值對照"};
+const cardsEl=$("cards");
+CARDS.forEach(c=>{const el=document.createElement("section");el.className="card";el.id="c-"+c.id;
+  el.innerHTML=`<div class="head"><div><span class="num">${c.num}</span><h2>${c.title}</h2></div><button class="btn-ai" data-p="${c.prompt}">複製討論提示詞</button></div>`+c.parts.map(p=>p.cat?catPart(p.cat):p.dim?dimPart(p.dim):p.dyn?`<div class="part"><h3>${DYNT[p.dyn]}</h3><div id="dyn-${p.dyn}"></div></div>`:`<div class="part">${textPart(p.text,p.grid)}</div>`).join("");cardsEl.appendChild(el)});
+function tagsHTML(k,i){const a=[];if(i.risk)a.push("無障礙／私隱風險");if(i.pro)a.push("須專業人士確認");if(i.inter&&k==="components")a.push("互動");if(i.cost)a.push("成本 "+["","低","中低","中高","高"][i.cost]);return a.length?`<div class="tagrow">${a.map(x=>`<span class="tg">${x}</span>`).join("")}</div>`:""}
+function renderCat(k){const c=CAT[k];
+  $("cat-"+k).innerHTML=c.groups.map(g=>`<div class="gt">${g.g}</div><div class="grid">${g.items.map(i=>`<button type="button" class="opt" aria-pressed="${S[k].includes(i.id)}" data-k="${k}" data-id="${i.id}"><b>${esc(i.zh)}</b><span class="d">${esc(i.desc)}</span>${tagsHTML(k,i)}</button>`).join("")}</div>`).join("");
+  $("cnt-"+k).textContent=`已選 ${count(k,S)}${c.max<90?" / 建議最多 "+c.max:""}`;
+  $("chips-"+k).innerHTML=S.custom[k].map((t,i)=>`<span class="chip">${esc(t)} <button data-del="${k}:${i}" aria-label="移除">✕</button></span>`).join("");
+  $("det-"+k).innerHTML=S[k].map(id=>byId(k,id)).filter(i=>i&&i.fit&&i.fit!=="-").map(i=>`<div><b>${esc(i.zh)}</b><dl><dt>適用</dt><dd>${esc(i.fit)}</dd><dt>風險</dt><dd>${esc(i.avoid||"—")}</dd><dt>配搭</dt><dd>${esc(i.pair||"—")}</dd>${i.note?`<dt>備註</dt><dd>${esc(i.note)}</dd>`:""}</dl></div>`).join("")}
+function renderDim(id){const d=DIM(id);$("dim-"+id).innerHTML=d.opts.map(o=>`<button type="button" class="opt" aria-pressed="${S.dims[id]===o.id}" data-dim="${id}" data-o="${o.id}"><b>${esc(o.zh)}</b><span class="d">${esc(o.desc)}</span></button>`).join("")}
+function fillTexts(){document.querySelectorAll("[data-t]").forEach(t=>{t.value=S.text[t.dataset.t]||""});swatches()}
+function swatches(){document.querySelectorAll(".sw").forEach(e=>{const h=hex(S.text[e.id.slice(3)]);e.style.background=h||""})}
+// ---- 元件實驗室 ----
+function dynLab(){const sa=specAll(S),ths=themes(S),tk=tokens(S),sm=sem(S);if(!ths.length){$("dyn-lab").innerHTML='<p class="hint">填入主色、文字色與背景色（匯入 4A 會自動帶入），再選元件，這裡會顯示預覽與逐狀態對比。</p>';return}
+  if(!sa.length){$("dyn-lab").innerHTML='<p class="hint">在上面選擇元件後，這裡顯示預覽與對比檢查。</p>';return}
+  const fails=specFails(S);let h=`<p class="hint">tokens：圓角 ${tk.rad.sm}／${tk.rad.md}／${tk.rad.lg}px｜邊框 ${tk.border}px｜焦點 ${tk.focus}px 偏移 ${tk.focusOff}px｜控制項 ${tk.h}px｜最小目標 ${tk.targetMin}px${tk.defaults?"（4B 未提供 tokens，使用預設值）":"（來自 4B）"}。目前有 <b class="${fails.length?"no":"ok"}">${fails.length}</b> 項顏色對比未達門檻。</p>`;
+  sa.forEach(c=>{const th=ths.find(t=>t.name===c.theme);h+=`<div class="cmp"><h4>${esc(c.name)} <small>（${c.theme}）｜高度 ${c.sizes.height||"—"}｜圓角 ${c.sizes.radius}px｜邊框 ${c.sizes.border}px｜陰影 ${esc(c.sizes.shadow)}${c.sizes.target?`｜最小目標 ${c.sizes.target}px`:""}</small></h4>${compPreview(c.id,th,tk,sm)}<div class="tw" style="margin-top:8px"><table class="ct"><tr><th>項目</th><th>狀態</th><th>前景</th><th>背景</th><th>規則</th><th>對比</th><th>結果</th></tr>${c.rows.map(r=>`<tr><td>${esc(r.item)}${r.note?`<br><small style="color:var(--muted)">${esc(r.note)}</small>`:""}</td><td>${r.state}</td><td><span class="sc" style="background:${r.fg}"></span>${r.fg}</td><td><span class="sc" style="background:${r.bg}"></span>${r.bg}</td><td>${COLORKIND[r.kind]}</td><td class="${r.kind==="info"?"":r.pass?"ok":"no"}">${fr(r.ratio)}:1</td><td class="${r.kind==="info"?"":r.pass?"ok":"no"}">${r.kind==="info"?"參考":r.pass?"通過":"未通過"}</td></tr>`).join("")}</table></div></div>`});
+  h+=`<p class="hint">提示氣泡、彈窗、導覽等的鍵盤與焦點行為無法由顏色檢查；預覽只是示意，不是最終設計。</p>`;$("dyn-lab").innerHTML=h}
+function dynPlan(){const t=a11yPlan(S);$("dyn-plan").innerHTML=`<pre style="white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px;font-size:.76rem;max-height:260px;overflow:auto">${esc(t)}</pre>`}
+// ---- 旅程 ----
+function emoSVG(rows){const pts=rows.map((r,i)=>({i,e:parseInt(r.emo)})).filter(p=>p.e);if(pts.length<2)return "";const W=520,H=110,x=i=>30+i*(W-60)/(rows.length-1),y=e=>H-15-(e-1)*(H-30)/4;return `<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:560px;background:var(--bg);border:1px solid var(--line);border-radius:10px"><polyline fill="none" stroke="#2563EB" stroke-width="2.5" points="${pts.map(p=>x(p.i)+","+y(p.e)).join(" ")}"/>${pts.map(p=>`<circle cx="${x(p.i)}" cy="${y(p.e)}" r="4" fill="${p.e<=2?"#DC2626":"#2563EB"}"/>`).join("")}${rows.map((r,i)=>`<text x="${x(i)}" y="${H-2}" font-size="9" text-anchor="middle" fill="#666">${r.stage}</text>`).join("")}</svg>`}
+function dynJourney(){const rows=journeyRows(S);$("dyn-journey").innerHTML=`<div class="tw"><table class="ct"><tr><th>階段</th><th>觸點</th><th>顧客行動</th><th>前台（可見）</th><th>後台（不可見）</th><th>情緒</th><th>痛點</th><th>改善機會</th></tr>${rows.map((r,i)=>`<tr><td><b>${r.stage}</b></td>${["tp","act","front","back"].map(f=>`<td><textarea data-j="${i}|${f}" rows="2">${esc(r[f])}</textarea></td>`).join("")}<td><select data-j="${i}|emo"><option value="">—</option>${[1,2,3,4,5].map(n=>`<option value="${n}" ${String(r.emo)===String(n)?"selected":""}>${n} ${EMO[n]}</option>`).join("")}</select></td>${["pain","opp"].map(f=>`<td><textarea data-j="${i}|${f}" rows="2">${esc(r[f])}</textarea></td>`).join("")}</tr>`).join("")}</table></div><div id="emoChart" style="margin-top:10px">${emoSVG(rows)}</div><p class="hint" style="margin-top:6px">內容須來自真實顧客觀察或明確標示為假設；情緒 1＝很差，5＝很好。情緒偏低（≤2）而沒有改善機會，檢查器會警告。</p>`}
+// ---- 容量 ----
+function dynQueue(){const q=queueCalc(S);$("dyn-queue").innerHTML=q?`<div class="tw"><table class="ct"><tr><th>每節循環</th><th>每間每日節數</th><th>每日容量</th><th>每小時容量</th><th>高峰利用率</th><th>平均等候人數 L</th><th>最少座位</th></tr><tr><td>${q.cyc} 分鐘</td><td>${q.perRoomDay}</td><td>${q.daily} 人</td><td>${q.perHour.toFixed(1)} 人</td><td class="${q.util>1?"no":q.util>.85?"":"ok"}">${q.util!=null?(q.util*100).toFixed(0)+"%":"—"}</td><td>${q.L!=null?q.L.toFixed(1):"—"}</td><td>${q.seats!=null?q.seats:"—"}</td></tr></table></div><p class="hint" style="margin-top:6px">每小時容量 ＝ 房間數 × 60 ÷（服務時間＋緩衝）；平均等候人數 L ＝ 到達率 × 平均等候時間（Little's law）。這只是平均值，高峰波動與預約遲到需另外預留餘量；利用率超過 100% 隊伍會持續變長。</p>`:'<p class="hint">填入房間數、每節時間與每日營業小時後顯示。</p>'}
+function dynBD(){const r=bdCompare(S);$("dyn-bd").innerHTML=r.length?`<div class="tw"><table class="ct"><tr><th>項目</th><th>你的數值</th><th>手冊參考</th><th>說明</th><th>結果</th></tr>${r.map(x=>`<tr><td>${x.item}</td><td>${x.value} mm</td><td>${x.ref}${x.ref2!==x.ref?" ／ "+x.ref2:""} mm</td><td>${esc(x.note)}</td><td class="${x.level==="ok"?"ok":x.level==="info"?"":"no"}">${x.level==="ok"?"達參考值":x.level==="info"?"低於較佳值":"低於參考值"}</td></tr>`).join("")}</table></div><p class="hint" style="margin-top:6px">數值摘錄自建築署《設計手冊：暢通無阻的通道》2008（2025 版）公開文件；以最新版與註冊專業人士判斷為準，是否適用於你的物業與用途須由專業人士確認，不是法律意見。</p>`:'<p class="hint">填入門寬、通道寬與迴轉空間後顯示比較。</p>'}
+function renderStages(){const L={s0:"Stage 0 業務",s1:"Stage 1 定位",s2:"Stage 2 感官",s3:"Stage 3 語言",s4a:"Stage 4A 視覺語言",s4b:"Stage 4B 表面系統",s4c:"Stage 4C 動態影片",s4d:"Stage 4D 3D 與產品"};$("stg").innerHTML=Object.entries(L).map(([k,l])=>`<span>${l}</span><span class="${S[k]?"y":"n"}">${S[k]?"已匯入":"未匯入"}</span>`).join("")}
+function renderDyn(){dynLab();dynPlan();dynQueue();dynBD()}
+function renderAll(){CAT_KEYS.forEach(renderCat);DIMS.forEach(d=>renderDim(d.id));fillTexts();renderDyn();dynJourney();renderStages()}
+document.addEventListener("input",e=>{const t=e.target.closest("[data-t]");if(t){S.text[t.dataset.t]=t.value;persist();swatches();renderDyn();return}
+  const j=e.target.closest("[data-j]");if(j&&j.tagName==="TEXTAREA"){const[i,f]=j.dataset.j.split("|");S.journey[i]=S.journey[i]||{};S.journey[i][f]=j.value;persist();$("emoChart").innerHTML=emoSVG(journeyRows(S))}});
+document.addEventListener("change",e=>{const j=e.target.closest("select[data-j]");if(j){const[i,f]=j.dataset.j.split("|");S.journey[i]=S.journey[i]||{};S.journey[i][f]=j.value;persist();$("emoChart").innerHTML=emoSVG(journeyRows(S))}});
+document.addEventListener("keydown",e=>{const c=e.target.closest("[data-cust]");if(c&&e.key==="Enter"){e.preventDefault();addCust(c.dataset.cust)}});
+function addCust(k){const i=document.querySelector(`[data-cust="${k}"]`),v=i.value.trim();if(v&&!S.custom[k].includes(v)){S.custom[k].push(v);i.value="";persist();renderCat(k)}}
+document.addEventListener("click",e=>{
+  const o=e.target.closest(".opt[data-k]");if(o){const k=o.dataset.k,id=o.dataset.id,a=S[k],i=a.indexOf(id);if(i>-1)a.splice(i,1);else{if(CAT[k].max<90&&count(k,S)>=CAT[k].max){toast(`此項建議最多 ${CAT[k].max} 個，請先取消一個`);return}a.push(id)}persist();renderCat(k);renderDyn();return}
+  const dm=e.target.closest(".opt[data-dim]");if(dm){const id=dm.dataset.dim,v=dm.dataset.o;if(S.dims[id]===v)delete S.dims[id];else S.dims[id]=v;persist();renderDim(id);renderDyn();return}
+  const ad=e.target.closest("[data-add]");if(ad){addCust(ad.dataset.add);return}
+  const del=e.target.closest("[data-del]");if(del){const[k,i]=del.dataset.del.split(":");S.custom[k].splice(+i,1);persist();renderCat(k);return}
+  const p=e.target.closest("[data-p]");if(p)navigator.clipboard.writeText(PROMPTS[p.dataset.p](S)).then(()=>toast("已複製完整討論提示詞，貼給 AI 即可開始"),()=>toast("無法寫入剪貼簿，請檢查瀏覽器權限"))});
+function meter(){const c=completeness(S);$("pct").textContent=`完成度 ${c.pct}%（${c.done}/${c.total}）`;$("barfill").style.width=c.pct+"%";const miss=c.missing.map(m=>m.key);
+  const LIST=[["ui","UI 風格與基礎","ui"],["palette","色值","ui"],["ux","UX 模式","ux"],["comp","元件與狀態","components"],["target","目標與焦點","components"],["a11y","無障礙測試","a11y"],["journey","旅程表","journey"],["moments","服務時刻","journey"],["space","空間類型與分區","space"],["spmat","材質燈光感官","material"],["flow","客流與容量","flow"],["way","尋路與無障礙","way"],["avoid","禁區","avoid"],["moments3","3 個關鍵時刻","avoid"]];
+  $("mlist").innerHTML=LIST.map(([k,l,a])=>`<li class="${miss.includes(k)?"":"done"}"><a href="#c-${a}">${l}</a></li>`).join("");
+  const ck=checks(S);$("chk").innerHTML=ck.length?ck.map(x=>`<li class="${x.level}">${x.level==="error"?"✕":x.level==="warn"?"⚠":"ℹ"} ${esc(x.msg)}</li>`).join(""):"<li class='info'>目前沒有發現問題。</li>";renderStages()}
+$("copyctx").onclick=()=>navigator.clipboard.writeText("【我的品牌背景與目前 UI／UX 與空間選擇】\n"+ctxStages(S)+"\n\n"+ctxUX(S)).then(()=>toast("已複製，貼在任何 AI 對話的開頭"),()=>toast("無法寫入剪貼簿"));
+function handle(text){const r=applyPaste(text,S);if(r.applied.length){persist();renderAll()}return r}
+$("paste").onclick=()=>{$("pres").textContent="";$("pt").value="";$("dlg").showModal()};$("pc").onclick=()=>$("dlg").close();
+$("pa").onclick=()=>{const r=handle($("pt").value);$("pres").className="res"+(r.errors.length&&!r.applied.length?" err":"");$("pres").innerHTML=(r.applied.length?"已套用：<br>"+r.applied.map(esc).join("<br>"):"")+(r.custom.length?"<br>加入自訂項："+r.custom.map(esc).join("、"):"")+(r.errors.length?"<br><span class='err'>"+r.errors.map(esc).join("<br>")+"</span>":"")};
+$("expb").onclick=()=>{const b=new Blob([JSON.stringify(buildBrief(S),null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="stage4e-brief.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+$("imp").onclick=()=>$("file").click();
+$("file").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const o=handle(r.result);toast(o.applied.length?"已匯入":"匯入失敗："+o.errors.join("；"))};r.readAsText(f);e.target.value=""};
+$("impstage").onclick=()=>$("stagefile").click();
+$("stagefile").onchange=async e=>{const fs=[...e.target.files];let ok=[],bad=[];for(const f of fs){const t=await f.text();const k=importBrief(t,S);if(k)ok.push(k);else bad.push(f.name)}persist();fillTexts();renderDyn();renderStages();toast((ok.length?"已匯入 "+ok.join("、"):"")+(bad.length?"｜無法辨識："+bad.join("、"):""));e.target.value=""};
+$("reset").onclick=()=>{if(confirm("確定清空 Stage 4E 的所有答案？（前階段匯入也會清除）此動作無法復原。")){Object.assign(S,emptyState());save(S);location.reload()}};
+renderAll();meter();
+</script></body></html>
