@@ -116,7 +116,7 @@ prompt(payload)
 7. **Needs 是正常人機協作，不是錯誤頁。** 上載或裁決後必須吸收，才算閉環。
 8. **沒有來源不寫成事實。** 可以保存有 placeholder 的 composition，不可虛構品牌、知識或權利。
 9. **對外發送永遠由人按下。** 第一版只做下載／複製，不做自動發布。
-10. **此 repo 不執行 AI 模型。** LLM／VLM 是外部 client 或 provider；第一版不做 MCP。
+10. **此 repo 不執行 AI 模型，但必須提供實際可用的 agent 接入。** LLM／VLM 是外部 client 或 provider；HTTP 與 MCP 都是正式介面。工作流程需要 MCP 時必須實作、接權限並驗收，不得只留空位或永久延後。
 11. **一個事實只有一個來源。** 索引、Boss 摘要、搜尋卡片均是可重建投影，不是可寫副本。
 12. **畫面必須誠實。** 沒有 agent、render 或資料時顯示實際狀態，不畫假進度、假分數或假數字。
 
@@ -570,7 +570,7 @@ Company OS API＋Permissions＋Postgres／MinIO
 外部 VLM／生成模型／HyperFrames 等 providers
 ```
 
-- 第一版使用有權限的 HTTP 介面；MCP 是之後的可選 adapter。
+- HTTP 與 MCP 是共用同一身份、授權、冪等、事件與審計的正式 adapter；按實際 agent 工作流程需要交付。需要 MCP 時必須完成實作與驗收，不再把它視為永久後置的可選項。
 - 外部 agent 沒有資料庫憑證，不可繞過 API 權限。
 - 每次寫入帶 actor、request identity、來源版本與事件。
 - provider 設定與密鑰不進 repo、日誌或 API 回應。

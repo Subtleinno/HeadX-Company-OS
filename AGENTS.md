@@ -18,6 +18,7 @@ HeadX Company OS：一間公司運作的唯一底座，全部放在這個 repo�
 - **預設不加閘**（原則 1）：不預設 approval gate、不預設 validator。批核是老闆逐項開啟的設定，不是架構預設。
 - **對外可達性只能向下收窄**：manifest 的 `exposure` 是硬上限，部署決定今次開幾道門，畫面只誠實顯示你而家喺邊道門。現時只開 `gateway-internal` 一道。見 `docs/CONCEPT.md` 第 9 節。
 - 這個 repo 不執行 AI 模型。AI 是外部客戶端（MCP／HTTP），同人一樣經介面接入。
+- **MCP 是需要時必須交付的正式 adapter。** 不得以舊 C79 或舊分期為由永久延後；實際工作流程需要時，要連同 request 身份、現有 policy、冪等、審計、真 client 合約測試與可見 UI 一併完成。
 
 ## 項目管理與施工規則（2026-11-16 起）
 

@@ -654,3 +654,9 @@
 - #95 的 U3 採用既有 `agent_identity`＋`app_grant`＋policy，不建立 DB 憑證或繞過權限的通道。老闆在 Agents 管理畫面簽發 HTTP Bearer token；明文只在 201 簽發回應顯示一次，`agent_http_token` 只存 SHA-256、到期及撤銷事實。每個請求重新驗 token、agent 狀態與當時的 design grant；停用 agent 會在同一交易撤銷其 token。
 - Project 原始要求、agent run 與 Brief 版本在 `design` schema 只追加。Brief 記錄 agent、token、request ID、原始要求、基於哪個舊 Brief 及審計；建立 Project、claim 與 Brief 提交都以 actor 範圍的 Idempotency-Key＋請求摘要處理重送，同 key 不同內容回 409。
 - Project 沒有可寫入的萬能 `status`。共用 `deriveProjectState()` 覆蓋待接手、規劃中、等待補料、可輸出、輸出中、已產出及已收貨；#95 只提供 request／run／Brief 事實，其餘狀態待相應模組產生真事實後才會出現。測試 HTTP client 證明契約可用，不代表任何生產 agent 已接通。
+
+## C130　MCP 是需要時必須交付的正式工作介面
+
+- 老闆 2026-11-16 明確指出完整可用的 app  heavily 依賴 MCP；因此舊 C79「MCP 一律暫緩」及 Marketing Design 藍圖「第一版不做 MCP／之後可選」即時由本決策取代。生產部署與備份還原演練的既有次序不因本決策改變。
+- 「repo 不執行 AI 模型」不變：LLM／VLM 仍是外部 client／provider。HTTP 與 MCP 都是正式接入方式，二者必須共用 request-scoped 身份、現有 policy、冪等、事件、審計與秘密保護；MCP 不可成為繞過權限的第二條通道。
+- 當實際工作流程需要 MCP 時，施工必須包括真正的 MCP tools／resources、輸入輸出契約、真 client 合約測試與可見 UI 狀態，不得只留註解、空按鈕或文件承諾。#95 的 HTTP 能力保留並可作為同一業務服務層的另一 adapter。
