@@ -21,6 +21,7 @@
 | `CONCEPT.md` | **設計真相**：七個原則、十二物件、Needs 閉環、公司層／品牌層、對外可達性 |
 | `product/HANDOFF.md` | **今日交接**：程式碼在哪、五分鐘跑起來、現有畫面、品牌模組 loop 次序（§5）、十一個坑 |
 | `product/DECISIONS.md` | **決策日誌** C1–C118，後者優先 |
+| `product/MARKETING-DESIGN-BLUEPRINT.md` | **Marketing Design v3 領域入口**：統一 Brand、Projects、Materials、Knowledge、Templates、Create、Needs 與 Boss Portal 的目標、取捨及縱切片（#93） |
 | `product/FRAME-UIUX-HANDOFF.md` | 外殼行為規格 v1.4（四層導覽、據點目錄、權限門） |
 | `product/SCOPE-MODEL.md` | 範圍模型：公司／品牌、三種 app 模式、管寫 vs 管讀 |
 | `product/MULTI-MACHINE-ACCESS.md` | 跨機入口：總部＝登記／批准／入口中心，不是資料隧道 |
@@ -105,7 +106,7 @@
 
 ## 開工與改文件的規矩
 
-1. 先讀 `CONCEPT.md`、`AGENTS.md`、`HANDOFF.md`，再讀你被指派的 issue。issue 是唯一授權；文件存在不等於批准施工。
+1. 先讀 `CONCEPT.md`、`AGENTS.md`、`HANDOFF.md`，再讀你被指派的 issue。issue 是唯一授權；文件存在不等於批准施工。Marketing Design v3 的 issue 另須讀 `product/MARKETING-DESIGN-BLUEPRINT.md`，不必重讀整個 `Perplexity idea/`。
 2. **改概念先改 `CONCEPT.md`**，再改下面。概念改了就同步 `DECISIONS.md` 記一條，否則兩處會各說各話。**但文件與程式碼不一致（純粹過時）時，直接改文件，不要等 issue**（C93）—— 過時的手冊比沒有手冊更貴。
 3. 一份文件只有一個責任。新文件之前先問：這件事是否已有主人？有就把舊的歸檔，不要留兩份。
 4. 歷史留在 `archive/`，不刪。但**不在歸檔文件裡找現行規則**。
