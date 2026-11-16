@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-Hant"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Stage 04D · 3D 與產品視覺 (View)</title><link rel="stylesheet" href="shared.css"/>
+<style>
+.spec{max-width:1120px;margin:0 auto;padding:60px 28px 120px}
+.eyebrow{font-family:var(--mono);font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.title{font-family:var(--serif);font-size:clamp(2rem,5vw,3.2rem);line-height:1.15;margin:12px 0 18px}
+.empty{color:var(--muted)}.prog{display:inline-block;margin:10px 0 0;font-family:var(--mono);font-size:.76rem;border:1px solid var(--line);border-radius:999px;padding:4px 12px;background:#fff}
+.sec{border-top:1px solid var(--line);margin-top:46px;padding-top:22px}.sec h3{font-family:var(--mono);font-size:.74rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:0 0 6px}.lead{font-size:.86rem;color:var(--muted);margin:0 0 14px;max-width:76ch}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}.c{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 16px}.c b{display:block;font-size:.95rem}.c p{margin:4px 0 0;font-size:.8rem;color:var(--muted)}
+.c .tg{display:inline-block;font-size:.64rem;font-family:var(--mono);border:1px solid var(--line);border-radius:999px;padding:0 6px;margin:6px 4px 0 0;color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:.82rem;background:#fff;border:1px solid var(--line)}th,td{border-bottom:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}th{font-family:var(--mono);font-size:.68rem;color:var(--muted);font-weight:500}.ok{color:var(--ok)}.no{color:var(--danger)}.tw{overflow-x:auto}
+.sw{display:inline-block;width:16px;height:16px;border-radius:4px;border:1px solid #ccc;vertical-align:-3px;margin-right:6px}
+.sb{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}.sb>div{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;min-height:100px}.sb small{font-family:var(--mono);font-size:.68rem;color:var(--muted);text-transform:uppercase;display:block;margin-bottom:6px}
+.hi{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}.hi>div{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 16px}.hi h4{margin:0 0 8px;font-family:var(--mono);font-size:.74rem;color:var(--accent)}.hi li{font-size:.82rem;margin-bottom:6px}.hi small{display:block;color:var(--muted)}.hi ul{margin:0;padding-left:16px}
+.ck li{margin-bottom:6px;font-size:.86rem}.ck .warn{color:var(--warn)}.ck .error{color:var(--danger)}.ck .info{color:var(--muted)}
+.avoid{display:flex;flex-wrap:wrap;gap:8px}.avoid span{background:var(--danger-bg);border:1px solid #FECACA;color:#991B1B;border-radius:999px;padding:3px 12px;font-size:.84rem}
+.draft{background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;padding:8px 14px;font-size:.8rem;margin-top:14px}
+@media(max-width:700px){table{display:block;overflow-x:auto}}
+</style></head><body>
+<nav class="topbar"><div class="brand-tag">COMPANY OS · BRAND STAGE 04D · 3D 與產品視覺</div>
+<div class="nav-links"><a class="nav-pill" href="edit.html">Edit</a><a class="nav-pill active" href="view.html">View</a><a class="nav-pill" href="agent.html">AI Agent</a></div></nav>
+<main class="spec" id="m"></main>
+<script src="options.js"></script><script src="core.js"></script>
+<script>
+const s=load(),cmp=completeness(s),E=t=>String(t).replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[m]));
+const L=k=>labels(k,s),X=id=>T_(s,id);
+const cardsOf=k=>{const it=items(k,s);return it.length?`<div class="cards">${it.map(i=>`<div class="c"><b>${E(i.zh)}</b>${i.desc?`<p>${E(i.desc)}</p>`:""}${i.avoid&&i.avoid!=="-"?`<p>風險：${E(i.avoid)}</p>`:""}${i.cost?`<span class="tg">成本 ${COST[i.cost]}</span>`:""}${i.perf?`<span class="tg">效能 ${PERF[i.perf]}</span>`:""}${i.tool?`<span class="tg">需模具</span>`:""}${i.val?`<span class="tg">須工程師驗證</span>`:""}</div>`).join("")}</div>`:'<p class="empty">尚未選擇</p>'};
+const dimRow=d=>{const dm=DIM(d),o=picked(s,d);return `<tr><th>${dm.title}</th><td>${o?`<b>${E(o.zh)}</b><br><small>${E(o.desc)}</small>`:'<span class="empty">尚未選擇</span>'}</td></tr>`};
+const sub=(t,k)=>`<p class="lead" style="margin:12px 0 6px"><b>${t}</b></p>${cardsOf(k)}`;
+const rc=renderCalc(s),wm=webMem(s),tr=turntable(s),ex=exploded(s),pd=productDims(s);
+const calcH=[rc?`<tr><th>渲染時間估算</th><td>${rc.frames} 幀${rc.hours!=null?`；約 ${rc.hours.toFixed(1)} 小時（每幀 ${rc.spf} 秒、${rc.mach} 台）`:""}</td></tr>`:"",wm?`<tr><th>貼圖記憶體估算</th><td>${wm.mb.toFixed(0)} MB（${wm.n} 張 ${wm.px}px，含 mipmap，未計壓縮）${wm.budget!=null?`；預算 ${wm.budget} MB`:""}</td></tr>`:"",tr?`<tr><th>轉盤</th><td>一圈 ${tr.sec} 秒（${tr.dps.toFixed(0)}°/秒）${tr.frames!=null?`；${tr.frames} 幀`:""}</td></tr>`:"",ex?`<tr><th>爆炸圖</th><td>${ex.n} 個零件；約 ${(ex.total/1000).toFixed(1)} 秒</td></tr>`:"",pd?`<tr><th>外框尺寸</th><td>${pd.L}×${pd.W}×${pd.H} mm；外框體積約 ${pd.vol.toFixed(0)} cm³${pd.wt!=null?`；目標重量 ${pd.wt} g`:""}</td></tr>`:""].join("");
+const cr=cmfRows(s),cmfH=cr.length?`<div class="tw"><table><tr><th>角色</th><th>HEX</th><th>物料</th><th>表面處理</th><th>色樣編號</th></tr>${cr.map(r=>`<tr><td>${r.label}</td><td><span class="sw" style="background:${r.hex}"></span>${r.hex}</td><td>${E(r.mat||"—")}</td><td>${E(r.fin||"—")}</td><td>${E(r.sid||"—")}</td></tr>`).join("")}</table></div>`:'<p class="empty">尚未填寫色值</p>';
+const bom=bomRows(s),bomH=bom.length?`<div class="tw"><table><tr><th>零件</th><th>材料</th><th>製程</th><th>供應商</th><th>狀態</th></tr>${bom.map(x=>`<tr><td>${E(x.part)}</td><td class="${x.mat?"":"no"}">${E(x.mat||"缺")}</td><td class="${x.proc?"":"no"}">${E(x.proc||"缺")}</td><td>${E(x.supplier||"—")}</td><td>${E(x.status||"—")}</td></tr>`).join("")}</table></div>`:'<p class="empty">尚未填寫</p>';
+const ck=checks(s),hs=hints(s),stages=[...new Set(hs.map(h=>h.stage))].sort();
+const hi=stages.map(st=>`<div><h4>${E(st)}</h4><ul>${hs.filter(h=>h.stage===st).map(h=>`<li><b>${E(h.field)}</b>：${E(h.text)}<small>原因：${E(h.why)}</small></li>`).join("")}</ul></div>`).join("");
+document.getElementById("m").innerHTML=`
+<span class="eyebrow">04D / 3D &amp; Product Visual · 草稿 · 未核准</span>
+<h1 class="title">${E(brandName(s))}</h1><p style="font-family:var(--serif);font-size:1.1rem;max-width:64ch">${E(X("statement")||draft(s))}</p>
+<span class="prog">完成度 ${cmp.pct}%（${cmp.done}/${cmp.total}）${cmp.missing.length?" · 未完成："+cmp.missing.map(m=>m.label.replace(/（.*/,"")).join("、"):""}</span>
+<div class="draft">狀態：草稿。工程規格（結構、材料、製程、電子、認證、測試）只作方向記錄，須由工程師與合資格專業人士驗證；CMF 以實物色樣為準；成本與效能是相對等級；本頁不是工程圖、BOM 或認證文件。</div>
+<div class="sec"><h3>3D 風格、材質與角色</h3>${cardsOf("style3d")}${sub("材質","mat3d")}${sub("角色／吉祥物","mascot")}<table style="margin-top:12px">${["quality3d","lens","bgKind","ipStatus"].map(dimRow).join("")}</table></div>
+<div class="sec"><h3>場景、燈光與運鏡</h3>${cardsOf("scene3d")}${sub("燈光","light3d")}${sub("運鏡","cam3d")}</div>
+<div class="sec"><h3>動畫、交付與效能</h3>${cardsOf("anim3d")}${sub("交付形式","delivery3d")}<table style="margin-top:12px">${["turntable","reduced3d"].map(dimRow).join("")}${calcH}</table></div>
+<div class="sec"><h3>產品外觀與使用</h3>${cardsOf("appearance")}${sub("使用情境","usage")}<table style="margin-top:12px">${["sizeClass","powerType"].map(dimRow).join("")}</table></div>
+<div class="sec"><h3>CMF：顏色、材料與表面</h3>${cmfH}<table style="margin-top:12px">${["cmfApproval","lightBox"].map(dimRow).join("")}</table></div>
+<div class="sec"><h3>物料、表面處理與製程</h3>${cardsOf("prodMat")}${sub("表面處理","finish")}${sub("製程","mfg")}<table style="margin-top:12px">${["supply","sustainClaim"].map(dimRow).join("")}<tr><th>產品標誌最小線寬</th><td>${E(X("p_logo_mm")||"—")} mm</td></tr></table></div>
+<div class="sec"><h3>工程用料與零件</h3>${cardsOf("parts")}<p class="lead" style="margin:12px 0 6px"><b>零件清單草稿</b></p>${bomH}</div>
+<div class="sec"><h3>認證提醒、測試與樣機階段</h3>${cardsOf("compliance")}${sub("測試","proto")}<table style="margin-top:12px">${dimRow("protoStage")}</table></div>
+<div class="sec"><h3>展示動畫</h3>${cardsOf("displayAnim")}</div>
+<div class="sec"><h3>3 張代表性渲染</h3><div class="sb">${SHOTS.map(([id,l])=>`<div><small>${l}</small>${X(id)?E(X(id)):'<span class="empty">尚未填寫</span>'}</div>`).join("")}</div><p class="lead" style="margin-top:10px">備註：${E(X("st_note")||"—")}</p></div>
+<div class="sec"><h3>禁區（合併 Stage 1／2／4A／4B／4C）</h3><div class="avoid">${negatives(s).map(x=>`<span>${E(x)}</span>`).join("")||'<span style="background:none;border:0;color:var(--muted)">尚未選擇</span>'}</div></div>
+<div class="sec"><h3>一致性與硬限制檢查</h3><ul class="ck" style="padding-left:18px">${ck.length?ck.map(x=>`<li class="${x.level}">${x.level==="error"?"✕":x.level==="warn"?"⚠":"ℹ"} ${E(x.msg)}</li>`).join(""):"<li class='info'>目前沒有發現問題。</li>"}</ul></div>
+<div class="sec"><h3>給 4E–4H 的建議</h3><p class="lead">依你的選擇推導。各階段目前還不會自動讀取，請匯出 stage4d-brief.json 帶過去。</p><div class="hi">${hi}</div></div>`;
+</script></body></html>

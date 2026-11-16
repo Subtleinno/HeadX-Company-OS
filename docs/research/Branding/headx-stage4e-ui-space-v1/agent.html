@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="zh-Hant"><head><meta charset="UTF-8"/><title>Stage 04E · AI Agent Contract</title><link rel="stylesheet" href="shared.css"/>
+<style>body{background:#0D0E11;color:#F4F4F6}.topbar{background:rgba(13,14,17,.9);border-bottom-color:#252932}.nav-pill{background:#15171C;border-color:#252932;color:#8B929E}.nav-pill.active{background:#F4F4F6;color:#0D0E11}
+.wrap{max-width:1000px;margin:0 auto;padding:40px 24px 100px}.panel{background:#15171C;border:1px solid #252932;border-radius:12px;padding:22px;margin-bottom:20px}
+.t{font-family:var(--mono);font-size:.76rem;color:#60A5FA;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:8px;flex-wrap:wrap}
+pre{margin:0;font-family:var(--mono);font-size:.8rem;line-height:1.6;overflow:auto;color:#E2E8F0;white-space:pre-wrap;word-break:break-word;max-height:520px}
+.b{background:#0D0E11;color:#F4F4F6;border:1px solid #252932;border-radius:6px;padding:4px 10px;font:inherit;font-size:.72rem;cursor:pointer}.st{font-family:var(--mono);font-size:.8rem;margin-bottom:16px}.ok{color:#10B981}.no{color:#F59E0B}</style></head><body>
+<nav class="topbar"><div class="brand-tag" style="color:#10B981">● AI AGENT CONTRACT // STAGE 04E</div><div class="nav-links"><a class="nav-pill" href="edit.html">Edit</a><a class="nav-pill" href="view.html">View</a><a class="nav-pill active" href="agent.html">AI Agent</a></div></nav>
+<main class="wrap"><div class="st" id="st"></div><div id="panels"></div></main><div class="toast" id="toast"></div>
+<script src="options.js"></script><script src="core.js"></script>
+<script>
+const s=load(),b=buildBrief(s);
+const V={sys:buildSystem(s),json:JSON.stringify(b,null,2),css:uiTokensCSS(s),cs:JSON.stringify(componentSpec(s),null,2),a11y:a11yPlan(s),jr:journeyCSV(s),sp:JSON.stringify(spaceSpec(s),null,2),up:uiPrompt(s),spp:spacePrompt(s),guide:buildGuide(s)};
+const F={sys:["ui-space-system-prompt.txt","text/plain","ui-space-system-prompt.txt（給 UI／UX／空間 Agent）"],json:["stage4e-brief.json","application/json","stage4e-brief.json"],css:["ui-tokens.css","text/css","ui-tokens.css（含深色主題與焦點）"],cs:["component-spec.json","application/json","component-spec.json（含逐狀態對比結果）"],a11y:["a11y-test-plan.md","text/markdown","a11y-test-plan.md"],jr:["journey-blueprint.csv","text/csv","journey-blueprint.csv（旅程與服務藍圖）"],sp:["space-spec.json","application/json","space-spec.json（須註冊專業人士確認）"],up:["ui-prompt.txt","text/plain","ui-prompt.txt（UI Mock-up Prompt）"],spp:["space-prompt.txt","text/plain","space-prompt.txt（空間概念 Prompt）"],guide:["ui-space-guide.md","text/markdown","ui-space-guide.md"]};
+document.getElementById("panels").innerHTML=Object.keys(F).map(k=>`<div class="panel"><div class="t"><span>${F[k][2]}</span><span><button class="b" data-c="${k}">複製</button> <button class="b" data-d="${k}">下載</button></span></div><pre id="p-${k}"></pre></div>`).join("");
+Object.keys(V).forEach(k=>document.getElementById("p-"+k).textContent=V[k]);
+document.getElementById("st").innerHTML=`status: <span class="${b.status==="complete"?"ok":"no"}">${b.status}</span> · approval: <span class="no">${b.approval.state}</span> · completeness ${b.completeness}%${b.missing.length?" · missing: "+b.missing.map(m=>m.key).join(", "):""} · checks: ${b.consistency_checks.filter(x=>x.level!=="info").length} warn/error`;
+const TT=m=>{const t=document.getElementById("toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1600)};
+document.addEventListener("click",e=>{const c=e.target.closest("[data-c]"),d=e.target.closest("[data-d]");
+ if(c)navigator.clipboard.writeText(V[c.dataset.c]).then(()=>TT("已複製"),()=>TT("無法寫入剪貼簿"));
+ if(d){const k=d.dataset.d,bl=new Blob([V[k]],{type:F[k][1]}),a=document.createElement("a");a.href=URL.createObjectURL(bl);a.download=F[k][0];a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}});
+</script></body></html>

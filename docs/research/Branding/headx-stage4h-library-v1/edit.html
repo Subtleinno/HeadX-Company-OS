@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-Hant"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Stage 04H · 風格庫與 AI 生成契約 (Edit)</title><link rel="stylesheet" href="shared.css"/>
+<style>
+.layout{max-width:1220px;margin:0 auto;padding:40px 24px 100px;display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:36px;align-items:start}
+@media(max-width:960px){.layout{grid-template-columns:minmax(0,1fr)}.side{position:static!important}}
+.layout main{min-width:0}
+.kicker{font-family:var(--mono);font-size:.75rem;color:var(--accent);text-transform:uppercase;letter-spacing:.1em}
+h1{font-size:2rem;margin:8px 0 8px;letter-spacing:-.02em}.sub{color:var(--muted);margin:0 0 24px;font-size:.93rem}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:24px;margin-bottom:22px;scroll-margin-top:70px}
+.card h2{margin:0;font-size:1.06rem}.card .num{font-family:var(--mono);font-size:.72rem;color:var(--muted);display:block;margin-bottom:2px}
+.head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;margin-bottom:10px}
+.part{border-top:1px solid var(--line);margin-top:16px;padding-top:14px}.part:first-of-type{border-top:0;margin-top:4px;padding-top:0}
+.part h3{margin:0 0 2px;font-size:.92rem}.hint{font-size:.8rem;color:var(--muted);margin:0 0 10px;max-width:80ch}
+.btn-ai{background:var(--soft);color:var(--accent);border:1px solid #BFDBFE;padding:5px 11px;border-radius:7px;font-size:.76rem;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit}
+.btn-ai:hover{background:#DBEAFE}.btn-ai.ghost{background:#fff;color:var(--muted);border-color:var(--line)}
+.count{font-size:.76rem;color:var(--muted);font-family:var(--mono)}
+.gt{font-family:var(--mono);font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:14px 0 8px;padding-top:10px;border-top:1px dashed var(--line)}.gt:first-child{border-top:0;margin-top:2px;padding-top:0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}.grid.wide{grid-template-columns:repeat(auto-fill,minmax(270px,1fr))}
+.opt{border:1px solid var(--line);border-radius:10px;padding:9px 12px;background:var(--bg);text-align:left;cursor:pointer;font-family:inherit;color:inherit}
+.opt:hover{border-color:#b8b8b0}.opt[aria-pressed=true]{background:var(--ink);color:#FFF;border-color:var(--ink);box-shadow:0 0 0 3px rgba(37,99,235,.25)}
+.opt b{display:block;font-size:.85rem}.opt span.d{display:block;font-size:.73rem;opacity:.78;margin-top:2px}.opt .tagrow{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}.opt .tg{font-size:.62rem;font-family:var(--mono);border:1px solid currentColor;border-radius:999px;padding:0 6px;opacity:.85}
+.row{display:flex;gap:8px;margin-top:10px}.row input{flex:1}
+input[type=text],textarea,select{width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--line);background:var(--bg);font-family:inherit;font-size:.88rem;color:var(--ink);outline:none}
+textarea{resize:vertical}input:focus,textarea:focus,select:focus{border-color:var(--accent);background:#FFF}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.chip{font-size:.78rem;padding:3px 10px;border-radius:999px;background:var(--bg);border:1px solid var(--line)}.chip button{border:0;background:none;cursor:pointer;color:var(--muted)}
+.tf{margin-bottom:12px}.tf label{display:block;font-size:.8rem;font-weight:600;margin-bottom:3px}.tf small{display:block;color:var(--muted);font-size:.72rem;margin-bottom:4px}
+.numgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px 14px}
+.note{background:var(--soft);border:1px solid #BFDBFE;border-radius:12px;padding:10px 14px;font-size:.8rem;margin-bottom:14px}
+.det{margin-top:12px;display:grid;gap:8px}.det>div{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-size:.8rem}.det b{font-size:.84rem}.det dl{margin:6px 0 0;display:grid;grid-template-columns:70px 1fr;gap:2px 10px}.det dt{color:var(--muted)}.det dd{margin:0}
+table.ct{width:100%;border-collapse:collapse;font-size:.78rem;background:var(--bg);border-radius:10px;overflow:hidden}.ct td,.ct th{border-bottom:1px solid var(--line);padding:5px 8px;text-align:left;vertical-align:middle}.ct th{font-family:var(--mono);font-size:.64rem;color:var(--muted);font-weight:500}.ct .ok{color:var(--ok);font-weight:600}.ct .no{color:var(--danger);font-weight:600}.ct .wn{color:var(--warn);font-weight:600}.ct input,.ct select{padding:5px 7px;font-size:.76rem;min-width:96px}
+.tw{overflow-x:auto;max-width:100%}.ctl{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0}
+.cell{border:1px solid var(--line);border-radius:6px;padding:4px 8px;font-size:.74rem;cursor:pointer;background:#fff;font-family:inherit;min-width:54px}.cell[data-v="A"]{background:#E6F4EA;color:#14532D;border-color:#86EFAC}.cell[data-v="C"]{background:#FEF3C7;color:#78350F;border-color:#FCD34D}.cell[data-v="X"]{background:#FEE2E2;color:#7F1D1D;border-color:#FCA5A5}
+pre.code{background:#15171C;color:#E2E8F0;border-radius:10px;padding:12px 14px;font-family:var(--mono);font-size:.72rem;overflow:auto;max-height:200px;white-space:pre-wrap;word-break:break-word;margin:6px 0}
+.sw{display:inline-block;width:14px;height:14px;border-radius:3px;border:1px solid #ccc;vertical-align:-2px;margin-right:4px}
+.bar2{height:10px;border-radius:99px;overflow:hidden;display:flex;background:#eee;margin:6px 0}.bar2 i{display:block;height:100%}
+.imgprev{max-width:100%;max-height:220px;border-radius:10px;border:1px solid var(--line)}
+.side{position:sticky;top:70px;display:flex;flex-direction:column;gap:14px}
+.meter{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
+.bar{height:8px;background:var(--line);border-radius:99px;overflow:hidden;margin:8px 0 12px}.bar>i{display:block;height:100%;background:var(--ink);transition:width .25s}
+.meter ul{list-style:none;margin:0;padding:0;font-size:.8rem}.meter li{padding:2px 0}.meter a{color:var(--muted);text-decoration:none}.meter li.done a{color:var(--ok)}
+.meter li.done::before{content:"✓ ";color:var(--ok)}.meter li:not(.done)::before{content:"○ ";color:var(--muted)}
+.side .btn-ai{display:block;width:100%;margin-top:8px;text-align:center}
+.chk li{font-size:.76rem;margin-bottom:6px;line-height:1.45}.chk .warn{color:var(--warn)}.chk .error{color:var(--danger)}.chk .info{color:var(--muted)}
+.stg{font-size:.76rem;display:grid;grid-template-columns:1fr auto;gap:2px 8px}.stg .y{color:var(--ok)}.stg .n{color:var(--muted)}
+dialog{border:1px solid var(--line);border-radius:16px;padding:24px;max-width:640px;width:92%}dialog::backdrop{background:rgba(0,0,0,.35)}
+dialog textarea{min-height:200px;font-family:var(--mono);font-size:.78rem}dialog .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+dialog .res{font-size:.8rem;margin-top:10px;color:var(--ok)}dialog .err{color:var(--danger)}
+</style></head><body>
+<nav class="topbar"><div class="brand-tag">COMPANY OS · BRAND STAGE 04H · 風格庫與 AI 生成契約</div>
+<div class="nav-links"><a class="nav-pill active" href="edit.html">Edit</a><a class="nav-pill" href="view.html">View</a><a class="nav-pill" href="agent.html">AI Agent</a></div></nav>
+<div class="layout"><main>
+<span class="kicker">Stage 04H · Style Library &amp; AI Generation Contract</span>
+<h1>風格庫與 AI 生成契約</h1>
+<p class="sub">Stage 4 的最後一站：把 4A–4G 的調色盤、漸變、紋理、Pattern、配色變體、禁區與治理，變成 AI 可讀的<b>風格庫條目</b>（每個附 Image Prompt、負面約束、允許與禁止用途、版本與核准）與<b>AI 生成契約</b>（政策、使用情境、模型登記、參考圖、提示詞規則、驗收、生成紀錄、守門評估）。含提示詞檢查器、圖片驗收（色彩距離與尺寸；只在瀏覽器內分析）與守門自測。</p>
+<div class="note"><b>注意：</b>原型資料只存在你的瀏覽器。選項內容是通用知識的起始草案，尚未逐項查證。<b>本契約是內部政策草稿，不是法律文件；原型不指定任何模型或供應商，也不判斷任何工具的條款可否商用；模型條款、AI 輸出的版權歸屬與披露要求因工具與法域而異，須逐項核對並由專業人士確認。條目、模型與政策的核准必須由人類執行。</b>提示詞檢查器只是關鍵字與格式規則，會漏也會誤報，不能代替人類審稿。模型不保證精準色彩、接縫與文字；色彩距離與尺寸只是事實量度，<b>不代表風格相符</b>（沒有相符度分數）；AI 圖不是實物色樣或印刷母檔。圖片只在瀏覽器內讀取，不會上傳。AI 提案不等於核准。</div>
+<div id="cards"></div>
+</main>
+<aside class="side"><div class="meter"><b id="pct"></b><div class="bar"><i id="barfill"></i></div><ul id="mlist"></ul></div>
+<div class="meter"><b style="font-size:.84rem">前階段匯入</b><div class="stg" id="stg" style="margin-top:8px"></div><button class="btn-ai" id="impstage">匯入 Stage 0–4G brief JSON（可多選）</button><input type="file" id="stagefile" accept="application/json" multiple hidden/></div>
+<div class="meter chk"><b style="font-size:.84rem">一致性與硬限制檢查</b><ul id="chk" style="margin-top:8px"></ul></div>
+<div class="meter"><button class="btn-ai" id="copyctx" style="margin:0">複製『前階段＋目前選擇』給 AI</button><button class="btn-ai" id="paste">貼回 AI 結果</button><button class="btn-ai" id="expb">匯出 stage4h-brief.json</button><button class="btn-ai" id="imp">匯入 4H JSON</button><button class="btn-ai" id="reset" style="color:var(--danger);border-color:#f3c0c0;background:#fff">全部清空</button><input type="file" id="file" accept="application/json" hidden/></div></aside></div>
+<dialog id="dlg"><b>貼回 AI 結果</b><p class="hint" style="margin:6px 0 12px">把 AI 討論結尾附的 JSON 整段貼上。選項會自動對應；風格庫（lib）、模型（models）、參考（refs）、生成紀錄（gens）與使用情境（uc）也會填入。核准者與日期請務必由人類確認。</p>
+<textarea id="pt" placeholder='{"useCases":["草圖與方向探索"],"aiPolicy":"受限（只作探索與素材，成品須人手重製）"}'></textarea><div class="res" id="pres"></div>
+<div class="actions"><button class="btn-ai ghost" id="pc">關閉</button><button class="btn-ai" id="pa">套用</button></div></dialog>
+<div class="toast" id="toast"></div>
+<script src="options.js"></script><script src="core.js"></script><script src="prompts.js"></script>
+<script>
+const $=id=>document.getElementById(id);const S=load();
+function toast(m){const t=$("toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2400)}
+const persist=()=>{save(S);meter()};
+const CARDS=[
+ {id:"policy",num:"01",title:"政策：態度、審核、披露、輸入與保存",prompt:"policy",parts:[{text:["brandName","owner"],grid:1},{dim:"aiPolicy"},{dim:"reviewLevel"},{dim:"disclosurePolicy"},{dim:"provenance"},{dim:"seedPolicy"},{dim:"dataPolicy"},{dim:"refPolicy"},{text:["retention","sec_note","viol_note"]}]},
+ {id:"usecases",num:"02",title:"AI 使用情境：允許、有條件、禁止",prompt:"usecases",parts:[{cat:"useCases"},{dyn:"uc"}]},
+ {id:"library",num:"03",title:"風格庫條目（含 Image Prompt 與負面約束）",prompt:"library",parts:[{cat:"libTypes"},{dim:"libVersion"},{text:["style_base","neg_extra"]},{dyn:"lib"}]},
+ {id:"models",num:"04",title:"模型與工具登記",prompt:"models",parts:[{cat:"modelTypes"},{dyn:"models"}]},
+ {id:"refs",num:"05",title:"情緒板與參考圖登記",prompt:"refs",parts:[{cat:"refTypes"},{text:["mood_note"]},{dyn:"refs"}]},
+ {id:"rules",num:"06",title:"提示詞規則與檢查器",prompt:"rules",parts:[{cat:"promptRules"},{dyn:"checker"}]},
+ {id:"accept",num:"07",title:"驗收條件與圖片驗收",prompt:"accept",parts:[{cat:"acceptCriteria"},{text:["thr","target_w","target_h"],grid:1},{dyn:"img"}]},
+ {id:"gens",num:"08",title:"生成紀錄",prompt:"gens",parts:[{dyn:"gens"}]},
+ {id:"eval",num:"09",title:"守門評估與自測",prompt:"eval",parts:[{dim:"evalCadence"},{dyn:"eval"}]},
+ {id:"avoid",num:"10",title:"AI 禁區與一句話",prompt:"avoid",parts:[{cat:"avoidAI"},{dyn:"neg"},{text:["st_note","statement"]}]}
+];
+function textPart(ids,grid){const h=ids.map(id=>{const t=TEXT_BY[id];return `<div class="tf"><label for="t-${id}">${t.label}</label>${t.help?`<small>${t.help}</small>`:""}${t.rows>1?`<textarea id="t-${id}" data-t="${id}" rows="${t.rows}" placeholder="${esc(t.ph)}"></textarea>`:`<input type="text" id="t-${id}" data-t="${id}" placeholder="${esc(t.ph)}"/>`}</div>`}).join("");return grid?`<div class="numgrid">${h}</div>`:h}
+function catPart(k){const c=CAT[k];return `<div class="part"><h3>${c.title}</h3><p class="hint">${c.hint||""}</p><div class="count" id="cnt-${k}"></div><div id="cat-${k}"></div><div class="det" id="det-${k}"></div><div class="row"><input type="text" data-cust="${k}" placeholder="沒有適合的？自訂一項（Enter 新增）"/><button class="btn-ai" data-add="${k}" type="button">新增</button></div><div class="chips" id="chips-${k}"></div></div>`}
+function dimPart(id){const d=DIM(id);return `<div class="part"><h3>${d.title}</h3>${d.q?`<p class="hint">${d.q}</p>`:""}<div class="grid wide" id="dim-${id}" role="group"></div></div>`}
+const DYNT={uc:"AI 使用情境矩陣（規則、審核層級、披露、條件）",lib:"風格庫條目（可編輯；Prompt 與 Negative 自動產生）",models:"模型登記冊（不填工具條款；請自行核對並記錄）",refs:"參考登記冊（區分『靈感』與『AI 輸入』）",checker:"提示詞檢查器（關鍵字與格式規則，只是提示）",img:"圖片驗收（在瀏覽器內分析色彩距離與尺寸；不上傳；不代表風格相符）",gens:"生成紀錄（逐筆檢查模型、條目、seed、審核、披露與參考圖）",eval:"守門自測評估集",neg:"通用負面約束（英文；自動合併各階段禁區）"};
+const cardsEl=$("cards");
+CARDS.forEach(c=>{const el=document.createElement("section");el.className="card";el.id="c-"+c.id;
+  el.innerHTML=`<div class="head"><div><span class="num">${c.num}</span><h2>${c.title}</h2></div><button class="btn-ai" data-p="${c.prompt}">複製討論提示詞</button></div>`+c.parts.map(p=>p.cat?catPart(p.cat):p.dim?dimPart(p.dim):p.dyn?`<div class="part"><h3>${DYNT[p.dyn]}</h3><div id="dyn-${p.dyn}"></div></div>`:`<div class="part">${textPart(p.text,p.grid)}</div>`).join("");cardsEl.appendChild(el)});
+function tagsHTML(k,i){const a=[];if(i.risk)a.push("高風險／須確認");if(i.pro)a.push("須專業人士");if(i.auto)a.push("可自動量度");return a.length?`<div class="tagrow">${a.map(x=>`<span class="tg">${x}</span>`).join("")}</div>`:""}
+function renderCat(k){const c=CAT[k];
+  $("cat-"+k).innerHTML=c.groups.map(g=>`<div class="gt">${g.g}</div><div class="grid">${g.items.map(i=>`<button type="button" class="opt" aria-pressed="${S[k].includes(i.id)}" data-k="${k}" data-id="${i.id}"><b>${esc(i.zh)}</b><span class="d">${esc(i.desc)}</span>${tagsHTML(k,i)}</button>`).join("")}</div>`).join("");
+  $("cnt-"+k).textContent=`已選 ${count(k,S)}${c.max<90?" / 建議最多 "+c.max:""}`;
+  $("chips-"+k).innerHTML=S.custom[k].map((t,i)=>`<span class="chip">${esc(t)} <button data-del="${k}:${i}" aria-label="移除">✕</button></span>`).join("");
+  $("det-"+k).innerHTML=S[k].map(id=>byId(k,id)).filter(i=>i&&i.avoid&&i.avoid!=="-").map(i=>`<div><b>${esc(i.zh)}</b><dl><dt>注意</dt><dd>${esc(i.avoid)}</dd>${i.fit?`<dt>適用</dt><dd>${esc(i.fit)}</dd>`:""}</dl></div>`).join("")}
+function renderDim(id){const d=DIM(id);$("dim-"+id).innerHTML=d.opts.map(o=>`<button type="button" class="opt" aria-pressed="${S.dims[id]===o.id}" data-dim="${id}" data-o="${o.id}"><b>${esc(o.zh)}</b><span class="d">${esc(o.desc)}</span></button>`).join("")}
+function fillTexts(){document.querySelectorAll("[data-t]").forEach(t=>{t.value=S.text[t.dataset.t]||""})}
+// ---- 通用表格 ----
+const SEL={lib:{type:Object.entries(ENTRYTYPES).map(([k,v])=>[k,v]),status:LIBSTATUS.map(x=>[x,x])},models:{status:["待審","已核准","已下架"].map(x=>[x,x]),comm:MODELCOMM.map(x=>[x,x]),type:["圖像","影片","音樂","語音","3D","語言模型","其他"].map(x=>[x,x])},refs:{stype:["自有素材","授權素材庫","客戶或合作方提供","供應商提供","公開資源（CC 等）","網上收集","AI 生成","競品對照"].map(x=>[x,x]),rights:REFRIGHTS.map(x=>[x,x]),use:REFUSES.map(x=>[x,x])},gens:{status:GENSTATUS.map(x=>[x,x]),disc:["是","否"].map(x=>[x,x])}};
+const TABLES={lib:{cols:ENTRYCOLS.concat([["extra","補充描述（英文）"]]),def:{ver:"0.1.0",status:"草稿"}},models:{cols:MODELCOLS,def:{status:"待審",comm:"未確認"}},refs:{cols:REFCOLS,def:{rights:"未確認",use:"風格參考"}},gens:{cols:GENCOLS,def:{status:"待審",disc:"否"}}};
+function tbl(key){const T=TABLES[key],arr=S[key];const head=T.cols.map(c=>`<th>${c[1]}</th>`).join("")+"<th></th>";
+  const body=arr.map((r,i)=>`<tr>${T.cols.map(([f])=>{const sel=(SEL[key]||{})[f];const v=r[f]==null?"":r[f];return `<td>${sel?`<select data-row="${key}|${i}|${f}"><option value=""></option>${sel.map(([a,b])=>`<option value="${esc(a)}" ${v===a?"selected":""}>${esc(b)}</option>`).join("")}</select>`:`<input type="text" data-row="${key}|${i}|${f}" value="${esc(v)}"/>`}</td>`}).join("")}<td><button class="btn-ai ghost" data-delrow="${key}:${i}">刪除</button></td></tr>`).join("");
+  return `<div class="tw"><table class="ct"><tr>${head}</tr>${body||`<tr><td colspan="${T.cols.length+1}" style="color:var(--muted)">還沒有紀錄。</td></tr>`}</table></div>`}
+// ---- 使用情境 ----
+function dynUc(){const its=items("useCases",S);if(!its.length){$("dyn-uc").innerHTML='<p class="hint">先在上面選擇使用情境。</p>';return}
+  $("dyn-uc").innerHTML=`<div class="ctl"><button class="btn-ai" id="ucDef">套用建議（只填未定的格子）</button></div><div class="tw"><table class="ct"><tr><th>情境</th><th>規則</th><th>審核層級</th><th>須披露</th><th>條件與備註</th></tr>${its.map(i=>{const c=ucCell(S,i.id);return `<tr><td><b>${esc(i.zh)}</b>${i.risk?' <span class="wn">高風險</span>':""}<br><small style="color:var(--muted)">${esc(i.avoid||"")}</small></td><td><button class="cell" data-v="${c.st}" data-uc="${i.id}">${POLICY_STATE[c.st]}</button></td><td><select data-ucf="${i.id}|rv"><option value=""></option>${REVIEWS.map((x,k)=>`<option value="${k}" ${String(c.rv)===String(k)?"selected":""}>${x}</option>`).join("")}</select></td><td><select data-ucf="${i.id}|disc">${["","是","否","視情況"].map(x=>`<option ${c.disc===x?"selected":""}>${x}</option>`).join("")}</select></td><td><input type="text" data-ucf="${i.id}|note" value="${esc(c.note)}"/></td></tr>`}).join("")}</table></div><p class="hint" style="margin-top:6px">點「規則」格切換：未定 → 允許 → 有條件 → 禁止。建議值只是起點（標誌、健康視覺與人物預設禁止），由人類決定；高風險情境建議『第二人＋專業人士』。</p>`;
+  $("ucDef").onclick=()=>{applyUcDefaults(S);persist();dynUc();toast("已套用建議到未定的格子")}}
+// ---- 風格庫 ----
+let CURE=null;
+function dynLib(){const sel=S.lib.find(e=>e.id===CURE)||S.lib[0];if(sel)CURE=sel.id;
+  $("dyn-lib").innerHTML=`<div class="ctl"><button class="btn-ai" id="libGen">從 4A–4G 產生條目（只加入尚未存在的）</button><button class="btn-ai" data-addrow="lib">＋ 新增一筆</button></div>${tbl("lib")}<p class="hint" style="margin-top:6px">狀態改為「已核准」須有核准者、日期與版本，並由人類執行。Pattern 與配色變體條目的使用場景來自 4G 的場景矩陣。</p>${sel?`<div class="ctl"><label style="font-size:.8rem">預覽條目 <select id="libSel" style="width:auto">${S.lib.map(e=>`<option value="${esc(e.id)}" ${e.id===sel.id?"selected":""}>${esc(e.id)}｜${esc(e.name)}</option>`).join("")}</select></label><button class="btn-ai" id="cpPrompt">複製 Prompt</button><button class="btn-ai" id="cpNeg">複製 Negative</button><button class="btn-ai ghost" id="cpAll">複製全部條目 Prompt（Markdown）</button></div><b style="font-size:.8rem">Prompt</b><pre class="code">${esc(entryPrompt(S,sel))}</pre><b style="font-size:.8rem">Negative</b><pre class="code">${esc(entryNeg(S,sel))}</pre>${usageHTML(sel)}`:""}`;
+  $("libGen").onclick=()=>{const n=mergeEntries(S);persist();dynLib();toast(n?`已加入 ${n} 個條目（狀態為草稿）`:"沒有新的條目可加入（須先匯入 4B／4A，或條目已存在）")};
+  if(sel){$("libSel").onchange=e=>{CURE=e.target.value;dynLib()};$("cpPrompt").onclick=()=>cp(entryPrompt(S,sel));$("cpNeg").onclick=()=>cp(entryNeg(S,sel));$("cpAll").onclick=()=>cp(imagePromptsMD(S))}}
+function usageHTML(e){const u=entryUsage(S,e);const f=(l,a,c)=>`<dt style="color:${c}">${l}</dt><dd>${a&&a.length?esc(a.join("、")):"—"}</dd>`;return `<div class="det"><div><b>用途規則（來自 4G／4B 與條目類型）</b><dl>${f("允許",u.A,"#14532D")}${f("有條件",u.C,"#78350F")}${f("禁止",u.X,"#7F1D1D")}</dl></div></div>`}
+function cp(t){navigator.clipboard.writeText(t).then(()=>toast("已複製"),()=>toast("無法寫入剪貼簿"))}
+// ---- 登記冊 ----
+function dynModels(){$("dyn-models").innerHTML=`<div class="ctl"><button class="btn-ai" data-addrow="models">＋ 新增一筆</button></div>${tbl("models")}<p class="hint" style="margin-top:6px">條款連結與版本、商用確認、輸入資料是否用於訓練、披露或標記要求，都要你向提供者核對後填寫；原型不預填任何工具的條款。條款會改，建議每年重新核對。</p>`}
+function dynRefs(){$("dyn-refs").innerHTML=`<div class="ctl"><button class="btn-ai" data-addrow="refs">＋ 新增一筆</button></div>${tbl("refs")}<p class="hint" style="margin-top:6px">網上收集（Behance、Pinterest 等）通常只作內部靈感：用途請選「不可作 AI 輸入」。權利狀態「未確認」或「僅供內部靈感」的參考圖，若出現在生成紀錄會被標為錯誤。</p>`}
+function dynGens(){$("dyn-gens").innerHTML=`<div class="ctl"><button class="btn-ai" data-addrow="gens">＋ 新增一筆</button><button class="btn-ai ghost" id="cpGen">複製 CSV</button></div>${tbl("gens")}<div id="genIss"></div>`;$("cpGen").onclick=()=>cp("\uFEFF"+rowsCSV(GENCOLS,S.gens));updGenIss()}
+function updGenIss(){const e=$("genIss");if(!e)return;const iss=genIssues(S);e.innerHTML=iss.length?`<ul style="margin:8px 0 0;padding-left:18px;font-size:.78rem">${iss.map(x=>`<li class="${x.level==="error"?"no":x.level==="warn"?"wn":""}">${x.level==="error"?"✕":x.level==="warn"?"⚠":"ℹ"} ${esc(x.msg)}</li>`).join("")}</ul>`:'<p class="hint">生成紀錄沒有發現問題（沒有紀錄也沒有問題）。</p>'}
+// ---- 檢查器 ----
+function dynChecker(){$("dyn-checker").innerHTML=`<div class="tf"><label>提示詞</label><textarea id="ckP" rows="4" placeholder="貼上要檢查的提示詞"></textarea></div><div class="tf"><label>負面約束</label><textarea id="ckN" rows="2" placeholder="貼上負面約束，或按『產生負面約束』"></textarea></div><div class="ctl"><button class="btn-ai" id="ckRun">檢查</button><button class="btn-ai ghost" id="ckNeg">產生負面約束</button></div><div id="ckOut"></div><p class="hint">檢查器是關鍵字與格式規則（創作者、他牌 IP、標誌、真人、兒童、見證、療效、倒數、個資、中文、HEX、圖內文字、負面約束）；名單不完整，會漏也會誤報，不能代替人類審稿。</p>`;
+  $("ckRun").onclick=()=>{const r=checkPrompt(S,$("ckP").value,$("ckN").value);$("ckOut").innerHTML=r.length?`<ul style="margin:8px 0;padding-left:18px;font-size:.8rem">${r.map(x=>`<li class="${x.level==="error"?"no":x.level==="warn"?"wn":""}">${x.level==="error"?"✕":x.level==="warn"?"⚠":"ℹ"} ${esc(x.msg)}</li>`).join("")}</ul>`:'<p class="hint ok">沒有命中任何規則（不代表合規）。</p>'};
+  $("ckNeg").onclick=()=>{$("ckN").value=negPrompt(S)}}
+// ---- 圖片驗收 ----
+function dynImg(){$("dyn-img").innerHTML=`<div class="ctl"><input type="file" id="imgIn" accept="image/*" style="max-width:320px"/><span class="hint" style="margin:0">圖片只在瀏覽器內讀取，不會上傳。</span></div><div id="imgOut"></div>`;
+  $("imgIn").onchange=e=>{const f=e.target.files[0];if(!f)return;const url=URL.createObjectURL(f),img=new Image();img.onload=()=>{const sc=Math.min(1,400/Math.max(img.width,img.height)),w=Math.max(1,Math.round(img.width*sc)),h=Math.max(1,Math.round(img.height*sc)),cv=document.createElement("canvas");cv.width=w;cv.height=h;const cx=cv.getContext("2d");cx.drawImage(img,0,0,w,h);const an=analyzePixels(cx.getImageData(0,0,w,h).data,w,h),pr=paletteReport(S,an),sr=sizeReport(S,img.width,img.height);
+    $("imgOut").innerHTML=`<img class="imgprev" src="${url}"/><p class="hint" style="margin-top:6px">原始尺寸 ${img.width}×${img.height}px（${(img.width/img.height).toFixed(3)}:1）</p><div class="bar2">${an.colors.map(c=>`<i style="width:${c.pct}%;background:${c.hex}" title="${c.hex} ${c.pct.toFixed(1)}%"></i>`).join("")}</div>${pr?`<div class="tw"><table class="ct"><tr><th>主要顏色</th><th>佔比</th><th>最近的調色盤顏色</th><th>ΔE76</th><th>門檻 ${pr.thr}</th></tr>${pr.rows.map(r=>`<tr><td><span class="sw" style="background:${r.hex}"></span>${r.hex}</td><td>${r.pct.toFixed(1)}%</td><td><span class="sw" style="background:${r.nearHex}"></span>${esc(r.near)} ${r.nearHex}</td><td>${r.d.toFixed(1)}</td><td class="${r.ok?"ok":"no"}">${r.ok?"在內":"超出"}</td></tr>`).join("")}</table></div><p class="hint" style="margin-top:6px">超出調色盤的主要顏色合計約 <b class="${pr.off>20?"no":""}">${pr.off.toFixed(1)}%</b>。ΔE76 只是色彩距離，沒有判斷風格；門檻是你自訂的。照片與漸變本來就有許多中間色，請結合人工判斷。</p>`:'<p class="hint">沒有調色盤（匯入 4A／4B 後可比較）。</p>'}${sr?`<table class="ct" style="margin-top:8px"><tr><th>目標尺寸</th><th>比例</th><th>解像度</th></tr><tr><td>${sr.tw}×${sr.th}</td><td class="${sr.ratioOk?"ok":"no"}">${sr.ratioOk?"比例相符":"比例不符（"+sr.ar.toFixed(3)+" vs "+sr.tar.toFixed(3)+"）"}</td><td class="${sr.sizeOk?"ok":"no"}">${sr.sizeOk?"達到目標":"低於目標"}</td></tr></table>`:'<p class="hint">沒有填目標尺寸。</p>'}`}; img.onerror=()=>toast("無法讀取這個圖片");img.src=url}}
+// ---- 評估 ----
+function dynEval(){const ev=runEval(S);$("dyn-eval").innerHTML=`<div class="tw"><table class="ct"><tr><th>案例</th><th>提示詞</th><th>預期</th><th>檢查器</th><th>結果</th><th>原因</th></tr>${ev.map(c=>`<tr><td>${c.id}</td><td style="max-width:360px">${esc(c.prompt)}</td><td>${c.expect==="block"?"應攔截":"應通過"}</td><td>${c.flagged?(c.strict?"錯誤":"警告"):"沒標出"}</td><td class="${c.ok?"ok":"no"}">${c.ok?"符合":"不符合"}</td><td>${esc(c.why)}</td></tr>`).join("")}</table></div><p class="hint" style="margin-top:6px">這是自測：檢查器自己能不能攔下已知的違規案例。換模型、條目或規則後要重跑；它不能保證攔下所有違規，更不能代替人類審稿。</p>`}
+function dynNeg(){const ns=negSplit(S);$("dyn-neg").innerHTML=`<pre class="code">${esc(negPrompt(S))}</pre>${ns.zh.length?`<p class="hint wn">以下禁區沒有英文對照，模型多數讀不懂中文負面約束，請在『額外負面約束』用英文補上：${esc(ns.zh.join("、"))}</p>`:""}`}
+function renderStages(){const L={s0:"Stage 0 業務",s1:"Stage 1 定位",s2:"Stage 2 感官",s3:"Stage 3 語言",s4a:"Stage 4A 視覺語言",s4b:"Stage 4B 表面系統",s4c:"Stage 4C 動態",s4d:"Stage 4D 3D 與產品",s4e:"Stage 4E UI／UX",s4f:"Stage 4F 行銷",s4g:"Stage 4G 治理"};$("stg").innerHTML=Object.entries(L).map(([k,l])=>`<span>${l}</span><span class="${S[k]?"y":"n"}">${S[k]?"已匯入":"未匯入"}</span>`).join("")}
+function renderTables(){dynLib();dynModels();dynRefs();dynGens()}
+function renderAll(){CAT_KEYS.forEach(renderCat);DIMS.forEach(d=>renderDim(d.id));fillTexts();dynUc();renderTables();dynChecker();dynImg();dynEval();dynNeg();renderStages()}
+function afterEdit(k){if(k==="gens")updGenIss()}
+document.addEventListener("input",e=>{const t=e.target.closest("[data-t]");if(t){S.text[t.dataset.t]=t.value;persist();dynEval();dynNeg();return}
+  const r=e.target.closest("[data-row]");if(r&&r.tagName==="INPUT"){const[k,i,f]=r.dataset.row.split("|");S[k][+i][f]=r.value;persist();afterEdit(k);return}
+  const u=e.target.closest("input[data-ucf]");if(u){const[id,f]=u.dataset.ucf.split("|");S.uc[id]=S.uc[id]||{};S.uc[id][f]=u.value;persist()}});
+document.addEventListener("change",e=>{const r=e.target.closest("select[data-row]");if(r){const[k,i,f]=r.dataset.row.split("|");S[k][+i][f]=r.value;persist();afterEdit(k);return}
+  const u=e.target.closest("select[data-ucf]");if(u){const[id,f]=u.dataset.ucf.split("|");S.uc[id]=S.uc[id]||{};S.uc[id][f]=u.value;persist()}});
+document.addEventListener("keydown",e=>{const c=e.target.closest("[data-cust]");if(c&&e.key==="Enter"){e.preventDefault();addCust(c.dataset.cust)}});
+function addCust(k){const i=document.querySelector(`[data-cust="${k}"]`),v=i.value.trim();if(v&&!S.custom[k].includes(v)){S.custom[k].push(v);i.value="";persist();renderCat(k)}}
+const NEXT={"":"A","A":"C","C":"X","X":""};
+document.addEventListener("click",e=>{
+  const o=e.target.closest(".opt[data-k]");if(o){const k=o.dataset.k,id=o.dataset.id,a=S[k],i=a.indexOf(id);if(i>-1)a.splice(i,1);else{if(CAT[k].max<90&&count(k,S)>=CAT[k].max){toast(`此項建議最多 ${CAT[k].max} 個，請先取消一個`);return}a.push(id)}persist();renderCat(k);if(k==="useCases")dynUc();if(k==="promptRules"||k==="avoidAI"){dynEval();dynNeg()}return}
+  const dm=e.target.closest(".opt[data-dim]");if(dm){const id=dm.dataset.dim,v=dm.dataset.o;if(S.dims[id]===v)delete S.dims[id];else S.dims[id]=v;persist();renderDim(id);dynEval();return}
+  const uc=e.target.closest("[data-uc]");if(uc){const id=uc.dataset.uc;S.uc[id]=S.uc[id]||{};const nv=NEXT[S.uc[id].st||""];S.uc[id].st=nv;persist();uc.dataset.v=nv;uc.textContent=POLICY_STATE[nv];return}
+  const ar=e.target.closest("[data-addrow]");if(ar){const k=ar.dataset.addrow,r={};TABLES[k].cols.forEach(([f])=>r[f]="");Object.assign(r,TABLES[k].def);if(k==="lib")r.spec={};S[k].push(r);persist();renderTables();return}
+  const dr=e.target.closest("[data-delrow]");if(dr){const[k,i]=dr.dataset.delrow.split(":");S[k].splice(+i,1);persist();renderTables();return}
+  const ad=e.target.closest("[data-add]");if(ad){addCust(ad.dataset.add);return}
+  const del=e.target.closest("[data-del]");if(del){const[k,i]=del.dataset.del.split(":");S.custom[k].splice(+i,1);persist();renderCat(k);return}
+  const p=e.target.closest("[data-p]");if(p)navigator.clipboard.writeText(PROMPTS[p.dataset.p](S)).then(()=>toast("已複製完整討論提示詞，貼給 AI 即可開始"),()=>toast("無法寫入剪貼簿，請檢查瀏覽器權限"))});
+function meter(){const c=completeness(S);$("pct").textContent=`完成度 ${c.pct}%（${c.done}/${c.total}）`;$("barfill").style.width=c.pct+"%";const miss=c.missing.map(m=>m.key);
+  const LIST=[["policy","政策","policy"],["usecase","使用情境","usecases"],["lib","風格庫條目","library"],["approved","已核准條目","library"],["style","全局風格與負面約束","library"],["models","模型登記","models"],["refs","參考登記","refs"],["rules","提示詞規則","rules"],["accept","驗收條件","accept"],["gen","生成紀錄","gens"],["data","保存、保安與違規","policy"],["eval","守門評估","eval"],["avoid","AI 禁區","avoid"],["mood","情緒板說明","refs"]];
+  $("mlist").innerHTML=LIST.map(([k,l,a])=>`<li class="${miss.includes(k)?"":"done"}"><a href="#c-${a}">${l}</a></li>`).join("");
+  const ck=checks(S);$("chk").innerHTML=ck.length?ck.map(x=>`<li class="${x.level}">${x.level==="error"?"✕":x.level==="warn"?"⚠":"ℹ"} ${esc(x.msg)}</li>`).join(""):"<li class='info'>目前沒有發現問題。</li>";renderStages()}
+$("copyctx").onclick=()=>navigator.clipboard.writeText("【我的品牌背景與目前風格庫與 AI 契約選擇】\n"+ctxStages(S)+"\n\n"+ctxAI(S)).then(()=>toast("已複製，貼在任何 AI 對話的開頭"),()=>toast("無法寫入剪貼簿"));
+function handle(text){const r=applyPaste(text,S);if(r.applied.length){persist();renderAll()}return r}
+$("paste").onclick=()=>{$("pres").textContent="";$("pt").value="";$("dlg").showModal()};$("pc").onclick=()=>$("dlg").close();
+$("pa").onclick=()=>{const r=handle($("pt").value);$("pres").className="res"+(r.errors.length&&!r.applied.length?" err":"");$("pres").innerHTML=(r.applied.length?"已套用：<br>"+r.applied.map(esc).join("<br>"):"")+(r.custom.length?"<br>加入自訂項："+r.custom.map(esc).join("、"):"")+(r.errors.length?"<br><span class='err'>"+r.errors.map(esc).join("<br>")+"</span>":"")};
+$("expb").onclick=()=>{const b=new Blob([JSON.stringify(buildBrief(S),null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="stage4h-brief.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+$("imp").onclick=()=>$("file").click();
+$("file").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const o=handle(r.result);toast(o.applied.length?"已匯入":"匯入失敗："+o.errors.join("；"))};r.readAsText(f);e.target.value=""};
+$("impstage").onclick=()=>$("stagefile").click();
+$("stagefile").onchange=async e=>{const fs=[...e.target.files];let ok=[],bad=[];for(const f of fs){const t=await f.text();const k=importBrief(t,S);if(k)ok.push(k);else bad.push(f.name)}persist();renderAll();toast((ok.length?"已匯入 "+ok.join("、")+"（可按『從 4A–4G 產生條目』）":"")+(bad.length?"｜無法辨識："+bad.join("、"):""));e.target.value=""};
+$("reset").onclick=()=>{if(confirm("確定清空 Stage 4H 的所有答案？（前階段匯入也會清除）此動作無法復原。")){Object.assign(S,emptyState());save(S);location.reload()}};
+renderAll();meter();
+</script></body></html>

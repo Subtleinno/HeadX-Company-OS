@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-Hant"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Stage 03 · 語言系統與語氣邊界 (Edit)</title><link rel="stylesheet" href="shared.css"/>
+<style>
+.layout{max-width:1140px;margin:0 auto;padding:40px 24px 100px;display:grid;grid-template-columns:1fr 280px;gap:36px;align-items:start}
+@media(max-width:920px){.layout{grid-template-columns:1fr}.side{position:static!important}}
+.kicker{font-family:var(--mono);font-size:.75rem;color:var(--accent);text-transform:uppercase;letter-spacing:.1em}
+h1{font-size:2rem;margin:8px 0 8px;letter-spacing:-.02em}.sub{color:var(--muted);margin:0 0 24px;font-size:.93rem}
+.ctx{background:var(--soft);border:1px solid #BFDBFE;border-radius:14px;padding:16px 18px;margin-bottom:22px;font-size:.84rem}
+.ctx b{color:var(--accent)}.ctx .row2{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.ctx .tg{background:#fff;border:1px solid #BFDBFE;border-radius:999px;padding:2px 10px;font-size:.76rem}
+.ctx .ln{margin-top:6px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:24px;margin-bottom:22px;scroll-margin-top:70px}
+.card h2{margin:0;font-size:1.06rem}.card .num{font-family:var(--mono);font-size:.72rem;color:var(--muted);display:block;margin-bottom:2px}
+.head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;margin-bottom:6px}
+.hint{font-size:.83rem;color:var(--muted);margin:0 0 14px;max-width:72ch}
+.btn-ai{background:var(--soft);color:var(--accent);border:1px solid #BFDBFE;padding:5px 11px;border-radius:7px;font-size:.76rem;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit}
+.btn-ai:hover{background:#DBEAFE}.btn-ai.ghost{background:#fff;color:var(--muted);border-color:var(--line)}
+.tools{display:flex;gap:10px;align-items:center;margin:0 0 12px;flex-wrap:wrap}
+input[type=text],textarea{width:100%;padding:10px 13px;border-radius:8px;border:1px solid var(--line);background:var(--bg);font-family:inherit;font-size:.9rem;color:var(--ink);outline:none}
+input:focus,textarea:focus{border-color:var(--accent);background:#FFF}
+.tools input{max-width:240px;padding:7px 11px;font-size:.82rem}
+.count{font-size:.76rem;color:var(--muted);font-family:var(--mono)}
+.gt{font-family:var(--mono);font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:18px 0 8px;padding-top:12px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.gt:first-child{border-top:0;margin-top:4px;padding-top:0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
+.opt{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--bg);text-align:left;cursor:pointer;font-family:inherit;color:inherit}
+.opt:hover{border-color:#b8b8b0}.opt[aria-pressed=true]{background:var(--ink);color:#FFF;border-color:var(--ink);box-shadow:0 0 0 3px rgba(37,99,235,.25)}
+.opt b{display:block;font-size:.86rem}.opt span.d{display:block;font-size:.74rem;opacity:.75;margin-top:2px}
+.opt.bad[aria-pressed=true]{background:var(--danger-bg);color:var(--danger);border-color:rgba(220,38,38,.45);box-shadow:0 0 0 3px rgba(220,38,38,.12)}
+.opt.bad b{text-decoration:none}.opt.bad[aria-pressed=true] b{text-decoration:line-through}
+.opt .q{display:block;margin-top:8px;padding:6px 8px;border-radius:7px;background:rgba(128,128,128,.12);font-size:.76rem;font-style:normal;white-space:pre-wrap;font-family:var(--serif)}
+.row{display:flex;gap:8px;margin-top:12px}.row input{flex:1}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.chip{font-size:.78rem;padding:3px 10px;border-radius:999px;background:var(--bg);border:1px solid var(--line)}.chip button{border:0;background:none;cursor:pointer;color:var(--muted)}
+.dim{border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:12px;background:var(--bg)}
+.dim h3{margin:0;font-size:.95rem}.dim .q0{font-size:.82rem;color:var(--muted);margin:2px 0 10px}.dim .grid{grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}.dim .opt{background:#fff}.dim .opt[aria-pressed=true]{background:var(--ink)}
+.dial{border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:12px;background:var(--bg)}
+.dial .q0{font-size:.9rem;font-weight:600;margin:0 0 10px}.dial .src{font-family:var(--mono);font-size:.64rem;background:#fff;border:1px solid var(--line);border-radius:999px;padding:1px 8px;margin-left:8px;color:var(--muted);font-weight:400}
+.dial .ends{display:flex;justify-content:space-between;font-size:.84rem;font-weight:600;margin-bottom:6px}
+.dial .eg{display:flex;justify-content:space-between;gap:14px;margin-bottom:10px}.dial .eg div{flex:1;font-size:.78rem;background:#fff;border:1px dashed var(--line);border-radius:8px;padding:8px 10px;font-family:var(--serif)}
+.pos{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.pos button{padding:8px 4px;border:1px solid var(--line);background:#fff;border-radius:8px;font-size:.74rem;cursor:pointer;font-family:inherit;color:inherit}.pos button[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.cost{font-size:.78rem;margin:10px 0 0;background:#fff;border-left:3px solid var(--accent);padding:6px 10px;border-radius:0 8px 8px 0;min-height:1.4em}
+.sit{display:grid;grid-template-columns:200px 1fr;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);align-items:center}
+@media(max-width:700px){.sit{grid-template-columns:1fr}}
+.sit b{font-size:.88rem}.sit small{display:block;color:var(--muted);font-size:.74rem}
+.shifts{display:flex;flex-wrap:wrap;gap:6px}.shifts button{padding:5px 10px;border:1px solid var(--line);background:#fff;border-radius:999px;font-size:.75rem;cursor:pointer;font-family:inherit;color:inherit}.shifts button[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.explain{background:var(--soft);border:1px solid #BFDBFE;border-radius:12px;padding:12px 16px;font-size:.83rem;margin-bottom:14px}.explain b{color:var(--accent)}
+.smp label{font-size:.78rem;font-weight:600;display:block;margin:12px 0 4px}.smp .res{font-size:.74rem;margin-top:3px}.res .e{color:var(--danger)}.res .w{color:var(--warn)}.res .o{color:var(--ok)}
+.side{position:sticky;top:70px;display:flex;flex-direction:column;gap:14px}
+.meter{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
+.bar{height:8px;background:var(--line);border-radius:99px;overflow:hidden;margin:8px 0 12px}.bar>i{display:block;height:100%;background:var(--ink);transition:width .25s}
+.meter ul{list-style:none;margin:0;padding:0;font-size:.8rem}.meter li{padding:2px 0}.meter a{color:var(--muted);text-decoration:none}.meter li.done a{color:var(--ok)}
+.meter li.done::before{content:"✓ ";color:var(--ok)}.meter li:not(.done)::before{content:"○ ";color:var(--muted)}
+.side .btn-ai{display:block;width:100%;margin-top:8px;text-align:center}
+.chk li{font-size:.76rem;margin-bottom:6px;line-height:1.45}.chk .warn{color:var(--warn)}.chk .error{color:var(--danger)}.chk .info{color:var(--muted)}
+dialog{border:1px solid var(--line);border-radius:16px;padding:24px;max-width:640px;width:92%}dialog::backdrop{background:rgba(0,0,0,.35)}
+dialog textarea{min-height:200px;font-family:var(--mono);font-size:.78rem}dialog .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+dialog .res{font-size:.8rem;margin-top:10px;color:var(--ok)}dialog .err{color:var(--danger)}
+</style></head><body>
+<nav class="topbar"><div class="brand-tag">COMPANY OS · BRAND STAGE 03 / 06</div>
+<div class="nav-links"><a class="nav-pill active" href="edit.html">Edit</a><a class="nav-pill" href="view.html">View</a><a class="nav-pill" href="agent.html">AI Agent</a></div></nav>
+<div class="layout"><main>
+<span class="kicker">Stage 03 · Voice &amp; Verbal Identity</span>
+<h1>語言系統與語氣邊界</h1>
+<p class="sub">這一步決定品牌『怎麼說話』。聲音（Voice）是永遠不變的性格，語氣（Tone）則隨情境調整。完成後系統會產出 voice-guide.md 與 AI 寫作系統提示詞，並提供『文案檢查器』即時檢驗任何一段文字。每張卡片的提示詞都會帶著你前兩階段的結論，並要求 AI 用同一則訊息寫出對照版本，讓你『聽到』差別。</p>
+<div class="ctx" id="ctx"></div><div id="cards"></div>
+</main>
+<aside class="side"><div class="meter"><b id="pct"></b><div class="bar"><i id="barfill"></i></div><ul id="mlist"></ul></div>
+<div class="meter chk"><b style="font-size:.84rem">一致性檢查</b><ul id="chk" style="margin-top:8px"></ul></div>
+<div class="meter"><button class="btn-ai" id="paste" style="margin:0">貼回 AI 結果</button><button class="btn-ai" id="expb">匯出 stage3-brief.json</button><button class="btn-ai" id="expg">匯出 voice-guide.md</button><button class="btn-ai" id="exps">匯出 system-prompt.txt</button><button class="btn-ai" id="imp">匯入 JSON（Stage 1／2／3）</button><button class="btn-ai" id="reset" style="color:var(--danger);border-color:#f3c0c0;background:#fff">全部清空</button><input type="file" id="file" accept="application/json" hidden/></div></aside></div>
+<dialog id="dlg"><b>貼回 AI 結果</b><p class="hint" style="margin:6px 0 12px">把 AI 討論結尾附的 JSON 整段貼上。也可貼上 Stage 1 或 Stage 2 的 brief 作為前階段資料。名稱會自動對應到選項，清單沒有的加為自訂項。</p>
+<textarea id="pt" placeholder='{"personality":["專業","溫暖"],"dials":{"formal_casual":-1}}'></textarea><div class="res" id="pres"></div>
+<div class="actions"><button class="btn-ai ghost" id="pc">關閉</button><button class="btn-ai" id="pa">套用</button></div></dialog>
+<div class="toast" id="toast"></div>
+<script src="options.js"></script><script src="core.js"></script><script src="prompts.js"></script>
+<script>
+const $=id=>document.getElementById(id);const S=load();
+const esc=t=>String(t).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+function toast(m){const t=$("toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1900)}
+const persist=()=>{save(S);meter()};const cards=$("cards");
+function shell(key,num,title,body,prompt){const d=document.createElement("section");d.className="card";d.id="c-"+key;d.innerHTML=`<div class="head"><div><span class="num">${num}</span><h2>${title}</h2></div><button class="btn-ai" data-p="${prompt||key}">複製討論提示詞</button></div>${body}`;cards.appendChild(d);return d}
+function optHTML(k,i){const on=S[k].includes(i.id);return `<button type="button" class="opt ${k==="banned"?"bad":""}" aria-pressed="${on}" data-k="${k}" data-id="${i.id}"><b>${esc(i.zh)}</b>${i.desc?`<span class="d">${esc(i.desc)}</span>`:""}</button>`}
+function renderCat(k){const c=CAT[k],card=$("c-"+k),q=card.querySelector(".q").value.trim().toLowerCase();
+  card.querySelector(".opts").innerHTML=c.groups.map((g,gi)=>{const it=g.items.filter(i=>!q||(i.zh+i.desc).toLowerCase().includes(q));if(!it.length)return "";const all=g.items.every(i=>S[k].includes(i.id));
+   return `<div class="gt"><span>${g.g}</span>${k==="banned"?`<button class="btn-ai ghost" data-grp="${gi}">${all?"取消此類":"全選此類"}</button>`:""}</div><div class="grid">${it.map(i=>optHTML(k,i)).join("")}</div>`}).join("")||"<p class='hint'>沒有符合的項目，可在下方自訂。</p>";
+  card.querySelector(".count").textContent=`已選 ${count(k,S)}${c.max<900?" / 建議最多 "+c.max:""}`;
+  card.querySelector(".chips").innerHTML=S.custom[k].map((t,i)=>`<span class="chip">${esc(t)} <button data-del="${k}:${i}" aria-label="移除">✕</button></span>`).join("")}
+function catCard(key,num){const c=CAT[key];const d=shell(key,num,c.title,`<p class="hint">${c.hint}</p><div class="tools"><input class="q" type="text" placeholder="搜尋選項…" aria-label="搜尋"/><span class="count"></span></div><div class="opts"></div><div class="row"><input type="text" class="cust" placeholder="沒有適合的？自訂一項（Enter 新增）"/><button class="btn-ai add" type="button">新增</button></div><div class="chips"></div>`);
+  d.querySelector(".q").addEventListener("input",()=>renderCat(key));const add=()=>{const i=d.querySelector(".cust"),v=i.value.trim();if(v&&!S.custom[key].includes(v)){S.custom[key].push(v);i.value="";persist();renderCat(key)}};
+  d.querySelector(".add").onclick=add;d.querySelector(".cust").addEventListener("keydown",e=>{if(e.key==="Enter")add()});renderCat(key)}
+function renderDials(){$("dials").innerHTML=DIALS.map(d=>{const v=S.dials[d.id];return `<div class="dial"><p class="q0">${d.q}<span class="src">${d.src}</span></p><div class="ends"><span>◀ ${d.l}</span><span>${d.r} ▶</span></div><div class="eg"><div>${esc(d.ls)}</div><div style="text-align:right">${esc(d.rs)}</div></div><div class="pos" role="group">${DIAL_POS.map(p=>`<button type="button" aria-pressed="${v===p.v}" data-d="${d.id}" data-v="${p.v}">${p.t}</button>`).join("")}</div><p class="cost">${v===undefined?"選一個位置，這裡會顯示這樣選的代價。":v<0?d.lw:v>0?d.rw:"取中間：兩邊都要，最難拿捏。請在『情境語氣』裡說明什麼時候偏哪邊。"}</p></div>`}).join("")}
+function renderSet(set){$("dims-"+set).innerHTML=SETS[set].dims.map(d=>`<div class="dim"><h3>${d.title}</h3><p class="q0">${d.q}</p><div class="grid" role="group">${d.opts.map(o=>`<button type="button" class="opt" aria-pressed="${S.pick[set][d.id]===o.id}" data-set="${set}" data-dim="${d.id}" data-o="${o.id}"><b>${esc(o.zh)}</b>${o.desc?`<span class="d">${esc(o.desc)}</span>`:""}${o.sample?`<span class="q">${esc(o.sample)}</span>`:""}</button>`).join("")}</div></div>`).join("")}
+function renderSit(){$("sits").innerHTML=SITUATIONS.map(x=>`<div class="sit"><div><b>${x.zh}</b><small>${x.hint}</small></div><div class="shifts" role="group">${SHIFTS.map(h=>`<button type="button" title="${h.desc}" aria-pressed="${S.sit[x.id]===h.id}" data-sit="${x.id}" data-sh="${h.id}">${h.zh}</button>`).join("")}</div></div>`).join("")}
+function renderSamples(){["yes","no"].forEach(k=>{S[k].forEach((t,i)=>{const r=$(`${k}${i}r`);if(!r)return;if(!t.trim()){r.innerHTML="";return}const c=checkText(t,S),bad=c.issues.filter(x=>x.level!=="info");r.innerHTML=k==="yes"?(bad.length?bad.map(x=>`<div class="${x.level==="error"?"e":"w"}">${x.level==="error"?"✕":"⚠"} ${esc(x.msg)}</div>`).join(""):`<div class="o">✓ 通過目前的規則檢查</div>`):(c.hits.length||bad.length?`<div class="o">✓ 這句確實違反規則（符合『不像我們』）</div>`:`<div class="w">⚠ 這句沒有違反任何已設定規則，若它真的『不像我們』，代表規則還缺一條</div>`)})})}
+function renderCtx(){const a=S.s1,b=S.s2;$("ctx").innerHTML=`<b>前階段資料</b>　<button class="btn-ai" id="s1imp" style="margin-left:8px">匯入 Stage 1／2 的 brief</button>
+ <div class="ln">${a?`Stage 1：<b style="color:inherit">${esc(a.name||"（尚未命名）")}</b>　${esc(a.statement||"")}`:"Stage 1：尚未匯入"}</div>${a?`<div class="row2"><span class="tg">核心張力：${esc(a.tension||"—")}</span>${a.anti.map(x=>`<span class="tg" style="color:#b91c1c;border-color:#fecaca">不要：${esc(x)}</span>`).join("")}</div>`:""}
+ <div class="ln">${b?`Stage 2：${esc(b.statement||"")}`:"Stage 2：尚未匯入"}</div>${b?`<div class="row2">${b.keywords.map(x=>`<span class="tg">${esc(x)}</span>`).join("")}${b.anti.map(x=>`<span class="tg" style="color:#b91c1c;border-color:#fecaca">反：${esc(x)}</span>`).join("")}</div>`:""}`;
+ $("s1imp").onclick=()=>$("file").click()}
+catCard("personality","01");catCard("pairs","02");
+shell("dials","03","語氣刻度（NN/g 四維度＋4 個實務維度）",`<div class="explain"><b>什麼是語氣刻度？</b> 每個刻度的兩端，都用同一句『客人預約確認』示範。先看哪一句比較像你，再決定位置。四個標示 NN/g 的是尼爾森諾曼集團提出的語氣四維度（正式／隨和、嚴肅／幽默、恭敬／不拘、熱情／平實），其餘四個是實務上最常用到的補充。取中間不是沒意見，而是要求兩邊都要成立。</div><div id="dials"></div>`);
+shell("lang","04","語言規則（10 項，每項單選）",`<p class="hint">每個選項都附同一句『預約確認』的示範，點選前先看哪個最像你想要的聲音。</p><div id="dims-lang"></div>`);
+shell("situations","05","情境語氣（Voice 不變，Tone 隨情境調整）",`<div class="explain"><b>為什麼要分情境？</b> 品牌的性格不會變，但對『投訴的客人』與『看社群貼文的朋友』說話的方式應該不同。為每個情境選一個調整方向（可滑過按鈕看說明）。高風險情境（投訴、系統錯誤、健康資訊、危機）選太輕鬆，系統會提醒。</div><div id="sits"></div>`);
+shell("words","06","用語偏好（我們說 A，不說 B）",`<p class="hint">8 組最常用的詞，選定之後全部文案都用同一個。</p><div id="dims-words"></div>`);
+catCard("banned","07");catCard("disclosure","08");
+shell("patterns","09","寫作模式（標題、按鈕、客服、道歉、錯誤、篇幅）",`<p class="hint">重複出現最多的『小零件』，統一後整體感覺立刻一致。</p><div id="dims-patterns"></div>`);
+shell("samples","10","範例句（最強的語氣教材）",`<p class="hint">寫 2–3 句『像我們』與 2–3 句『不像我們』。『不像我們』要寫成『看似接近但差一點』，不要寫成明顯荒謬。下方會即時用你的規則檢查：『像我們』若違規會被標紅，『不像我們』若沒有違反任何規則，表示規則還缺一條。</p><div class="smp">${[0,1,2].map(i=>`<label>像我們 ${i+1}</label><textarea rows="2" data-s="yes:${i}"></textarea><div class="res" id="yes${i}r"></div>`).join("")}${[0,1,2].map(i=>`<label>不像我們 ${i+1}</label><textarea rows="2" data-s="no:${i}"></textarea><div class="res" id="no${i}r"></div>`).join("")}</div>`);
+shell("statement","11","聲音宣言（自動組合，可改寫）",`<p class="hint">一句話說清楚品牌怎麼說話。上面選得越完整，草稿越完整。</p><textarea id="st" rows="3" placeholder="按下方按鈕自動組合，或讓 AI 幫你寫成更有畫面的一句。"></textarea><div class="row"><button class="btn-ai" id="mk" type="button">用目前選擇自動組合</button></div>`);
+renderDials();["lang","words","patterns"].forEach(renderSet);renderSit();renderCtx();
+document.querySelectorAll("[data-s]").forEach(t=>{const[k,i]=t.dataset.s.split(":");t.value=S[k][+i]||"";t.addEventListener("input",()=>{S[k][+i]=t.value;persist();renderSamples()})});
+$("st").value=S.statement;$("st").addEventListener("input",()=>{S.statement=$("st").value;persist()});
+$("mk").onclick=()=>{S.statement=draft(S);$("st").value=S.statement;persist();toast("已用目前選擇組合草稿")};
+document.addEventListener("click",e=>{
+  const o=e.target.closest(".opt[data-k]");if(o){const k=o.dataset.k,id=o.dataset.id,a=S[k],i=a.indexOf(id);if(i>-1)a.splice(i,1);else{if(CAT[k].max<900&&count(k,S)>=CAT[k].max){toast(`此項建議最多 ${CAT[k].max} 個，請先取消一個`);return}a.push(id)}persist();renderCat(k);renderSamples();return}
+  const g=e.target.closest("[data-grp]");if(g){const gr=CAT.banned.groups[+g.dataset.grp],ids=gr.items.map(i=>i.id),all=ids.every(i=>S.banned.includes(i));S.banned=all?S.banned.filter(i=>!ids.includes(i)):[...new Set([...S.banned,...ids])];persist();renderCat("banned");renderSamples();return}
+  const dm=e.target.closest(".opt[data-dim]");if(dm){const st=dm.dataset.set,d=dm.dataset.dim,v=dm.dataset.o;if(S.pick[st][d]===v)delete S.pick[st][d];else S.pick[st][d]=v;persist();renderSet(st);renderSamples();return}
+  const dl=e.target.closest("[data-d]");if(dl){const id=dl.dataset.d,v=+dl.dataset.v;if(S.dials[id]===v)delete S.dials[id];else S.dials[id]=v;persist();renderDials();return}
+  const sh=e.target.closest("[data-sit]");if(sh){const id=sh.dataset.sit,v=sh.dataset.sh;if(S.sit[id]===v)delete S.sit[id];else S.sit[id]=v;persist();renderSit();return}
+  const del=e.target.closest("[data-del]");if(del){const[k,i]=del.dataset.del.split(":");S.custom[k].splice(+i,1);persist();renderCat(k);renderSamples();return}
+  const p=e.target.closest("[data-p]");if(p)navigator.clipboard.writeText(PROMPTS[p.dataset.p](S)).then(()=>toast("已複製完整討論提示詞，貼給 AI 即可開始"),()=>toast("無法寫入剪貼簿，請檢查瀏覽器權限"))});
+function meter(){const c=completeness(S);$("pct").textContent=`完成度 ${c.pct}%（${c.done}/${c.total}）`;$("barfill").style.width=c.pct+"%";
+  const all=[["personality","說話性格"],["pairs","守護欄"],["dials","語氣刻度"],["lang","語言規則"],["situations","情境語氣"],["words","用語偏好"],["banned","禁用詞彙"],["disclosure","必備提示句"],["patterns","寫作模式"],["samples","範例句"]];
+  const miss=c.missing.map(m=>m.key);$("mlist").innerHTML=all.map(([k,l])=>`<li class="${miss.includes(k)?"":"done"}"><a href="#c-${k}">${l}</a></li>`).join("");
+  const ck=checks(S);$("chk").innerHTML=ck.length?ck.map(x=>`<li class="${x.level}">${x.level==="error"?"✕":x.level==="warn"?"⚠":"ℹ"} ${esc(x.msg)}</li>`).join(""):"<li class='info'>目前沒有衝突。</li>"}
+function refreshAll(){CAT_KEYS.forEach(renderCat);renderDials();["lang","words","patterns"].forEach(renderSet);renderSit();renderCtx();document.querySelectorAll("[data-s]").forEach(t=>{const[k,i]=t.dataset.s.split(":");t.value=S[k][+i]||""});$("st").value=S.statement;renderSamples();persist()}
+function handleText(text){let j=null;try{j=extractJSON(text)}catch(e){}
+  const s1=parseS1(j||text),s2=parseS2(j||text);if(s1){S.s1=s1;refreshAll();return{applied:["已匯入 Stage 1："+(s1.name||"（尚未命名）")],custom:[],errors:[]}}
+  if(s2){S.s2=s2;refreshAll();return{applied:["已匯入 Stage 2 感官資料"],custom:[],errors:[]}}
+  const r=applyPaste(text,S);if(r.applied.length)refreshAll();return r}
+$("paste").onclick=()=>{$("pres").textContent="";$("pt").value="";$("dlg").showModal()};$("pc").onclick=()=>$("dlg").close();
+$("pa").onclick=()=>{const r=handleText($("pt").value);$("pres").className="res"+(r.errors.length&&!r.applied.length?" err":"");$("pres").innerHTML=(r.applied.length?"已套用：<br>"+r.applied.map(esc).join("<br>"):"")+(r.custom.length?"<br>加入自訂項："+r.custom.map(esc).join("、"):"")+(r.errors.length?"<br><span class='err'>"+r.errors.map(esc).join("<br>")+"</span>":"")};
+const dl=(name,text,type)=>{const b=new Blob([text],{type}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+$("expb").onclick=()=>dl("stage3-brief.json",JSON.stringify(buildBrief(S),null,2),"application/json");$("expg").onclick=()=>dl("voice-guide.md",buildGuide(S),"text/markdown");$("exps").onclick=()=>dl("system-prompt.txt",buildSystem(S),"text/plain");
+$("imp").onclick=()=>$("file").click();
+$("file").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const out=handleText(r.result);toast(out.applied.length?"已匯入":"匯入失敗："+out.errors.join("；"))};r.readAsText(f);e.target.value=""};
+$("reset").onclick=()=>{if(confirm("確定清空 Stage 3 的所有答案？（Stage 1／2 資料會保留）")){const a=S.s1,b=S.s2;Object.assign(S,emptyState());S.s1=a;S.s2=b;save(S);location.reload()}};
+renderSamples();meter();
+</script></body></html>

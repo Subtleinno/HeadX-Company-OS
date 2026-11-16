@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-Hant"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Stage 01 · 品牌定位與核心張力 (Edit)</title><link rel="stylesheet" href="shared.css"/>
+<style>
+.layout{max-width:1100px;margin:0 auto;padding:40px 24px 100px;display:grid;grid-template-columns:1fr 250px;gap:36px;align-items:start}
+@media(max-width:900px){.layout{grid-template-columns:1fr}.side{position:static!important}}
+.kicker{font-family:var(--mono);font-size:.75rem;color:var(--accent);text-transform:uppercase;letter-spacing:.1em}
+h1{font-size:2rem;margin:8px 0 8px;letter-spacing:-.02em}.sub{color:var(--muted);margin:0 0 28px;font-size:.93rem}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:24px;margin-bottom:22px;scroll-margin-top:70px}
+.card h2{margin:0;font-size:1.08rem}.card .num{font-family:var(--mono);font-size:.72rem;color:var(--muted);display:block;margin-bottom:2px}
+.head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;margin-bottom:6px}
+.hint{font-size:.83rem;color:var(--muted);margin:0 0 14px;max-width:70ch}
+.btn-ai{background:var(--soft);color:var(--accent);border:1px solid #BFDBFE;padding:5px 11px;border-radius:7px;font-size:.76rem;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit}
+.btn-ai:hover{background:#DBEAFE}
+.tools{display:flex;gap:10px;align-items:center;margin:0 0 12px;flex-wrap:wrap}
+input[type=text],textarea{width:100%;padding:10px 13px;border-radius:8px;border:1px solid var(--line);background:var(--bg);font-family:inherit;font-size:.9rem;color:var(--ink);outline:none}
+input:focus,textarea:focus{border-color:var(--accent);background:#FFF}
+.tools input{max-width:240px;padding:7px 11px;font-size:.82rem}
+.count{font-size:.76rem;color:var(--muted);font-family:var(--mono)}
+.gt{font-family:var(--mono);font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:18px 0 8px;padding-top:12px;border-top:1px solid var(--line)}
+.gt:first-child{border-top:0;margin-top:4px;padding-top:0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px}
+.opt{border:1px solid var(--line);border-radius:10px;padding:11px 13px;background:var(--bg);text-align:left;cursor:pointer;font-family:inherit;color:inherit}
+.opt:hover{border-color:#b8b8b0}.opt[aria-pressed=true]{background:var(--ink);color:#FFF;border-color:var(--ink)}
+.opt.anti[aria-pressed=true]{background:var(--danger-bg);color:var(--danger);border-color:rgba(220,38,38,.45)}
+.opt b{display:block;font-size:.88rem}.opt span{display:block;font-size:.76rem;opacity:.75;margin-top:2px}
+.row{display:flex;gap:8px;margin-top:12px}.row input{flex:1}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.chip{font-size:.78rem;padding:3px 10px;border-radius:999px;background:var(--bg);border:1px solid var(--line)}
+.chip button{border:0;background:none;cursor:pointer;color:var(--muted)}
+.note{margin-top:14px}.note label{font-size:.78rem;font-weight:600;display:block;margin-bottom:4px}
+/* dials */
+.dial{border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:12px;background:var(--bg)}
+.dial .q{font-size:.9rem;font-weight:600;margin:0 0 10px}
+.dial .ends{display:flex;justify-content:space-between;font-size:.84rem;font-weight:600;margin-bottom:6px}
+.dial .eg{display:flex;justify-content:space-between;gap:14px;font-size:.74rem;color:var(--muted);margin-bottom:10px}.dial .eg div{flex:1}.dial .eg div:last-child{text-align:right}
+.pos{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.pos button{padding:8px 4px;border:1px solid var(--line);background:var(--surface);border-radius:8px;font-size:.74rem;cursor:pointer;font-family:inherit;color:inherit}
+.pos button[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.dial .cost{font-size:.78rem;margin:10px 0 0;color:var(--ink);background:var(--surface);border-left:3px solid var(--accent);padding:6px 10px;border-radius:0 8px 8px 0;min-height:1.4em}
+.explain{background:var(--soft);border:1px solid #BFDBFE;border-radius:12px;padding:14px 16px;font-size:.84rem;margin-bottom:16px}
+.explain b{color:var(--accent)}
+.side{position:sticky;top:70px}
+.meter{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px}
+.bar{height:8px;background:var(--line);border-radius:99px;overflow:hidden;margin:8px 0 12px}.bar>i{display:block;height:100%;background:var(--ink);transition:width .25s}
+.meter ul{list-style:none;margin:0;padding:0;font-size:.8rem}.meter li{padding:3px 0}.meter a{color:var(--muted);text-decoration:none}.meter li.done a{color:var(--ok)}
+.meter li.done::before{content:"✓ ";color:var(--ok)}.meter li:not(.done)::before{content:"○ ";color:var(--muted)}
+.side .btn-ai{display:block;width:100%;margin-top:10px;text-align:center}
+dialog{border:1px solid var(--line);border-radius:16px;padding:24px;max-width:640px;width:92%}dialog::backdrop{background:rgba(0,0,0,.35)}
+dialog textarea{min-height:200px;font-family:var(--mono);font-size:.78rem}
+dialog .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+dialog .res{font-size:.8rem;margin-top:10px;color:var(--ok)}dialog .err{color:var(--danger)}
+</style></head><body>
+<nav class="topbar"><div class="brand-tag">COMPANY OS · BRAND STAGE 01 / 06</div>
+<div class="nav-links"><a class="nav-pill active" href="edit.html">Edit</a><a class="nav-pill" href="view.html">View</a><a class="nav-pill" href="agent.html">AI Agent</a></div></nav>
+<div class="layout"><main>
+<span class="kicker">Stage 01 · Positioning &amp; Core Tension</span>
+<h1>品牌定位與核心張力</h1>
+<p class="sub">不用想清楚才開始：每張卡片旁的「複製討論提示詞」會帶著你目前的答案，讓 AI 先訪問你、再給建議。討論完，把 AI 最後附的 JSON 用右側「貼回 AI 結果」一次填入。選項已完整列出並附說明，沒有適合的可自訂。</p>
+<div id="cards"></div>
+</main>
+<aside class="side"><div class="meter"><b id="pct"></b><div class="bar"><i id="barfill"></i></div><ul id="mlist"></ul>
+<button class="btn-ai" id="paste">貼回 AI 結果</button><button class="btn-ai" id="exp">匯出 brand-brief.json</button><button class="btn-ai" id="imp">匯入 JSON</button><button class="btn-ai" id="reset" style="color:var(--danger);border-color:#f3c0c0;background:#fff">全部清空</button>
+<input type="file" id="file" accept="application/json" hidden/></div></aside></div>
+<dialog id="dlg"><b>貼回 AI 結果</b><p class="hint" style="margin:6px 0 12px">把 AI 討論結尾附的 JSON 區塊整段貼上（含 ```json 也可以）。名稱會自動對應到選項，清單沒有的會加為自訂項。</p>
+<textarea id="pt" placeholder='{"audience":["年輕專業人士"],"pain":["沒時間"], ... }'></textarea><div class="res" id="pres"></div>
+<div class="actions"><button class="btn-ai" id="pc" style="color:var(--muted);background:#fff;border-color:var(--line)">關閉</button><button class="btn-ai" id="pa">套用</button></div></dialog>
+<div class="toast" id="toast"></div>
+<script src="options.js"></script><script src="core.js"></script><script src="prompts.js"></script>
+<script>
+const $=id=>document.getElementById(id);const S=load();
+function toast(m){const t=$("toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1900)}
+const persist=()=>{save(S);meter()};
+const SECTIONS=[["audience","01"],["pain","02"],["alternatives","03"],["diff","04"],["value","05"],["category","06"],["rtb","07"],["statement","08"],["tension","09"],["anti","10"],["name","11"]];
+const cards=$("cards");
+function sectionShell(key,num,title,prompt,body){const d=document.createElement("section");d.className="card";d.id="c-"+key;d.innerHTML=`<div class="head"><div><span class="num">${num}</span><h2>${title}</h2></div><button class="btn-ai" data-p="${prompt}">複製討論提示詞</button></div>${body}`;cards.appendChild(d);return d}
+function optHTML(k,i){const on=S[k].includes(i.id);return `<button type="button" class="opt ${k==="anti"?"anti":""}" aria-pressed="${on}" data-k="${k}" data-id="${i.id}"><b>${i.zh}</b><span>${i.desc}</span></button>`}
+function renderCat(k){const c=CAT[k],card=$("c-"+k),q=(card.querySelector(".q")||{value:""}).value.trim().toLowerCase();
+  card.querySelector(".opts").innerHTML=c.groups.map(g=>{const it=g.items.filter(i=>!q||(i.zh+i.desc).toLowerCase().includes(q));return it.length?`<div class="gt">${g.g}</div><div class="grid">${it.map(i=>optHTML(k,i)).join("")}</div>`:""}).join("")||"<p class='hint'>沒有符合的項目，可在下方自訂。</p>";
+  card.querySelector(".count").textContent=`已選 ${count(k,S)}${c.max<99?" / 建議最多 "+c.max:""}`;
+  card.querySelector(".chips").innerHTML=S.custom[k].map((t,i)=>`<span class="chip">${t} <button data-del="${k}:${i}" aria-label="移除">✕</button></span>`).join("")}
+CAT_KEYS.forEach(k=>{}); 
+SECTIONS.forEach(([key,num])=>{
+  if(CAT[key]){const c=CAT[key];
+    const d=sectionShell(key,num,c.title,key,`<p class="hint">${c.hint}</p><div class="tools"><input class="q" type="text" placeholder="搜尋選項…" aria-label="搜尋"/><span class="count"></span></div><div class="opts"></div>
+    <div class="row"><input type="text" class="cust" placeholder="沒有適合的？自訂一項（Enter 新增）"/><button class="btn-ai add" type="button">新增</button></div><div class="chips"></div>
+    ${key!=="anti"?`<div class="note"><label>補充說明（選填，可貼 AI 討論的結論）</label><textarea rows="2" data-note="${key}Note"></textarea></div>`:""}`);
+    d.querySelector(".q").addEventListener("input",()=>renderCat(key));
+    const add=()=>{const i=d.querySelector(".cust"),v=i.value.trim();if(v&&!S.custom[key].includes(v)){S.custom[key].push(v);i.value="";persist();renderCat(key)}};
+    d.querySelector(".add").onclick=add;d.querySelector(".cust").addEventListener("keydown",e=>{if(e.key==="Enter")add()});
+    renderCat(key)}
+  else if(key==="statement"){sectionShell(key,num,"定位宣言（自動組合，可改寫）","statement",`<p class="hint">格式：對於［對象］，當他們面對［痛點］時，［品牌］是一個［類別］，以［差異點］為特色，替客人帶來［價值］，因為［信任理由］。上面選得越完整，草稿越完整。</p><textarea id="st" rows="4" placeholder="按下方按鈕用你的選擇自動組合，或讓 AI 幫你寫成更鋒利的一句。"></textarea><div class="row"><button class="btn-ai" id="mk" type="button">用目前選擇自動組合</button></div>`)}
+  else if(key==="tension"){sectionShell(key,num,"核心張力：你的品牌要同時成立哪兩件看似矛盾的事？","tension",`<div class="explain"><b>什麼是核心張力？</b> 好品牌通常同時成立兩件看似衝突的事，例如「專業，但不冷漠」。只選一邊的品牌很普通；兩邊都做到，才有辨識度。這一步分兩部分：<b>先選一句主張力</b>，再用 <b>8 個刻度</b>決定每個面向偏哪邊。</div>
+    <div class="hint" style="font-weight:600;color:var(--ink)">A. 選一句最像你的主張力（單選）</div><div class="grid" id="tp"></div>
+    <div class="hint" style="font-weight:600;color:var(--ink);margin-top:22px">B. 8 個刻度（每個決定偏哪邊；「兩邊都要」不是沒意見，而是要求兩者同時成立）</div><div id="dials"></div>`)}
+  else if(key==="name"){sectionShell(key,num,"暫定品牌名稱（可留白）","name",`<p class="hint">名稱放在定位之後最容易想。還沒想法就直接點右上角，讓 AI 做命名研究。</p><input type="text" id="nm" placeholder="尚未決定？讓 AI 做命名研究與檢查"/>`)}
+});
+function renderTension(){
+  $("tp").innerHTML=TENSIONS.map(t=>`<button type="button" class="opt" aria-pressed="${S.tensionPrimary===t.id}" data-tp="${t.id}"><b>${t.zh}</b><span>${t.desc}</span></button>`).join("");
+  $("dials").innerHTML=DIALS.map(d=>{const v=S.dials[d.id];return `<div class="dial"><p class="q">${d.q}</p><div class="ends"><span>◀ ${d.l}</span><span>${d.r} ▶</span></div><div class="eg"><div>${d.le}</div><div>${d.re}</div></div>
+  <div class="pos" role="group" aria-label="${d.l} 到 ${d.r}">${DIAL_POS.map(p=>`<button type="button" aria-pressed="${v===p.v}" data-d="${d.id}" data-v="${p.v}">${p.t}</button>`).join("")}</div>
+  <p class="cost">${v===undefined?"選一個位置，這裡會顯示這樣選的代價。":v<0?d.lw:v>0?d.rw:"兩邊都要：最難、也最有辨識度。請在上面的主張力裡寫清楚兩者怎麼同時成立。"}</p></div>`}).join("")}
+renderTension();
+$("st").value=S.statement;$("nm").value=S.name;
+document.querySelectorAll("[data-note]").forEach(t=>{t.value=S[t.dataset.note]||"";t.addEventListener("input",()=>{S[t.dataset.note]=t.value;persist()})});
+$("st").addEventListener("input",()=>{S.statement=$("st").value;persist()});$("nm").addEventListener("input",()=>{S.name=$("nm").value.trim();persist()});
+$("mk").onclick=()=>{S.statement=draft(S);$("st").value=S.statement;persist();toast("已用目前選擇組合草稿")};
+document.addEventListener("click",e=>{
+  const o=e.target.closest(".opt[data-k]");
+  if(o){const k=o.dataset.k,id=o.dataset.id,a=S[k],i=a.indexOf(id);if(i>-1)a.splice(i,1);else{if(CAT[k].max<99&&count(k,S)>=CAT[k].max){toast(`「${CAT[k].title.replace(/[？（].*/,"")}」建議最多 ${CAT[k].max} 個，請先取消一個`);return}a.push(id)}persist();renderCat(k);return}
+  const del=e.target.closest("[data-del]");if(del){const[k,i]=del.dataset.del.split(":");S.custom[k].splice(+i,1);persist();renderCat(k);return}
+  const tp=e.target.closest("[data-tp]");if(tp){S.tensionPrimary=S.tensionPrimary===tp.dataset.tp?"":tp.dataset.tp;persist();renderTension();return}
+  const dl=e.target.closest("[data-d]");if(dl){const id=dl.dataset.d,v=+dl.dataset.v;if(S.dials[id]===v)delete S.dials[id];else S.dials[id]=v;persist();renderTension();return}
+  const p=e.target.closest("[data-p]");if(p){navigator.clipboard.writeText(PROMPTS[p.dataset.p](S)).then(()=>toast("已複製完整討論提示詞，貼給 AI 即可開始"),()=>toast("無法寫入剪貼簿，請檢查瀏覽器權限"))}
+});
+function meter(){const c=completeness(S);$("pct").textContent=`完成度 ${c.pct}%（${c.done}/${c.total}）`;$("barfill").style.width=c.pct+"%";
+  const all=[["audience","你服務誰"],["pain","痛點"],["alternatives","現有替代方案"],["diff","獨特屬性"],["value","價值"],["category","市場類別"],["rtb","信任理由"],["tension","核心張力"],["anti","Anti-Persona"]];
+  const miss=c.missing.map(m=>m.key);$("mlist").innerHTML=all.map(([k,l])=>`<li class="${miss.includes(k)?"":"done"}"><a href="#c-${k==="tension"?"tension":k}">${l}</a></li>`).join("")}
+$("paste").onclick=()=>{$("pres").textContent="";$("pt").value="";$("dlg").showModal()};$("pc").onclick=()=>$("dlg").close();
+$("pa").onclick=()=>{const r=applyPaste($("pt").value,S);if(r.applied.length){persist();CAT_KEYS.forEach(renderCat);renderTension();$("st").value=S.statement;$("nm").value=S.name;document.querySelectorAll("[data-note]").forEach(t=>t.value=S[t.dataset.note]||"")}
+  $("pres").className="res"+(r.errors.length&&!r.applied.length?" err":"");$("pres").innerHTML=(r.applied.length?"已套用：<br>"+r.applied.join("<br>"):"")+(r.custom.length?"<br>加入自訂項："+r.custom.join("、"):"")+(r.errors.length?"<br><span class='err'>"+r.errors.join("<br>")+"</span>":"")};
+$("exp").onclick=()=>{const b=new Blob([JSON.stringify(buildBrief(S),null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="brand-brief.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+$("imp").onclick=()=>$("file").click();
+$("file").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const out=applyPaste(r.result,S);if(out.applied.length){persist();CAT_KEYS.forEach(renderCat);renderTension();$("st").value=S.statement;$("nm").value=S.name;toast("已匯入")}else toast("匯入失敗："+out.errors.join("；"))};r.readAsText(f);e.target.value=""};
+$("reset").onclick=()=>{if(confirm("確定清空 Stage 01 的所有答案？此動作無法復原。")){Object.assign(S,emptyState());persist();location.reload()}};
+meter();
+</script></body></html>

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="zh-Hant"><head><meta charset="UTF-8"/><title>Stage 02 · AI Agent Contract</title><link rel="stylesheet" href="shared.css"/>
+<style>body{background:#0D0E11;color:#F4F4F6}.topbar{background:rgba(13,14,17,.9);border-bottom-color:#252932}.nav-pill{background:#15171C;border-color:#252932;color:#8B929E}.nav-pill.active{background:#F4F4F6;color:#0D0E11}
+.wrap{max-width:980px;margin:0 auto;padding:40px 24px 100px}.panel{background:#15171C;border:1px solid #252932;border-radius:12px;padding:22px;margin-bottom:20px}
+.t{font-family:var(--mono);font-size:.76rem;color:#60A5FA;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+pre{margin:0;font-family:var(--mono);font-size:.8rem;line-height:1.6;overflow:auto;color:#E2E8F0;white-space:pre-wrap;word-break:break-word;max-height:520px}
+.b{background:#0D0E11;color:#F4F4F6;border:1px solid #252932;border-radius:6px;padding:4px 10px;font:inherit;font-size:.72rem;cursor:pointer}.st{font-family:var(--mono);font-size:.8rem;margin-bottom:16px}.ok{color:#10B981}.no{color:#F59E0B}</style></head><body>
+<nav class="topbar"><div class="brand-tag" style="color:#10B981">● AI AGENT CONTRACT // STAGE 02</div><div class="nav-links"><a class="nav-pill" href="edit.html">Edit</a><a class="nav-pill" href="view.html">View</a><a class="nav-pill active" href="agent.html">AI Agent</a></div></nav>
+<main class="wrap"><div class="st" id="st"></div>
+<div class="panel"><div class="t"><span>stage2-brief.json</span><span><button class="b" id="c1">複製</button> <button class="b" id="d1">下載</button></span></div><pre id="j"></pre></div>
+<div class="panel"><div class="t"><span>physics.css（設計 token）</span><span><button class="b" id="c3">複製</button> <button class="b" id="d3">下載</button></span></div><pre id="css"></pre></div>
+<div class="panel"><div class="t"><span>Downstream system prompt</span><button class="b" id="c2">複製</button></div><pre id="p"></pre></div></main>
+<div class="toast" id="toast"></div>
+<script src="options.js"></script><script src="core.js"></script>
+<script>
+const s=load(),b=buildBrief(s),txt=JSON.stringify(b,null,2),css=tokensCSS(s);
+const L=k=>labels(k,s).join("、")||"（未定義）";
+const R=DIMS.map(d=>`- ${d.title}：${s.rules[d.id]?OPT(d.id,s.rules[d.id]).zh:"（未定義）"}`).join("\n");
+const warn=b.consistency_checks.filter(x=>x.level!=="info").map(x=>"- "+x.msg).join("\n");
+const pr=`你是此品牌的設計與內容 Agent。以下是已確認的材質與感官定調，所有視覺、介面與文案輸出必須遵守。
+${s.s1?"品牌："+(s.s1.name||"（尚未命名）")+"\n定位："+s.s1.statement+"\n核心張力："+s.s1.tension+"\n":""}感官宣言：${b.sensory_statement.text}
+物理材質：${L("material")}；觸感：${L("tactile")}；光線：${L("light")}；空氣：${L("atmosphere")}；動態與聲音：${L("motionsound")}
+情緒關鍵字（所有素材必須能用這些詞檢驗）：${L("keywords")}
+反關鍵字（不可出現）：${L("antiKeywords")}
+物理禁區（不可看起來像）：${L("avoidMaterials")}
+視覺物理規則：\n${R}
+介面只可使用 physics.css 內的 token（圓角、陰影、模糊、動態等），不可自行發明數值。
+${warn?"尚待人類確認的衝突：\n"+warn+"\n":""}${b.status==="incomplete"?"注意：Stage 2 尚未完成，缺少："+b.missing.map(m=>m.label).join("、")+"。遇到缺少的資訊請回報人類，不要自行補寫。":""}`.trim();
+document.getElementById("j").textContent=txt;document.getElementById("css").textContent=css;document.getElementById("p").textContent=pr;
+document.getElementById("st").innerHTML=`status: <span class="${b.status==="complete"?"ok":"no"}">${b.status}</span> · completeness ${b.completeness}%${b.missing.length?" · missing: "+b.missing.map(m=>m.key).join(", "):""}`;
+const T=m=>{const t=document.getElementById("toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1600)};
+const cp=(x)=>navigator.clipboard.writeText(x).then(()=>T("已複製"),()=>T("無法寫入剪貼簿"));
+const dl=(n,x,ty)=>{const bl=new Blob([x],{type:ty}),a=document.createElement("a");a.href=URL.createObjectURL(bl);a.download=n;a.click()};
+document.getElementById("c1").onclick=()=>cp(txt);document.getElementById("c2").onclick=()=>cp(pr);document.getElementById("c3").onclick=()=>cp(css);
+document.getElementById("d1").onclick=()=>dl("stage2-brief.json",txt,"application/json");document.getElementById("d3").onclick=()=>dl("physics.css",css,"text/css");
+</script></body></html>

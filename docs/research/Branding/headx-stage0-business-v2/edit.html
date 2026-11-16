@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-Hant"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Stage 00 · 業務基礎 (Edit)</title><link rel="stylesheet" href="shared.css"/>
+<style>
+.layout{max-width:1140px;margin:0 auto;padding:40px 24px 100px;display:grid;grid-template-columns:1fr 290px;gap:36px;align-items:start}
+@media(max-width:940px){.layout{grid-template-columns:1fr}.side{position:static!important}}
+.kicker{font-family:var(--mono);font-size:.75rem;color:var(--accent);text-transform:uppercase;letter-spacing:.1em}
+h1{font-size:2rem;margin:8px 0 8px;letter-spacing:-.02em}.sub{color:var(--muted);margin:0 0 24px;font-size:.93rem}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:24px;margin-bottom:22px;scroll-margin-top:70px}
+.card h2{margin:0;font-size:1.06rem}.card .num{font-family:var(--mono);font-size:.72rem;color:var(--muted);display:block;margin-bottom:2px}
+.head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;margin-bottom:10px}
+.part{border-top:1px solid var(--line);margin-top:16px;padding-top:14px}.part:first-of-type{border-top:0;margin-top:4px;padding-top:0}
+.part h3{margin:0 0 2px;font-size:.92rem}.hint{font-size:.8rem;color:var(--muted);margin:0 0 10px;max-width:74ch}
+.btn-ai{background:var(--soft);color:var(--accent);border:1px solid #BFDBFE;padding:5px 11px;border-radius:7px;font-size:.76rem;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit}
+.btn-ai:hover{background:#DBEAFE}.btn-ai.ghost{background:#fff;color:var(--muted);border-color:var(--line)}
+.tools{display:flex;gap:10px;align-items:center;margin:0 0 10px;flex-wrap:wrap}
+input[type=text],textarea{width:100%;padding:10px 13px;border-radius:8px;border:1px solid var(--line);background:var(--bg);font-family:inherit;font-size:.9rem;color:var(--ink);outline:none;resize:vertical}
+input:focus,textarea:focus{border-color:var(--accent);background:#FFF}
+.tools input{max-width:240px;padding:7px 11px;font-size:.82rem}.count{font-size:.76rem;color:var(--muted);font-family:var(--mono)}
+.gt{font-family:var(--mono);font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:14px 0 8px;padding-top:10px;border-top:1px dashed var(--line)}
+.gt:first-child{border-top:0;margin-top:2px;padding-top:0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px}
+.opt{border:1px solid var(--line);border-radius:10px;padding:9px 12px;background:var(--bg);text-align:left;cursor:pointer;font-family:inherit;color:inherit}
+.opt:hover{border-color:#b8b8b0}.opt[aria-pressed=true]{background:var(--ink);color:#FFF;border-color:var(--ink);box-shadow:0 0 0 3px rgba(37,99,235,.25)}
+.opt b{display:block;font-size:.85rem}.opt span.d{display:block;font-size:.73rem;opacity:.75;margin-top:2px}
+.opt .reg{display:inline-block;font-size:.62rem;font-family:var(--mono);border:1px solid currentColor;border-radius:999px;padding:0 6px;margin-top:4px;opacity:.8}
+.grid.wide{grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+.row{display:flex;gap:8px;margin-top:10px}.row input{flex:1}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.chip{font-size:.78rem;padding:3px 10px;border-radius:999px;background:var(--bg);border:1px solid var(--line)}.chip button{border:0;background:none;cursor:pointer;color:var(--muted)}
+.tf{margin-bottom:12px}.tf label{display:block;font-size:.8rem;font-weight:600;margin-bottom:3px}.tf small{display:block;color:var(--muted);font-size:.72rem;margin-bottom:4px}
+.numgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px 14px}
+.note{background:var(--soft);border:1px solid #BFDBFE;border-radius:12px;padding:10px 14px;font-size:.8rem;margin-bottom:14px}
+.calc{width:100%;border-collapse:collapse;font-size:.82rem;background:var(--bg);border-radius:10px;overflow:hidden}.calc td{border-bottom:1px solid var(--line);padding:7px 12px;vertical-align:top}.calc td:first-child{width:46%}.calc small{display:block;color:var(--muted);font-size:.7rem}.calc b{font-family:var(--mono)}
+.side{position:sticky;top:70px;display:flex;flex-direction:column;gap:14px}
+.meter{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
+.bar{height:8px;background:var(--line);border-radius:99px;overflow:hidden;margin:8px 0 12px}.bar>i{display:block;height:100%;background:var(--ink);transition:width .25s}
+.meter ul{list-style:none;margin:0;padding:0;font-size:.8rem}.meter li{padding:2px 0}.meter a{color:var(--muted);text-decoration:none}.meter li.done a{color:var(--ok)}
+.meter li.done::before{content:"✓ ";color:var(--ok)}.meter li:not(.done)::before{content:"○ ";color:var(--muted)}
+.side .btn-ai{display:block;width:100%;margin-top:8px;text-align:center}
+.chk li{font-size:.76rem;margin-bottom:6px;line-height:1.45}.chk .warn{color:var(--warn)}.chk .error{color:var(--danger)}.chk .info{color:var(--muted)}
+dialog{border:1px solid var(--line);border-radius:16px;padding:24px;max-width:640px;width:92%}dialog::backdrop{background:rgba(0,0,0,.35)}
+dialog textarea{min-height:200px;font-family:var(--mono);font-size:.78rem}dialog .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+dialog .res{font-size:.8rem;margin-top:10px;color:var(--ok)}dialog .err{color:var(--danger)}
+</style></head><body>
+<nav class="topbar"><div class="brand-tag">COMPANY OS · BRAND STAGE 00 / 06 · 業務基礎</div>
+<div class="nav-links"><a class="nav-pill active" href="edit.html">Edit</a><a class="nav-pill" href="view.html">View</a><a class="nav-pill" href="agent.html">AI Agent</a></div></nav>
+<div class="layout"><main>
+<span class="kicker">Stage 00 · Business Foundation</span>
+<h1>先說清楚：你在做什麼生意？怎麼賺錢？</h1>
+<p class="sub">品牌建立在業務之上。這一步只問事實：做什麼、給誰、<b>怎麼賺錢</b>（賺錢策略型態、定價策略、增加收入的槓桿與做法、單位經濟）、在哪裡、有多少資源、有哪些要先查證的事。參考 Business Model Canvas 九個區塊，並加入香港起步事項的提醒。完成後，之後每一階段的討論提示詞都能帶著這份背景。</p>
+<div class="note"><b>注意：</b>這是原型，資料只存在你的瀏覽器，沒有上傳。香港商業登記、牌照、商標、個人資料與廣告宣稱的提醒只是起步參考，不是法律意見。LTV÷獲客成本 3 倍、回本 12 個月內等只是常見經驗法則，不是定律；財務數字請與會計師核對。</div>
+<div id="cards"></div>
+</main>
+<aside class="side"><div class="meter"><b id="pct"></b><div class="bar"><i id="barfill"></i></div><ul id="mlist"></ul></div>
+<div class="meter chk"><b style="font-size:.84rem">準備度與一致性檢查</b><ul id="chk" style="margin-top:8px"></ul></div>
+<div class="meter"><button class="btn-ai" id="copyctx" style="margin:0">複製『業務背景』給 AI</button><button class="btn-ai" id="paste">貼回 AI 結果</button><button class="btn-ai" id="expb">匯出 stage0-brief.json</button><button class="btn-ai" id="imp">匯入 JSON</button><button class="btn-ai" id="reset" style="color:var(--danger);border-color:#f3c0c0;background:#fff">全部清空</button><input type="file" id="file" accept="application/json" hidden/></div></aside></div>
+<dialog id="dlg"><b>貼回 AI 結果</b><p class="hint" style="margin:6px 0 12px">把 AI 討論結尾附的 JSON 整段貼上。選項會自動對應，清單沒有的會加為自訂項；文字欄與數字欄會直接填入。</p>
+<textarea id="pt" placeholder='{"bmodel":["訂閱制"],"calcTicket":"800"}'></textarea><div class="res" id="pres"></div>
+<div class="actions"><button class="btn-ai ghost" id="pc">關閉</button><button class="btn-ai" id="pa">套用</button></div></dialog>
+<div class="toast" id="toast"></div>
+<script src="options.js"></script><script src="core.js"></script><script src="prompts.js"></script>
+<script>
+const $=id=>document.getElementById(id);const S=load();
+const esc=t=>String(t).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+function toast(m){const t=$("toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1900)}
+const persist=()=>{save(S);meter()};
+const CARDS=[
+ {id:"status",num:"01",title:"業務狀態與現有資產",prompt:"status",parts:[{dim:"status"},{cat:"reasons"},{cat:"assets"}]},
+ {id:"oneline",num:"02",title:"一句話說明你在做什麼",prompt:"oneline",parts:[{text:["what","who","how"]}]},
+ {id:"industry",num:"03",title:"行業",prompt:"industry",parts:[{cat:"industry"}]},
+ {id:"offering",num:"04",title:"提供什麼，怎麼交付",prompt:"offering",parts:[{cat:"offering"},{cat:"delivery"}]},
+ {id:"model",num:"05",title:"客人與收入形式",prompt:"model",parts:[{cat:"customer"},{cat:"revenue"},{dim:"priceTier"},{dim:"pricingStyle"},{dim:"avgTicket"},{dim:"repeat"}]},
+ {id:"earn",num:"06",title:"賺錢策略型態（錢主要靠什麼賺）",prompt:"bmodel",parts:[{cat:"bmodel"}]},
+ {id:"pricing",num:"07",title:"定價策略（怎麼決定價錢）",prompt:"pricing",parts:[{cat:"pricingStrategy"}]},
+ {id:"growth",num:"08",title:"增加收入：槓桿與具體做法",prompt:"growth",parts:[{cat:"levers"},{cat:"tactics"}]},
+ {id:"econ",num:"09",title:"單位經濟與現金流（算一算賺不賺錢）",prompt:"econ",parts:[{dim:"grossMargin"},{dim:"cacLevel"},{dim:"paybackPeriod"},{dim:"cashflow"},{dim:"seasonality"},{dim:"capacity"},{dim:"concentration"},{text:["calcTicket","calcMargin","calcVisits","calcYears","calcCac","calcFixed","calcTarget"],num:true},{calc:true}]},
+ {id:"channels",num:"10",title:"渠道與獲客",prompt:"channels",parts:[{cat:"channels"},{cat:"acquisition"}]},
+ {id:"market",num:"11",title:"市場、地點與語言",prompt:"market",parts:[{cat:"markets"},{cat:"location"},{cat:"languages"}]},
+ {id:"resources",num:"12",title:"規模、預算與時間",prompt:"resources",parts:[{dim:"team"},{dim:"funding"},{dim:"brandBudget"},{dim:"launchTime"},{dim:"customersNow"},{text:["partners","costs"]}]},
+ {id:"legal",num:"13",title:"法規與起步狀態（提醒你先查證）",prompt:"legal",parts:[{cat:"regflags"},{dim:"entity"},{dim:"br"},{dim:"tm"},{dim:"domain"},{dim:"licence"}]},
+ {id:"purpose",num:"14",title:"品牌目的、故事與價值觀",prompt:"purpose",parts:[{text:["purpose","vision","story","founder"]},{cat:"values"}]},
+ {id:"compete",num:"15",title:"競爭對手與欣賞的品牌",prompt:"compete",parts:[{text:["comp1","comp2","comp3","admire1","admire2","admire3"]}]},
+ {id:"goals",num:"16",title:"目標、限制與底線",prompt:"goals",parts:[{cat:"goals"},{cat:"constraints"},{text:["mustHave","dealBreaker"]}]},
+ {id:"name",num:"17",title:"名稱現況（命名前準備）",prompt:"namestate",parts:[{dim:"nameStatus"},{dim:"nameLang"},{text:["existingName","nameCandidates"]}]},
+ {id:"company",num:"18",title:"公司基本資料",prompt:"company",parts:[{text:["legalZh","legalEn","trading","address","email","phone","website","social","currency","timezone","fiscalEnd"]}]}
+];
+const cardsEl=$("cards");
+function textPart(ids,numeric){const inner=ids.map(id=>{const t=TEXT_BY[id];return `<div class="tf"><label for="t-${id}">${t.label}</label>${t.help?`<small>${t.help}</small>`:""}${t.rows>1?`<textarea id="t-${id}" data-t="${id}" rows="${t.rows}" placeholder="${esc(t.ph)}"></textarea>`:`<input type="text" id="t-${id}" data-t="${id}" ${numeric?'inputmode="decimal"':""} placeholder="${esc(t.ph)}"/>`}</div>`}).join("");return numeric?`<div class="numgrid">${inner}</div>`:inner}
+function catPart(k){const c=CAT[k];const many=flat(k).length>14;return `<div class="part"><h3>${c.title}</h3><p class="hint">${c.hint||""}</p><div class="tools">${many?`<input class="q" data-q="${k}" type="text" placeholder="搜尋…" aria-label="搜尋"/>`:""}<span class="count" id="cnt-${k}"></span></div><div id="cat-${k}"></div><div class="row"><input type="text" data-cust="${k}" placeholder="沒有適合的？自訂一項（Enter 新增）"/><button class="btn-ai" data-add="${k}" type="button">新增</button></div><div class="chips" id="chips-${k}"></div></div>`}
+function dimPart(id){const d=dimInfo(id);return `<div class="part"><h3>${d.title}</h3>${d.q?`<p class="hint">${d.q}</p>`:""}<div class="grid" id="dim-${id}" role="group"></div></div>`}
+CARDS.forEach(c=>{const el=document.createElement("section");el.className="card";el.id="c-"+c.id;
+  el.innerHTML=`<div class="head"><div><span class="num">${c.num}</span><h2>${c.title}</h2></div><button class="btn-ai" data-p="${c.prompt}">複製討論提示詞</button></div>`+c.parts.map(p=>p.cat?catPart(p.cat):p.dim?dimPart(p.dim):p.calc?`<div class="part"><h3>即時試算</h3><p class="hint">依上面的數字自動計算。只是估算，請與會計師或實際紀錄核對。</p><div id="calcOut"></div></div>`:`<div class="part">${textPart(p.text,p.num)}</div>`).join("");cardsEl.appendChild(el)});
+function renderCat(k){const c=CAT[k],q=((document.querySelector(`[data-q="${k}"]`)||{}).value||"").trim().toLowerCase();
+  const wide=["bmodel","pricingStrategy","tactics"].includes(k);
+  $("cat-"+k).innerHTML=c.groups.map(g=>{const it=g.items.filter(i=>!q||(i.zh+i.desc+(i.lic||"")).toLowerCase().includes(q));if(!it.length)return "";
+   return `<div class="gt">${g.g}</div><div class="grid ${wide?"wide":""}">${it.map(i=>`<button type="button" class="opt" aria-pressed="${S[k].includes(i.id)}" data-k="${k}" data-id="${i.id}"><b>${esc(i.zh)}</b>${i.desc?`<span class="d">${esc(i.desc)}</span>`:""}${i.lic?`<span class="reg" title="${esc(i.lic)}">常見規管</span>`:""}</button>`).join("")}</div>`}).join("")||"<p class='hint'>沒有符合的項目，可在下方自訂。</p>";
+  $("cnt-"+k).textContent=`已選 ${count(k,S)}${c.max<90?" / 建議最多 "+c.max:""}`;
+  $("chips-"+k).innerHTML=S.custom[k].map((t,i)=>`<span class="chip">${esc(t)} <button data-del="${k}:${i}" aria-label="移除">✕</button></span>`).join("")}
+function renderDim(id){const d=dimInfo(id);$("dim-"+id).innerHTML=d.opts.map(o=>`<button type="button" class="opt" aria-pressed="${S.pick[d.set][id]===o.id}" data-dim="${id}" data-o="${o.id}"><b>${esc(o.zh)}</b>${o.desc?`<span class="d">${esc(o.desc)}</span>`:""}</button>`).join("")}
+function fillTexts(){document.querySelectorAll("[data-t]").forEach(t=>{t.value=S.text[t.dataset.t]||""})}
+function renderCalc(){const u=unitEcon(S);$("calcOut").innerHTML=u.any?`<table class="calc">${econRows(S).map(r=>`<tr><td>${r[0]}<small>${r[2]}</small></td><td><b>${esc(r[3])}</b></td></tr>`).join("")}</table>`:'<p class="hint">填入上面的數字後，這裡會顯示每次毛利、LTV、LTV÷獲客成本、回本時間與每月打平所需成交次數。</p>'}
+function renderAll(){CAT_KEYS.forEach(renderCat);DIMS_ALL.forEach(d=>renderDim(d.id));fillTexts();renderCalc()}
+document.addEventListener("input",e=>{const t=e.target.closest("[data-t]");if(t){S.text[t.dataset.t]=t.value;persist();return}const q=e.target.closest("[data-q]");if(q)renderCat(q.dataset.q)});
+document.addEventListener("keydown",e=>{const c=e.target.closest("[data-cust]");if(c&&e.key==="Enter"){e.preventDefault();addCust(c.dataset.cust)}});
+function addCust(k){const i=document.querySelector(`[data-cust="${k}"]`),v=i.value.trim();if(v&&!S.custom[k].includes(v)){S.custom[k].push(v);i.value="";persist();renderCat(k)}}
+document.addEventListener("click",e=>{
+  const o=e.target.closest(".opt[data-k]");if(o){const k=o.dataset.k,id=o.dataset.id,a=S[k],i=a.indexOf(id);if(i>-1)a.splice(i,1);else{if(CAT[k].max<90&&count(k,S)>=CAT[k].max){toast(`此項建議最多 ${CAT[k].max} 個，請先取消一個`);return}a.push(id)}persist();renderCat(k);return}
+  const dm=e.target.closest(".opt[data-dim]");if(dm){const id=dm.dataset.dim,d=dimInfo(id),v=dm.dataset.o;if(S.pick[d.set][id]===v)delete S.pick[d.set][id];else S.pick[d.set][id]=v;persist();renderDim(id);return}
+  const ad=e.target.closest("[data-add]");if(ad){addCust(ad.dataset.add);return}
+  const del=e.target.closest("[data-del]");if(del){const[k,i]=del.dataset.del.split(":");S.custom[k].splice(+i,1);persist();renderCat(k);return}
+  const p=e.target.closest("[data-p]");if(p)navigator.clipboard.writeText(PROMPTS[p.dataset.p](S)).then(()=>toast("已複製完整討論提示詞，貼給 AI 即可開始"),()=>toast("無法寫入剪貼簿，請檢查瀏覽器權限"))});
+function meter(){const c=completeness(S);$("pct").textContent=`完成度 ${c.pct}%（${c.done}/${c.total}）`;$("barfill").style.width=c.pct+"%";
+  const miss=c.missing.map(m=>m.key),all=CARDS.map(x=>[x.id,x.title.replace(/（.*/,"")]);
+  $("mlist").innerHTML=all.map(([k,l])=>`<li class="${miss.includes(k)?"":"done"}"><a href="#c-${k}">${l}</a></li>`).join("");
+  const ck=checks(S);$("chk").innerHTML=ck.length?ck.map(x=>`<li class="${x.level}">${x.level==="error"?"✕":x.level==="warn"?"⚠":"ℹ"} ${esc(x.msg)}</li>`).join(""):"<li class='info'>目前沒有發現問題。</li>";renderCalc()}
+$("copyctx").onclick=()=>navigator.clipboard.writeText("【我的業務背景】\n"+ctxBusiness(S)).then(()=>toast("已複製業務背景，貼在任何 AI 對話的開頭"),()=>toast("無法寫入剪貼簿"));
+function handle(text){const r=applyPaste(text,S);if(r.applied.length){persist();renderAll()}return r}
+$("paste").onclick=()=>{$("pres").textContent="";$("pt").value="";$("dlg").showModal()};$("pc").onclick=()=>$("dlg").close();
+$("pa").onclick=()=>{const r=handle($("pt").value);$("pres").className="res"+(r.errors.length&&!r.applied.length?" err":"");$("pres").innerHTML=(r.applied.length?"已套用：<br>"+r.applied.map(esc).join("<br>"):"")+(r.custom.length?"<br>加入自訂項："+r.custom.map(esc).join("、"):"")+(r.errors.length?"<br><span class='err'>"+r.errors.map(esc).join("<br>")+"</span>":"")};
+$("expb").onclick=()=>{const b=new Blob([JSON.stringify(buildBrief(S),null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="stage0-brief.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+$("imp").onclick=()=>$("file").click();
+$("file").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const o=handle(r.result);toast(o.applied.length?"已匯入":"匯入失敗："+o.errors.join("；"))};r.readAsText(f);e.target.value=""};
+$("reset").onclick=()=>{if(confirm("確定清空 Stage 0 的所有答案？此動作無法復原。")){Object.assign(S,emptyState());save(S);location.reload()}};
+renderAll();meter();
+</script></body></html>
