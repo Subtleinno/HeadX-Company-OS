@@ -4,12 +4,13 @@
 .design-modern .frame-tab,
 .design-modern .frame-subtab { border-radius:6px; }
 .design-modern .frame-tab[aria-current='page'],
-.design-modern .frame-subtab[aria-current='page'] { background:var(--hx-design-selected); color:var(--hx-design-ink); }
+.design-modern .frame-subtab[aria-current='page'] { background:var(--hx-frame-accent-soft); color:var(--hx-frame-accent-fg); }
 .design-modern .frame-subtab[aria-current='page']::before,
 .design-modern .frame-sidebar__item[aria-current='page']::before { display:none; }
 .design-modern .frame-sidebar { background:var(--hx-design-sidebar); border-right:1px solid var(--hx-design-border); }
 .design-modern .frame-sidebar__item { border-radius:7px; }
-.design-modern .frame-sidebar__item[aria-current='page'] { background:var(--hx-design-selected); }
+/* accent-ladder：active nav 用主色的淡 tint + 深主色字，full hue 只落在細 mark。 */
+.design-modern .frame-sidebar__item[aria-current='page'] { background:var(--hx-frame-accent-soft); color:var(--hx-frame-accent-fg); font-weight:600; }
 .design-modern .frame-content { padding:24px 28px 48px; }
 .design-modern .frame-content__head { margin-bottom:20px; }
 .design-modern .frame-content__title { letter-spacing:-.025em; }
@@ -31,7 +32,7 @@
 .design-modern .frame-sidebar__search input:focus-visible { outline:2px solid var(--hx-frame-accent); outline-offset:2px; }
 .project-library { width:100%; }
 .project-library__summary { display:flex; align-items:center; justify-content:space-between; gap:16px; min-height:32px; margin-bottom:8px; color:var(--hx-design-muted); font-size:13px; }
-.project-preview-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:18px; }
+.project-preview-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; }
 .project-preview-card { min-width:0; padding:0; overflow:hidden; border:1px solid var(--hx-design-border); border-radius:9px; background:var(--hx-design-surface); color:var(--hx-design-ink); text-align:left; cursor:pointer; }
 .project-preview-card:hover { border-color:var(--hx-design-faint); }
 .project-preview-card:focus-visible { outline:2px solid var(--hx-frame-accent); outline-offset:2px; }
