@@ -66,8 +66,10 @@ const FRAME_MESSAGES: Record<string, string> = {
 // 「建立時一律是員工、沒有部門」改為「部門可以即刻揀，亦可以之後再改」。
 // 原因：建立員工時真的可以選部門了，舊句變成一句錯的說明。除此之外
 // 其餘既有鍵逐字不變（鍵數不變，只是那一條的值改了）。
+// 2026-11-17（老闆定）：Create 頂欄五模組中文化 —— `design.module.create`
+// 「創作」→「製作」；其餘既有鍵逐字不變。
 const FROZEN_NON_FRAME_SHA256 =
-  'd870f58308893198313eb458c3af74d4caf745b59191302f4c4bef1330a091da';
+  'b5fc58a9f448a7e2752a1836caba3acb5c30ba0bb9c021f345acf6b0c1f6b471';
 
 // #163 新增 files.* 前綴；同 #161 嘅 policy.* 一樣，唔屬 #155 要守嘅既有鍵。
 // issue 168 新增 5 個 grant.detail.* 鍵，同樣唔屬 #155 要守嘅既有鍵；

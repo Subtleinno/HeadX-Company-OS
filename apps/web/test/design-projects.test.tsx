@@ -149,14 +149,14 @@ describe('Marketing Design Projects', () => {
       projects: () => jsonResponse(200, { projects: [carousel, deck], total: 2 }),
     });
 
-    const search = await screen.findByRole('searchbox', { name: 'Search projects and folders' });
+    const search = await screen.findByRole('searchbox', { name: '搜尋作品、資料夾' });
     await userEvent.type(search, '季度');
     expect(screen.queryByRole('button', { name: carousel.title })).toBeNull();
     expect(screen.getByRole('button', { name: deck.title })).toBeTruthy();
 
     await userEvent.clear(search);
     const subbar = document.querySelector('[data-frame-subbar]') as HTMLElement;
-    await userEvent.click(within(subbar).getByRole('button', { name: 'Presentation' }));
+    await userEvent.click(within(subbar).getByRole('button', { name: '簡報' }));
     await waitFor(() => expect(window.location.hash).toBe('#/design/create/presentation'));
     expect(screen.queryByRole('button', { name: carousel.title })).toBeNull();
     expect(screen.getByRole('button', { name: deck.title })).toBeTruthy();

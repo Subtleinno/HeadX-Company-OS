@@ -144,7 +144,7 @@ try {
 
     await open('#/design/create/projects', '[data-design-page="projects"]');
     const moduleLabels = await page.locator('[data-frame-slot="modules"] button').allTextContents();
-    assert.deepEqual(moduleLabels, ['創作', '品牌', '素材', '知識', 'Templates']);
+    assert.deepEqual(moduleLabels, ['製作', '品牌', '素材', '知識', '模板']);
     await assertModuleTabsFullyVisible();
     assert.equal(await page.locator('[data-frame-slot="modules"]').getByText('Needs').count(), 0);
     await page.screenshot({
@@ -166,18 +166,18 @@ try {
 
   await page.setViewportSize({ width: 768, height: 900 });
   await open('#/design/create/projects', '[data-design-page="projects"]');
-  await page.locator('[data-frame-subbar]').getByRole('button', { name: 'Outputs', exact: true }).click();
+  await page.locator('[data-frame-subbar]').getByRole('button', { name: '成品', exact: true }).click();
   await page.waitForURL(/#\/design\/create\/outputs$/);
   await page.locator('[data-design-page="outputs"]').waitFor();
-  await page.locator('[data-frame-rail]').getByRole('button', { name: 'All projects', exact: true }).click();
+  await page.locator('[data-frame-rail]').getByRole('button', { name: '全部作品', exact: true }).click();
   await page.waitForURL(/#\/design\/create\/projects$/);
 
   for (const [label, hash] of [
     ['素材', '#/design/material/library'],
     ['知識', '#/design/knowledge/list'],
-    ['Templates', '#/design/templates/library'],
+    ['模板', '#/design/templates/library'],
     ['品牌', '#/design/brand/home'],
-    ['創作', '#/design/create/projects'],
+    ['製作', '#/design/create/projects'],
   ]) {
     await page.locator('[data-frame-slot="modules"]').getByRole('button', { name: label, exact: true }).click();
     await page.waitForURL((url) => url.hash === hash);

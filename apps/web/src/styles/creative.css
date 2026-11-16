@@ -32,11 +32,11 @@
 .design-modern .frame-sidebar__search input:focus-visible { outline:2px solid var(--hx-frame-accent); outline-offset:2px; }
 .project-library { width:100%; }
 .project-library__summary { display:flex; align-items:center; justify-content:space-between; gap:16px; min-height:32px; margin-bottom:8px; color:var(--hx-design-muted); font-size:13px; }
-.project-preview-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; }
-.project-preview-card { min-width:0; padding:0; overflow:hidden; border:1px solid var(--hx-design-border); border-radius:9px; background:var(--hx-design-surface); color:var(--hx-design-ink); text-align:left; cursor:pointer; }
-.project-preview-card:hover { border-color:var(--hx-design-faint); }
+.project-preview-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; }
+.project-preview-card { position:relative; display:flex; min-width:0; padding:0; overflow:hidden; flex-direction:column; border:1px solid var(--hx-design-border); border-radius:12px; background:var(--hx-design-surface); color:var(--hx-design-ink); text-align:left; cursor:pointer; transition:border-color .15s,box-shadow .15s,transform .15s; }
+.project-preview-card:hover { border-color:var(--hx-design-control); box-shadow:var(--hx-shadow-sm); }
 .project-preview-card:focus-visible { outline:2px solid var(--hx-frame-accent); outline-offset:2px; }
-.project-preview-card__media { display:block; aspect-ratio:4/3; overflow:hidden; background:var(--hx-design-media); }
+.project-preview-card__media { display:block; aspect-ratio:4/3; overflow:hidden; background:var(--hx-design-media); border-bottom:1px solid var(--hx-design-border); }
 .project-preview-card__media img { display:block; width:100%; height:100%; object-fit:cover; }
 .project-preview-card__fallback { display:flex; height:100%; flex-direction:column; align-items:flex-start; justify-content:flex-end; gap:9px; padding:18px; background:var(--hx-design-ground); }
 .project-preview-card__media--presentation .project-preview-card__fallback { background:var(--hx-design-presentation); }
@@ -46,11 +46,11 @@
 .project-preview-card__media--video .project-preview-card__fallback span { color:var(--hx-design-video-muted); }
 .project-preview-card__fallback strong { display:-webkit-box; overflow:hidden; font-size:19px; line-height:1.16; letter-spacing:-.025em; -webkit-box-orient:vertical; -webkit-line-clamp:2; }
 .project-preview-card__fallback span { max-width:100%; overflow:hidden; color:var(--hx-design-muted); font-size:12px; text-overflow:ellipsis; white-space:nowrap; }
-.project-preview-card__info { display:grid; gap:9px; padding:12px 13px 13px; }
+.project-preview-card__info { display:grid; gap:8px; padding:13px 14px 14px; }
 .project-preview-card__title { display:flex; min-width:0; align-items:center; justify-content:space-between; gap:8px; }
-.project-preview-card__title > strong { min-width:0; overflow:hidden; font-size:13px; font-weight:600; text-overflow:ellipsis; white-space:nowrap; }
-.project-preview-card__title .project-state { flex:none; max-width:45%; overflow:hidden; padding:3px 5px; font-size:10px; text-overflow:ellipsis; white-space:nowrap; }
-.project-preview-card__meta { display:flex; min-width:0; justify-content:space-between; gap:8px; color:var(--hx-design-muted); font-size:11px; font-variant-numeric:tabular-nums; }
+.project-preview-card__title > strong { min-width:0; overflow:hidden; font-size:14px; font-weight:600; text-overflow:ellipsis; white-space:nowrap; }
+.project-preview-card__title .project-state { flex:none; max-width:45%; overflow:hidden; padding:3px 6px; border-radius:6px; font-size:10px; text-overflow:ellipsis; white-space:nowrap; }
+.project-preview-card__meta { display:flex; min-width:0; align-items:center; justify-content:space-between; gap:8px; color:var(--hx-design-muted); font-size:11px; font-variant-numeric:tabular-nums; }
 .project-preview-card__meta time { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .project-preview-card__meta > span { flex:none; }
 .project-workspace { max-width:none; }

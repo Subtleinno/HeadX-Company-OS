@@ -83,7 +83,7 @@ const LOCALES: readonly string[] = [DEFAULT_LOCALE];
 // 「建立時一律是員工、沒有部門」改為「部門可以即刻揀，亦可以之後再改」。
 // 原因：建立員工時真的可以選部門了，舊句變成一句錯的說明。除此之外
 // 其餘既有鍵逐字不變（鍵數不變，只是那一條的值改了）。
-const FROZEN_ALL_SHA256 = '4af9f8e145020638a2b141f52026861eed7031250932204b5a38ab583a0ccdb4';
+const FROZEN_ALL_SHA256 = '7c30d94093b18918a718081669eb9f5afbf3306212a2614f7df480ce3b1fae61';
 
 /**
  * 呢張之後嘅施工張所新增嘅鍵前綴（#13／#14 起）。

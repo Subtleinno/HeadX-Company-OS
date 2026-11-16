@@ -65,11 +65,11 @@ describe('Marketing Design v3 導覽', () => {
 
     const tabs = moduleTabs();
     expect(Array.from(tabs.querySelectorAll('button')).map((button) => button.textContent)).toEqual([
-      '創作',
+      '製作',
       '品牌',
       '素材',
       '知識',
-      'Templates',
+      '模板',
     ]);
     expect(within(tabs).queryByText('Needs')).toBeNull();
   });
@@ -80,10 +80,10 @@ describe('Marketing Design v3 導覽', () => {
     expect((await screen.findAllByText('成品庫')).length).toBeGreaterThan(0);
     const subbar = document.querySelector('[data-frame-subbar]') as HTMLElement;
     expect(Array.from(subbar.querySelectorAll('button')).map((button) => button.textContent)).toEqual([
-      'Carousel', 'Presentation', 'Video / Reels',
+      'IG Carousel', '簡報', '影片',
     ]);
     const sidebar = document.querySelector('[data-frame-rail]') as HTMLElement;
-    await userEvent.click(within(sidebar).getByRole('button', { name: 'All projects' }));
+    await userEvent.click(within(sidebar).getByRole('button', { name: '全部作品' }));
 
     await waitFor(() => {
       expect(window.location.hash).toBe('#/design/create/projects');
@@ -106,9 +106,9 @@ describe('Marketing Design v3 導覽', () => {
     open();
 
     await waitFor(() => {
-      expect(within(moduleTabs()).getByRole('button', { name: 'Templates' })).toBeTruthy();
+      expect(within(moduleTabs()).getByRole('button', { name: '模板' })).toBeTruthy();
     });
-    await userEvent.click(within(moduleTabs()).getByRole('button', { name: 'Templates' }));
+    await userEvent.click(within(moduleTabs()).getByRole('button', { name: '模板' }));
 
     await waitFor(() => {
       expect(window.location.hash).toBe('#/design/templates/library');
