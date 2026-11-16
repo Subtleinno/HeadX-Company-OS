@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-Hant"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Stage 04H · 風格庫與 AI 生成契約 (View)</title><link rel="stylesheet" href="shared.css"/>
+<style>
+.spec{max-width:1120px;margin:0 auto;padding:60px 28px 120px}
+.eyebrow{font-family:var(--mono);font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.title{font-family:var(--serif);font-size:clamp(2rem,5vw,3.2rem);line-height:1.15;margin:12px 0 18px}
+.empty{color:var(--muted)}.prog{display:inline-block;margin:10px 0 0;font-family:var(--mono);font-size:.76rem;border:1px solid var(--line);border-radius:999px;padding:4px 12px;background:#fff}
+.sec{border-top:1px solid var(--line);margin-top:46px;padding-top:22px}.sec h3{font-family:var(--mono);font-size:.74rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:0 0 6px}.lead{font-size:.86rem;color:var(--muted);margin:0 0 14px;max-width:76ch}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}.c{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 16px}.c b{display:block;font-size:.95rem}.c p{margin:4px 0 0;font-size:.8rem;color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:.82rem;background:#fff;border:1px solid var(--line)}th,td{border-bottom:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}th{font-family:var(--mono);font-size:.68rem;color:var(--muted);font-weight:500}.ok{color:var(--ok)}.no{color:var(--danger)}.wn{color:var(--warn)}.tw{overflow-x:auto}
+.mc{text-align:center;font-size:.74rem;border-radius:4px}.mc.A{background:#E6F4EA;color:#14532D}.mc.C{background:#FEF3C7;color:#78350F}.mc.X{background:#FEE2E2;color:#7F1D1D}
+pre.code{background:#15171C;color:#E2E8F0;border-radius:10px;padding:12px 14px;font-family:var(--mono);font-size:.74rem;overflow:auto;max-height:200px;white-space:pre-wrap;word-break:break-word;margin:6px 0}
+.ent{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:10px}.ent h4{margin:0 0 4px;font-size:.95rem}.ent small{color:var(--muted)}
+.hi{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}.hi>div{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 16px}.hi h4{margin:0 0 8px;font-family:var(--mono);font-size:.74rem;color:var(--accent)}.hi li{font-size:.82rem;margin-bottom:6px}.hi small{display:block;color:var(--muted)}.hi ul{margin:0;padding-left:16px}
+.ck li{margin-bottom:6px;font-size:.86rem}.ck .warn{color:var(--warn)}.ck .error{color:var(--danger)}.ck .info{color:var(--muted)}
+.avoid{display:flex;flex-wrap:wrap;gap:8px}.avoid span{background:var(--danger-bg);border:1px solid #FECACA;color:#991B1B;border-radius:999px;padding:3px 12px;font-size:.84rem}
+.draft{background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;padding:8px 14px;font-size:.8rem;margin-top:14px}
+@media(max-width:700px){table{display:block;overflow-x:auto}}
+</style></head><body>
+<nav class="topbar"><div class="brand-tag">COMPANY OS · BRAND STAGE 04H · 風格庫與 AI 生成契約</div>
+<div class="nav-links"><a class="nav-pill" href="edit.html">Edit</a><a class="nav-pill active" href="view.html">View</a><a class="nav-pill" href="agent.html">AI Agent</a></div></nav>
+<main class="spec" id="m"></main>
+<script src="options.js"></script><script src="core.js"></script>
+<script>
+const s=load(),cmp=completeness(s),E=esc;
+const L=k=>labels(k,s),X=id=>T_(s,id);
+const cardsOf=k=>{const it=items(k,s);return it.length?`<div class="cards">${it.map(i=>`<div class="c"><b>${E(i.zh)}</b>${i.desc?`<p>${E(i.desc)}</p>`:""}${i.avoid&&i.avoid!=="-"?`<p>注意：${E(i.avoid)}</p>`:""}</div>`).join("")}</div>`:'<p class="empty">尚未選擇</p>'};
+const dimRow=d=>{const dm=DIM(d),o=picked(s,d);return `<tr><th>${dm.title}</th><td>${o?`<b>${E(o.zh)}</b><br><small>${E(o.desc)}</small>`:'<span class="empty">尚未選擇</span>'}</td></tr>`};
+const sub=(t,k)=>`<p class="lead" style="margin:12px 0 6px"><b>${t}</b></p>${cardsOf(k)}`;
+const tab=(cols,arr,empty)=>arr.length?`<div class="tw"><table><tr>${cols.map(c=>`<th>${c[1]}</th>`).join("")}</tr>${arr.map(r=>`<tr>${cols.map(c=>`<td>${E(r[c[0]]||"—")}</td>`).join("")}</tr>`).join("")}</table></div>`:`<p class="empty">${empty}</p>`;
+const uc=items("useCases",s),ucH=uc.length?`<div class="tw"><table><tr><th>情境</th><th>規則</th><th>審核</th><th>披露</th><th>條件</th></tr>${uc.map(i=>{const c=ucCell(s,i.id);return `<tr><td>${E(i.zh)}</td><td class="mc ${c.st}">${POLICY_STATE[c.st]}</td><td>${c.rv!==""?REVIEWS[+c.rv]:"—"}</td><td>${E(c.disc||"—")}</td><td>${E(c.note||"—")}</td></tr>`}).join("")}</table></div>`:'<p class="empty">尚未選擇</p>';
+const entH=s.lib.length?s.lib.map(e=>{const u=entryUsage(s,e);return `<div class="ent"><h4>${E(e.id)}｜${E(e.name)} <small>（${E(ENTRYTYPES[e.type]||e.type)}・v${E(e.ver||"?")}・${E(e.status)}${e.approver?"・核准 "+E(e.approver)+" "+E(e.date||""):""}）</small></h4><b style="font-size:.76rem">Prompt</b><pre class="code">${E(entryPrompt(s,e))}</pre><b style="font-size:.76rem">Negative</b><pre class="code">${E(entryNeg(s,e))}</pre><small>允許：${E((u.A||[]).join("、")||"—")}｜有條件：${E((u.C||[]).join("、")||"—")}｜禁止：${E((u.X||[]).join("、")||"—")}</small></div>`}).join(""):'<p class="empty">風格庫是空的</p>';
+const ev=runEval(s);
+const ck=checks(s),hs=hints(s),stages=[...new Set(hs.map(h=>h.stage))].sort();
+const hi=stages.map(st=>`<div><h4>${E(st)}</h4><ul>${hs.filter(h=>h.stage===st).map(h=>`<li><b>${E(h.field)}</b>：${E(h.text)}<small>原因：${E(h.why)}</small></li>`).join("")}</ul></div>`).join("");
+document.getElementById("m").innerHTML=`
+<span class="eyebrow">04H / Style Library &amp; AI Generation Contract · 草稿 · 未核准</span>
+<h1 class="title">${E(brandName(s))}</h1><p style="font-family:var(--serif);font-size:1.1rem;max-width:64ch">${E(X("statement")||draft(s))}</p>
+<span class="prog">完成度 ${cmp.pct}%（${cmp.done}/${cmp.total}）${cmp.missing.length?" · 未完成："+cmp.missing.map(m=>m.label.replace(/（.*/,"")).join("、"):""}</span>
+<div class="draft">狀態：草稿。契約是內部政策，不是法律文件；條目、模型與政策的核准須由人類執行；模型條款與披露要求須專業人士確認；色彩距離不代表風格相符。</div>
+<div class="sec"><h3>政策</h3><table><tr><th>負責人</th><td>${E(X("owner")||"—")}</td></tr>${["aiPolicy","reviewLevel","disclosurePolicy","provenance","seedPolicy","dataPolicy","refPolicy"].map(dimRow).join("")}<tr><th>輸出保存</th><td>${E(X("retention")||"—")}</td></tr><tr><th>保安</th><td>${E(X("sec_note")||"—")}</td></tr><tr><th>違規與事故</th><td>${E(X("viol_note")||"—")}</td></tr></table></div>
+<div class="sec"><h3>AI 使用情境</h3>${ucH}</div>
+<div class="sec"><h3>風格庫</h3><table style="margin-bottom:12px">${dimRow("libVersion")}<tr><th>全局風格</th><td>${E(X("style_base")||"—")}</td></tr><tr><th>額外負面約束</th><td>${E(X("neg_extra")||"—")}</td></tr></table>${entH}</div>
+<div class="sec"><h3>模型登記</h3>${tab(MODELCOLS,s.models,"沒有登記")}</div>
+<div class="sec"><h3>情緒板與參考登記</h3><p class="lead">${E(X("mood_note")||"")}</p>${cardsOf("refTypes")}<div style="margin-top:12px">${tab(REFCOLS,s.refs,"沒有登記")}</div></div>
+<div class="sec"><h3>提示詞規則與驗收</h3>${cardsOf("promptRules")}${sub("驗收條件","acceptCriteria")}<table style="margin-top:12px"><tr><th>色彩距離門檻</th><td>ΔE76 ≤ ${E(X("thr")||"—")}（自訂；只是色彩距離，不代表風格相符）</td></tr><tr><th>目標尺寸</th><td>${E(X("target_w")||"—")}×${E(X("target_h")||"—")}</td></tr></table></div>
+<div class="sec"><h3>生成紀錄</h3>${tab(GENCOLS,s.gens,"沒有紀錄")}</div>
+<div class="sec"><h3>守門自測（${picked(s,"evalCadence")?E(picked(s,"evalCadence").zh):"頻率未定"}）</h3><div class="tw"><table><tr><th>案例</th><th>提示詞</th><th>預期</th><th>檢查器</th><th>結果</th></tr>${ev.map(c=>`<tr><td>${c.id}</td><td>${E(c.prompt)}</td><td>${c.expect==="block"?"應攔截":"應通過"}</td><td>${c.flagged?"有標出":"沒標出"}</td><td class="${c.ok?"ok":"no"}">${c.ok?"符合":"不符合"}</td></tr>`).join("")}</table></div></div>
+<div class="sec"><h3>禁區（AI 禁區＋各階段合併）</h3><div class="avoid">${negatives(s).map(x=>`<span>${E(x)}</span>`).join("")||'<span style="background:none;border:0;color:var(--muted)">尚未選擇</span>'}</div><p class="lead" style="margin-top:10px">備註：${E(X("st_note")||"—")}</p></div>
+<div class="sec"><h3>一致性與硬限制檢查</h3><ul class="ck" style="padding-left:18px">${ck.length?ck.map(x=>`<li class="${x.level}">${x.level==="error"?"✕":x.level==="warn"?"⚠":"ℹ"} ${E(x.msg)}</li>`).join(""):"<li class='info'>目前沒有發現問題。</li>"}</ul></div>
+<div class="sec"><h3>下一步</h3><div class="hi">${hi}</div></div>`;
+</script></body></html>

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-Hant"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Stage 02 · 材質隱喻與感官定調 (Edit)</title><link rel="stylesheet" href="shared.css"/>
+<style>
+.layout{max-width:1140px;margin:0 auto;padding:40px 24px 100px;display:grid;grid-template-columns:1fr 270px;gap:36px;align-items:start}
+@media(max-width:920px){.layout{grid-template-columns:1fr}.side{position:static!important}}
+.kicker{font-family:var(--mono);font-size:.75rem;color:var(--accent);text-transform:uppercase;letter-spacing:.1em}
+h1{font-size:2rem;margin:8px 0 8px;letter-spacing:-.02em}.sub{color:var(--muted);margin:0 0 24px;font-size:.93rem}
+.ctx{background:var(--soft);border:1px solid #BFDBFE;border-radius:14px;padding:16px 18px;margin-bottom:22px;font-size:.84rem}
+.ctx b{color:var(--accent)}.ctx .row2{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.ctx .tg{background:#fff;border:1px solid #BFDBFE;border-radius:999px;padding:2px 10px;font-size:.76rem}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:24px;margin-bottom:22px;scroll-margin-top:70px}
+.card h2{margin:0;font-size:1.06rem}.card .num{font-family:var(--mono);font-size:.72rem;color:var(--muted);display:block;margin-bottom:2px}
+.head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;margin-bottom:6px}
+.hint{font-size:.83rem;color:var(--muted);margin:0 0 14px;max-width:72ch}
+.btn-ai{background:var(--soft);color:var(--accent);border:1px solid #BFDBFE;padding:5px 11px;border-radius:7px;font-size:.76rem;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit}
+.btn-ai:hover{background:#DBEAFE}
+.tools{display:flex;gap:10px;align-items:center;margin:0 0 12px;flex-wrap:wrap}
+input[type=text],textarea{width:100%;padding:10px 13px;border-radius:8px;border:1px solid var(--line);background:var(--bg);font-family:inherit;font-size:.9rem;color:var(--ink);outline:none}
+input:focus,textarea:focus{border-color:var(--accent);background:#FFF}
+.tools input{max-width:240px;padding:7px 11px;font-size:.82rem}
+.count{font-size:.76rem;color:var(--muted);font-family:var(--mono)}
+.gt{font-family:var(--mono);font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:18px 0 8px;padding-top:12px;border-top:1px solid var(--line)}
+.gt:first-child{border-top:0;margin-top:4px;padding-top:0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}
+.opt{border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--bg);text-align:left;cursor:pointer;font-family:inherit;color:inherit}
+.opt:hover{border-color:#b8b8b0}.opt[aria-pressed=true]{background:var(--ink);color:#FFF;border-color:var(--ink);box-shadow:0 0 0 3px rgba(37,99,235,.25)}
+.opt .sw{display:block;height:42px;border-radius:7px;margin-bottom:8px;border:1px solid rgba(0,0,0,.08)}
+.opt b{display:block;font-size:.86rem}.opt span.d{display:block;font-size:.74rem;opacity:.75;margin-top:2px}
+.opt.mini{padding:8px 12px}.grid.minigrid{grid-template-columns:repeat(auto-fill,minmax(110px,1fr))}
+.row{display:flex;gap:8px;margin-top:12px}.row input{flex:1}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.chip{font-size:.78rem;padding:3px 10px;border-radius:999px;background:var(--bg);border:1px solid var(--line)}
+.chip button{border:0;background:none;cursor:pointer;color:var(--muted)}
+.note{margin-top:14px}.note label{font-size:.78rem;font-weight:600;display:block;margin-bottom:4px}
+.dim{border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:12px;background:var(--bg)}
+.dim h3{margin:0;font-size:.95rem}.dim .q{font-size:.82rem;color:var(--muted);margin:2px 0 10px}
+.dim .grid{grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
+.dim .opt{background:#fff}.dim .opt[aria-pressed=true]{background:var(--ink)}
+.stg{height:62px;border-radius:7px;display:flex;align-items:center;justify-content:center;margin-bottom:8px;overflow:hidden;position:relative;background:repeating-linear-gradient(45deg,#7fb2c2 0 8px,#f2c58a 8px 16px)}
+.stg.plain{background:#F1F1EE}.stg.col{background:linear-gradient(135deg,#f6a,#6bf,#fc6)}
+.sm{width:62%;height:34px;color:#111}.dot{width:14px;height:14px;border-radius:50%;background:#111;--d:0ms;--e:linear}
+@keyframes slide{from{transform:translateX(-36px)}to{transform:translateX(36px)}}
+.dots{display:flex;gap:3px;flex-direction:column;width:60%}.dots i{display:block;background:#999;height:5px;border-radius:2px}
+.explain{background:var(--soft);border:1px solid #BFDBFE;border-radius:12px;padding:12px 16px;font-size:.83rem;margin-bottom:14px}.explain b{color:var(--accent)}
+.side{position:sticky;top:70px;display:flex;flex-direction:column;gap:14px}
+.meter{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
+.bar{height:8px;background:var(--line);border-radius:99px;overflow:hidden;margin:8px 0 12px}.bar>i{display:block;height:100%;background:var(--ink);transition:width .25s}
+.meter ul{list-style:none;margin:0;padding:0;font-size:.8rem}.meter li{padding:2px 0}.meter a{color:var(--muted);text-decoration:none}.meter li.done a{color:var(--ok)}
+.meter li.done::before{content:"✓ ";color:var(--ok)}.meter li:not(.done)::before{content:"○ ";color:var(--muted)}
+.side .btn-ai{display:block;width:100%;margin-top:8px;text-align:center}
+.chk li{font-size:.76rem;margin-bottom:6px;line-height:1.45}.chk .warn{color:var(--warn)}.chk .error{color:var(--danger)}.chk .info{color:var(--muted)}
+dialog{border:1px solid var(--line);border-radius:16px;padding:24px;max-width:640px;width:92%}dialog::backdrop{background:rgba(0,0,0,.35)}
+dialog textarea{min-height:200px;font-family:var(--mono);font-size:.78rem}dialog .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+dialog .res{font-size:.8rem;margin-top:10px;color:var(--ok)}dialog .err{color:var(--danger)}
+</style></head><body>
+<nav class="topbar"><div class="brand-tag">COMPANY OS · BRAND STAGE 02 / 06</div>
+<div class="nav-links"><a class="nav-pill active" href="edit.html">Edit</a><a class="nav-pill" href="view.html">View</a><a class="nav-pill" href="agent.html">AI Agent</a></div></nav>
+<div class="layout"><main>
+<span class="kicker">Stage 02 · Material &amp; Sensory Metaphor</span>
+<h1>材質隱喻與感官定調</h1>
+<p class="sub">這一步把 Stage 1 的『定位與張力』翻成看得到、摸得到的東西：先選材質與光線，再用 5 個詞定調，最後決定介面的留白、表面、圓角、陰影與動態。每張卡片的提示詞都會要求 AI 同時生圖，讓你『看見』再決定。</p>
+<div class="ctx" id="ctx"></div>
+<div id="cards"></div>
+</main>
+<aside class="side"><div class="meter"><b id="pct"></b><div class="bar"><i id="barfill"></i></div><ul id="mlist"></ul></div>
+<div class="meter chk"><b style="font-size:.84rem">一致性檢查</b><ul id="chk" style="margin-top:8px"></ul></div>
+<div class="meter"><button class="btn-ai" id="paste" style="margin:0">貼回 AI 結果</button><button class="btn-ai" id="exp">匯出 brand-brief.json</button><button class="btn-ai" id="expcss">匯出 physics.css</button><button class="btn-ai" id="imp">匯入 JSON</button><button class="btn-ai" id="reset" style="color:var(--danger);border-color:#f3c0c0;background:#fff">全部清空</button>
+<input type="file" id="file" accept="application/json" hidden/></div></aside></div>
+<dialog id="dlg"><b>貼回 AI 結果</b><p class="hint" style="margin:6px 0 12px">把 AI 討論結尾附的 JSON 整段貼上。名稱會自動對應到選項，清單沒有的加為自訂項。也可貼上 Stage 1 的 brand-brief.json 作為前階段資料。</p>
+<textarea id="pt" placeholder='{"material":["霧面陶瓷"],"rules":{"surface":"紙感"}}'></textarea><div class="res" id="pres"></div>
+<div class="actions"><button class="btn-ai" id="pc" style="color:var(--muted);background:#fff;border-color:var(--line)">關閉</button><button class="btn-ai" id="pa">套用</button></div></dialog>
+<div class="toast" id="toast"></div>
+<script src="options.js"></script><script src="core.js"></script><script src="prompts.js"></script>
+<script>
+const $=id=>document.getElementById(id);const S=load();
+const esc=t=>String(t).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+function toast(m){const t=$("toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1900)}
+const persist=()=>{save(S);meter()};
+const ORDER=[["material","01"],["tactile","02"],["light","03"],["atmosphere","04"],["motionsound","05"],["keywords","06"],["antiKeywords","07"],["avoidMaterials","08"],["rules","09"],["statement","10"]];
+const cards=$("cards");
+function shell(key,num,title,body){const d=document.createElement("section");d.className="card";d.id="c-"+key;d.innerHTML=`<div class="head"><div><span class="num">${num}</span><h2>${title}</h2></div><button class="btn-ai" data-p="${key}">複製討論提示詞</button></div>${body}`;cards.appendChild(d);return d}
+function optHTML(k,i){const on=S[k].includes(i.id),c=CAT[k];return `<button type="button" class="opt ${i.desc?"":"mini"}" aria-pressed="${on}" data-k="${k}" data-id="${i.id}">${c.swatch&&i.sw?`<span class="sw" style="background:${i.sw}"></span>`:""}<b>${esc(i.zh)}</b>${i.desc?`<span class="d">${esc(i.desc)}</span>`:""}</button>`}
+function renderCat(k){const c=CAT[k],card=$("c-"+k),q=card.querySelector(".q").value.trim().toLowerCase();
+  card.querySelector(".opts").innerHTML=c.groups.map(g=>{const it=g.items.filter(i=>!q||(i.zh+i.desc).toLowerCase().includes(q));const mini=g.items.every(i=>!i.desc);return it.length?`<div class="gt">${g.g}</div><div class="grid ${mini?"minigrid":""}">${it.map(i=>optHTML(k,i)).join("")}</div>`:""}).join("")||"<p class='hint'>沒有符合的項目，可在下方自訂。</p>";
+  card.querySelector(".count").textContent=`已選 ${count(k,S)} / 建議最多 ${c.max}`;
+  card.querySelector(".chips").innerHTML=S.custom[k].map((t,i)=>`<span class="chip">${esc(t)} <button data-del="${k}:${i}" aria-label="移除">✕</button></span>`).join("")}
+function sample(dim,o){const t=o.tok;
+  if(dim==="surface")return `<div class="stg"><div class="sm" style="background:${t.bg};border:${t.border};box-shadow:${t.shadow};backdrop-filter:blur(${t.blur});border-radius:10px"></div></div>`;
+  if(dim==="border")return `<div class="stg plain"><div class="sm" style="background:#fff;border:${t.border};border-radius:8px"></div></div>`;
+  if(dim==="radius")return `<div class="stg plain"><div class="sm" style="background:#fff;border:1px solid #999;border-radius:${t["--radius"]}"></div></div>`;
+  if(dim==="elevation")return `<div class="stg plain"><div class="sm" style="background:#fff;box-shadow:${t.shadow};border-radius:8px"></div></div>`;
+  if(dim==="transparency")return `<div class="stg"><div class="sm" style="background:rgba(255,255,255,${t.alpha});backdrop-filter:blur(${t.blur});border-radius:10px;border:1px solid rgba(255,255,255,.5)"></div></div>`;
+  if(dim==="density"){const u=parseInt(t["--space-unit"]);return `<div class="stg plain"><div class="dots">${[0,1,2].map(()=>`<i style="margin:${Math.round(u/3)}px 0"></i>`).join("")}</div></div>`}
+  if(dim==="contrast"){const c={low:"#6b6b75",standard:"#2a2a33",high:"#000",accentonly:"#777"}[o.id];return `<div class="stg plain" style="font-weight:700;font-size:1.2rem;color:${c}">Aa 文字${o.id==="accentonly"?'<i style="width:10px;height:10px;border-radius:50%;background:#2563EB;margin-left:8px"></i>':""}</div>`}
+  if(dim==="motion")return `<div class="stg plain"><div class="dot" style="--d:${t["--motion-duration"]};--e:${t["--motion-easing"]};${t["--motion-duration"]==="0ms"?"":"animation:slide calc(var(--d)*8) var(--e) infinite alternate"}"></div></div>`;
+  if(dim==="imagery")return `<div class="stg col" style="filter:${t["--img-filter"]}"></div>`;return ""}
+function renderDims(){$("dims").innerHTML=DIMS.map(d=>`<div class="dim"><h3>${d.title}</h3><p class="q">${d.q}</p><div class="grid" role="group">${d.opts.map(o=>`<button type="button" class="opt" aria-pressed="${S.rules[d.id]===o.id}" data-dim="${d.id}" data-o="${o.id}">${sample(d.id,o)}<b>${o.zh}</b><span class="d">${o.desc}</span></button>`).join("")}</div></div>`).join("")}
+function renderCtx(){const p=S.s1;$("ctx").innerHTML=p?`<b>來自 Stage 1</b>　${esc(p.name||"（尚未命名）")}　<button class="btn-ai" id="s1imp" style="margin-left:8px">更新 Stage 1</button><div style="margin-top:6px">${esc(p.statement||"")}</div><div class="row2"><span class="tg">核心張力：${esc(p.tension||"—")}</span>${p.anti.map(a=>`<span class="tg" style="color:#b91c1c;border-color:#fecaca">不要：${esc(a)}</span>`).join("")}</div>`:`<b>尚未匯入 Stage 1</b>　材質選擇需要參考 Stage 1 的核心張力與 Anti-Persona，系統才能做跨階段檢查。<button class="btn-ai" id="s1imp" style="margin-left:8px">匯入 Stage 1 brand-brief.json</button>`;
+  $("s1imp").onclick=()=>{$("file").dataset.s1="1";$("file").click()}}
+ORDER.forEach(([key,num])=>{
+  if(CAT[key]){const c=CAT[key];const d=shell(key,num,c.title,`<p class="hint">${c.hint}</p><div class="tools"><input class="q" type="text" placeholder="搜尋選項…" aria-label="搜尋"/><span class="count"></span></div><div class="opts"></div>
+   <div class="row"><input type="text" class="cust" placeholder="沒有適合的？自訂一項（Enter 新增）"/><button class="btn-ai add" type="button">新增</button></div><div class="chips"></div>
+   ${key==="material"?`<div class="note"><label>補充說明（選填，可貼 AI 討論的結論）</label><textarea rows="2" id="mnote"></textarea></div>`:""}`);
+   d.querySelector(".q").addEventListener("input",()=>renderCat(key));
+   const add=()=>{const i=d.querySelector(".cust"),v=i.value.trim();if(v&&!S.custom[key].includes(v)){S.custom[key].push(v);i.value="";persist();renderCat(key)}};
+   d.querySelector(".add").onclick=add;d.querySelector(".cust").addEventListener("keydown",e=>{if(e.key==="Enter")add()});renderCat(key)}
+  else if(key==="rules")shell(key,num,"視覺物理規則（把感覺變成介面規則）",`<div class="explain"><b>什麼是視覺物理？</b> 如果品牌是一件物件，介面就是它的『表面』。這裡用 9 個面向決定這個表面的物理性質：留白多少、卡片像紙還是玻璃、轉角多圓、浮多高、動得多快。每個選項都有即時小預覽；選完會自動轉成設計 token（圓角、陰影、模糊、動態…），日後所有頁面只能用這組數值。透明與新擬態有無障礙風險，系統會提醒。</div><div id="dims"></div>`);
+  else shell(key,num,"感官一句話（自動組合，可改寫）",`<p class="hint">格式：如果［品牌］是一件物件，它是［材質］做的，摸起來［觸感］，在［光線］之下，空氣是［氛圍］，給人［關鍵字］的感覺。</p><textarea id="st" rows="3" placeholder="按下方按鈕自動組合，或讓 AI 幫你寫成更有畫面的一句。"></textarea><div class="row"><button class="btn-ai" id="mk" type="button">用目前選擇自動組合</button></div>`)});
+$("mnote").value=S.materialNote||"";$("mnote").addEventListener("input",()=>{S.materialNote=$("mnote").value;persist()});
+$("st").value=S.statement;$("st").addEventListener("input",()=>{S.statement=$("st").value;persist()});
+$("mk").onclick=()=>{S.statement=draft(S);$("st").value=S.statement;persist();toast("已用目前選擇組合草稿")};
+renderDims();renderCtx();
+document.addEventListener("click",e=>{
+  const o=e.target.closest(".opt[data-k]");
+  if(o){const k=o.dataset.k,id=o.dataset.id,a=S[k],i=a.indexOf(id);if(i>-1)a.splice(i,1);else{if(count(k,S)>=CAT[k].max){toast(`此項建議最多 ${CAT[k].max} 個，請先取消一個`);return}a.push(id)}persist();renderCat(k);return}
+  const dm=e.target.closest(".opt[data-dim]");if(dm){const d=dm.dataset.dim,v=dm.dataset.o;if(S.rules[d]===v)delete S.rules[d];else S.rules[d]=v;persist();renderDims();return}
+  const del=e.target.closest("[data-del]");if(del){const[k,i]=del.dataset.del.split(":");S.custom[k].splice(+i,1);persist();renderCat(k);return}
+  const p=e.target.closest("[data-p]");if(p)navigator.clipboard.writeText(PROMPTS[p.dataset.p](S)).then(()=>toast("已複製完整討論提示詞，貼給 AI 即可開始"),()=>toast("無法寫入剪貼簿，請檢查瀏覽器權限"))});
+function meter(){const c=completeness(S);$("pct").textContent=`完成度 ${c.pct}%（${c.done}/${c.total}）`;$("barfill").style.width=c.pct+"%";
+  const all=[["material","物理材質"],["tactile","觸感"],["light","光線感"],["atmosphere","空氣與氛圍"],["motionsound","動態與聲音"],["keywords","情緒關鍵字"],["antiKeywords","反關鍵字"],["avoidMaterials","物理禁區"],["rules","視覺物理規則"]];
+  const miss=c.missing.map(m=>m.key);$("mlist").innerHTML=all.map(([k,l])=>`<li class="${miss.includes(k)?"":"done"}"><a href="#c-${k}">${l}</a></li>`).join("");
+  const ck=checks(S);$("chk").innerHTML=ck.length?ck.map(x=>`<li class="${x.level}">${x.level==="error"?"✕":x.level==="warn"?"⚠":"ℹ"} ${esc(x.msg)}</li>`).join(""):"<li class='info'>目前沒有衝突。</li>"}
+function refreshAll(){MAT_KEYS.forEach(renderCat);renderDims();renderCtx();$("st").value=S.statement;$("mnote").value=S.materialNote||"";persist()}
+function handleText(text){const s1=parseS1(text);if(s1){S.s1=s1;refreshAll();return {applied:["已匯入 Stage 1："+(s1.name||"（尚未命名）")],custom:[],errors:[]}}const r=applyPaste(text,S);if(r.applied.length)refreshAll();return r}
+$("paste").onclick=()=>{$("pres").textContent="";$("pt").value="";$("dlg").showModal()};$("pc").onclick=()=>$("dlg").close();
+$("pa").onclick=()=>{const r=handleText($("pt").value);$("pres").className="res"+(r.errors.length&&!r.applied.length?" err":"");$("pres").innerHTML=(r.applied.length?"已套用：<br>"+r.applied.map(esc).join("<br>"):"")+(r.custom.length?"<br>加入自訂項："+r.custom.map(esc).join("、"):"")+(r.errors.length?"<br><span class='err'>"+r.errors.map(esc).join("<br>")+"</span>":"")};
+const dl=(name,text,type)=>{const b=new Blob([text],{type}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+$("exp").onclick=()=>dl("stage2-brief.json",JSON.stringify(buildBrief(S),null,2),"application/json");
+$("expcss").onclick=()=>dl("physics.css",tokensCSS(S),"text/css");
+$("imp").onclick=()=>{delete $("file").dataset.s1;$("file").click()};
+$("file").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const out=handleText(r.result);toast(out.applied.length?"已匯入":"匯入失敗："+out.errors.join("；"))};r.readAsText(f);e.target.value=""};
+$("reset").onclick=()=>{if(confirm("確定清空 Stage 2 的所有答案？（Stage 1 資料會保留）")){const keep=S.s1;Object.assign(S,emptyState());S.s1=keep;save(S);location.reload()}};
+meter();
+</script></body></html>

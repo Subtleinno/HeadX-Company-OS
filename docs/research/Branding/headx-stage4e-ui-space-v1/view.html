@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-Hant"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Stage 04E · UI／UX 與空間體驗 (View)</title><link rel="stylesheet" href="shared.css"/>
+<style>
+.spec{max-width:1120px;margin:0 auto;padding:60px 28px 120px}
+.eyebrow{font-family:var(--mono);font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.title{font-family:var(--serif);font-size:clamp(2rem,5vw,3.2rem);line-height:1.15;margin:12px 0 18px}
+.empty{color:var(--muted)}.prog{display:inline-block;margin:10px 0 0;font-family:var(--mono);font-size:.76rem;border:1px solid var(--line);border-radius:999px;padding:4px 12px;background:#fff}
+.sec{border-top:1px solid var(--line);margin-top:46px;padding-top:22px}.sec h3{font-family:var(--mono);font-size:.74rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:0 0 6px}.lead{font-size:.86rem;color:var(--muted);margin:0 0 14px;max-width:76ch}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}.c{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 16px}.c b{display:block;font-size:.95rem}.c p{margin:4px 0 0;font-size:.8rem;color:var(--muted)}
+.c .tg{display:inline-block;font-size:.64rem;font-family:var(--mono);border:1px solid var(--line);border-radius:999px;padding:0 6px;margin:6px 4px 0 0;color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:.82rem;background:#fff;border:1px solid var(--line)}th,td{border-bottom:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}th{font-family:var(--mono);font-size:.68rem;color:var(--muted);font-weight:500}.ok{color:var(--ok)}.no{color:var(--danger)}.tw{overflow-x:auto}
+.sc{display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:-2px;border:1px solid #ccc;margin-right:4px}
+.sb{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}.sb>div{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;min-height:100px}.sb small{font-family:var(--mono);font-size:.68rem;color:var(--muted);text-transform:uppercase;display:block;margin-bottom:6px}
+.cmp{border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px;background:#fff}.cmp h4{margin:0 0 8px;font-size:.9rem}
+.hi{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}.hi>div{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 16px}.hi h4{margin:0 0 8px;font-family:var(--mono);font-size:.74rem;color:var(--accent)}.hi li{font-size:.82rem;margin-bottom:6px}.hi small{display:block;color:var(--muted)}.hi ul{margin:0;padding-left:16px}
+.ck li{margin-bottom:6px;font-size:.86rem}.ck .warn{color:var(--warn)}.ck .error{color:var(--danger)}.ck .info{color:var(--muted)}
+.avoid{display:flex;flex-wrap:wrap;gap:8px}.avoid span{background:var(--danger-bg);border:1px solid #FECACA;color:#991B1B;border-radius:999px;padding:3px 12px;font-size:.84rem}
+.draft{background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;padding:8px 14px;font-size:.8rem;margin-top:14px}
+@media(max-width:700px){table{display:block;overflow-x:auto}}
+</style></head><body>
+<nav class="topbar"><div class="brand-tag">COMPANY OS · BRAND STAGE 04E · UI／UX 與空間體驗</div>
+<div class="nav-links"><a class="nav-pill" href="edit.html">Edit</a><a class="nav-pill active" href="view.html">View</a><a class="nav-pill" href="agent.html">AI Agent</a></div></nav>
+<main class="spec" id="m"></main>
+<script src="options.js"></script><script src="core.js"></script>
+<script>
+const s=load(),cmp=completeness(s),E=t=>String(t).replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[m]));
+const L=k=>labels(k,s),X=id=>T_(s,id);
+const cardsOf=k=>{const it=items(k,s);return it.length?`<div class="cards">${it.map(i=>`<div class="c"><b>${E(i.zh)}</b>${i.desc?`<p>${E(i.desc)}</p>`:""}${i.avoid&&i.avoid!=="-"?`<p>風險：${E(i.avoid)}</p>`:""}${i.risk?`<span class="tg">無障礙／私隱風險</span>`:""}${i.pro?`<span class="tg">須專業人士確認</span>`:""}</div>`).join("")}</div>`:'<p class="empty">尚未選擇</p>'};
+const dimRow=d=>{const dm=DIM(d),o=picked(s,d);return `<tr><th>${dm.title}</th><td>${o?`<b>${E(o.zh)}</b><br><small>${E(o.desc)}</small>`:'<span class="empty">尚未選擇</span>'}</td></tr>`};
+const sub=(t,k)=>`<p class="lead" style="margin:12px 0 6px"><b>${t}</b></p>${cardsOf(k)}`;
+const p=palette(s),tk=tokens(s),sm=sem(s),palH=COLS.map(([id,l])=>p[id]?`<span class="sc" style="background:${p[id]}"></span>${l} ${p[id]}`:"").filter(Boolean).join("　");
+const sa=specAll(s),fails=specFails(s);
+const compH=sa.length?sa.map(c=>`<div class="cmp"><h4>${E(c.name)}（${c.theme}）<small style="font-weight:400;color:var(--muted)">　高度 ${c.sizes.height||"—"}｜圓角 ${c.sizes.radius}px｜邊框 ${c.sizes.border}px</small></h4><div class="tw"><table><tr><th>項目</th><th>狀態</th><th>前景／背景</th><th>規則</th><th>對比</th><th>結果</th></tr>${c.rows.map(r=>`<tr><td>${E(r.item)}</td><td>${r.state}</td><td><span class="sc" style="background:${r.fg}"></span>${r.fg} ／ <span class="sc" style="background:${r.bg}"></span>${r.bg}</td><td>${COLORKIND[r.kind]}</td><td>${fr(r.ratio)}:1</td><td class="${r.kind==="info"?"":r.pass?"ok":"no"}">${r.kind==="info"?"參考":r.pass?"通過":"未通過"}</td></tr>`).join("")}</table></div></div>`).join(""):'<p class="empty">尚未選擇元件，或尚未填寫色值</p>';
+const jr2=journeyRows(s),jH=`<div class="tw"><table><tr><th>階段</th><th>觸點</th><th>顧客行動</th><th>前台</th><th>後台</th><th>情緒</th><th>痛點</th><th>機會</th></tr>${jr2.map(r=>`<tr><td><b>${r.stage}</b></td><td>${E(r.tp||"—")}</td><td>${E(r.act||"—")}</td><td>${E(r.front||"—")}</td><td>${E(r.back||"—")}</td><td>${EMO[parseInt(r.emo)]||"—"}</td><td>${E(r.pain||"—")}</td><td>${E(r.opp||"—")}</td></tr>`).join("")}</table></div>`;
+const q=queueCalc(s),qH=q?`<tr><th>容量</th><td>${q.rooms} 間；每節循環 ${q.cyc} 分鐘；每小時約 ${q.perHour.toFixed(1)} 人；每日約 ${q.daily} 人${q.util!=null?`；高峰利用率 ${(q.util*100).toFixed(0)}%`:""}${q.seats!=null?`；等候約 ${q.L.toFixed(1)} 人（至少 ${q.seats} 座）`:""}</td></tr>`:"";
+const bd=bdCompare(s),bdH=bd.length?`<div class="tw" style="margin-top:12px"><table><tr><th>項目</th><th>你的數值</th><th>手冊參考</th><th>結果</th></tr>${bd.map(x=>`<tr><td>${x.item}</td><td>${x.value} mm</td><td>${x.ref}${x.ref2!==x.ref?" ／ "+x.ref2:""} mm</td><td class="${x.level==="ok"?"ok":x.level==="info"?"":"no"}">${x.level==="ok"?"達參考值":x.level==="info"?"低於較佳值":"低於參考值"}</td></tr>`).join("")}</table></div><p class="lead" style="margin-top:6px">建築署《設計手冊：暢通無阻的通道》公開摘錄，以最新版與註冊專業人士判斷為準，不是法律意見。</p>`:"";
+const ck=checks(s),hs=hints(s),stages=[...new Set(hs.map(h=>h.stage))].sort();
+const hi=stages.map(st=>`<div><h4>${E(st)}</h4><ul>${hs.filter(h=>h.stage===st).map(h=>`<li><b>${E(h.field)}</b>：${E(h.text)}<small>原因：${E(h.why)}</small></li>`).join("")}</ul></div>`).join("");
+document.getElementById("m").innerHTML=`
+<span class="eyebrow">04E / UI/UX &amp; Space Experience · 草稿 · 未核准</span>
+<h1 class="title">${E(brandName(s))}</h1><p style="font-family:var(--serif);font-size:1.1rem;max-width:64ch">${E(X("statement")||draft(s))}</p>
+<span class="prog">完成度 ${cmp.pct}%（${cmp.done}/${cmp.total}）${cmp.missing.length?" · 未完成："+cmp.missing.map(m=>m.label.replace(/（.*/,"")).join("、"):""}</span>
+<div class="draft">狀態：草稿。對比檢查只涵蓋顏色，不等於已符合 WCAG；鍵盤、螢幕閱讀器與真人測試須由人類執行。實體空間須由註冊專業人士確認；旅程內容須來自真實觀察或標示為假設。</div>
+<div class="sec"><h3>UI 風格與基礎</h3>${cardsOf("uiStyle")}<table style="margin-top:12px">${["density","spacingBase","typeBase","themeMode","iconStyle","a11yTarget"].map(dimRow).join("")}<tr><th>色值</th><td>${palH||"—"}</td></tr><tr><th>表面 tokens</th><td>圓角 ${tk.rad.sm}／${tk.rad.md}／${tk.rad.lg}px；邊框 ${tk.border}px；焦點 ${tk.focus}px 偏移 ${tk.focusOff}px；控制項高度 ${tk.h}px；最小目標 ${tk.targetMin}px${tk.defaults?"（部分為預設值）":"（來自 4B）"}</td></tr></table></div>
+<div class="sec"><h3>UX 模式</h3>${cardsOf("uxPattern")}<table style="margin-top:12px">${["navPattern","labelPos","errorPattern"].map(dimRow).join("")}</table></div>
+<div class="sec"><h3>元件規範與對比檢查</h3><p class="lead">目前有 <b class="${fails.length?"no":"ok"}">${fails.length}</b> 項顏色對比未達門檻。</p>${cardsOf("components")}${sub("狀態","uiStates")}<table style="margin:12px 0">${["targetPolicy","focusPolicy"].map(dimRow).join("")}</table>${compH}</div>
+<div class="sec"><h3>無障礙測試</h3>${cardsOf("a11yTests")}</div>
+<div class="sec"><h3>觸點、旅程與服務藍圖</h3>${cardsOf("touchpoints")}${sub("服務時刻","serviceMoments")}<div style="margin-top:12px">${jH}</div></div>
+<div class="sec"><h3>空間：類型、風格與分區</h3>${cardsOf("spaceType")}${sub("室內風格","interiorStyle")}${sub("分區","zones")}</div>
+<div class="sec"><h3>空間：材質、燈光與感官</h3>${cardsOf("spaceMat")}${sub("燈光","spaceLight")}${sub("感官","spaceSensory")}<table style="margin-top:12px">${["cctPolicy","cleanPolicy"].map(dimRow).join("")}<tr><th>主要色溫</th><td>${E(X("sp_cct")||"—")} K</td></tr></table></div>
+<div class="sec"><h3>客流與容量</h3><table>${dimRow("crowdPolicy")}${qH}</table></div>
+<div class="sec"><h3>尋路與無障礙空間</h3>${cardsOf("wayfinding")}${sub("無障礙空間","spaceAccess")}<table style="margin-top:12px">${dimRow("signageLang")}</table>${bdH}</div>
+<div class="sec"><h3>3 個關鍵時刻</h3><div class="sb">${KEYS.map(([id,l])=>`<div><small>${l}</small>${X(id)?E(X(id)):'<span class="empty">尚未填寫</span>'}</div>`).join("")}</div><p class="lead" style="margin-top:10px">備註：${E(X("st_note")||"—")}</p></div>
+<div class="sec"><h3>禁區（合併 Stage 1／2／4A／4B）</h3><div class="avoid">${negatives(s).map(x=>`<span>${E(x)}</span>`).join("")||'<span style="background:none;border:0;color:var(--muted)">尚未選擇</span>'}</div></div>
+<div class="sec"><h3>一致性與硬限制檢查</h3><ul class="ck" style="padding-left:18px">${ck.length?ck.map(x=>`<li class="${x.level}">${x.level==="error"?"✕":x.level==="warn"?"⚠":"ℹ"} ${E(x.msg)}</li>`).join(""):"<li class='info'>目前沒有發現問題。</li>"}</ul></div>
+<div class="sec"><h3>給 4F–4H 的建議</h3><p class="lead">依你的選擇推導。各階段目前還不會自動讀取，請匯出 stage4e-brief.json 帶過去。</p><div class="hi">${hi}</div></div>`;
+</script></body></html>

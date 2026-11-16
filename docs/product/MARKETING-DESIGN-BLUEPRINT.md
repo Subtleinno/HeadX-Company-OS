@@ -1,790 +1,816 @@
-# Marketing Design v3：產品、架構與開發藍圖
+# HeadX Marketing Design：完整產品總圖與施工正本
 
-版本 v3.1 ｜ 2026-11-16 ｜ 追蹤：GitHub issue #93 ｜ 施工佇列：#94–#105
+版本 v4.1｜2026-11-17｜取代 v4.0 及 v3.1 的舊施工順序與已過時 UI 假設
 
-> 這份是 **Marketing Design app 的目標藍圖與單一領域入口**。它整合 `Perplexity idea/`、現行 Brand 實作及 Company OS 邊界，讓下一位 agent 不必重讀整個資料夾。
+> **這份文件回答：我們究竟正在建立甚麼、各模組如何合作、甚麼已經完成、甚麼仍不能假裝完成。**
 >
-> 它**不會即時改變現行程式碼的現況**：現況仍以 `HANDOFF.md` 與程式碼為準；全域原則仍以 `CONCEPT.md` 為準；施工仍須遵守 `AGENTS.md` 與被指派的 issue。
+> 新 session 先讀 `AGENTS.md`，再讀本文，然後讀 `docs/product/HANDOFF.md` 及實際程式。不要再由零猜產品，也不要把某張舊 issue、舊 Ardot 畫面或某段對話當成完整方向。
 >
-> 本文的「已定」是由現行 Company OS 原則、已有程式或老闆今次明確要求直接支持的取捨；「建議」與「待拍板」不得被 worker 當成已拍板事實。
+> **狀態原則：**本文同時記錄目標與現況，兩者必須分開。程式存在不等於已部署；API 測試通過不等於真實作品已生成；Render Job 有資料庫記錄不等於 PNG 已存在。
+>
+> **v4.1 變更摘要：**見文末附錄 A。主要是：HyperFrames 指令與環境需求對照官方文件重新標註「已驗證／待實測」；補上 MCP 協議版本釘選；釐清 Render 解像度與研究稿 2x 設定的差異；補齊 Project State 定義、MCP 工具命名對照與 Docker 驗收細節。
 
 ---
 
-## 0. 下一位 agent 怎樣讀
+## 0. 文件與真相的優先次序
 
-### 開工前
+1. **老闆最新明確決定**優先於舊文件及舊設計稿。
+2. **可運行程式、資料庫與真實輸出檔案**是現有能力的最終證據。
+3. **本文**是 Marketing Design 的完整產品方向、模組邊界及驗收正本。
+4. `HANDOFF.md` 記錄部署與施工現況；如未同步，必須修正，不可沿用過時描述。
+5. `DECISIONS.md` 保存全域歷史決策；較新決定優先。
+6. `docs/research/` 是既定研究與原型來源，不是現成產品，也不需要每位 worker 全部重讀。**研究稿中與本文衝突之處（例如 2x 輸出倍率、`approval.request` 審批、`hf.*` 工具名）以本文為準。**
+7. Ardot 是視覺協作稿；老闆最新提供的產品截圖是目前 UI 的主要參考。程式落地後要同步 Ardot，不可只留下設計稿而沒有產品。
 
-1. 按 `AGENTS.md` 讀完全域入口文件。
-2. 讀本文，理解 Marketing Design 的完整方向。
-3. 只讀被指派 issue 列出的程式檔與 UI 畫面；不要重讀 `Perplexity idea/` 全部原型。
-4. 只開工依賴已完成的 issue；本文不是一次過做完整個藍圖的授權。
+目前創作工作台的 Ardot 檔：
+`https://ardot.tencent.com/file/748129148813297`
 
-### 三種狀態不可混淆
+### 0.1 本文中的「驗證標記」
 
-| 類別 | 意思 | 例子 |
-|---|---|---|
-| **現有能力** | 今日 repo 已有程式與資料表 | Brand typed payload、版本、gaps、輸出、Needs 基本列表與認領 |
-| **v3 目標** | 今次要施工的新閉環 | Projects、Materials、Templates、Composition、Render、Provenance |
-| **外部能力** | 不在此 repo 執行，只經介面接入 | LLM、VLM、HyperFrames、Blender、ComfyUI、外部 agent |
+為避免把未驗證的事寫成事實，本文凡涉及外部工具與現況，一律標記：
 
-### UI/UX 正本
+- **[已驗證]**：已對照官方文件或實際執行確認。
+- **[待實測]**：來自內部記錄或推斷，必須在 Docker／Linux 實測後才能當事實。
+- **[本機工作樹]**：只存在於開發機，未部署。
 
-Ardot：`https://ardot.tencent.com/file/748070210348880`
+### 0.2 本輪明確覆蓋 v3.1 的舊規則
 
-設計檔內的畫面是 v3 施工參考；本文負責解釋對象、邊界、狀態與驗收。兩者衝突時，先停下在 issue 問清，不自行補規格。
+以下由老闆於 2026-11-17 定案，優先於 v3.1 及任何仍引用舊規則的文件：
 
----
-
-## 1. 一句話與成功定義
-
-**Marketing Design 是一個由人提出工作、外部 agent 組織可信資料與品牌規則、系統保存半成品與成品、人透過 Needs 補位，並能追查每個產出為何如此生成的創作作業系統。**
-
-成功不是「Brand 有很多頁」或「畫面有 AI 按鈕」，而是：
-
-- 一句要求能建立一個可追蹤的 Project。
-- agent 能由少量索引開始，逐步選到正確品牌、策略、知識、素材與模板。
-- 缺料會留下合法半成品及清楚 Needs，不會亂填或靜靜降級。
-- 成品可 render、可修訂、可下載，且每個來源與版本都查得回。
-- Brand 改版不會改寫舊成品；下一次修訂才選用新版本。
-- Boss Portal 看見跨部門摘要，但不接管部門工作。
-- 系統沒有模型或外發能力時，畫面會誠實講，不假裝已生成或已發布。
+1. **MCP 納入本輪正式範圍。** 取代「第一版不做 MCP／之後再選配」；HTTP、MCP 與 UI 必須共用正式身份、Store、DB、Storage 與 Render 業務鏈。
+2. **施工採單一自主 Loop。** 建議次序是 #111 → #120，一次一張，不並行修改同一批程式。若目前工作需要尚未完成的前置，worker 在同一工作單元先完成前置再返回；這不是並行開工，也不等待老闆放行。驗收完成後可合併並繼續下一張。
+3. **規格空白不再停工猜問。** 取代 v3.1「規格空白或矛盾就停手、不猜」：worker 必須先用本文、`docs/research/` 與實際程式取得答案；仍有空白時採最小一致方案，在 PR 記錄假設與取捨並繼續。身份安全、資料歸屬、append-only、真 Output 與不得假冒能力等硬規則不可因此被繞過。
+4. **研究稿正式可讀位置是 `docs/research/`。** 本機未追蹤的 `Perplexity idea/` 不再是 worker 的必要依賴；GitHub、CI 與本機都應能讀到同一份已提交方案庫。
+5. **目前 Ardot 正本是 `748129148813297`。** 取代舊 `748070210348880` 作本輪創作工作台、Project Library 與 Knowledge 畫面的同步目標；老闆最新截圖仍是具體 UI 參考。
+6. **進度必須可見。** 每個可見增量即時更新 Docker UI；錯誤在相關頁面顯示，issue 回報網址、截圖、實際驗證與下一動作。沒有相關畫面截圖及實際操作證據，不算完成該 PR。
 
 ---
 
-## 2. 為何 Brand v2 被判失敗
+## 1. 一句話產品定義
 
-### 2.1 不是欄位不夠，而是作業對象不完整
+**HeadX Marketing Design 是一個持續管理品牌、素材、知識、模板與作品，讓人類和 AI Agent 在同一份資料上合作，並能真正生成、修訂、下載及追溯社交內容成品的創作作業系統。**
 
-現有 Brand v2/v2.1/v2.2 的強項是「一份品牌頁 payload，衍生 HTML、tokens、prompt、PDF」。但 Perplexity 原型描述的其實是完整生命週期：
+它不是：
+
+- Project CRUD 或 Brief 閱讀器。
+- 只有漂亮卡片、沒有業務能力的 Dashboard。
+- 把 Perplexity 原型逐頁照搬的表單集合。
+- 只供一次性生成、沒有版本與來源的 AI 玩具。
+- 只做 Carousel、日後不能承載 Presentation／Video／Reels 的封閉工具。
+- 自動對外發布平台。
+
+### 第一個必須真正完成的作品閉環
+
+由一個明確品牌的 Project 開始，使用：
+
+- Brand identity 與固定 Brand Release
+- Materials
+- Knowledge 與具體 chunk citation
+- Carousel Templates
+- Composition
+- HyperFrames
+- PNG／ZIP Output
+- Provenance
+
+最終使用者必須能在 UI 看見、預覽及下載真實作品。
+
+---
+
+## 2. 不可違反的產品原則
+
+1. **先完成作品，再擴大平台。** 不再為重寫而重寫，不在第一條閉環前發明新框架。
+2. **同一件事實只有一個來源。** UI、HTTP API、MCP 與 Agent 使用同一業務 Store；不可有 SQLite 副本或前端假資料成為第二真相。
+3. **Composition 是作品內容真相。** HTML 是由指定 Composition version 產生的渲染輸入，不可獨立手改成另一份稿件。
+4. **版本追加，不改寫歷史。** 原始要求、Brief、Knowledge Version、Composition、Output、Output File 與 Provenance 必須可追溯。
+5. **舊成品不受品牌後續修改影響。** Composition 建立時固定 Brand Release。
+6. **狀態由事實推導。** 不由不同頁面隨意寫一個萬能 status 字串。
+7. **沒有能力就誠實顯示。** 不放假 Render、假 AI 進度、假 Output、假模板、假統計或無反應按鈕。
+8. **創作流程預設無額外審批。** 基本登入、Agent 身份、權限與審計仍保留；不另加權利／授權 workflow 阻擋第一條創作路徑。（此決定優先於研究稿中的 `approval.request`。）
+9. **對外發布永遠由人操作。** 現階段交付下載與複製，不自動發佈到 Instagram 或其他平台。
+10. **UI 改動必須看得見。** API 或資料層更新必須有對應畫面入口；部署後回報使用者在哪裡看到。
+11. **速度與收斂優先。** 必要 API、DB、MCP、真檔案與 build 驗證不能省；不重複進行沒有新資訊的瀏覽器測試或主觀美化。
+
+---
+
+## 3. 公司、品牌、App、身份與權限
+
+### 3.1 全域模型
+
+- 一個 HeadX 安裝代表一間公司及其本機資料邊界。
+- 公司可有多個 Brand；Marketing Design 是**品牌型 App**。
+- App selector 回答「使用哪個工具」；Brand selector 回答「目前在哪個品牌工作」。
+- 兩個 selector 都不是授權證據，不會因切換而複製資料、改變資料歸屬或擴大權限。
+- Brand 工作上下文永遠是一個明確品牌；不可用「全部品牌」冒充公司範圍或跨品牌授權。
+- App 清單、名稱、route 與可用狀態由 server manifest 提供，前端不可另寫一份硬編碼清單。
+
+### 3.2 身份
+
+| 身份 | 主要能力 |
+|---|---|
+| Boss／Owner | 公司級 Super Admin；人員、部門、策略、品牌建立、據點與機器等全域管理 |
+| Staff | 在已授予的 App／Brand 範圍工作；建立及編輯實際創作資料 |
+| 外部 AI Agent | 以獨立 service identity 與 Bearer token 經 HTTP／MCP 工作；沒有資料庫憑證 |
+| Renderer | 執行明確 Render Job；不是業務資料擁有者，也不能自行改 Composition |
+
+「Super Admin」描述身份與管理能力，不代表可在 UI 繞過資料歸屬、跨機信任或審計規則。
+
+### 3.3 據點與機器
+
+- 保持現有 Boss Portal 全域入口，不在 Marketing Design 內另造機器管理。
+- 入口位於公司／Boss 管理區；權限依現行 owner／super admin 規則及最新正式文件。
+- 總部目錄、入口或批准不等於另一部機自動授予本機身份權限。
+- 不在創作 UI 加公司切換器、跨機即時查詢或虛構在線狀態。
+
+---
+
+## 4. 完整業務流程
+
+### 4.1 管線總圖
 
 ```text
-業務假設
-  → 市場與品牌定位
-  → 創意方向與感官世界
-  → 語言聲音
-  → 識別與設計系統
-  → 專業製作
-  → 渠道應用
-  → 治理、使用與反饋
+[A 原料入庫]  Brand / Materials / Knowledge / Templates
+              ↓（版本只追加）
+[B 立案]      Project＋原始要求 → Brief
+              ↓
+[C 路由]      L0 地圖 → L1 卡片 → L2 詳情 → L3 原件，寫 Route Log
+              ↓
+[D 組稿]      Composition（typed slots＋refs＋placeholder）
+              ↓ 缺料 ──→ [N Needs] 開立 → 認領 → 交付／裁決 → 吸收 → 回填新版本
+              ↓ 齊料
+[E 檢查]      Lint（溢出、安全區、對比、引用、頁序、解像度）
+              ↓
+[F 渲染]      HyperFrames：1080×1350、五張 PNG＋ZIP
+              ↓
+[G 成品]      Output＋Provenance（MinIO＋Postgres）
+              ↓
+[H 回饋]      收回／局部修訂 → 新 Composition 版本 → 回到 E
+              ↓
+[P 投影]      Project State、Library 卡片、Boss Portal 摘要（可重建，不可寫）
 ```
 
-若只把這些階段繼續加成 Brand 固定頁，會造成四個問題：
+### 4.2 各階段輸入、輸出與硬規則
 
-1. **探索與真相混在一起。** 候選方向、未驗證假設與已選定規則看似同等有效。
-2. **品牌與單次工作混在一起。** 一次 campaign 的目標、渠道、CTA 不應永久寫入品牌識別。
-3. **資料頁與產出斷開。** Brand 填完後，沒有 Projects／Materials／Templates／Create 把它變成作品。
-4. **頁面無止境增生。** Stage 0–4H 若逐項變成強制順序頁，會再形成一套很長、很難使用的表單。
+| 階段 | 輸入 | 輸出（存哪裡） | 硬規則 |
+|---|---|---|---|
+| A1 Brand | 十一個固定頁的 typed payload | `brand_page_version`、`brand_release`（Postgres） | 只追加；色值只住 color 頁；檢查只報告，不阻止儲存 |
+| A2 Materials | PNG／JPEG／WebP 上載 | Asset → Segment → Description；原檔進 MinIO，WebP 預覽另存 | 第一版一張圖一個 Segment；權利不明預設「需確認」；去重、尺寸由程式處理 |
+| A3 Knowledge | Markdown＋frontmatter（來源、日期、地區、有效期） | Doc／Version／Chunk／Citation | AI 只能提交 unverified；人核對才可標 verified |
+| A4 Templates | cover／body／cta 三件套 | manifest、typed slots、fixtures、版本 | manifest、Composition 驗證、MCP 清單由同一個 contract 生成 |
+| B 立案 | 一句要求 | Project＋Brief，記錄 actor 與時間 | 沒有 agent 時只保存要求，畫面誠實顯示「等待接手」 |
+| C 路由 | Brief、硬條件 | Route Log（選了甚麼、為何拒絕） | 先用品牌、語言、地區、渠道收窄；不合用只重搜一次；索引只是投影 |
+| D 組稿 | 路由結果 | Composition 版本（slots、refs、template version、brand release、lint、basedOn） | placeholder 合法，必須含 need_id；舊版本不改寫 |
+| N Needs | 缺料或待裁決事項 | Need＋事件（只追加） | deliverable 要先給規格；decision 要先給建議方案；吸收完成才算關閉 |
+| E Lint | Composition | pass／fail／undetermined 結果 | Lint 通過不等於 Render 成功 |
+| F 渲染 | 通過檢查的 Composition | 五張 PNG、ZIP（MinIO）、render log | 單一 paused timeline、明確取格時間、等字體載入；失敗保存真錯誤並清理孤立檔 |
+| G 成品 | Render 結果 | Output＋Provenance | 釘住建立時的 Brand、Strategy、Knowledge、Material、Template、actor 版本 |
+| H 回饋 | 人的收回或修訂要求 | `received_at` 事實；新 Composition 版本與新 Output；明確收貨另記 `accepted_at` | 只重做受影響部分；舊 Composition 與 Output 保留 |
+| P 投影 | 各階段事實 | Project State、Library 卡片、Boss 摘要 | 由事實推導，不設可隨意寫入的 status 欄 |
 
-### 2.2 必須保留的現有基礎
+**P 不是另一份業務資料。** Project State、Library 卡片及 Boss 摘要必須能由 A–H／N 事實重建，任何 worker 不可直接寫投影來假裝工作完成。
 
-今次不是第三次無理由推倒。以下能力直接保留並擴展：
+### 沒有外部模型時
 
-- 每頁一份 **typed payload**；HTML、tokens、prompt、PDF 是派生輸出。
-- `brand_page_version` 只追加、不改寫歷史；現行版本由查詢算出。
-- `brand_release` 保存各頁版號組合，供成品釘住來源。
-- `PageSchema` 共通模式：
+系統可以使用**確定性組稿**：
+
+- 文案只取 Project、Brief 及真實 Knowledge chunk。
+- 素材只取使用者或 Agent 實際選擇的 Material。
+- 缺 Knowledge 時回報 `knowledge_required`，不可虛構內容。
+- UI 不可寫成「AI 正在思考」或假裝模型已完成工作。
+
+### 修訂
+
+- 原 Composition 與 Output 不變。
+- 由舊 Composition 建立新版本，保留修改者、時間與來源。
+- 局部改封面不應無故重寫所有內頁。
+- 新 Render 必須指向明確 Composition version。
+
+---
+
+## 5. 核心資料對象
+
+| 對象 | 責任 | 關鍵規則 |
+|---|---|---|
+| Project | 一件持續可找回的創作工作 | 屬一個 Brand、一個 Format；Library 的基本單位 |
+| Project Request | 人最初輸入的要求 | 不可變，不被 Brief 覆寫 |
+| Brief Version | 整理後的目的、受眾、內容與限制 | append-only；記 actor 與 request identity |
+| Agent Run | 哪個 Agent 何時接手及做到哪裡 | 與真人操作分開記錄 |
+| Brand Page Version | 品牌穩定規則 | typed payload、版本鏈；Brand 模組擁有 |
+| Brand Release | 一次創作使用的品牌頁版本組合 | Composition 建立時固定 |
+| Material | 原圖、預覽、描述、來源與技術資料 | 必須屬目前 Brand；原檔可讀回 |
+| Knowledge Doc | 一份知識的穩定身份與目前版本 | 搜尋、文件樹及狀態管理入口 |
+| Knowledge Version | 某版 Markdown、metadata 與 sources | append-only |
+| Knowledge Chunk | 可引用及檢索的具體段落 | 引用必須對上 doc/version/chunk |
+| Template | 某 Format／Role 的可重用版型契約 | id、version、slots、限制與 manifest |
+| Composition | 一次作品的 typed slides 與所有 refs | 作品真相；保存 lint 與版本鏈 |
+| Render Job | 一次對指定 Composition 的輸出請求 | queued／running／succeeded／failed 等真實狀態 |
+| Output | 一次成功產出的作品集合 | 指向 Project 與 Composition version |
+| Output File | PNG、ZIP 等實際檔案 metadata | 檔案必須存在、可讀、可下載及可驗證（含 sha256） |
+| Provenance | 成品為何如此生成的來源鏈 | 品牌、素材、知識、模板、渲染與 actor 均可追 |
+
+### Project Format
+
+目前共用三個值：
 
 ```ts
-normalize(raw)
-gaps(payload)
-layout(payload)
-tokens(payload)
-prompt(payload)
+'carousel' | 'presentation' | 'video'
 ```
 
-- 色值只住色彩頁；其他頁與 renderer 只引用色彩角色。
-- `document.gaps` 是缺口真相；`brand_gap` 只記 Need 關聯。
-- 檢查為 `pass / fail / undetermined`，只報告，不阻止儲存。
-- 閱讀態與編輯態分開；無權者不見假編輯入口。
-- 現有固定頁鍵：`home`、`platform`、`color`、`type`、`logo`、`tone`、`image`、`mascot`、`examples`、`video-long`、`video-short`。
-- 本地 migration `0024` 已把 mascot 從 image 搬到獨立頁，並以新增版本保留歷史。
+- Video 包含日後 Instagram Reels 等短影片工作。
+- 三種格式共用 Project、Brief、Library、來源與權限骨架。
+- **只有 Carousel 目前正在實作完整 Composition／Render。**
+- Presentation 與 Video 可以建立、分類及管理 Brief，但不可顯示未實作的 Carousel 編輯器或假 Render 按鈕。
 
-### 2.3 不再沿用舊施工線
+### Project State
 
-#89 的未完成項目屬舊 Brand v2.1 逐頁修補，不是 v3 閉環施工順序。已完成程式保留；未完成項目不應與 v3 issues 同時開工。是否保留個別修正，由對應 v3 issue 明確吸收，不由 worker 同時跟兩份清單。
+對外狀態由事實推導。最新目標包含「需修訂」，由 #112 用單一純函式實作；Store 只提供事實，UI／Library／MCP／Boss 投影不可各自判斷：
 
----
-
-## 3. 不可違反的產品邊界
-
-1. **agent 是主要執行者，人是判斷者與補位者。**
-2. **預設無閘。** 「人選定方向」是記錄決策，不是為所有儲存加 approval workflow。
-3. **策略由老闆寫，agent 只選與跟。** agent 可建議修訂，不可自行改策略正文。
-4. **業務資料由部門 app 擁有。** Boss Portal 不直接讀其他 app 的資料表。
-5. **成品留在出身的 app。** 不回流成中央第二份真相；原料與成品不可混為一庫。
-6. **平台殼只做切換、身份、註冊、事件。** 不把路由、模板、品牌頁等業務規則搬進 Frame。
-7. **Needs 是正常人機協作，不是錯誤頁。** 上載或裁決後必須吸收，才算閉環。
-8. **沒有來源不寫成事實。** 可以保存有 placeholder 的 composition，不可虛構品牌、知識或權利。
-9. **對外發送永遠由人按下。** 第一版只做下載／複製，不做自動發布。
-10. **此 repo 不執行 AI 模型。** LLM／VLM 是外部 client 或 provider；第一版不做 MCP。
-11. **一個事實只有一個來源。** 索引、Boss 摘要、搜尋卡片均是可重建投影，不是可寫副本。
-12. **畫面必須誠實。** 沒有 agent、render 或資料時顯示實際狀態，不畫假進度、假分數或假數字。
-
----
-
-## 4. 核心對象與擁有權
-
-### 4.1 對象總表
-
-| 對象 | 負責回答 | 擁有者 | 備註 |
-|---|---|---|---|
-| **Brand Page** | 這個品牌穩定、可重用的規則是甚麼 | Marketing Design／Brand | 沿用現有頁與版本鏈 |
-| **Brand Release** | 某次產出當時用了哪些品牌頁版本 | Brand | 現有快照概念 |
-| **Brand Foundation Project** | 品牌建立／重塑時探索了甚麼、選了甚麼、證據是甚麼 | Create／Projects | 一種 Project 類型，不是另一個 app |
-| **Project** | 今次要完成哪一件工作 | Create／Projects | 包括一般營銷與品牌建立工作 |
-| **Brief** | 目的、受眾、渠道、格式、語言、限制、期限 | Project | 原始要求與 agent 整理稿要可分別追溯 |
-| **Strategy Doc** | 這類工作應依循哪些標準 | 老闆；Boss Portal 編輯 | 多份、分層；agent 記錄選用版本 |
-| **Asset / Segment / Description** | 有哪些原料；哪一段適合這個用途 | Materials | Segment 是檢索單位 |
-| **Rights / Consent** | 這份原料能否在指定用途使用 | Materials | 不由畫面外觀推測授權 |
-| **Knowledge Doc / Chunk / Citation** | 內容依據在哪份來源、哪一段 | Knowledge | AI 不可自行標 verified |
-| **Template / Version / Slot / Fixture** | 這類版面有哪些可填位與限制 | Templates | HTML 版型＋manifest＋測試夾具 |
-| **Composition / Version** | 今次作品如何填版、哪些地方留空 | Create | typed slots＋HTML；placeholder 合法 |
-| **Output Profile** | 同一份 composition 要輸出成甚麼 | Create／Render | PNG、Carousel、PPT、PDF、MP4 等 |
-| **Render Job / Output** | 哪次 render 產生了哪些檔案 | Create＋外部 renderer | renderer 不是業務真相 |
-| **Provenance** | 成品用了哪些物件與版本 | Create | 品牌、策略、知識、素材、模板均可追 |
-| **Need / Need Event / Need Link** | 哪件事需要人補位、如何回覆與吸收 | Platform＋所屬部門 | Boss 只看投影 |
-| **Route Log** | agent 為何讀了、選了或拒絕了哪些資料 | Create | 用於除錯，不是另一份內容真相 |
-| **Feedback / Revision** | 人收貨、手改或要求重做時改了甚麼 | Create | 形成下一次工作的輸入 |
-
-### 4.2 三種「品牌相關工作」不可混為一談
-
-| 類型 | 內容 | 完成後留下 |
-|---|---|---|
-| **穩定品牌真相** | 已選定的定位、語氣、色字標誌、圖像規則 | Brand Page 新版本；必要時形成 Brand Release |
-| **品牌建立／重塑 Project** | 訪談、業務假設、候選定位、方向比較、未決問題 | 專案證據與決策；被選定的內容由有權者寫入 Brand Page |
-| **單次營銷 Project** | campaign 目標、主題、渠道、CTA、期限、單次素材 | Composition、Output、Provenance、Feedback |
-
-**硬規則：候選方向不可因存在於 Project 就自動成為 Brand 真相；一次 campaign 的選擇也不可自動改寫 Brand。**
-
-### 4.3 Stage 0 業務資料的建議邊界
-
-Stage 0 的產品、客戶、收費、渠道、市場、團隊、目標、限制、命名、資產與單位經濟資料，**不應全部複製進 Brand**。
-
-建議：
-
-- 原始訪談、假設、計算與證據留在 Brand Foundation Project。
-- 對品牌創作有長期作用的已選定摘要，才提升為 `platform` 或其他 Brand Page 的欄位。
-- 產品、價格、客戶、財務等已有公司主檔時，只保存來源引用與策略摘要，不建立 Marketing 的第二份主檔。
-- 此邊界屬待拍板事項 U1；第一條 IG Carousel 縱切片不依賴 Stage 0 全量實作。
-
----
-
-## 5. Brand v3：由資料頁變成品牌中樞
-
-### 5.1 Brand Home 的五個責任
-
-1. **看清品牌。** 立場、品牌一句話、目前 release、關鍵識別與語氣摘要。
-2. **看清可用程度。** 哪些頁有現行版本、哪些有缺口、哪些檢查無法判斷。
-3. **進入來源頁。** 每項摘要追到擁有它的頁與版本，不在 Home 建第二份規則。
-4. **開始工作。** 以目前品牌建立 Project；品牌建立／重塑也由這裡發起。
-5. **看見使用與影響。** 最近 Projects／Outputs、被哪些成品引用、哪些舊範例使用舊 release。
-
-Brand Home 不是假儀表板，不顯示沒有資料來源的分數、完成率或趨勢圖。
-
-### 5.2 固定頁與新增內容的取捨
-
-第一條縱切片**不改寫現有十一頁 payload，也不先加一批新固定頁**。新內容按下列方式歸位：
-
-| 原型內容 | v3 歸位 |
+| 狀態 | 推導條件 |
 |---|---|
-| Stage 0 業務探索 | Brand Foundation Project；選定摘要才進 Brand |
-| Stage 1 定位、核心張力、Anti-Persona、信任依據 | 已選定位進 `platform`；候選、張力與反例留在 Project 作決策證據 |
-| Stage 2 材質、光線、觸感、動態、情緒與反關鍵詞 | 建議日後增設可選 `direction` 頁；候選方向與同觸點比較留在 Project |
-| Stage 3 Voice／Tone、語言規則、禁用詞、正反例 | `tone`；Voice 是固定聲音，Tone 是情境變化 |
-| Stage 4A 識別任務、Logo、色彩、字體、輸出需求 | `logo`、`color`、`type`、`image`；方向候選仍在 Project |
-| Stage 4B Surface、Pattern、印刷與工藝 | 可選 `direction`／自定義頁；打樣與授權記錄屬治理資料 |
-| Stage 4C Motion、聲音、影片、字幕、節奏 | 現有 `video-long`／`video-short`；日後可評估獨立 `motion`，不屬第一版 |
-| Stage 4D 產品、3D、CMF、BOM-lite | 後續專業模組；工程規格須專業人士驗證 |
-| Stage 4E UI、服務、空間 | 後續可選專業模組，不塞進核心 Brand 表單 |
-| Stage 4F 渠道、漏斗、內容結構、CTA、合規、成效 | Strategy、Templates、Output Profiles、Projects、Feedback；不是九十一個 Brand 頁 |
-| Stage 4G 打樣、授權、命名、RACI、例外 | Release、Provenance、Rights、策略設定與事件記錄 |
-| Stage 4H 風格庫、生成契約、參考圖、評估集 | `examples`、Template／Output provenance、生成記錄；不用主觀分數冒充品質 |
+| `awaiting_agent` | 有 Project Request，但沒有有效 Brief |
+| `planning` | Agent 正在路由或整理 Brief，尚未形成可輸出 Composition |
+| `waiting_materials` | 有未完成 Needs；包括 Composition／Lint 回報缺 Material 或 Knowledge |
+| `ready_to_render` | 必要 slots 齊、沒有阻塞缺口，且無 active Render Job |
+| `rendering` | 有 queued／running Render Job；新 revision 正在輸出時亦顯示此狀態 |
+| `produced` | 至少一個有效 Output，且沒有進行中的 Revision |
+| `needs_revision` | 有進行中的 Revision；局部修訂建立新 Composition，舊 Output 保留 |
+| `received` | 最新相關 Output 有明確 `accepted_at`；代表人已收貨，不代表對外發布 |
 
-### 5.3 候選方向與「預設無閘」如何共存
+同一時間有多項事實時，#112 必須以「目前最新工作」定義並測試固定優先次序：active Render → active Revision → 最新 Output 的 accepted／produced → open Needs → ready Composition → planning → awaiting。`received_at` 只記人取得／收回成品的事實；`accepted_at` 才是 `received` 狀態依據，兩者不可混用。
 
-- agent 可以建立多個 **AI 提案**，每個附理由、證據、風險與適用觸點。
-- 候選方向必須用**相同內容、相同觸點**比較，不只比漂亮 moodboard。
-- 人按「選用」記錄 `selected_by`、`selected_at`、理由；這是決策事實，不是多層批核。
-- 有權編輯品牌的人仍可正常儲存 Brand Page；檢查不通過也不阻止。
-- AI 不可把提案標成人已選定，也不可自行改寫策略正文。
-- 上游核心方向改變時，系統列出受影響的模板、範例、composition 與 outputs；舊成品不自動重寫。
+Composition、Revision、active Render Job 及 Output 必須參與推導；UI 不可自行維護另一份狀態。新 Composition revision 後重新推導，舊 Output 仍可在 Outputs 找到。
 
-### 5.4 每個探索類別都有三個合法答案
+**程式核對（2026-11-17，[本機工作樹]）：**上表是產品目標，不是現況驗收。目前 `deriveProjectState()` 的實際優先次序為 `received → produced → rendering → waiting_materials → ready_to_render → planning → awaiting_agent`，並有以下未接通差距：
 
-`不適用`、`未決定`、`自訂`。
+1. Store 傳入的 `openNeedCount` 目前固定為 `0`；Composition／Lint 缺料也未轉成 Needs，因此 `waiting_materials` 尚未按上表工作。
+2. `hasCompleteComposition` 目前只檢查是否有 Composition id，沒有證明來源檢查或 Lint 通過。
+3. `receivedAt` 目前固定為 `null`；下載與「已收到」都尚未形成收回事實，亦沒有 `accepted_at`，因此實際 Project 不會由 Store 進入 `received`。
+4. `hasOutput` 的判斷先於 active Render Job；有舊 Output 時，新 revision 正在 Render 仍會顯示 `produced`。
+5. 目前只查 latest Output 是否存在，沒有比較它與最新 Composition revision，因此「新 revision 後重新推導」尚未實作。
+6. 現行 enum 沒有 `needs_revision`，也沒有 Revision／`accepted_at` facts；上述八狀態目標尚未成立。
 
-「不適用」不是缺；「未決定」才可形成 decision Need；「自訂」不能繞過型別、權利、安全與來源規則。
+施工時應先補事實來源與測試，再把這段標為已接通；不可只改狀態文字。
 
 ---
 
-## 6. Create：由一句要求到成品
+## 6. 五個永久模組與各自責任
 
-### 6.1 主流程
+五個入口必須一直可見：
 
 ```text
-人輸入一句要求
-  → 系統建立 Project＋原始要求
-  → 外部 agent 讀 L0 地圖，整理 Brief
-  → 逐層選策略、知識、模板與素材
-  → 寫 Route Log 與來源理由
-  → 建立 Composition
-       ├─ 缺料：保留 placeholder＋建立 Needs
-       │     → 人交付／裁決
-       │     → agent 吸收、入庫、回填
-       │     → 重新檢查
-       └─ 齊料：Lint＋檢查
-  → 建立 Render Job（外部 renderer）
-  → Output 存入 Create＋Provenance
-  → 人收貨或要求局部修訂
+Create｜Brand｜Materials｜Knowledge｜Templates
 ```
 
-### 6.2 Project 狀態是事實的投影
+Needs、搜尋、語言、通知、幫助及帳戶屬全域外殼，不是第六個業務模組。
 
-建議對外顯示：
+### 6.1 Create
 
-| 顯示狀態 | 根據 |
+分成兩種清楚不同的工作模式：
+
+#### Project Library：找作品
+
+- 顯示目前 Brand 的所有 Projects。
+- 可搜尋標題及管理工作上下文。
+- 左側以 All Projects、Carousel、Presentation、Video 等真實格式分類及數量組織。
+- Outputs 是已完成成品入口，不是另一批 Project。
+- 右側使用老闆最新參考圖的**緊湊視覺預覽卡**，不是巨型展示卡，也不是只有文字的密集表格。
+- 有真實 Output 時顯示第一張真實 PNG 作預覽。
+- 未有 Output 時顯示明確的格式／標題 cover fallback，不可放 Unsplash 假作品。
+- 每張卡顯示標題、Brand、格式、真實狀態、Brief／版本或更新資訊，並可進入 Editor。
+- Library 必須能承載大量 Project；搜尋、分類與路由不可只在幾張示範卡上成立（分頁或虛擬捲動）。
+
+#### Project Editor：做作品
+
+- 預設進入「創作」而不是 Brief。
+- Carousel Editor 包含頁序列、中央 4:5 畫布、右側內容編輯及來源狀態。
+- 可選 Materials／Knowledge、自動組稿、直接編輯標題／正文／CTA、儲存新版本、發起 HyperFrames Render。
+- Outputs tab 顯示真實 PNG／ZIP 與 Provenance。
+- Brief tab 保留原始要求、現行 Brief 與歷史版本。
+- AI Agent tab 顯示真實 Agent 狀態、MCP 配置與可用工具，不把 Agent 資訊塞進 Brief 閱讀區。
+
+### 6.2 Brand
+
+- Brand Home 是品牌中樞與摘要，不建立第二套品牌規則。
+- 固定頁與自定義頁沿用現有 typed payload 和版本鏈。
+- 左欄列出目前品牌的實際頁面與分組，方便直接切換。
+- 顏色、字體、Logo、語氣等規則由各來源頁擁有；Composition 只引用固定 Release。
+- 不把一次 campaign 的目標、CTA 或方向候選自動寫入品牌真相。
+
+### 6.3 Materials
+
+- 提供實際上載、搜尋、列表、預覽及資料編輯。
+- 左欄是有功能的來源分類，不是重複導航。
+- 原圖、preview、描述、tags、來源與尺寸要可追。
+- View／Edit／AI Agent 使用同一份 Material 資料。
+- 第一條閉環以 PNG／JPEG／WebP 圖片為主；影片 Segment、VLM 描述與完整權利系統不可假稱已完成。
+- Render 前須檢查圖片解像度是否足夠覆蓋其在 1080×1350 畫布上的使用尺寸（研究稿建議不低於輸出尺寸 80%），不足時在 Lint 提示，不阻擋。
+
+### 6.4 Knowledge
+
+- 主左欄使用**可搜尋、可展開的文件樹**，符合老闆最新 Knowledge 截圖。
+- 文件樹直接驅動右側文件選擇，不在內容區再放一個重複的文件列表側欄。
+- 可按全部、未核對、已核對、過期等真實狀態過濾。
+- 主區顯示文件 metadata、來源、版本、Markdown、chunks 與引用。
+- View 用於閱讀；Edit 用於新增文件或明確追加目前文件的新版本；AI Agent 提供精簡可執行資料。
+- 「新增」與「編輯」不可共用含糊的 fallback selection；新增時不得誤存到另一份文件。
+- Knowledge 核對是證據狀態，不是作品發布審批。
+
+### 6.5 Templates
+
+- 依內容格式分類，顯示真實存在的模板。
+- Carousel 第一組是三件套：cover／body／cta。
+- 每個模板顯示 id、version、role、slots、required／optional、字數限制與 Agent manifest。
+- Presentation／Video 未有模板時顯示誠實空狀態，不顯示 Carousel 卡片冒充跨格式支援。
+- 完整 Template Studio、fixtures 管理與 AI 改版不是目前第一閉環的額外前置。
+
+---
+
+## 7. UI 資訊架構正本
+
+### 7.1 全域頂欄：保留，不重新發明
+
+沿用現有 Frame，包括：
+
+- App selector
+- Brand selector
+- 五個永久模組入口
+- Needs
+- 既有搜尋／語言／通知／幫助／帳戶等全域入口
+- 左下公司身份與 Boss 管理入口
+
+原因：這些控制承載多 App、多 Brand、身份、Needs 及公司級能力，不是 Project 工具列。格式選擇不得搬進全域頂欄。
+
+### 7.2 第二層與左欄分工
+
+- 第二層只放目前模組少量、有意義的工作上下文切換；Create 可切換作品格式。
+- 左欄負責目前模組的實際 Library、資料夾、文件、頁面與搜尋。
+- 不可把所有格式、文件與工具都擠進第二行 tabs。
+- 不同模組必須有不同且有實際用途的左欄。
+
+| 模組 | 左欄內容 |
 |---|---|
-| 待 agent 接手 | 有原始要求，未有有效 agent run／Brief |
-| 規劃中 | agent 正在路由或整理 Brief |
-| 等待補料 | 有未完成 Needs；composition 可已存在 |
-| 可輸出 | 必要 slots 齊、沒有未處理的阻塞缺口 |
-| 輸出中 | 有 queued／running Render Job |
-| 已產出 | 至少一個有效 Output |
-| 需修訂 | 有進行中的 Revision |
-| 已收貨 | 有明確 `accepted_at` 事實 |
+| Create | Library 搜尋、All Projects、格式資料夾與數量、Outputs |
+| Brand | Brand Home、固定頁、自定義頁與分組 |
+| Materials | 搜尋、全部素材、實際來源分類 |
+| Knowledge | 搜尋、狀態分類、可展開文件樹 |
+| Templates | 內容格式分類與真實模板集合 |
 
-**不新增一個可由不同程式隨意寫入、最後彼此矛盾的萬能 status 欄。** 具體儲存與推導方式由 Project issue 定義及測試。
+### 7.3 Library 與 Editor 不可混為一頁
 
-### 6.3 沒有 agent 時的誠實行為
+```text
+Project Library
+  搜尋／資料夾／格式／預覽卡／狀態
+        ↓ 選一件作品
+Project Editor
+  頁序列／畫布／內容／來源／Render／Output
+        ↓ 返回
+原本 Library 位置與格式上下文
+```
 
-- 「新增 Project」只保證要求已保存，不假裝 AI 已即時理解。
-- 畫面顯示「等待外部 agent 接手」；可提供「複製請求」供人交給 agent。
-- agent 離線是連線狀態，不自動開 Need；只有工作需要人的資料或判斷才開 Need。
-- agent 回傳的 Brief、Composition 與建議均記錄 actor、時間與版本。
+### 7.4 View／Edit／AI Agent
 
-### 6.4 修訂不是由零開始
+這不是三份內容，而是同一份資料的三種工作方式：
 
-修訂保存原 composition，複製成新版本，只重新路由受影響部分。例：換封面相片不應重寫全部文案；改 Brand Release 時則要列出受影響 slots、規則與輸出。
+- **View**：快速理解內容、來源、版本與狀態。
+- **Edit**：人類直接修改並保存新版本。
+- **AI Agent**：精簡、結構化、可執行的工作契約；包括 ids、版本、限制與允許動作，不是把整個頁面 HTML 複製給模型。
+
+### 7.5 視覺與互動
+
+- 乾淨、現代、克制，以內容密度和清晰層級為先。
+- 保留既有全域設計語言；內容區使用共享 design tokens，不在模組 CSS 再寫一套色值。
+- 不用紫色漸層、emoji、無意義玻璃效果或裝飾性 Dashboard 圖表。
+- 每個頁面要有 loading、empty、error、success 與 permission 狀態。
+- 主要動作名稱對應真能力，例如「儲存為新版本」「用 HyperFrames 產生 PNG」。
+- 所有入口最終都要在真實 UI 走通；不能只靠程式推斷可用。
 
 ---
 
-## 7. 漸進式路由與索引
+## 8. Carousel Composition 契約
 
-### 7.1 四層讀取
+### 8.1 基本結構
 
-| 層 | 內容 | 使用時機 |
+- 3–10 頁。
+- 第一頁 role 必須是 `cover`。
+- 最後一頁 role 必須是 `cta`。
+- 中間為一個或多個 `body`。
+- 每個 body 頁至少要有一個真實 Knowledge citation。
+- 第一條驗收作品為五頁：封面＋三個知識內頁＋CTA。
+
+### 8.2 每版 Composition 必須固定
+
+- Project 與 Format
+- Brand Release
+- Slides 與順序
+- 每頁 Template id／version
+- Material ids 與使用位置
+- Knowledge docId／versionId／chunkId
+- 文案與 CTA
+- Lint 結果
+- Actor、request identity、建立時間
+- 前一版 Composition（如屬修訂）
+
+### 8.3 檢查原則
+
+- Material 必須屬目前 Project Brand。
+- Knowledge doc／version／chunk 必須互相匹配。
+- 引用不可因列表顯示而自動變成可信；必須指向真實資料庫記錄。
+- 缺料應顯示明確問題；不可生成無來源醫療、法律或效果承諾。
+- 檢查結果與 Render 是否成功是兩件事，不可互相冒充。
+- Lint 項目（沿用研究稿）：文字溢出 slot、對比度低於 WCAG AA 4.5:1、IG 安全區被侵佔、字體未載入、圖片解像度不足。Lint 只標記，不等同 Render 成功。
+
+---
+
+## 9. HyperFrames 正式 Render 路線
+
+### 9.1 固定決定
+
+- Renderer 是 **HyperFrames**（HeyGen 開源的 HTML→影片／畫面框架），不是自行命名的一套截圖器。
+- 目前實作固定 CLI version：`0.9.56` **[待實測：官方文件僅說明「以安裝版本為準」，須在 Docker 以 `hyperframes --version` 確認此版本存在且可安裝]**。[本機工作樹] `package-lock.json` 的確鎖定 `hyperframes@0.9.56`；這只證明依賴已安裝並鎖版，不證明 Docker CLI 或 Render 可用。
+- Carousel 根尺寸：每頁 **1080×1350**，根元素必須有明確像素尺寸。
+- HTML composition 包含多個 timed scenes 與單一 paused GSAP timeline，註冊於 `window.__timelines["<composition-id>"]`，頁面載入時同步建立。
+- 正式流程先 `hyperframes check`，再按每頁時間點執行 `hyperframes snapshot`。
+- 不使用另一套 renderer 冒充 HyperFrames；如日後有降級路徑，必須在 UI 和 Provenance 明示。
+- **輸出倍率決定：** 交付 PNG 以 1080×1350 為準，不採用研究稿 `01-Hyperframes` 的預設 2x（那是 PPT 用途）。如日後要 2x，另立 Output Profile，並在 Provenance 記錄。
+
+### 9.2 指令對照
+
+官方文件 [已驗證]：`npx hyperframes check`（瀏覽器、版面、動態、對比檢查，支援 `--json`）、`npx hyperframes snapshot --at <t1,t2,...>`（擷取指定時間點 PNG，不需完整 render）。官方 skill 指出需要 **Node.js 22+ 與 FFmpeg**；snapshot 預設輸出於 `.hyperframes/artifacts/snapshots/`。
+
+目前實作命令形狀：
+
+```text
+hyperframes check --json --no-cache --no-craft --timeout=60000
+hyperframes snapshot --at=0.5,1.5,... --no-end --output=<dir> --json
+```
+
+其中 `--json`、`--at` 屬已驗證用法；**`--no-cache`、`--no-craft`、`--timeout`、`--no-end`、`--output` 在我檢視的官方頁面摘錄中未見，標為 [待實測]**。實施前執行 `hyperframes check --help` 與 `hyperframes snapshot --help`，以實際輸出為準；若旗標不存在，CLI 會報錯，必須移除而非忽略。
+
+### 9.3 Render 輸入
+
+由固定 Composition version 產生臨時 HyperFrames project：
+
+- `index.html`
+- `hyperframes.json`
+- `meta.json`
+- 本地 `assets/gsap.min.js`
+- 所需品牌字體與素材原件
+
+渲染不可依賴外部網絡偶然成功；字體、Script、圖片與瀏覽器環境必須可重現。HTML 規則（官方「靜默錯誤」清單）：不用 `Date.now()`、未設種子的 `Math.random`、網絡請求；不用 `repeat: -1`；不 tween `display`／`visibility`；全螢幕背景放在鋪滿的子元素而非根元素；跨檔案 id 不可重複；文字內不用 `<br>`；截圖前等 `document.fonts.ready`；每頁在「動畫完成」時間點取格（研究稿 `settled` 規則），避免截到入場動畫半途。
+
+### 9.4 Output
+
+預期儲存：
+
+```text
+outputs/{projectId}/{jobId}/slide-01.png
+outputs/{projectId}/{jobId}/slide-02.png
+...
+outputs/{projectId}/{jobId}/ig-carousel.zip
+```
+
+每個 PNG 必須檢查實際像素尺寸（1080×1350）與頁序；ZIP 必須實際包含完整頁組並記錄 sha256。失敗時：
+
+- Render Job 標記 `failed` 並保存真錯誤。
+- 清理已上載的孤立檔案。
+- 不建立假的成功 Output。
+- UI 顯示可理解失敗狀態。
+
+### 9.5 目前尚未越過的關鍵阻塞
+
+Mac 實測中，自訂 Composition 與官方 blank project 均出現：
+
+```text
+Requesting main frame too early!
+```
+
+曾嘗試調整 timeline duration、`--no-browser-gpu` 與系統 Chrome，仍未解決；本機 `doctor` 亦顯示 FFmpeg／FFprobe 環境缺口。
+
+**根因線索（推斷，[待實測]）：**這條錯誤訊息是 Puppeteer 的已知錯誤（公開問答中描述為在選取元素或等待 selector 時過早存取 main frame）。由於官方 blank project 同樣失敗，較可能是**本機 Chrome／Puppeteer 版本、頁面導航競態或環境（含 FFmpeg 缺口）問題，而非 HeadX Composition 本身**。排查順序：
+
+1. 先補齊 FFmpeg／FFprobe，執行 `hyperframes doctor` 至全綠。
+2. 確認 Node.js ≥ 22。
+3. 使用 HyperFrames 自行管理的 Chrome，而非系統 Chrome，並在 Docker 內重試。
+4. 先官方 blank project，再 HeadX Composition。
+5. 記錄真命令、完整錯誤與根因。
+
+**因此目前不能宣稱 HyperFrames 已成功出圖。** 下一步是在預定 Docker／Linux 環境驗證完整 CLI、Chrome、字體及 FFmpeg 依賴，並實際打開輸出檔案。Docker 內以非 root 執行 Chrome 時，注意 sandbox 與 `--no-sandbox` 需求、共享記憶體（`/dev/shm`）大小及 CJK 字型安裝（否則中文會變方塊）。
+
+---
+
+## 10. HTTP API、MCP 與 Creative Skills
+
+### 10.1 共用業務入口
+
+Browser 與 Agent 可以走不同 adapter，但必須共用：
+
+- Agent Bearer token／人類 session
+- App grant 與 Brand scope
+- Postgres／MinIO
+- Carousel Store 與 Project Store
+- 冪等、版本、audit 與 Provenance
+- 同一個 `renderCarousel()` 業務流程
+
+### 10.2 MCP
+
+正式 Transport：**Streamable HTTP**，單一端點 `/mcp`，使用官方 `@modelcontextprotocol/sdk` [已驗證：Streamable HTTP 自 2025-03-26 規格取代舊 HTTP+SSE，要求單一 endpoint；客戶端每個 JSON-RPC 訊息以 HTTP POST 送出，Accept 須同時列出 `application/json` 與 `text/event-stream`]。
+
+**協議版本釘選（新增）：**MCP 規格草案已出現 2026-07-28 修訂，改變了 Streamable HTTP 的行為（例如每個 POST 須帶 `MCP-Protocol-Version` 等請求 metadata header，伺服器對客戶端互動改用 MRTR）。因此：
+
+- 在 `HANDOFF.md` 記錄目前實作的 MCP 協議版本與 SDK 版本。
+- 驗收用的「官方 MCP client」必須與該版本相符。
+- 若升級 SDK 或協議版本，須重跑 initialize／tools／resources 驗收，並確認舊 client 向下相容。
+
+[本機工作樹] `package-lock.json` 目前鎖定 `@modelcontextprotocol/sdk@1.32.2`，server 與官方 client 測試使用同一 package。實際 initialize 協商出的 MCP protocol version 尚未記錄，不可由 SDK 版本自行推斷；須在下一次整合驗收讀取並記錄。
+
+Resources：
+
+- `headx://create/guide`
+- `headx://hyperframes/guide`
+
+核心 Tools（命名統一用底線；研究稿的 `brand.get_rules`、`asset.search`、`hf.*` 為舊命名，不再使用）：
+
+- `create_map`
+- `brand_get_rules`
+- `asset_search`
+- `kb_search`
+- `kb_get`
+- `template_list`
+- `project_get`
+- `project_claim`
+- `brief_submit`
+- `composition_submit`
+- `job_submit`
+- `job_status`
+- `review_checklist`
+- `tool_doctor`
+
+`job_submit(type='hyperframes')` 必須與 UI 使用同一條 Render 業務鏈。
+
+### 10.3 L0–L3 漸進式讀取
+
+| 層級 | 內容 | 目的 |
 |---|---|---|
-| **L0 地圖** | 品牌摘要、各模組索引、數量、最近更新、agent 能力與限制 | 每個 Project 開始 |
-| **L1 卡片** | id、標題、summary、狀態、tags、必要 facets | 初步篩選；一次小批量 |
-| **L2 詳情** | 選中頁的相關欄位、知識 chunk、Segment Description、Template manifest | 確定可能使用 |
-| **L3 原件** | 完整 Markdown、HTML、原圖、影片、完整版本資料 | 必須精確複製或視覺判斷時 |
+| L0 | 品牌與創作地圖、數量、能力與限制 | 開始工作，不一次讀完整資料庫 |
+| L1 | Material／Knowledge／Template 搜尋卡片 | 以 id、summary、tags、狀態收窄 |
+| L2 | 選中項目的詳情與 Knowledge chunks | 判斷是否適用及建立引用 |
+| L3 | 原圖、完整 Markdown、完整原件 | 只在精確製作或視覺判斷時讀取 |
 
-原型的 token 數字是**可配置初始建議**，不是寫死常數。預算由策略設定，每次超出要記理由。
+### 10.4 Creative Skills
 
-### 7.2 選擇次序
+`headx-creative-pack-MCPSkill` 中的 creative-director、brand-guardian、hyperframes-production 等是 Agent 工作指引：
 
-1. 先用品牌、地區、語言、渠道、格式、權利等硬條件收窄。
-2. 策略：品牌層 → 渠道層 → 格式層 → 步驟層 → 範例層。
-3. 知識：只選有效、適用地區正確且狀態可用的文件與段落。
-4. 模板：先硬過濾輸出與 slots，再按內容形狀、用途、品牌限制與系列關係選 Top-3。
-5. 素材：按模板逐 slot 搜尋；先看 L1／L2，需要構圖判斷才看 L3。
-6. 不合用可換說法重搜一次；仍缺就建立有規格的 Need，不無限搜尋。
-
-### 7.3 索引只是投影
-
-若採用統一 `index_card`，它必須：
-
-- 由事件或重建程式從各模組真相生成。
-- 可全量刪除再重建，不丟業務資料。
-- 不允許前端或 agent 直接改卡片來修改原物件。
-- 記錄 `source_id`、`source_version` 與索引更新時間。
-
-第一版可先用各模組 L0/L1 API 組成路由 facade，避免為了「統一索引」再建一個過早的大平台。
+- 它們不擁有另一份業務資料。
+- 不可繞過身份、版本、來源或權限。
+- 不可把「建議」自動變成品牌真相或人類決策。
+- 正式交付要驗證實際 MCP client 合約，而不是只檢查 `/mcp` route 存在。
+- 官方 HyperFrames skills 須與 CLI 版本一致（`npx hyperframes skills update`），以安裝版本為準。
 
 ---
 
-## 8. Materials：可找、可用、可追的原料
+## 11. 技術架構與資料一致性
 
-### 8.1 模型
+### 11.1 技術棧
 
-```text
-Asset（原檔、技術資料、來源、權利）
-  → Segment（相片一段；影片每鏡一段，含時間與關鍵幀）
-  → Description（固定詞彙＋結構化欄位＋少量自由描述）
-```
+- Frontend：React＋hash routing
+- Backend：Fastify＋Postgres
+- Shared contracts：`packages/contracts`
+- Shared shell：`packages/app-shell`
+- Design tokens：`packages/design-tokens`
+- Storage：MinIO／Storage interface
+- Renderer：HyperFrames CLI（Node.js 22+、FFmpeg、Chrome）
+- Agent interface：HTTP＋MCP Streamable HTTP
 
-第一版只做**相片**：每張一個 Segment。影片切鏡、語音、音樂、圖像向量與 GPU 佇列延後。
+### 11.2 Append-only
 
-### 8.2 入庫與使用
+以下歷史不可被普通 Update 改寫：
 
-- 人手上載是主要路徑；Needs 交付也是重要入口。
-- 原檔、縮圖與代理檔分開；原檔不可因代理檔可重生而降低備份等級。
-- 去重、尺寸、方向、EXIF 等可由確定性程式處理。
-- VLM 描述由外部 provider 回傳；系統保存 provider、模型、時間與結果版本。
-- 人只處理地點不確定、肖像同意、權利不明、詞表新增等需要判斷的項目。
-- AI 生成、圖庫、客戶提供與真人拍攝永久可分辨。
+- Project Request
+- Agent Run 歷史事實
+- Brief Version
+- Knowledge Version
+- Composition Version
+- Output
+- Output File
+- Provenance
 
-### 8.3 檢索與評估
+Migration trigger 與 integration tests 要提供反證，而不是只靠程式習慣。
 
-```text
-結構過濾 → 關鍵字／同義詞 → 可選向量 → 按用途與安全區重排
-```
+### 11.3 冪等
 
-- 回傳卡片必附「為何入選」與權利／同意警告。
-- 模組內搜尋與篩選是 Materials 功能，不是被禁止的全站搜尋。
-- 建立 30–50 條真實查詢的黃金集，先看 **Recall@5、非香港／不可用誤入率、實際採用率**。
-- pgvector、權重與模型選型必須由黃金集實測，不把原型公式當定律。
+Project、Brief、Composition、Render Job 等寫入使用：
 
----
+- `Idempotency-Key`
+- request hash
+- actor／request identity
 
-## 9. Knowledge 與 Posts
+同 key 同 request 應回同一結果；同 key 不同 request 必須拒絕，不可重複產生作品或 Render。
 
-### 9.1 Knowledge 必須早於第一條完整閉環
+### 11.4 交易可見性
 
-原規劃把 Knowledge 放後，但第一條 IG Carousel 已要求「已驗證知識」，所以最小 Knowledge 必須提前：
-
-- Markdown 正文＋frontmatter。
-- 來源、擷取日、適用地區、有效期、`review_by`、語言與敏感級別。
-- `unverified / verified / outdated`；AI 只能提交未驗證提案。
-- 人核對來源後才可標 verified；這是證據狀態，不是通用審批鏈。
-- L1 摘要、L2 chunk、引用 Citation；沒有依據的宣稱要標出。
-- 法規與醫療資料只作提醒，不能冒充法律或醫療意見。
-
-### 9.2 Posts 屬 Create 的輸出家族，不是知識真相
-
-- Knowledge 是來源；Posts 是整理後文章。
-- Posts 的編輯與輸出日後放 Create，與其他 composition 共用素材、知識引用與版本。
-- 第一版文章輸出建議乾淨 HTML＋SEO 資料；Gutenberg 與 WordPress REST 延後。
-- 外部發布始終由人操作。
+Transaction 內建立資料後，讀回必須使用同一 DB client；不可改用 pool 查一個尚未 commit、對外不可見的版本。
 
 ---
 
-## 10. Templates 與 Render
+## 12. 目前真實施工狀態
 
-### 10.1 Template 的四個部分
+最後整理：2026-11-17。以下是**本機工作樹 [本機工作樹]**狀態，不等於已部署給老闆使用。下列「曾通過」皆為歷史記錄，不是當前證據。
 
-1. `template.html`／CSS：版型與 slots。
-2. `manifest`：家族、角色、輸出、slot 型別與限制、適用／避免情況、品牌需求。
-3. `fixtures`：短文、長文、邊緣內容、缺圖與不同方向素材。
-4. 版本與預覽：同一版本可重現，預覽由真實模板與品牌資料生成。
+### 12.1 已有實際程式
 
-第一條縱切片只需要 IG Carousel 三件套：封面、內頁、CTA。完整 Template Studio、AI 草稿改版與跨渠道大批量模板延後。
+- Project／原始要求／Brief／Agent Run 與版本 API。
+- `ProjectFormat` 已接入 contracts、建立輸入、Store 及前端建立表單。
+- Carousel migration：Material、Knowledge、Composition、Render、Output、Provenance。
+- 確定性自動組稿。
+- HyperFrames project 生成、Render orchestration、MinIO Output 路徑與失敗處理。
+- Carousel HTTP API 與正式 MCP adapter。
+- Creative Workspace、Materials、Knowledge、Templates、Outputs 頁面。
+- Create Library 格式分類、搜尋與 compact preview cards。
+- Knowledge 文件樹及明確 create-versus-version 行為。
+- 非 Carousel Project 隱藏不適用的 Carousel Render 流程。
 
-### 10.2 品牌變身不是只換色
+### 12.2 曾實際通過的驗證（歷史）
 
-至少可由資料改變：
+- Contracts、Platform、App Shell、Web builds 曾在相關修改後通過。
+- 15 項 database／migration／Project／MCP integration tests 曾通過。
+- Design focused tests 曾通過，涵蓋建立、Brief、格式過濾、搜尋、組稿、Render API 回饋與 Output。
+- 58 項 shared-shell tests 曾通過。
+- 67 項 i18n contract tests 曾通過。
+- 官方 MCP client initialize、tools、resources 及同一份 Project 讀取曾通過。
+- Knowledge 新增／追加版本 regression test 曾通過。
 
-- 色彩角色與字體層級。
-- Logo 模式與安全範圍。
-- 圖形語言／ motif 與表面規則。
-- 留白、對齊、區塊次序與版式節奏。
-- 標題長度、敘事與語氣。
-- 圖像選擇與安全區。
+**注意：** 這些測試通過不涵蓋 HyperFrames 真實出圖；Render 相關測試若使用 stub／fixture，不可當作 Render 已驗收。
 
-驗收不能只看兩張不同顏色的圖；至少要有兩項非色彩差異。
+### 12.3 目前仍不能算完成
 
-### 10.3 Composition 與 placeholder
-
-- DB 保存 typed slot values、refs、template version、brand release、lint 與版本。
-- HTML composition 可存 MinIO；它是同一版本的派生可讀稿，不另成可隨意修改的第二真相。
-- placeholder 必須含 `need_id`、slot、需求規格與目前狀態。
-- Need 吸收後建立新 composition version；不改寫已 render 的舊版本。
-
-### 10.4 HyperFrames 與 Output Profiles
-
-HyperFrames 是外部 Render 層，不是業務資料庫。
-
-- scene 宣告 `still_at`；靜態輸出建議 `settled`。
-- 等字體載入、檢查溢出與安全區；失敗要可見。
-- 第一版輸出 `carousel-png`。
-- PPT 先做每頁圖片的 A 級；混合型之後才做；原生逐元素轉換不作承諾。
-- Blender 只接受模板 ID＋白名單參數；Lottie 入庫要檢查 expressions、腳本、尺寸與預覽。兩者均不在第一條縱切片。
-
----
-
-## 11. Needs：完整的人機協作閉環
-
-### 11.1 兩型與必填內容
-
-| 型 | 人交付 | agent 必須先給 |
-|---|---|---|
-| `deliverable` | 檔案、資料、相片、影片、文字 | 用途、規格、數量、格式、為何需要、引用位置、驗收條件 |
-| `decision` | 選擇、判斷、授權與理由 | **建議方案、依據、風險、選項與建議後的動作** |
-
-每張 Need 只問一件事，並連到 Project 及 composition slot／Brand gap 等實際位置。
-
-### 11.2 狀態與吸收
-
-```text
-deliverable：開立 → 待認領 → 進行中 → 已交付 → 已吸收 → 關閉
-                              ↘ 需要補件，回進行中
-decision：   開立 → 待認領 → 已裁決 → 已吸收 → 關閉
-                       ↘ 需要更多資料，補完再裁決
-```
-
-- 不可由「已上載」直接當完成。
-- 吸收包括結構化入庫、建立來源版本、回填 placeholder、重跑檢查與通知 Project。
-- 吸收失敗要留在已交付並顯示實際錯誤，不能假裝關閉。
-- Need Event 只追加；狀態與逾期盡量由事件與時間算出。
-
-### 11.3 介面
-
-- 頂欄 Needs：全app收件箱與「我負責」。
-- 頁面右欄：只看此 Project／Brand Page／Composition 的相關 Needs。
-- Need 詳情：要做甚麼、為何、規格、agent 建議、附件、回覆、吸收結果與完整事件。
-- 拍攝 Need 可附構圖、光線、方向、留白、參考圖；參考圖預設不是可直接出街素材。
-
-### 11.4 延後但保留位置
-
-去重、Need Link、多 Project 共用、拍攝 Bundle、路線與日程、外判 magic link、批次 decision 與通知升級。它們不是第一條縱切片的隱藏前置。
+1. **HyperFrames 真實五張 PNG／ZIP 未驗收。**
+2. **最新 migration 與 UI 尚未正式部署到 Docker 給老闆使用。**
+3. 最後一輪 design-token CSS 搬移曾被中斷，必須重新 build、lint 與跑測試；不可沿用先前綠燈當作目前工作樹證據。
+4. 完整測試曾發現舊 navigation assertions 與一個高並行 setup timeout；要分別收尾及確認。
+5. 最新 Project Library／Knowledge 參考畫面尚未完整同步 Ardot。
+6. HANDOFF、路由表、BACKEND FUNCTIONS MAP 與最終交付狀態仍有舊描述，完成部署時必須同步。
+7. Presentation／Video／Reels 只有共同 Project 骨架，尚未有各自完整 Renderer。
+8. 完整 Needs 交付／吸收、完整 Materials 權利系統、Posts／WordPress、Boss 跨模組摘要不是本條 Carousel 閉環已完成能力。
+9. MCP SDK 套件版已在本機 lockfile 核對為 1.32.2；實際協商的協議版本仍未記錄（見 10.2）。
+10. Project State 目標與現行 Store 有六項已查明的差距（見第 5 節程式核對），不得以狀態名存在就當流程已接通。
 
 ---
 
-## 12. Provenance、版本與反饋
+## 13. 現在唯一應執行的收斂順序
 
-### 12.1 每個 Output 必須能回答
+### Step 1：收尾目前工作樹
 
-- 用了哪個 Brand Release、哪些頁與版本？
-- 選了哪些 Strategy Docs 與版本？
-- 引用了哪些 Knowledge Doc／Chunk／來源？
-- 用了哪些 Material Segments、權利與描述版本？
-- 使用了哪些 Template versions 與 Output Profile？
-- 哪個 agent／人做了甚麼決定？何時？
-- 哪些 Needs 曾阻塞，如何被吸收？
-- render log、lint、檢查結果是甚麼？
+- 完成 Creative CSS 色值到 shared design tokens 的遷移。
+- 重跑 contracts／platform／app-shell／web builds。
+- 重跑 migration、Carousel、Project、MCP integration tests。
+- 重跑相關 Web tests、完整 suite、i18n、lint、boundaries 與 `git diff --check`。
+- 修真正由本輪引起的回歸；不再改產品架構。
 
-### 12.2 版本規則
+### Step 2：在 Docker 打通真實 HyperFrames
 
-- Brand Page、Knowledge、Template、Composition、Description 等內容版本只追加。
-- Output 永遠釘住建立時的來源版本。
-- 上游改變只產生「有新版／可能受影響」的提示，不靜靜改舊成品。
-- 已核准範例保留當時版本；重用時先列出新舊差異。
-- 可重建的索引、縮圖與預覽不冒充內容版本。
+- 對照 `docs/research/Tools/HYPERFRAMES.md` 與官方 CLI／Skills。
+- 補齊 Linux image 的 Node.js 22+、Chrome、FFmpeg／FFprobe、CJK 字型與 HyperFrames（目標 0.9.56，先確認可用）。
+- 以 `--help` 核對 9.2 所列旗標。
+- 先用官方 blank project 證明環境（`hyperframes doctor` 全綠、`check`、`snapshot` 成功），再用 HeadX Composition。
+- 記錄真命令、真錯誤與根因，不盲目換 renderer。
 
-### 12.3 反饋不是主觀風格分數
+### Step 3：完成一個真作品
 
-記錄具體結果：採用、拒絕、手改、修訂原因、素材不合、文案無依據、模板溢出、權利缺失等。這些資料可改善排序與提出策略修訂草稿；不產生沒有證據的「品牌相符度 92 分」。
+- 建立或選取一個 Carousel Project。
+- 選真 Brand、Materials、Knowledge 與三件套 Templates。
+- 建立五頁 Composition。
+- 產生五張 1080×1350 PNG 及 ZIP。
+- 實際打開每張圖檢查文字、頁序、素材與品牌，不只檢查 HTTP 201。
+- 下載 ZIP，檢查檔案與 Provenance。
+- 再做一次局部修訂，確認舊 Output 不變。
 
----
+### Step 4：部署與可見驗收
 
-## 13. Boss Portal 與策略
+- 套用 migrations，重建並啟動 Docker stack。
+- 讓老闆從 Create Library 實際走一次建立、組稿、Render、預覽與下載。
+- 最後才做一次針對性瀏覽器驗收，不重複無目的巡頁。
+- 同步 Ardot、HANDOFF、DECISIONS、BACKEND FUNCTIONS MAP 與項目記憶。
 
-### 13.1 總覽只看摘要
-
-Marketing Design 經摘要介面提供：
-
-- 活躍 Projects 與目前階段。
-- 未完成、逾期、阻塞 Needs。
-- 最近 Outputs 與待修訂數。
-- 已配置的 schedule／deadline 摘要。
-- 如老闆開啟特定批核項，才出現 approvals；否則不畫空批核儀表。
-
-Portal 不讀 Brand／Project／Output 的業務表，不在 Portal 改期、指派、吸收或改 Project 狀態。點卡片進入 Marketing Design 處理。
-
-### 13.2 甚麼可以在 Boss Portal 寫
-
-- 既有帳戶與部門管理例外照舊。
-- Strategy Docs／品牌頁策略由老闆在 Portal 編輯，因策略是老闆擁有的設定，不是 Project 業務操作。
-- 公司級批核配置、權利預設與 agent／provider 設定由有權老闆管理；密鑰不可回顯。
-
-### 13.3 全公司 Needs 是投影
-
-不是把部門 Needs 複製成中央可寫表，也不是 SQL UNION 各部門私有表。各部門透過 Registry／platform 介面提供一致卡片與 summary；Portal 顯示並導向來源 app。
+**在 Step 3 完成前，不開始另一輪全站 UI 重設計，也不擴展到完整 Presentation／Video Studio。**
 
 ---
 
-## 14. 資訊架構與 UI/UX 規則
+## 14. 第一條閉環 Definition of Done
 
-### 14.1 頂層模組
+只有全部成立才可說「完整 IG Carousel 已完成」：
 
-```text
-Marketing Design
-├─ Create
-│  ├─ Projects
-│  └─ Outputs
-├─ Brand
-│  ├─ 品牌主頁
-│  └─ 現有固定頁與自定義頁
-├─ Materials
-├─ Knowledge
-└─ Templates
-```
+### 使用者路徑
 
-- Needs 住外殼，不另建第六個業務模組。
-- Posts 日後是 Create 的輸出家族，不提前增加頂層 tab。
-- Create 的 Project detail 是工作台；Outputs 是成品庫，兩者共用同一批 Project／Composition 對象。
-- Brand selector 永遠選一個明確品牌，沒有「全部品牌」寫入上下文。
+- [ ] 在正確 Brand 下建立 Carousel Project。
+- [ ] 原始要求與 Brief 可讀回，重新整理不消失。
+- [ ] 能選擇真 Materials 與 Knowledge。
+- [ ] 能組成並直接編輯五頁作品。
+- [ ] 能儲存 Composition 新版本。
+- [ ] 能按真按鈕發起 HyperFrames Render。
+- [ ] 能在同一 Project 看見五張實際 PNG。
+- [ ] 能下載每張 PNG 與完整 ZIP。
+- [ ] 能查看 Provenance。
+- [ ] 能修訂並保留舊版 Output。
+- [ ] Library 找回作品時顯示真實預覽及正確狀態。
 
-### 14.2 關鍵畫面
+### 檔案與來源
 
-| 畫面 | 主要問題 | 主要動作 |
-|---|---|---|
-| Create／Projects | 現在有哪些工作，卡在哪裡 | 新增 Project |
-| Project Detail | 這件工作的 Brief、來源、缺口、稿件與輸出是甚麼 | 依階段只有一個主動作 |
-| Need Detail | 人要交付／判斷甚麼，agent 建議是甚麼 | 交付或裁決 |
-| Materials | 有哪些原料，權利與適用性如何 | 上載素材 |
-| Material Detail | 這段素材能否用於目前用途 | 修正權利／建立使用引用 |
-| Knowledge | 哪些知識可用、過期或被引用 | 新增知識 |
-| Knowledge Edit | 內容與來源是否完整 | 儲存新版本；有權者核對狀態 |
-| Templates | 哪個版型適合這個用途 | 新增／檢視模板 |
-| Template Detail | slots、fixtures、品牌預覽與 lint 如何 | 儲存草稿／建立版本 |
-| Brand Home | 品牌目前是誰、可否用、最近如何用 | 用此品牌建立 Project |
-| Brand Page | 這一頁決定甚麼、來源與缺口是甚麼 | 編輯並儲存新版本 |
-| Boss Portal | 全公司工作與補位負載如何 | 導向來源 app |
+- [ ] 五張 PNG 都是 1080×1350，頁序正確。
+- [ ] ZIP 可打開且包含同一組實際檔案（sha256 一致）。
+- [ ] 沒有空白、純雜訊、錯頁或外部占位圖；中文字體正常顯示，無方塊字。
+- [ ] 每個 body 頁引用真 Knowledge chunk。
+- [ ] 使用固定 Brand Release 與 Template versions。
+- [ ] 舊 Output 不因 Brand 或 Knowledge 後續修改而改變。
+- [ ] Render 失敗不會留下假成功 Output。
 
-### 14.3 Frame 視覺與互動硬規則
+### Agent 與工程
 
-- Apple HIG、白底黑字、系統字體堆疊；chrome 只用黑灰白。
-- `#0057FF` 只用於內容區主要寫入／確認動作與合法空狀態圖示。
-- 無全站搜尋、無深色 UI、無紫色漸層、無 emoji。
-- 平鋪內容用細線與留白分組；浮層才用柔和陰影。
-- 1440／1024／768 三個寬度都要真瀏覽器驗收；768 單欄、次要面板變抽屜或堆疊。
-- 不為「看起來豐富」加假圖表、假統計、假 badge 或裝飾性卡片。
-- 每個資料畫面都要有 loading、empty、error、success、permission 狀態。
-- 主要按鈕用真能力命名：`建立 Project`、`儲存新版本`、`建立 Render Job`；沒有模型執行時不寫「AI 立即生成」。
-- 所有 API／資料層改動都必須有可見畫面入口與真瀏覽器路徑。
-
-### 14.4 Edit／View／Agent 的落地方式
-
-不增加一套混亂的全域三頁導覽：
-
-- **View**：預設閱讀態，顯示決策、來源與狀態。
-- **Edit**：有權者明確按編輯；儲存後回閱讀態。
-- **Agent**：由伺服器同一 payload 生成的精簡輸出／抽屜，供複製與外部 agent API 使用；不是前端另砌一份摘要。
+- [ ] 官方 MCP client 可完成同一條必要工作鏈。
+- [ ] HTTP／MCP／UI 操作相同業務資料。
+- [ ] 冪等、append-only、權限及交易測試通過。
+- [ ] build、test、integration、lint、boundaries 全綠。
+- [ ] 最新 Docker 部署與實際 UI 驗收完成。
+- [ ] 文件與 Ardot 不再描述舊空殼為現況。
+- [ ] MCP 協議版本與 SDK 版本已記錄於 HANDOFF。
 
 ---
 
-## 15. 外部 agent、模型與 provider 邊界
+## 15. 明確延後，不阻塞目前閉環
 
-```text
-Browser／Staff／Boss
-       │
-       ▼
-Company OS API＋Permissions＋Postgres／MinIO
-       ▲
-       │ 同一套權限、版本與事件
-       │
-外部 agent（LLM 在 Company OS 外）
-       │ 讀 L0–L3；提交 Brief、提案、Composition、Route Log、吸收結果
-       │
-外部 VLM／生成模型／HyperFrames 等 providers
-```
+- 自動發佈到 Instagram／Facebook／其他平台。
+- 完整權利審批、肖像授權 workflow 或多層作品 approval。
+- Presentation 原生逐元素 PPT 編輯器（研究稿 A 級圖片 PPT 可作為日後第一版）。
+- Video／Reels 完整剪輯、配音、音樂與 MP4 Render。
+- 影片 Segment 切鏡與大型 VLM pipeline。
+- pgvector 與大型統一索引平台。
+- 完整 Template Studio 與大批量模板生成。
+- Posts／SEO／WordPress 發佈鏈。
+- 完整 Brand Foundation／Stage 0–4H 表單化。
+- Needs dedupe、bundle、外判與通知升級。
+- 跨機即時資料查詢或中央可寫業務資料庫。
 
-- 第一版使用有權限的 HTTP 介面；MCP 是之後的可選 adapter。
-- 外部 agent 沒有資料庫憑證，不可繞過 API 權限。
-- 每次寫入帶 actor、request identity、來源版本與事件。
-- provider 設定與密鑰不進 repo、日誌或 API 回應。
-- 敏感素材能否送雲端由策略決定；provider 離線不可靜靜改走另一條路。
-- 模型分工、成本與 token budget 以實測決定，不寫死某個模型永遠最好。
+這些項目可以在架構中保留位置，但不可令第一條 Carousel 閉環繼續等待。
 
 ---
 
-## 16. 第一條驗收縱切片
+## 16. 既定研究來源索引
 
-### 16.1 只驗證一件完整作品
+不要再猜方案；需要細節時按主題讀以下來源：
 
-**Moonic 滿月堂：一個關於經期前日常照顧的五頁 IG Carousel。**
-
-- 香港真實生活場景、真人實拍、權利與肖像同意明確。
-- 至少一份由合資格人士核對的 Knowledge，引用到具體段落；不作療效保證。
-- 使用 Brand Release、三個 Carousel Template 角色與一個明確 Output Profile。
-- 過程中刻意缺一张封面相片，完整走一次 deliverable Need 與吸收。
-- 外部 agent 與 renderer 是實際接入的 client／provider；測試可用 fixture，但不可把 fixture 當生產整合成功。
-
-示範內容只用於驗收，不可寫死成所有品牌的預設資料。
-
-### 16.2 必經路徑
-
-1. Staff 在 Create 輸入一句要求並建立 Project。
-2. 外部 agent 讀 L0，整理 Brief，記錄所選策略。
-3. agent 選取 Brand、Knowledge、Templates 與 Materials，留下 L0–L3 Route Log。
-4. 封面缺圖：建立有拍攝規格的 Need，同時能預覽帶 placeholder 的五頁 composition。
-5. Staff 在 Need 詳情上載相片；系統入庫，agent 完成 Description／Rights 檢查並吸收。
-6. Need 只有在回填新 composition version 後才關閉。
-7. 建立 Render Job，產生五張 1080×1350 PNG，存回 Create。
-8. 人查看 Output、Provenance 與檢查，要求一次局部修訂，再產生新版本。
-9. Boss Portal 看見正確摘要，點擊只導向 Marketing Design，不能在 Portal 改狀態。
-10. 所有公開發布仍由人在外部平台完成。
-
-### 16.3 完成閘
-
-- 五張圖真實存在、可開、可下載，尺寸與頁序正確。
-- 沒有無來源知識、過期權利、未處理 placeholder 或假品牌資料。
-- Provenance 覆蓋所有品牌、策略、知識、素材、模板與輸出版本。
-- 改 Brand 後舊 Output 不變；新 Revision 明確選用新舊 release。
-- 同一模板套到第二個內容不同的品牌，至少有兩項非色彩差異且不崩版。
-- Need 不可跳過吸收；重複交付與吸收失敗有可見處理。
-- agent 離線、render 失敗、權限不足、空庫均有真實畫面。
-- 1440／1024／768 無橫向溢出、文字裁切或無法觸達的 Needs。
-- 真瀏覽器走完側欄、頁面按鈕與空狀態等所有新建入口，不只跑 API 測試。
-
-### 16.4 必跑工程驗證
-
-```bash
-npm test
-npm run test:integration
-npm run lint
-npm run lint:boundaries
-npm run build
-npm run deploy:build && docker compose up -d
-```
-
-另加相關 migration 反證、權限測試、Render provider 合約測試與 Playwright 路徑。未執行的項目必須如實列明。
-
----
-
-## 17. 分期與施工依賴
-
-### Phase 0：統一規格
-
-- #93：本文、取捨、UI/UX、第一輪 issues。
-- 完成前不開實作；舊 #89 不得與新線並行。
-
-### Phase 1：工作骨架
-
-1. **#94** Marketing Design v3 導覽、路由與誠實空狀態。
-2. **#95** Project／Brief、外部 agent 接手狀態與 Project Detail；開工前須回答 U3。
-3. **#96** Need 詳情、回覆、吸收與 Project 關聯。
-
-### Phase 2：可信來源
-
-4. **#97** Materials 相片入庫、Asset／Segment／Description、權利與詳情；開工前須回答 U5。
-5. **#98** Materials 混合檢索、L1／L2、黃金查詢集與使用回饋。
-6. **#99** Knowledge Markdown、來源、verified 權限、chunk 與 citation。
-7. **#100** Templates manifest、slots、fixtures、lint 與 IG Carousel 三件套。
-
-### Phase 3：組稿與輸出
-
-8. **#101** Composition、placeholder、Provenance、外部 agent 寫入與修訂版本。
-9. **#102** HyperFrames `carousel-png`、Render Job、Output 儲存與下載；開工前須回答 U4。
-
-### Phase 4：中樞與整合驗收
-
-10. **#103** Brand Home v3，接上目前 release、Projects、Outputs、Needs 與來源頁。
-11. **#104** Boss Portal 的 Marketing Design／Needs 只讀摘要與策略入口。
-12. **#105** 第一條 IG Carousel 全閉環、兩品牌差異、響應式、Docker 與文件驗收。
-
-**實際施工次序是 #94 → #105，一次只開工一張，前一張 PR 合併後才開下一張。** 每張 issue 已列明 Ardot frame、Depends-on、現有程式範圍、明確授權的 platform／contracts 範圍、範圍外與先紅後綠驗收。若施工發現還需要未被授權的共享 UI、storage、provider 或 app-host 基礎設施，必須停下由規劃者另開獨立 issue，不可夾帶。
-
-現況反證已納入 issues：Need 現時只有列表／summary／claim，沒有完整 detail、事件與吸收 API；Files 的員工讀取主要是自己上載的檔案，不可假設已支援部門素材／Output 共享；Boss 目前沒有四 shape 的 summary provider registry；repo 亦沒有正式 Playwright harness。以上都不是現成能力。
-
-### Phase 5：縱切片證明後才擴展
-
-- Need 去重、Bundles、拍攝清單、外判與通知。
-- 圖片型 PPT、PDF、Posts／SEO、乾淨 HTML。
-- 完整 Template Studio、更多社交格式與黃金集擴充。
-- 影片 Segment、語音、音樂、GPU provider 佇列。
-- Creative Direction 固定頁與完整品牌建立／重塑流程。
-
-### Phase 6：專業與自我生長
-
-- Motion、Sound、3D、Product、UI／Service／Space 等可選專業模組。
-- Framework Engine：先手寫 Spec 驗證，再開放 AI 提議；啟用、L1 沙盒與 L2 晉級另決策。
-- Recipes、使用統計與策略修訂建議。
-- Blender、Lottie、更多 Render adapters。
-- 外部發布接駁只在獨立授權後設計，且最後按發送永遠是人。
-
-**刻意不一次開齊所有後續 issues。** 第一條閉環會暴露真實資料與 UX 問題；過早把 P5/P6 寫成施工命令，只會重複今次「各自很好、合起來不連」的問題。
-
----
-
-## 18. 原始構思採納矩陣
-
-| 來源／構想 | 決定 | 調整與理由 |
-|---|---|---|
-| Edit／View／Agent 三視圖 | **調整採納** | 同一 typed 資料；落地為閱讀、編輯與 server-generated Agent 輸出，不另造三套真相 |
-| L0–L3 漸進式路由 | **採納** | token 數字可配置；索引是可重建投影 |
-| Project Brief＋Route Log＋Composition＋Provenance | **採納** | 狀態盡量由事實推導；版本只追加 |
-| Asset→Segment→Description | **採納** | 第一版只做相片；影片之後 |
-| 混合檢索＋黃金查詢集 | **採納** | 權重、pgvector 與模型須實測 |
-| Template slots／manifest／fixtures／lint | **採納** | 先三個 Carousel 角色，完整 Studio 延後 |
-| 同模板跨品牌不只換色 | **採納** | 成為硬性驗收 |
-| HyperFrames＋Output Profile | **採納** | 外部 renderer；第一版只做 Carousel PNG |
-| 圖片型 PPT | **延後採納** | IG Carousel 證明後做；混合 PPT 再後 |
-| Knowledge 來源、有效期、地區、verified | **採納並提前** | 第一條閉環需要已驗證知識；AI 不可自證 |
-| Posts／WordPress 乾淨 HTML | **延後** | 歸 Create 輸出家族，不另建中央內容庫 |
-| Needs 兩型、decision 先建議、已吸收才完成 | **採納** | 與 Company OS 核心完全一致 |
-| Needs dedupe／Bundle／外判 | **延後採納** | 不阻塞第一條閉環 |
-| Framework Engine | **延後** | 先證明手寫 schemas 與完整閉環，避免先造通用引擎再造產品 |
-| Stage 0 商業與單位經濟 | **調整採納** | 留在 Brand Foundation Project；公司主檔不在 Marketing 複製 |
-| Stage 1 定位、核心張力、Anti-Persona | **採納** | 選定事實與探索證據分層保存 |
-| Stage 2 感官與材質方向 | **延後採納** | 建議可選 `direction` 頁；待 U2 拍板 |
-| Stage 3 Voice／Tone | **採納** | 擴充現有 `tone`，不改歷史 slot key |
-| Stage 4A 同內容同觸點比較候選 | **採納** | 是方向選擇的驗收方法，不是額外 approval gate |
-| Stage 4B–4E 專業模組 | **延後** | 按品牌業務選用，不成全公司必經流程 |
-| Stage 4F 十二渠道、九十一模板 | **作資料來源，非首期規格** | 平台政策與尺寸需持續查證；先一個渠道 |
-| Stage 4G 治理 | **分散採納** | 落在 release、rights、provenance、策略與例外事件 |
-| Stage 4H 生成契約與評估 | **採納** | 不採用主觀風格分數冒充品質 |
-| Creative Director／Brand Guardian skills | **調整採納** | 只作外部 agent 工作指引；不得覆寫無閘、權限與不缺料原則 |
-| Creative Pack MCP 原型 | **不視為現有能力** | 只有部分核心邏輯曾測試；完整 worker／MCP／自動觸發未驗收 |
-| 全渠道自動發布 | **拒絕列入目前計劃** | 與對外發送由人按下的不變量不符 |
-
----
-
-## 19. 待老闆拍板，不阻塞已界定的第一步
-
-| ID | 問題 | 建議 | 何時必須回答 |
-|---|---|---|---|
-| **U1** | Stage 0 Business Context 的長期擁有者 | 探索留 Project；公司主檔只引用；選定品牌摘要進 Brand | 實作品牌建立／重塑前 |
-| **U2** | 是否新增可選 `direction` 固定頁 | 是，但第一條縱切片後；先重用現有頁與 Project 候選 | 實作 Creative Direction 前 |
-| **U3** | 外部 agent 第一版 HTTP 身份與授權形式 | 用 request-scoped service identity＋現有 policy，不給 DB 憑證 | Project issue 開工前 |
-| **U4** | HyperFrames 的實際 endpoint、認證與本機測試拓撲 | 外部 provider；repo 只保存可配置 base URL 與安全契約 | Render issue 開工前 |
-| **U5** | 員工上載素材的預設權利 | 不明預設「需確認」；公司自家擁有須老闆策略明確設定 | Materials issue 開工前 |
-| **U6** | AI 生成圖作成品是否一律 decision Need | 建議公開用途預設需要；內部參考不必，最終由策略配置 | AI 生成素材前 |
-| **U7** | pgvector 與中文／英文檢索方案 | 先結構＋關鍵字，黃金集 spike 後決定 | 向量檢索 issue 前 |
-| **U8** | `Needs` 的產品顯示名 | 功能與 key 暫不改，避免無謂 migration | 純命名決定，隨時可後置 |
-
-worker 不得把「建議」欄直接寫成已拍板規格；若某 issue 需要答案，應在該 issue 停下列出證據。
-
----
-
-## 20. 現有文件與程式的遷移規則
-
-### 20.1 文件責任
-
-| 文件 | 責任 |
+| 主題 | 來源 |
 |---|---|
-| `docs/CONCEPT.md` | 全域 Company OS 真相；本文不改寫它 |
-| `docs/product/DECISIONS.md` | 新決策落地時追加；建議不得偷寫成已裁決 |
-| `docs/product/HANDOFF.md` | 今日程式、路由與已完成能力；每張實作 PR 同步 |
-| **本文** | Marketing Design v3 目標、對象邊界、分期與原始構思取捨 |
-| `docs/product/ui/brand/` | 現有 Brand v2 的實作歷史與對照；不再是新 v3 整體方向正本 |
-| `docs/product/MATERIAL-MODULE-PLAN.md` | 早期素材規劃；新工作以本文與對應 v3 issue 為入口，保留其中有價值的 provider／權利細節 |
-| `Perplexity idea/` | 原始研究與原型；不再要求每個 worker 全讀，不把原型聲稱為現有能力 |
-| Ardot 設計檔 | v3 目標畫面；施工 issue 必須指定相關 frame |
+| 整體工作與漸進式路由 | `docs/research/How HeadX work/` |
+| Materials 與 L0–L3 | `How HeadX work/03-Materials-素材檢索.md` |
+| Templates、slots、三件套 | `How HeadX work/04-Templates-模組.md` |
+| Knowledge、chunks、citations | `How HeadX work/05-Knowledge與Posts.md` |
+| Create、Composition、Output、Provenance | `How HeadX work/06-Create模組與漸進式路由.md` |
+| HyperFrames HTML 管線 | `How HeadX work/01-Hyperframes-HTML轉PPT管線.md` |
+| HyperFrames CLI 與環境 | `docs/research/Tools/HYPERFRAMES.md`；官方文件 https://hyperframes.heygen.com/packages/cli |
+| Edit／View／AI Agent 與品牌階段 | `docs/research/Branding/` |
+| MCP 與 Creative Skills | `docs/research/headx-creative-pack-MCPSkill/`；MCP 規格 https://modelcontextprotocol.io |
+| App／Brand／權限／據點與機器 | `docs/product/SCOPE-MODEL.md`、`FRAME-UIUX-HANDOFF.md`、`MULTI-MACHINE-ACCESS.md`、`DECISIONS.md` |
 
-### 20.2 程式遷移
-
-- 不修改已套用 migration；只新增。
-- Brand 固定頁與 payload 遷移要保留舊版本，以新增版本搬資料。
-- 不重寫已存在的 Brand Release、Output 或 Provenance 歷史。
-- 目前主要業務實作仍在 `apps/web` 與 `apps/platform`；`apps/design` 只有 manifest。
-- 新 issues 必須遵守現行 `web → api → domain → db` 與 package 邊界，不可假裝獨立 app-host 搬遷已完成。
-- 若要搬入真正 `apps/design/src`，另立不改行為的遷移 issue，不夾在功能 PR。
-- 新舊 UI 不得長期雙軌；每張 issue 說明取代哪個入口、保留哪些歷史路由與資料。
-
-### 20.3 Git／GitHub 現況注意
-
-- 本機曾有兩個 Brand v2.1/v2.2 恢復提交尚未出現在 GitHub `origin/main`。
-- `Perplexity idea/` 目前是未跟蹤目錄。
-- 因此「本機文件存在」不等於下一個 GitHub worker 能讀到；交付施工前要把相關文件與正確基線經 PR 發布。
-- 不自動提交或推送原始 Perplexity 檔；是否把研究原文入庫由老闆另決定。
+研究原型可作業務依據，但不可把原型裡的本地 mock、SQLite、假 Output 或未執行 worker 當成已接通產品。注意：`Tools/HYPERFRAMES.md` 內的版本描述（v0.1.15）與規則已較舊，**以實際安裝版本與官方文件為準**。
 
 ---
 
-## 21. Worker 施工檢查表
+## 17. 下一位 Agent 的開工規則
 
-每張實作 issue 都必須回答：
+1. 先讀本文，不要只讀最後一則對話或一張舊 issue。
+2. 明確說出目前在做哪一個縱切片，以及它如何通向真 Output。
+3. 修改前讀實際相關程式；不重讀所有研究資料，不重新發明已拍板方向。
+4. 每次改動都保持 UI、HTTP、MCP、DB 與文件的一致。
+5. 不把程式碼存在、測試 fixture、job row 或設計稿當成作品已生成。
+6. 不回頭改全域 App／Brand selector，除非老闆有新的明確決定。
+7. 不把 Library 再改回大卡片牆，也不把 Knowledge 文件樹藏回內容區雙側欄。
+8. 不新增沒有實際能力的 Presentation／Video 按鈕。
+9. 每完成一個可驗收步驟，更新本文的現況、HANDOFF 與 `.workbuddy/memory/`。
+10. 若發現本文與程式不一致，先查明並即時修正文件；不要讓下一個 session 再付一次理解成本。
+11. 引用外部工具行為（CLI 旗標、版本、協議）時，必須標明 [已驗證] 或 [待實測]。
 
-1. 這張只改哪一個對象與哪一條使用者路徑？
-2. Depends-on 是否全部合併？是否拿到最新正確基線？
-3. UI 對應 Ardot 哪個 frame？1440／1024／768 如何排列？
-4. 資料唯一來源是甚麼？哪些只是投影？
-5. 哪些是外部 agent／provider，repo 內實際只做甚麼？
-6. 空、錯、離線、無權、缺料、重複提交如何顯示？
-7. 版本、事件、Provenance、軟刪除與審計如何保留？
-8. 哪個測試會先紅？如何證明它不是永遠綠的假檢查？
-9. 使用者在 Docker 畫面哪裡看到改動？所有入口是否都走過？
-10. 不做甚麼？是否把後期功能偷塞進第一版？
+---
 
-**任何規格空白或矛盾：停手，在 issue 寫證據與具體問題，不猜。**
+## 18. 最終要記住的核心
+
+**我們不是在建一個有很多模組名稱的 App。**
+
+我們在建一個能長期累積公司品牌與內容資產、讓人和 Agent 共同創作、每次都能找回作品與來源，並且第一時間真正交付可下載 IG Carousel 的系統。
+
+目前資料骨架、MCP 與主要畫面已經推進很多，但**真正 HyperFrames 出圖及 Docker 可用版本仍是未完成的核心交付**。後續所有工作都應圍繞這個事實收斂，而不是再用更多設計或文件掩蓋它。
+
+---
+
+## 附錄 A：v4.0 → v4.1 變更記錄
+
+| 位置 | 變更 | 原因 |
+|---|---|---|
+| 0, 0.1 | 新增驗證標記；明訂與研究稿衝突時以本文為準 | 避免未驗證內容被當事實 |
+| 5 Project State | 補上各狀態推導條件，標明 `received` 含義 | 原文只列名稱，定義不明 |
+| 6.3 | 加入圖片解像度 Lint | 對應研究稿 80% 規則 |
+| 8.3 | 列出 Lint 項目 | 原文未具體 |
+| 9.1 | 版本 0.9.56 標為待實測；決定輸出為 1080×1350（非 2x） | 官方文件未確認此版本；與研究稿 2x 衝突 |
+| 9.2 | 區分已驗證與待實測旗標 | 官方資料僅確認 `check --json`、`snapshot --at` |
+| 9.3 | 補官方靜默錯誤規則與字體等待 | 可重現渲染 |
+| 9.5 | 補根因線索與排查順序、Docker 注意事項 | 該錯誤為 Puppeteer 類錯誤；FFmpeg 缺口與 Node 22+ 需求 |
+| 10.2 | 新增 MCP 協議版本釘選；標明工具命名統一用底線 | 規格已有 2026-07-28 修訂；研究稿用 `.` 命名 |
+| 12 | 明示「曾通過」為歷史；新增第 9 項未完成 | 避免舊綠燈被當證據 |
+| 14 | 新增中文字體、sha256、MCP 版本記錄項 | 提高驗收可檢查性 |

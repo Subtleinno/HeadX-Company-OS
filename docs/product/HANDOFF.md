@@ -3,13 +3,25 @@
 > `docs/INDEX.md` 是文件地圖，`AGENTS.md` 是規則。這一頁只管四件事：
 > **現在有什麼、怎樣跑起來、下一步做什麼、哪幾個坑別踩。**
 
-最後更新：2026-11-12 晚（品牌模組 v2：#55–#69 全部完成；整合驗收報告在 `BRAND-V2-ACCEPTANCE.md`，四項衝突待老闆決定，C126。另修 #87：既有品牌缺三個固定頁，migration `0020` 補齊，C127）
+最後更新：2026-11-17（Marketing Design 完整產品總圖已由老闆修訂為 `MARKETING-DESIGN-BLUEPRINT.md` v4.1；本頁部分路由與空殼描述仍是舊施工記錄，待目前工作樹驗證及部署後同步）
 
-> **2026-11-16 Marketing Design v3 規劃入口：**老闆已判定現有 Brand 方向失敗，要求重做整個 Marketing Design 閉環。新工作先讀 `MARKETING-DESIGN-BLUEPRINT.md`（#93）與 Ardot `https://ardot.tencent.com/file/748070210348880`，按新 issue 依賴施工；不要繼續把 #89 的未完成逐頁修補當成新一輪方向。本頁以下仍描述**目前程式現況**，不是 v3 已完成驗收。
+> **新 session 的產品入口：**先讀 `MARKETING-DESIGN-BLUEPRINT.md` v4.1。它已整合完整 Carousel 業務鏈、最新 Project Library／Knowledge 截圖資訊架構、五模組專用左欄、多格式骨架、HyperFrames、MCP／Skills、App／Brand selector、Boss／Super Admin、據點與機器，以及真實完成／未完成狀態。不要再由舊對話重新推測產品。
+>
+> **目前核心事實：**Carousel 資料模型、HTTP API、正式 MCP、創作工作台與 Library 已有本機程式及多項歷史測試記錄；但 HyperFrames 真實五張 PNG／ZIP 仍未驗收，最新工作樹亦未完成最後 lint／全量測試與 Docker 部署。不得把本頁舊「未做 MCP」或空殼描述當作最新決定，也不得宣稱完整生成閉環已完成。
+>
+> **本機依賴核對（不是執行驗收）：**`package-lock.json` 鎖定 HyperFrames `0.9.56` 與 `@modelcontextprotocol/sdk` `1.32.2`。HyperFrames Docker CLI／Render 可用性仍待實測；MCP initialize 實際協商的 protocol version 尚未記錄，不得由 SDK 版本推斷。Project State 的目標與本機程式差距見藍圖第 5 節。
+>
+> **2026-11-17 GitHub 施工佇列已重置：**老闆指示主要 agent 停止實作、只作規劃與管理，由 DeepSeek V4.1 Flash 執行。舊 53 張 issues（open＋closed）已全部刪除；完整備份在 `.workbuddy/github-backup/issues-before-v4.1-reset-2026-11-17.json`。新總控是 **#110**，批次為 #111–#120。每張已詳列 `docs/research/`（由既定研究稿正式提交）的必讀方案、程式範圍、施工步驟與驗收；這是**無人值守自主 loop**：前置未完成就自行完成，規格空白用 v4.1＋研究稿＋程式收斂，不向老闆提問或等待批准。每個可見增量都要即時更新 Docker UI，並在 issue 回報畫面、真實問題、證據與下一動作，讓老闆不靠程式碼也能持續看到進度。
+>
+> **老闆審閱原稿：**未修改副本保存於 `docs/product/reviewed/MARKETING-DESIGN-BLUEPRINT-v4.1-owner-reviewed.md`；產品正本仍是上層 `MARKETING-DESIGN-BLUEPRINT.md`。
+>
+> **2026-11-16 Marketing Design v3 歷史入口：**舊規劃追蹤 #93–#105；實際範圍與收斂次序已由上述 v4.1 總圖取代。舊 Ardot：`https://ardot.tencent.com/file/748070210348880`；本輪創作工作台 Ardot：`https://ardot.tencent.com/file/748129148813297`。
+>
+> **2026-11-16 全產品施工邊界：**產品範圍是整個 HeadX-Company-OS，包括 Boss Portal、共享外殼與其他部門 app；Marketing Design 只是第一條逐塊交付線，不是唯一可修改的程式區域。老闆已授權主要 agent 管理整個項目並以新規則取代舊範圍鎖，詳見 `AGENTS.md`「項目管理與施工規則」及 C128。若正確實作必須改共享導覽、權限、Frame、Boss Portal 或其他 app，可以直接施工，不必用局部 workaround 避開；但要保持單一業務真相與對象擁有權，並補上受影響 app 的測試及真瀏覽器驗收。#94 已把 768 平板導覽收回共享 `frame.css`，Design 與 Boss Portal 都以真瀏覽器驗證五個入口完整可見。交付仍一次完成一個可驗收縱切片，不把「全產品由同一位 agent 開發」理解成同時重寫所有模組。
 
 ## 開新 session 時，貼這一句就夠
 
-> 讀 `docs/product/HANDOFF.md`，然後按 §5 的頁面隊列，做我在 issue 指定的那一頁。只做那一頁。
+> 讀 `AGENTS.md` 的新施工規則與 `docs/product/HANDOFF.md`，以 §5 作現況起點，按老闆最新目標完成一個可用縱切片。需要改共享外殼、Boss Portal、platform 或其他 app 時直接一併完成，並補跨應用測試及文件。
 
 夜間 loop（無人值守）貼這一句：
 
@@ -23,8 +35,11 @@
 
 登入已經按身份落地：老闆去 Boss Portal，員工去所屬部門（現時只有 Marketing Design），
 未指派部門的員工會被擋住並講明原因。Boss Portal 的「人員與部門」可以真建立員工、真指派部門、
-真停用登入、真恢復（停用的逆操作）、真重設密碼。Design 的品牌頁可以真讀真寫，會記住每位員工上次工作的品牌，
-而開新品牌的入口只給老闆。其餘四個部門 app 仍然灰掉，並如實寫明未建。
+真停用登入、真恢復（停用的逆操作）、真重設密碼。Marketing Design 由 Create／Projects 進入，
+五個頂層模組是 Create、Brand、Materials、Knowledge、Templates；Needs 留在外殼。
+Brand 既有頁可以真讀真寫，會記住每位員工上次工作的品牌，開新品牌的入口只給老闆。
+Projects 已可建立、列表、詳情與保存原始要求；外部 agent 可用有授權的 HTTP token 接手並追加 Brief。Outputs、Materials、Knowledge、Templates 仍是固定路由與誠實空狀態，尚未接 CRUD。
+其餘四個部門 app 仍然灰掉，並如實寫明未建。
 
 ## 1. 程式碼在哪
 
@@ -134,8 +149,13 @@ curl -s https://hxd.subtle-inno.com/api/auth/state    # 應回 {"setupRequired":
 | `#/boss/sites/add` | 新增據點 | 第一、二步可用，第三步端點未存在 |
 | `#/boss/people/members` | 人員與部門：名單、建立員工（可一併選部門）、改部門、停用、恢復、重設密碼 | 可用，全部真寫入 |
 | `#/boss/policy/brand` | 品牌頁策略：六個槽的標準全文、每次儲存新增一版 | 可用，全部真寫入 |
-| `#/design` | 品牌模組：第一格是品牌主頁；品牌清單在頂欄品牌切換；記住上次品牌 | 可用；品牌主頁內容見 #39 |
-| `#/design/brand/home` | 品牌主頁：這個品牌是誰（一段）、標誌的預設用法、色彩角色的樣本、字體層級的樣本、語氣短例、每一頁的入口（含每張自定義頁）、缺頁 | 可用，全部真寫入（#39） |
+| `#/design`、`#/design/create/projects` | Create／Projects：按目前品牌讀真實列表；Staff 可建立 Project＋不可變原始要求；無權者不見新增入口 | 可用（#95），真寫入與重讀 |
+| `#/design/create/projects/:id/brief` | Project Detail：原始要求、實際 agent run、現行與歷史 Brief、actor／request ID；未接手可複製請求 | 可用（#95）；Composition／Render 未建 |
+| `#/design/create/outputs` | Create／Outputs：由真實 Project 產生的成品入口；未接 Render／Output API 前不顯示示範成品 | 路由與空狀態可用（#94）；CRUD 未建 |
+| `#/design/material/library` | Materials：素材、權利與適用範圍入口；不假設素材權利 | 路由與空狀態可用（#94）；入庫未建 |
+| `#/design/knowledge/list` | Knowledge：有來源、有效期與核對狀態的知識入口；不顯示未核實內容 | 路由與空狀態可用（#94）；CRUD 未建 |
+| `#/design/templates/library` | Templates：模板、版本、slots 與檢查結果入口；不顯示假模板或假預覽 | 路由與空狀態可用（#94）；CRUD 未建 |
+| `#/design/brand/home` | 品牌主頁：這個品牌是誰（一段）、標誌的預設用法、色彩角色的樣本、字體層級的樣本、語氣短例、每一頁的入口（含每張自定義頁）、缺頁 | 可用，全部真寫入（#39）；#94 保留深連結 |
 | `#/design/brand/color` | 色彩：九個寫死的角色分三組、淺色與深色各一套值、HEX／RGB／CMYK、階、准用與不准組合（即時算對比）、標誌可用角色 | 可用，全部真寫入（#35） |
 | `#/design/brand/type` | 字體：四個層級（display／heading／body／caption）各自指定家族、尺寸、行距、字重、最小尺寸、文字顏色；家族與授權（最多兩個）、中英配對、備用字、行長、對齊、錯誤用法 | 可用，全部真寫入（#38） |
 | `#/design/brand/logo` | 標誌：五類資產（Logo／Wordmark／Mark／Monogram／App icon 與 favicon 合起來一類）、主標誌、四種顏色模式各自的最小尺寸（螢幕 px／印刷 mm）與對應色彩頁角色、安全範圍 X、方向與組合、背景、何時用／怎樣用、錯誤用法 | 可用，全部真寫入（#36） |
@@ -196,8 +216,8 @@ Boss Portal 的導覽是五組：總覽｜據點與機器｜人員｜策略｜�
 
 | 位 | issue | 交付 | 開工前額外閘 | 狀態 |
 |---|---|---|---|---|
-| 1 | #94 | Marketing Design 導覽、路由與誠實空狀態 | #93 文件基線已合併 | 待施工 |
-| 2 | #95 | Project／Brief 與外部 agent 接手狀態 | U3 agent 身份與授權 | 待施工 |
+| 1 | #94 | Marketing Design 導覽、路由與誠實空狀態 | #93 文件基線已合併 | 功能已完成；待 integration 基線 #108 與 PR 合併 |
+| 2 | #95 | Project／Brief 與外部 agent 接手狀態 | U3 已由 C129 落實 | 功能完成；真 DB、前端、Docker、三寬度真瀏覽器驗收通過；生產 agent 未宣稱接通 |
 | 3 | #96 | Need 詳情、交付／裁決與吸收閉環 | #95 已合併 | 待施工 |
 | 4 | #97 | Materials 相片入庫、權利與詳情 | U5 預設權利；Files 共享權限必須在本張明確補齊 | 待施工 |
 | 5 | #98 | Materials 檢索、L1／L2 與黃金查詢集 | 不以 pgvector 為前置 | 待施工 |
@@ -337,9 +357,9 @@ Boss Portal 的導覽是五組：總覽｜據點與機器｜人員｜策略｜�
 ## 8. 誠實的未做清單
 
 - Needs：開立（MCP 端）、交貨、吸收、驗收、詳情頁、我負責分頁
-- Design：品牌模組 v2 已完成（#55–#69；七頁＝主頁／平台／色彩／字體／標誌／語氣／圖像＋已核准範例）；素材、知識、創作三個模組仍是空殼
+- Design：品牌模組 v2 已完成（#55–#69；七頁＝主頁／平台／色彩／字體／標誌／語氣／圖像＋已核准範例）
+- Design：#94 已有 Create 優先的五模組導覽與固定路由；#95 已接通 Project／Brief。Outputs、Materials、Knowledge、Templates 尚未接 CRUD；Composition、Needs 吸收、Render、Output 與 Provenance 仍未形成作品閉環
 - Design：品牌版本的介面（後端有 `brand_release` 與每頁版號，前端未曝露）
-- Design：素材、知識、創作三個模組的頁
 - Boss Portal：憑證與金鑰、批准紀錄、管理級成員、操作紀錄
 - 新增據點第三步（要後端收確認檔的端點）
 - 備份從未做過一次真正的「刪庫再還原」實測

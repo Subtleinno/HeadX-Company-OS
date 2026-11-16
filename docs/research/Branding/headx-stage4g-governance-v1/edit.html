@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-Hant"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Stage 04G · 跨媒體使用與治理 (Edit)</title><link rel="stylesheet" href="shared.css"/>
+<style>
+.layout{max-width:1220px;margin:0 auto;padding:40px 24px 100px;display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:36px;align-items:start}
+@media(max-width:960px){.layout{grid-template-columns:minmax(0,1fr)}.side{position:static!important}}
+.layout main{min-width:0}
+.kicker{font-family:var(--mono);font-size:.75rem;color:var(--accent);text-transform:uppercase;letter-spacing:.1em}
+h1{font-size:2rem;margin:8px 0 8px;letter-spacing:-.02em}.sub{color:var(--muted);margin:0 0 24px;font-size:.93rem}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:24px;margin-bottom:22px;scroll-margin-top:70px}
+.card h2{margin:0;font-size:1.06rem}.card .num{font-family:var(--mono);font-size:.72rem;color:var(--muted);display:block;margin-bottom:2px}
+.head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;margin-bottom:10px}
+.part{border-top:1px solid var(--line);margin-top:16px;padding-top:14px}.part:first-of-type{border-top:0;margin-top:4px;padding-top:0}
+.part h3{margin:0 0 2px;font-size:.92rem}.hint{font-size:.8rem;color:var(--muted);margin:0 0 10px;max-width:80ch}
+.btn-ai{background:var(--soft);color:var(--accent);border:1px solid #BFDBFE;padding:5px 11px;border-radius:7px;font-size:.76rem;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit}
+.btn-ai:hover{background:#DBEAFE}.btn-ai.ghost{background:#fff;color:var(--muted);border-color:var(--line)}
+.count{font-size:.76rem;color:var(--muted);font-family:var(--mono)}
+.gt{font-family:var(--mono);font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:14px 0 8px;padding-top:10px;border-top:1px dashed var(--line)}.gt:first-child{border-top:0;margin-top:2px;padding-top:0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}.grid.wide{grid-template-columns:repeat(auto-fill,minmax(270px,1fr))}
+.opt{border:1px solid var(--line);border-radius:10px;padding:9px 12px;background:var(--bg);text-align:left;cursor:pointer;font-family:inherit;color:inherit}
+.opt:hover{border-color:#b8b8b0}.opt[aria-pressed=true]{background:var(--ink);color:#FFF;border-color:var(--ink);box-shadow:0 0 0 3px rgba(37,99,235,.25)}
+.opt b{display:block;font-size:.85rem}.opt span.d{display:block;font-size:.73rem;opacity:.78;margin-top:2px}.opt .tagrow{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}.opt .tg{font-size:.62rem;font-family:var(--mono);border:1px solid currentColor;border-radius:999px;padding:0 6px;opacity:.85}
+.row{display:flex;gap:8px;margin-top:10px}.row input{flex:1}
+input[type=text],textarea,select{width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--line);background:var(--bg);font-family:inherit;font-size:.88rem;color:var(--ink);outline:none}
+textarea{resize:vertical}input:focus,textarea:focus,select:focus{border-color:var(--accent);background:#FFF}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.chip{font-size:.78rem;padding:3px 10px;border-radius:999px;background:var(--bg);border:1px solid var(--line)}.chip button{border:0;background:none;cursor:pointer;color:var(--muted)}
+.tf{margin-bottom:12px}.tf label{display:block;font-size:.8rem;font-weight:600;margin-bottom:3px}.tf small{display:block;color:var(--muted);font-size:.72rem;margin-bottom:4px}
+.numgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px 14px}
+.note{background:var(--soft);border:1px solid #BFDBFE;border-radius:12px;padding:10px 14px;font-size:.8rem;margin-bottom:14px}
+.det{margin-top:12px;display:grid;gap:8px}.det>div{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-size:.8rem}.det b{font-size:.84rem}.det dl{margin:6px 0 0;display:grid;grid-template-columns:70px 1fr;gap:2px 10px}.det dt{color:var(--muted)}.det dd{margin:0}
+table.ct{width:100%;border-collapse:collapse;font-size:.78rem;background:var(--bg);border-radius:10px;overflow:hidden}.ct td,.ct th{border-bottom:1px solid var(--line);padding:5px 8px;text-align:left;vertical-align:middle}.ct th{font-family:var(--mono);font-size:.64rem;color:var(--muted);font-weight:500}.ct .ok{color:var(--ok);font-weight:600}.ct .no{color:var(--danger);font-weight:600}.ct .wn{color:var(--warn);font-weight:600}.ct input,.ct select{padding:5px 7px;font-size:.76rem;min-width:96px}
+.tw{overflow-x:auto;max-width:100%}.ctl{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0}
+.cell{border:1px solid var(--line);border-radius:6px;padding:4px 8px;font-size:.74rem;cursor:pointer;background:#fff;font-family:inherit;min-width:54px}.cell[data-v="A"]{background:#E6F4EA;color:#14532D;border-color:#86EFAC}.cell[data-v="C"]{background:#FEF3C7;color:#78350F;border-color:#FCD34D}.cell[data-v="X"]{background:#FEE2E2;color:#7F1D1D;border-color:#FCA5A5}
+.sw{display:inline-block;width:12px;height:12px;border-radius:3px;border:1px solid #ccc;vertical-align:-2px;margin-right:3px}
+.side{position:sticky;top:70px;display:flex;flex-direction:column;gap:14px}
+.meter{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
+.bar{height:8px;background:var(--line);border-radius:99px;overflow:hidden;margin:8px 0 12px}.bar>i{display:block;height:100%;background:var(--ink);transition:width .25s}
+.meter ul{list-style:none;margin:0;padding:0;font-size:.8rem}.meter li{padding:2px 0}.meter a{color:var(--muted);text-decoration:none}.meter li.done a{color:var(--ok)}
+.meter li.done::before{content:"✓ ";color:var(--ok)}.meter li:not(.done)::before{content:"○ ";color:var(--muted)}
+.side .btn-ai{display:block;width:100%;margin-top:8px;text-align:center}
+.chk li{font-size:.76rem;margin-bottom:6px;line-height:1.45}.chk .warn{color:var(--warn)}.chk .error{color:var(--danger)}.chk .info{color:var(--muted)}
+.stg{font-size:.76rem;display:grid;grid-template-columns:1fr auto;gap:2px 8px}.stg .y{color:var(--ok)}.stg .n{color:var(--muted)}
+dialog{border:1px solid var(--line);border-radius:16px;padding:24px;max-width:640px;width:92%}dialog::backdrop{background:rgba(0,0,0,.35)}
+dialog textarea{min-height:200px;font-family:var(--mono);font-size:.78rem}dialog .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+dialog .res{font-size:.8rem;margin-top:10px;color:var(--ok)}dialog .err{color:var(--danger)}
+</style></head><body>
+<nav class="topbar"><div class="brand-tag">COMPANY OS · BRAND STAGE 04G · 跨媒體使用與治理</div>
+<div class="nav-links"><a class="nav-pill active" href="edit.html">Edit</a><a class="nav-pill" href="view.html">View</a><a class="nav-pill" href="agent.html">AI Agent</a></div></nav>
+<div class="layout"><main>
+<span class="kicker">Stage 04G · Cross-media Use &amp; Governance</span>
+<h1>跨媒體使用與治理</h1>
+<p class="sub">讓品牌系統在真實世界不走樣：<b>色彩打樣登記冊</b>（核准者、日期、色票或 ICC 版本、印刷廠與工單、自動計算有效期與過期）、<b>配色變體 × 場景矩陣</b>（允許／有條件／禁止，並用 4B 的對比數據檢查）、觸點矩陣、檔案格式與命名檢查、標誌最小尺寸／留白／禁用、授權登記與到期提醒、跨媒體無障礙、責任矩陣（RACI 驗證）、例外登記與稽核。完成後輸出 governance.json、矩陣 CSV、登記冊 CSV、使用規則、稽核清單與設計 Agent 守門規則。</p>
+<div class="note"><b>注意：</b>原型資料只存在你的瀏覽器。選項內容是通用知識的起始草案，尚未逐項查證。<b>登記冊是內部管理工具，不是法律文件；原型不能代替人類核准打樣、授權或例外，也不會偽造核准紀錄。</b>授權範圍以合約為準，你須請合資格專業人士確認；AI 生成素材的條款因工具而異。印刷色以印刷廠與打樣為準（PDF/X 版本的要求以印刷廠為準）；PDF 無障礙須用輔助科技驗證。日期以你電腦的今天計算過期與到期。沒有風格相符度分數。AI 提案不等於核准。</div>
+<div id="cards"></div>
+</main>
+<aside class="side"><div class="meter"><b id="pct"></b><div class="bar"><i id="barfill"></i></div><ul id="mlist"></ul></div>
+<div class="meter"><b style="font-size:.84rem">前階段匯入</b><div class="stg" id="stg" style="margin-top:8px"></div><button class="btn-ai" id="impstage">匯入 Stage 0–4F brief JSON（可多選）</button><input type="file" id="stagefile" accept="application/json" multiple hidden/></div>
+<div class="meter chk"><b style="font-size:.84rem">一致性與硬限制檢查</b><ul id="chk" style="margin-top:8px"></ul></div>
+<div class="meter"><button class="btn-ai" id="copyctx" style="margin:0">複製『前階段＋目前選擇』給 AI</button><button class="btn-ai" id="paste">貼回 AI 結果</button><button class="btn-ai" id="expb">匯出 stage4g-brief.json</button><button class="btn-ai" id="imp">匯入 4G JSON</button><button class="btn-ai" id="reset" style="color:var(--danger);border-color:#f3c0c0;background:#fff">全部清空</button><input type="file" id="file" accept="application/json" hidden/></div></aside></div>
+<dialog id="dlg"><b>貼回 AI 結果</b><p class="hint" style="margin:6px 0 12px">把 AI 討論結尾附的 JSON 整段貼上。選項會自動對應；登記冊（reg、lic、exc）、責任矩陣（raci）與配色變體矩陣（cwm）也會填入。核准者與日期請務必由人類確認。</p>
+<textarea id="pt" placeholder='{"media":["網站"],"proofValidity":"24 個月"}'></textarea><div class="res" id="pres"></div>
+<div class="actions"><button class="btn-ai ghost" id="pc">關閉</button><button class="btn-ai" id="pa">套用</button></div></dialog>
+<div class="toast" id="toast"></div>
+<script src="options.js"></script><script src="core.js"></script><script src="prompts.js"></script>
+<script>
+const $=id=>document.getElementById(id);const S=load();
+function toast(m){const t=$("toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2200)}
+const persist=()=>{save(S);meter()};
+const CARDS=[
+ {id:"scope",num:"01",title:"範圍、負責人與核准模式",prompt:"scope",parts:[{text:["brandName","owner"],grid:1},{cat:"media"},{cat:"touchpoints"},{cat:"distribution"},{dim:"approvalMode"}]},
+ {id:"proof",num:"02",title:"色彩打樣登記冊",prompt:"proof",parts:[{dim:"proofValidity"},{dyn:"reg"}]},
+ {id:"matrix",num:"03",title:"配色變體 × 場景：允許與禁止",prompt:"matrix",parts:[{dyn:"matrix"}]},
+ {id:"tpm",num:"04",title:"觸點矩陣",prompt:"scope",parts:[{dyn:"tpm"}]},
+ {id:"files",num:"05",title:"檔案格式、命名與版本",prompt:"files",parts:[{cat:"fileFormats"},{dim:"namePattern"},{dim:"versionScheme"},{text:["n_brand","n_asset","n_variant","n_size","n_ver","n_ext","n_date"],grid:1},{text:["file_samples"]},{dyn:"naming"}]},
+ {id:"logo",num:"06",title:"標誌最小尺寸、留白與禁用",prompt:"logo",parts:[{text:["lm_px","lm_mm"],grid:1},{dim:"logoClear"},{text:["lc_note"]},{cat:"prohibited"},{text:["mis1","mis2","mis3"]}]},
+ {id:"license",num:"07",title:"授權登記冊",prompt:"license",parts:[{cat:"licenseTypes"},{dim:"licenseWarn"},{dyn:"lic"}]},
+ {id:"a11y",num:"08",title:"跨媒體無障礙",prompt:"a11y",parts:[{cat:"a11yUse"}]},
+ {id:"gov",num:"09",title:"責任矩陣（RACI）與例外登記",prompt:"governance",parts:[{dim:"exceptionMax"},{dyn:"raci"},{dyn:"exc"}]},
+ {id:"audit",num:"10",title:"稽核、禁區與一句話",prompt:"audit",parts:[{cat:"audit"},{dim:"reviewCadence"},{cat:"avoidGov"},{text:["st_note","statement"]}]}
+];
+function textPart(ids,grid){const h=ids.map(id=>{const t=TEXT_BY[id];return `<div class="tf"><label for="t-${id}">${t.label}</label>${t.help?`<small>${t.help}</small>`:""}${t.rows>1?`<textarea id="t-${id}" data-t="${id}" rows="${t.rows}" placeholder="${esc(t.ph)}"></textarea>`:`<input type="text" id="t-${id}" data-t="${id}" placeholder="${esc(t.ph)}"/>`}</div>`}).join("");return grid?`<div class="numgrid">${h}</div>`:h}
+function catPart(k){const c=CAT[k];return `<div class="part"><h3>${c.title}</h3><p class="hint">${c.hint||""}</p><div class="count" id="cnt-${k}"></div><div id="cat-${k}"></div><div class="det" id="det-${k}"></div><div class="row"><input type="text" data-cust="${k}" placeholder="沒有適合的？自訂一項（Enter 新增）"/><button class="btn-ai" data-add="${k}" type="button">新增</button></div><div class="chips" id="chips-${k}"></div></div>`}
+function dimPart(id){const d=DIM(id);return `<div class="part"><h3>${d.title}</h3>${d.q?`<p class="hint">${d.q}</p>`:""}<div class="grid wide" id="dim-${id}" role="group"></div></div>`}
+const DYNT={reg:"打樣登記冊（有效期與過期自動計算）",matrix:"配色變體 × 場景矩陣（點擊格子切換：未定 → 允許 → 有條件 → 禁止）",tpm:"觸點矩陣：格式、尺寸、配色變體、負責人、核准、限制",naming:"命名產生器與現有檔名檢查",lic:"授權登記冊（到期自動計算）",raci:"責任矩陣（R 執行、A 最終負責、C 諮詢、I 知會；每行只能有一個 A）",exc:"例外登記"};
+const cardsEl=$("cards");
+CARDS.forEach(c=>{const el=document.createElement("section");el.className="card";el.id="c-"+c.id;
+  el.innerHTML=`<div class="head"><div><span class="num">${c.num}</span><h2>${c.title}</h2></div><button class="btn-ai" data-p="${c.prompt}">複製討論提示詞</button></div>`+c.parts.map(p=>p.cat?catPart(p.cat):p.dim?dimPart(p.dim):p.dyn?`<div class="part"><h3>${DYNT[p.dyn]}</h3><div id="dyn-${p.dyn}"></div></div>`:`<div class="part">${textPart(p.text,p.grid)}</div>`).join("");cardsEl.appendChild(el)});
+function tagsHTML(k,i){const a=[];if(i.risk)a.push("須確認授權範圍");if(i.pro)a.push("須專業人士判斷");if(i.n1&&i.n2&&k==="touchpoints")a.push(i.n1+"×"+i.n2);return a.length?`<div class="tagrow">${a.map(x=>`<span class="tg">${x}</span>`).join("")}</div>`:""}
+function renderCat(k){const c=CAT[k];
+  $("cat-"+k).innerHTML=c.groups.map(g=>`<div class="gt">${g.g}</div><div class="grid">${g.items.map(i=>`<button type="button" class="opt" aria-pressed="${S[k].includes(i.id)}" data-k="${k}" data-id="${i.id}"><b>${esc(i.zh)}</b><span class="d">${esc(i.desc||i.note||"")}</span>${tagsHTML(k,i)}</button>`).join("")}</div>`).join("");
+  $("cnt-"+k).textContent=`已選 ${count(k,S)}${c.max<90?" / 建議最多 "+c.max:""}`;
+  $("chips-"+k).innerHTML=S.custom[k].map((t,i)=>`<span class="chip">${esc(t)} <button data-del="${k}:${i}" aria-label="移除">✕</button></span>`).join("");
+  $("det-"+k).innerHTML=S[k].map(id=>byId(k,id)).filter(i=>i&&i.avoid&&i.avoid!=="-").map(i=>`<div><b>${esc(i.zh)}</b><dl><dt>注意</dt><dd>${esc(i.avoid)}</dd>${i.fit?`<dt>適用</dt><dd>${esc(i.fit)}</dd>`:""}${i.pair?`<dt>配搭</dt><dd>${esc(i.pair)}</dd>`:""}</dl></div>`).join("")}
+function renderDim(id){const d=DIM(id);$("dim-"+id).innerHTML=d.opts.map(o=>`<button type="button" class="opt" aria-pressed="${S.dims[id]===o.id}" data-dim="${id}" data-o="${o.id}"><b>${esc(o.zh)}</b><span class="d">${esc(o.desc)}</span></button>`).join("")}
+function fillTexts(){document.querySelectorAll("[data-t]").forEach(t=>{t.value=S.text[t.dataset.t]||""})}
+// ---- 登記冊 ----
+const typeOpts=()=>CAT.licenseTypes.groups[0].items.map(i=>i.zh);
+function rowsTable(key,cols,statusCol){const arr=S[key];const head=cols.map(c=>`<th>${c[1]}</th>`).join("")+(key==="reg"?"<th>有效至</th><th>狀態判斷</th>":key==="lic"?"<th>狀態</th>":"")+"<th></th>";
+  const body=arr.map((r,i)=>`<tr>${cols.map(([f])=>{let inp;if(key==="reg"&&f==="status")inp=`<select data-row="${key}|${i}|${f}">${PSTATUS.map(x=>`<option ${r[f]===x?"selected":""}>${x}</option>`).join("")}</select>`;else if(key==="lic"&&f==="type")inp=`<input type="text" list="dl-type" data-row="${key}|${i}|${f}" value="${esc(r[f]||"")}"/>`;else inp=`<input type="text" data-row="${key}|${i}|${f}" value="${esc(r[f]||"")}"/>`;return `<td>${inp}</td>`}).join("")}${key==="reg"?`<td id="rg-exp-${i}"></td><td id="rg-st-${i}"></td>`:key==="lic"?`<td id="lc-st-${i}"></td>`:""}<td><button class="btn-ai ghost" data-delrow="${key}:${i}">刪除</button></td></tr>`).join("");
+  return `<div class="tw"><table class="ct"><tr>${head}</tr>${body||`<tr><td colspan="${cols.length+3}" style="color:var(--muted)">還沒有紀錄。</td></tr>`}</table></div>`}
+function updDerived(key){if(key==="reg")S.reg.forEach((r,i)=>{const pi=proofInfo(S,r),e=$("rg-exp-"+i),st=$("rg-st-"+i);if(e)e.textContent=fmtD(pi.exp)||"—";if(st){st.textContent=pi.state+(pi.left!=null&&r.status==="已核准"&&pi.left>=0?`（${pi.left} 天）`:"");st.className=pi.state==="已核准"?"ok":/過期|未通過/.test(pi.state)?"no":"wn"}});if(key==="lic")S.lic.forEach((r,i)=>{const li=licInfo(S,r),st=$("lc-st-"+i);if(st){st.textContent=li.state+(li.left!=null?(li.left<0?`（已逾 ${-li.left} 天）`:`（還有 ${li.left} 天）`):"");st.className=li.state==="有效"?"ok":li.state==="已過期"||li.state==="日期格式錯誤"?"no":"wn"}})}
+function dynReg(){$("dyn-reg").innerHTML=`<datalist id="dl-type">${typeOpts().map(t=>`<option>${t}</option>`).join("")}</datalist><div class="ctl"><button class="btn-ai" data-addrow="reg">＋ 新增一筆</button><button class="btn-ai ghost" id="seedReg">從 4B 色彩輸出預填</button></div>${rowsTable("reg",PROOFCOLS)}<p class="hint" style="margin-top:6px">有效至＝打樣日期＋有效期（${(picked(S,"proofValidity")||{zh:"未定"}).zh}）。狀態為「已核准」卻缺核准者、日期、印刷廠或色票／ICC 版本，檢查器會警告；日期須用 YYYY-MM-DD。核准必須由人類執行。</p>`;updDerived("reg");$("seedReg").onclick=()=>{const n=seedFromStages(S);persist();renderTables();toast(n?`已預填 ${n} 筆`:"沒有可預填的資料（須先匯入 4B，且登記冊為空）")}}
+function dynLic(){$("dyn-lic").innerHTML=`<div class="ctl"><button class="btn-ai" data-addrow="lic">＋ 新增一筆</button><button class="btn-ai ghost" id="seedLic">從 4C／4F 預填（字體、音樂、AI 人聲、KOL）</button></div>${rowsTable("lic",LICCOLS)}<p class="hint" style="margin-top:6px">到期提醒期：${(picked(S,"licenseWarn")||{zh:"未定"}).zh}。到期日留空代表你沒填：請註明是永久授權還是未填。範圍以合約為準；這不是法律意見。</p>`;updDerived("lic");$("seedLic").onclick=()=>{const n=seedFromStages(S);persist();renderTables();toast(n?`已預填 ${n} 筆`:"沒有可預填的資料（須先匯入 4C／4F，且登記冊為空）")}}
+function dynExc(){$("dyn-exc").innerHTML=`<div class="ctl"><button class="btn-ai" data-addrow="exc">＋ 新增一筆</button></div>${rowsTable("exc",EXCCOLS)}<p class="hint" style="margin-top:6px">例外必須有原因、核准者與到期日；上限：${(picked(S,"exceptionMax")||{zh:"未定"}).zh}。沒有期限的例外會變成規則。</p>`}
+// ---- 矩陣 ----
+function dynMatrix(){const names=cwNames(S);$("dyn-matrix").innerHTML=`<div class="ctl"><button class="btn-ai" id="sugg">套用建議（只填未定的格子）</button><button class="btn-ai ghost" id="csvM">複製 CSV</button><span class="hint" style="margin:0">${S.s4b?"配色變體來自 4B（含文字對比）":"尚未匯入 4B：使用預設變體名稱"}</span></div><div class="tw"><table class="ct"><tr><th>配色變體</th><th>對比</th>${CTX.map(c=>`<th><label style="font-weight:400;display:flex;gap:4px;align-items:center"><input type="checkbox" data-ctxoff="${c.id}" ${S.ctxOff[c.id]?"":"checked"} style="min-width:0;width:auto"/>${c.zh}</label></th>`).join("")}<th>條件與備註</th></tr>${names.map((n,i)=>{const ci=cwInfo(S,n);return `<tr><td><b>${esc(n)}</b>${ci?`<br><span class="sw" style="background:${esc(ci.bg||"#fff")}"></span><span class="sw" style="background:${esc(ci.fg||"#fff")}"></span><span class="sw" style="background:${esc(ci.ac||"#fff")}"></span>`:""}</td><td>${ci&&ci.tr!=null?`<span class="${ci.tr>=4.5?"ok":"no"}">${ci.tr}:1</span>`:"—"}</td>${CTX.map(c=>{const v=cwCell(S,n,c.id);return `<td style="${S.ctxOff[c.id]?"opacity:.35":""}"><button class="cell" data-v="${v}" data-cwc="${i}|${c.id}">${CWSTATE[v]}</button></td>`}).join("")}<td><input type="text" data-cwnote="${i}" value="${esc(S.cwnote[n]||"")}" placeholder="條件"/></td></tr>`}).join("")}</table></div><p class="hint" style="margin-top:6px">取消勾選＝該場景不適用。建議只是起點，由名稱關鍵字推斷（單色黑、單色白、灰階、高對比、照片上、深色…），每一格都須由人類決定。文字對比低於 4.5:1 的變體不應在文字場景被允許。</p>`;
+  $("sugg").onclick=()=>{applySuggest(S);persist();dynMatrix();toast("已套用建議到未定的格子")};$("csvM").onclick=()=>navigator.clipboard.writeText(matrixCSV(S)).then(()=>toast("已複製 CSV"),()=>toast("無法寫入剪貼簿"))}
+// ---- 觸點 ----
+function dynTpm(){const its=items("touchpoints",S);if(!its.length){$("dyn-tpm").innerHTML='<p class="hint">在第 1 張卡片選擇觸點後，這裡會有一行一個觸點。</p>';return}const names=cwNames(S);
+  $("dyn-tpm").innerHTML=`<div class="tw"><table class="ct"><tr><th>觸點</th>${TPMCOLS.map(c=>`<th>${c[1]}</th>`).join("")}</tr>${its.map(i=>{const r=tpmRow(S,i.id);return `<tr><td><b>${esc(i.zh)}</b><br><small style="color:var(--muted)">${esc(i.note||"")}${i.n1?`（${i.n1}×${i.n2}）`:""}</small></td><td><input type="text" data-tpm="${i.id}|fmt" value="${esc(r.fmt)}" placeholder="例 SVG、PDF/X"/></td><td><input type="text" data-tpm="${i.id}|size" value="${esc(r.size)}" placeholder="${esc(i.n1?i.n1+"×"+i.n2:"")}"/></td><td><select data-tpm="${i.id}|cw"><option value="">—</option>${[...names,"（多個）"].map(n=>`<option ${r.cw===n?"selected":""}>${esc(n)}</option>`).join("")}</select></td><td><input type="text" data-tpm="${i.id}|owner" value="${esc(r.owner)}" placeholder="負責人"/></td><td><select data-tpm="${i.id}|appr"><option value="">—</option>${["是","否","視情況"].map(x=>`<option ${r.appr===x?"selected":""}>${x}</option>`).join("")}</select></td><td><input type="text" data-tpm="${i.id}|note" value="${esc(r.note)}" placeholder="授權與限制"/></td></tr>`}).join("")}</table></div><p class="hint" style="margin-top:6px">尺寸欄的灰色提示是常見起點，須以最新平台與印刷廠規格為準。</p>`}
+// ---- 命名 ----
+function dynNaming(){const g=genName(S),sc=nameScan(S);$("dyn-naming").innerHTML=`<p class="hint">產生的範例檔名：<b style="font-family:var(--mono)">${esc(g||"（請選命名模式並填欄位）")}</b></p>${sc.length?`<div class="tw"><table class="ct"><tr><th>現有檔名</th><th>問題</th></tr>${sc.map(x=>`<tr><td style="font-family:var(--mono)">${esc(x.name)}</td><td class="${x.issues.length?"no":"ok"}">${x.issues.length?esc(x.issues.join("、")):"通過"}</td></tr>`).join("")}</table></div>`:'<p class="hint">在上方貼上現有檔名後顯示檢查。</p>'}`}
+// ---- RACI ----
+function dynRaci(){const iss=raciIssues(S);$("dyn-raci").innerHTML=`<div class="tw"><table class="ct"><tr><th>活動</th>${ROLES.map(r=>`<th>${r}</th>`).join("")}<th>檢查</th></tr>${ACTS.map((a,ai)=>`<tr><td>${a}</td>${ROLES.map((r,ri)=>`<td><select data-raci="${ai}|${ri}">${["","R","A","C","I"].map(x=>`<option ${racCell(S,a,r)===x?"selected":""}>${x}</option>`).join("")}</select></td>`).join("")}<td id="rc-${ai}"></td></tr>`).join("")}</table></div><p class="hint" style="margin-top:6px">原則：每個活動只有一個 A（最終負責），至少一個 R。外部供應商通常是 R 或 I，不是 A；涉及宣稱、授權與工程的項目，專業人士應為 C 或參與核准。</p>`;updRaci()}
+function updRaci(){const iss=raciIssues(S);ACTS.forEach((a,ai)=>{const e=$("rc-"+ai);if(!e)return;const f=ROLES.some(r=>racCell(S,a,r)),m=iss.filter(x=>x.act===a);e.textContent=!f?"未填":m.length?m.map(x=>x.msg).join("；"):"通過";e.className=!f?"":m.length?"no":"ok"})}
+function renderTables(){dynReg();dynLic();dynExc();dynTpm()}
+function renderStages(){const L={s0:"Stage 0 業務",s1:"Stage 1 定位",s2:"Stage 2 感官",s3:"Stage 3 語言",s4a:"Stage 4A 視覺語言",s4b:"Stage 4B 表面系統",s4c:"Stage 4C 動態影片",s4d:"Stage 4D 3D 與產品",s4e:"Stage 4E UI／UX",s4f:"Stage 4F 行銷"};$("stg").innerHTML=Object.entries(L).map(([k,l])=>`<span>${l}</span><span class="${S[k]?"y":"n"}">${S[k]?"已匯入":"未匯入"}</span>`).join("")}
+function renderAll(){CAT_KEYS.forEach(renderCat);DIMS.forEach(d=>renderDim(d.id));fillTexts();renderTables();dynMatrix();dynNaming();dynRaci();renderStages()}
+document.addEventListener("input",e=>{const t=e.target.closest("[data-t]");if(t){S.text[t.dataset.t]=t.value;persist();dynNaming();return}
+  const r=e.target.closest("[data-row]");if(r){const[k,i,f]=r.dataset.row.split("|");S[k][+i][f]=r.value;persist();updDerived(k);return}
+  const n=e.target.closest("[data-cwnote]");if(n){S.cwnote[cwNames(S)[+n.dataset.cwnote]]=n.value;persist();return}
+  const tp=e.target.closest("[data-tpm]");if(tp&&tp.tagName==="INPUT"){const[id,f]=tp.dataset.tpm.split("|");S.tpm[id]=S.tpm[id]||{};S.tpm[id][f]=tp.value;persist()}});
+document.addEventListener("change",e=>{const r=e.target.closest("select[data-row]");if(r){const[k,i,f]=r.dataset.row.split("|");S[k][+i][f]=r.value;persist();updDerived(k);return}
+  const tp=e.target.closest("select[data-tpm]");if(tp){const[id,f]=tp.dataset.tpm.split("|");S.tpm[id]=S.tpm[id]||{};S.tpm[id][f]=tp.value;persist();return}
+  const rc=e.target.closest("[data-raci]");if(rc){const[ai,ri]=rc.dataset.raci.split("|");const a=ACTS[+ai],r=ROLES[+ri];S.raci[a]=S.raci[a]||{};S.raci[a][r]=rc.value;persist();updRaci();return}
+  const co=e.target.closest("[data-ctxoff]");if(co){if(co.checked)delete S.ctxOff[co.dataset.ctxoff];else S.ctxOff[co.dataset.ctxoff]=true;persist();dynMatrix()}});
+document.addEventListener("keydown",e=>{const c=e.target.closest("[data-cust]");if(c&&e.key==="Enter"){e.preventDefault();addCust(c.dataset.cust)}});
+function addCust(k){const i=document.querySelector(`[data-cust="${k}"]`),v=i.value.trim();if(v&&!S.custom[k].includes(v)){S.custom[k].push(v);i.value="";persist();renderCat(k)}}
+const NEXT={"":"A","A":"C","C":"X","X":""};
+document.addEventListener("click",e=>{
+  const o=e.target.closest(".opt[data-k]");if(o){const k=o.dataset.k,id=o.dataset.id,a=S[k],i=a.indexOf(id);if(i>-1)a.splice(i,1);else{if(CAT[k].max<90&&count(k,S)>=CAT[k].max){toast(`此項建議最多 ${CAT[k].max} 個，請先取消一個`);return}a.push(id)}persist();renderCat(k);if(k==="touchpoints")dynTpm();return}
+  const dm=e.target.closest(".opt[data-dim]");if(dm){const id=dm.dataset.dim,v=dm.dataset.o;if(S.dims[id]===v)delete S.dims[id];else S.dims[id]=v;persist();renderDim(id);if(["proofValidity"].includes(id))updDerived("reg");if(id==="licenseWarn")updDerived("lic");dynNaming();return}
+  const cc=e.target.closest("[data-cwc]");if(cc){const[i,cx]=cc.dataset.cwc.split("|");const n=cwNames(S)[+i];S.cwm[n]=S.cwm[n]||{};const nv=NEXT[S.cwm[n][cx]||""];if(nv)S.cwm[n][cx]=nv;else delete S.cwm[n][cx];persist();cc.dataset.v=nv;cc.textContent=CWSTATE[nv];return}
+  const ar=e.target.closest("[data-addrow]");if(ar){const k=ar.dataset.addrow,cols=k==="reg"?PROOFCOLS:k==="lic"?LICCOLS:EXCCOLS;const r={};cols.forEach(([f])=>r[f]="");if(k==="reg")r.status="未打樣";S[k].push(r);persist();renderTables();return}
+  const dr=e.target.closest("[data-delrow]");if(dr){const[k,i]=dr.dataset.delrow.split(":");S[k].splice(+i,1);persist();renderTables();return}
+  const ad=e.target.closest("[data-add]");if(ad){addCust(ad.dataset.add);return}
+  const del=e.target.closest("[data-del]");if(del){const[k,i]=del.dataset.del.split(":");S.custom[k].splice(+i,1);persist();renderCat(k);return}
+  const p=e.target.closest("[data-p]");if(p)navigator.clipboard.writeText(PROMPTS[p.dataset.p](S)).then(()=>toast("已複製完整討論提示詞，貼給 AI 即可開始"),()=>toast("無法寫入剪貼簿，請檢查瀏覽器權限"))});
+function meter(){const c=completeness(S);$("pct").textContent=`完成度 ${c.pct}%（${c.done}/${c.total}）`;$("barfill").style.width=c.pct+"%";const miss=c.missing.map(m=>m.key);
+  const LIST=[["scope","範圍與分發","scope"],["owner","負責人與核准","scope"],["proof","打樣登記","proof"],["matrix","配色變體矩陣","matrix"],["tpm","觸點矩陣","tpm"],["files","檔案與命名","files"],["logo","標誌規則與禁用","logo"],["license","授權登記","license"],["a11y","跨媒體無障礙","a11y"],["raci","責任矩陣","gov"],["audit","稽核與例外上限","audit"],["avoid","治理禁區","audit"],["mis","誤用案例","logo"]];
+  $("mlist").innerHTML=LIST.map(([k,l,a])=>`<li class="${miss.includes(k)?"":"done"}"><a href="#c-${a}">${l}</a></li>`).join("");
+  const ck=checks(S);$("chk").innerHTML=ck.length?ck.map(x=>`<li class="${x.level}">${x.level==="error"?"✕":x.level==="warn"?"⚠":"ℹ"} ${esc(x.msg)}</li>`).join(""):"<li class='info'>目前沒有發現問題。</li>";renderStages()}
+$("copyctx").onclick=()=>navigator.clipboard.writeText("【我的品牌背景與目前跨媒體使用與治理選擇】\n"+ctxStages(S)+"\n\n"+ctxGov(S)).then(()=>toast("已複製，貼在任何 AI 對話的開頭"),()=>toast("無法寫入剪貼簿"));
+function handle(text){const r=applyPaste(text,S);if(r.applied.length){persist();renderAll()}return r}
+$("paste").onclick=()=>{$("pres").textContent="";$("pt").value="";$("dlg").showModal()};$("pc").onclick=()=>$("dlg").close();
+$("pa").onclick=()=>{const r=handle($("pt").value);$("pres").className="res"+(r.errors.length&&!r.applied.length?" err":"");$("pres").innerHTML=(r.applied.length?"已套用：<br>"+r.applied.map(esc).join("<br>"):"")+(r.custom.length?"<br>加入自訂項："+r.custom.map(esc).join("、"):"")+(r.errors.length?"<br><span class='err'>"+r.errors.map(esc).join("<br>")+"</span>":"")};
+$("expb").onclick=()=>{const b=new Blob([JSON.stringify(buildBrief(S),null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="stage4g-brief.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+$("imp").onclick=()=>$("file").click();
+$("file").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const o=handle(r.result);toast(o.applied.length?"已匯入":"匯入失敗："+o.errors.join("；"))};r.readAsText(f);e.target.value=""};
+$("impstage").onclick=()=>$("stagefile").click();
+$("stagefile").onchange=async e=>{const fs=[...e.target.files];let ok=[],bad=[];for(const f of fs){const t=await f.text();const k=importBrief(t,S);if(k)ok.push(k);else bad.push(f.name)}persist();renderAll();toast((ok.length?"已匯入 "+ok.join("、")+"（可用『預填』按鈕帶入登記冊）":"")+(bad.length?"｜無法辨識："+bad.join("、"):""));e.target.value=""};
+$("reset").onclick=()=>{if(confirm("確定清空 Stage 4G 的所有答案？（前階段匯入也會清除）此動作無法復原。")){Object.assign(S,emptyState());save(S);location.reload()}};
+renderAll();meter();
+</script></body></html>

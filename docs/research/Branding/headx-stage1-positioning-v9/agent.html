@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="zh-Hant"><head><meta charset="UTF-8"/><title>Stage 01 · AI Agent Contract</title><link rel="stylesheet" href="shared.css"/>
+<style>body{background:#0D0E11;color:#F4F4F6}.topbar{background:rgba(13,14,17,.9);border-bottom-color:#252932}.nav-pill{background:#15171C;border-color:#252932;color:#8B929E}.nav-pill.active{background:#F4F4F6;color:#0D0E11}
+.wrap{max-width:980px;margin:0 auto;padding:40px 24px 100px}.panel{background:#15171C;border:1px solid #252932;border-radius:12px;padding:22px;margin-bottom:20px}
+.t{font-family:var(--mono);font-size:.76rem;color:#60A5FA;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+pre{margin:0;font-family:var(--mono);font-size:.8rem;line-height:1.6;overflow:auto;color:#E2E8F0;white-space:pre-wrap;word-break:break-word;max-height:560px}
+.b{background:#0D0E11;color:#F4F4F6;border:1px solid #252932;border-radius:6px;padding:4px 10px;font:inherit;font-size:.72rem;cursor:pointer}.st{font-family:var(--mono);font-size:.8rem;margin-bottom:16px}.ok{color:#10B981}.no{color:#F59E0B}</style></head><body>
+<nav class="topbar"><div class="brand-tag" style="color:#10B981">● AI AGENT CONTRACT // STAGE 01</div><div class="nav-links"><a class="nav-pill" href="edit.html">Edit</a><a class="nav-pill" href="view.html">View</a><a class="nav-pill active" href="agent.html">AI Agent</a></div></nav>
+<main class="wrap"><div class="st" id="st"></div>
+<div class="panel"><div class="t"><span>brand-brief.json</span><span><button class="b" id="c1">複製</button> <button class="b" id="d1">下載</button></span></div><pre id="j"></pre></div>
+<div class="panel"><div class="t"><span>Downstream system prompt</span><button class="b" id="c2">複製</button></div><pre id="p"></pre></div></main>
+<div class="toast" id="toast"></div>
+<script src="options.js"></script><script src="core.js"></script>
+<script>
+const s=load(),b=buildBrief(s),txt=JSON.stringify(b,null,2);
+const L=k=>labels(k,s).join("、")||"（未定義）";
+const pr=`你是此品牌的內容與設計 Agent。以下是已確認的品牌定位，所有輸出必須遵守。
+品牌：${s.name||"（尚未命名）"}
+定位宣言：${b.positioning_statement.text}
+最適客群：${L("audience")}
+客人的痛點：${L("pain")}
+我們的差異：${L("diff")}；帶來的價值：${L("value")}；信任理由：${L("rtb")}
+核心張力：${tensionName(s)||"（未定義）"}（兩端都必須成立，不可偏向其中一端）
+絕對不要像：${L("anti")}
+${b.status==="incomplete"?"注意：定位尚未完成，缺少："+b.missing.map(m=>m.label).join("、")+"。遇到缺少的資訊，請回報人類，不要自行補寫。":""}`.trim();
+document.getElementById("j").textContent=txt;document.getElementById("p").textContent=pr;
+document.getElementById("st").innerHTML=`status: <span class="${b.status==="complete"?"ok":"no"}">${b.status}</span> · completeness ${b.completeness}%${b.missing.length?" · missing: "+b.missing.map(m=>m.key).join(", "):""}`;
+const T=m=>{const t=document.getElementById("toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1600)};
+document.getElementById("c1").onclick=()=>navigator.clipboard.writeText(txt).then(()=>T("已複製"));document.getElementById("c2").onclick=()=>navigator.clipboard.writeText(pr).then(()=>T("已複製"));
+document.getElementById("d1").onclick=()=>{const bl=new Blob([txt],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(bl);a.download="brand-brief.json";a.click()};
+</script></body></html>

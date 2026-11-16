@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="zh-Hant"><head><meta charset="UTF-8"/><title>Stage 04F · AI Agent Contract v3</title><link rel="stylesheet" href="shared.css"/>
+<style>body{background:#0D0E11;color:#F4F4F6}.topbar{background:rgba(13,14,17,.9);border-bottom-color:#252932}.nav-pill{background:#15171C;border-color:#252932;color:#8B929E}.nav-pill.active{background:#F4F4F6;color:#0D0E11}
+.wrap{max-width:1000px;margin:0 auto;padding:40px 24px 100px}.panel{background:#15171C;border:1px solid #252932;border-radius:12px;padding:22px;margin-bottom:20px}
+.t{font-family:var(--mono);font-size:.76rem;color:#60A5FA;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:8px;flex-wrap:wrap}
+pre{margin:0;font-family:var(--mono);font-size:.8rem;line-height:1.6;overflow:auto;color:#E2E8F0;white-space:pre-wrap;word-break:break-word;max-height:520px}
+.b{background:#0D0E11;color:#F4F4F6;border:1px solid #252932;border-radius:6px;padding:4px 10px;font:inherit;font-size:.72rem;cursor:pointer}.st{font-family:var(--mono);font-size:.8rem;margin-bottom:16px}.ok{color:#10B981}.no{color:#F59E0B}
+.files{display:flex;flex-wrap:wrap;gap:8px}.files .b{padding:6px 12px}</style></head><body>
+<nav class="topbar"><div class="brand-tag" style="color:#10B981">● AI AGENT CONTRACT // STAGE 04F v3</div><div class="nav-links"><a class="nav-pill" href="edit.html">Edit</a><a class="nav-pill" href="view.html">View</a><a class="nav-pill active" href="agent.html">AI Agent</a></div></nav>
+<main class="wrap"><div class="st" id="st"></div><div class="panel"><div class="t"><span>template-pack（SVG 模板檔，逐個下載）</span></div><div class="files" id="files"></div></div><div id="panels"></div></main><div class="toast" id="toast"></div>
+<script src="options.js"></script><script src="tpl-data.js"></script><script src="core.js"></script><script src="tpl-logic.js"></script>
+<script>
+const s=load(),b=buildBrief(s),pack=templatePack(s);
+const V={sys:buildSystem(s),json:JSON.stringify(b,null,2),tlib:JSON.stringify({schema:"headx.template-library/v1",status:"draft",note:"平台規格與政策以最新說明為準；合規提醒不是法律意見；hr=true 的模板須人類合規審核。",channels:CH_INFO,templates:TPLS},null,2),tlibmd:tplLibMD(),selt:JSON.stringify({schema:"headx.selected-templates/v1",status:"draft",templates:selTpls(s)},null,2),tprompt:tplPromptsMD(s),tcsv:tplCSV(s),pub:pubCSV(s),css:tokensCSS(s),plan:JSON.stringify(campaignPlan(s),null,2),copy:copyDeck(s),utm:utmCSV(s),cal:calendarCSV(s),ap:adPrompt(s),guide:buildGuide(s)};
+const F={sys:["marketing-system-prompt.txt","text/plain","marketing-system-prompt.txt（給行銷與廣告 Agent；含模板與 opt-in 規則）"],json:["stage4f-brief.json","application/json","stage4f-brief.json"],tlib:["template-library.json","application/json","template-library.json（91 個模板與 12 個渠道規格）"],tlibmd:["template-library.md","text/markdown","template-library.md（人類可讀）"],selt:["selected-templates.json","application/json","selected-templates.json（已選模板）"],tprompt:["template-prompts.md","text/markdown","template-prompts.md（已選模板的 AI 填寫提示）"],tcsv:["template-list.csv","text/csv","template-list.csv"],pub:["publish-log.csv","text/csv","publish-log.csv（發佈與成效紀錄）"],css:["template-tokens.css","text/css","template-tokens.css"],plan:["campaign-plan.json","application/json","campaign-plan.json"],copy:["copy-deck.md","text/markdown","copy-deck.md（文案稿與關鍵字提示）"],utm:["utm-links.csv","text/csv","utm-links.csv"],cal:["content-calendar.csv","text/csv","content-calendar.csv（含審稿狀態欄）"],ap:["ad-prompt.txt","text/plain","ad-prompt.txt（Ad Creative Prompt）"],guide:["marketing-guide.md","text/markdown","marketing-guide.md"]};
+const BOM="\uFEFF";
+document.getElementById("panels").innerHTML=Object.keys(F).map(k=>`<div class="panel"><div class="t"><span>${F[k][2]}</span><span><button class="b" data-c="${k}">複製</button> <button class="b" data-d="${k}">下載</button></span></div><pre id="p-${k}"></pre></div>`).join("");
+Object.keys(V).forEach(k=>document.getElementById("p-"+k).textContent=V[k]);
+document.getElementById("files").innerHTML=pack.length?pack.map((t,i)=>`<button class="b" data-f="${i}">${t.file}</button>`).join(""):'<span style="color:#8B929E;font-size:.8rem">尚未填寫色值，沒有模板可產生。</span>';
+document.getElementById("st").innerHTML=`status: <span class="${b.status==="complete"?"ok":"no"}">${b.status}</span> · approval: <span class="no">${b.approval.state}</span> · completeness ${b.completeness}%${b.missing.length?" · missing: "+b.missing.map(m=>m.key).join(", "):""} · checks: ${b.consistency_checks.filter(x=>x.level!=="info").length} warn/error · templates selected: ${s.tplSel.length}/${TPLS.length} · svg: ${pack.length}`;
+const TT=m=>{const t=document.getElementById("toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1600)};
+function dl(name,type,text){const bl=new Blob([text],{type}),a=document.createElement("a");a.href=URL.createObjectURL(bl);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+document.addEventListener("click",e=>{const c=e.target.closest("[data-c]"),d=e.target.closest("[data-d]"),f=e.target.closest("[data-f]");
+ if(c)navigator.clipboard.writeText(V[c.dataset.c]).then(()=>TT("已複製"),()=>TT("無法寫入剪貼簿"));
+ if(d){const k=d.dataset.d;dl(F[k][0],F[k][1],(/csv/.test(F[k][1])?BOM:"")+V[k])}
+ if(f){const t=pack[+f.dataset.f];dl(t.file,"image/svg+xml",t.svg)}});
+</script></body></html>

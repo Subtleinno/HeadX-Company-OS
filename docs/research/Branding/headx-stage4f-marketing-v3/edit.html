@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-Hant"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Stage 04F · 行銷內容與廣告 v3 (Edit)</title><link rel="stylesheet" href="shared.css"/>
+<style>
+.layout{max-width:1220px;margin:0 auto;padding:40px 24px 100px;display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:36px;align-items:start}
+@media(max-width:960px){.layout{grid-template-columns:minmax(0,1fr)}.side{position:static!important}}
+.layout main{min-width:0}
+.kicker{font-family:var(--mono);font-size:.75rem;color:var(--accent);text-transform:uppercase;letter-spacing:.1em}
+h1{font-size:2rem;margin:8px 0 8px;letter-spacing:-.02em}.sub{color:var(--muted);margin:0 0 24px;font-size:.93rem}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:24px;margin-bottom:22px;scroll-margin-top:70px}
+.card h2{margin:0;font-size:1.06rem}.card .num{font-family:var(--mono);font-size:.72rem;color:var(--muted);display:block;margin-bottom:2px}
+.head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;margin-bottom:10px}
+.part{border-top:1px solid var(--line);margin-top:16px;padding-top:14px}.part:first-of-type{border-top:0;margin-top:4px;padding-top:0}
+.part h3{margin:0 0 2px;font-size:.92rem}.hint{font-size:.8rem;color:var(--muted);margin:0 0 10px;max-width:80ch}
+.btn-ai{background:var(--soft);color:var(--accent);border:1px solid #BFDBFE;padding:5px 11px;border-radius:7px;font-size:.76rem;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit}
+.btn-ai:hover{background:#DBEAFE}.btn-ai.ghost{background:#fff;color:var(--muted);border-color:var(--line)}
+.count{font-size:.76rem;color:var(--muted);font-family:var(--mono)}
+.gt{font-family:var(--mono);font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:14px 0 8px;padding-top:10px;border-top:1px dashed var(--line)}.gt:first-child{border-top:0;margin-top:2px;padding-top:0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}.grid.wide{grid-template-columns:repeat(auto-fill,minmax(270px,1fr))}
+.opt{border:1px solid var(--line);border-radius:10px;padding:9px 12px;background:var(--bg);text-align:left;cursor:pointer;font-family:inherit;color:inherit}
+.opt:hover{border-color:#b8b8b0}.opt[aria-pressed=true]{background:var(--ink);color:#FFF;border-color:var(--ink);box-shadow:0 0 0 3px rgba(37,99,235,.25)}
+.opt b{display:block;font-size:.85rem}.opt span.d{display:block;font-size:.73rem;opacity:.78;margin-top:2px}.opt .tagrow{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}.opt .tg{font-size:.62rem;font-family:var(--mono);border:1px solid currentColor;border-radius:999px;padding:0 6px;opacity:.85}
+.row{display:flex;gap:8px;margin-top:10px}.row input{flex:1}
+input[type=text],textarea,select{width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--line);background:var(--bg);font-family:inherit;font-size:.88rem;color:var(--ink);outline:none}
+textarea{resize:vertical}input:focus,textarea:focus,select:focus{border-color:var(--accent);background:#FFF}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.chip{font-size:.78rem;padding:3px 10px;border-radius:999px;background:var(--bg);border:1px solid var(--line)}.chip button{border:0;background:none;cursor:pointer;color:var(--muted)}
+.tf{margin-bottom:12px}.tf label{display:block;font-size:.8rem;font-weight:600;margin-bottom:3px}.tf small{display:block;color:var(--muted);font-size:.72rem;margin-bottom:4px}
+.numgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px 14px}
+.hexrow{display:flex;gap:8px;align-items:center}.sw{width:34px;height:34px;border-radius:8px;border:1px solid var(--line);flex:none;background:repeating-conic-gradient(#ddd 0 25%,#fff 0 50%) 0 0/10px 10px}
+.note{background:var(--soft);border:1px solid #BFDBFE;border-radius:12px;padding:10px 14px;font-size:.8rem;margin-bottom:14px}
+.det{margin-top:12px;display:grid;gap:8px}.det>div{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-size:.8rem}.det b{font-size:.84rem}.det dl{margin:6px 0 0;display:grid;grid-template-columns:70px 1fr;gap:2px 10px}.det dt{color:var(--muted)}.det dd{margin:0}
+table.ct{width:100%;border-collapse:collapse;font-size:.78rem;background:var(--bg);border-radius:10px;overflow:hidden}.ct td,.ct th{border-bottom:1px solid var(--line);padding:6px 10px;text-align:left;vertical-align:top}.ct th{font-family:var(--mono);font-size:.66rem;color:var(--muted);font-weight:500}.ct .ok{color:var(--ok);font-weight:600}.ct .no{color:var(--danger);font-weight:600}.ct .wn{color:var(--warn);font-weight:600}.ct input,.ct select{padding:5px 7px;font-size:.76rem;min-width:96px}
+.tw{overflow-x:auto;max-width:100%}.ctl{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0}.ctl label{font-size:.78rem;display:flex;gap:6px;align-items:center}.ctl select{width:auto}
+.stage{background:#E9E9E4;border-radius:12px;padding:14px;display:flex;justify-content:center;border:1px solid var(--line)}.stage svg{max-height:540px;max-width:100%;width:auto;height:auto;box-shadow:0 2px 14px rgba(0,0,0,.15);background:#fff}
+.strip{display:flex;gap:10px;overflow-x:auto;padding:8px;background:#E9E9E4;border-radius:12px;border:1px solid var(--line)}.strip figure{margin:0;flex:none;text-align:center}.strip svg{height:230px;width:auto;display:block;box-shadow:0 1px 8px rgba(0,0,0,.15);background:#fff}.strip figcaption{font-size:.68rem;color:var(--muted);margin-top:4px}
+.warnbox{border:1px solid #FDE68A;background:#FFFBEB;border-radius:10px;padding:8px 12px;font-size:.78rem;margin:6px 0}
+.tpc{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin-bottom:8px}.tpc h4{margin:0 0 2px;font-size:.9rem}.tpc small{color:var(--muted)}.tpc .why{font-size:.72rem;color:var(--accent)}
+.tpc details{margin-top:6px;font-size:.78rem}.tpc summary{cursor:pointer;color:var(--accent)}.tpc .acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.side{position:sticky;top:70px;display:flex;flex-direction:column;gap:14px}
+.meter{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
+.bar{height:8px;background:var(--line);border-radius:99px;overflow:hidden;margin:8px 0 12px}.bar>i{display:block;height:100%;background:var(--ink);transition:width .25s}
+.meter ul{list-style:none;margin:0;padding:0;font-size:.8rem}.meter li{padding:2px 0}.meter a{color:var(--muted);text-decoration:none}.meter li.done a{color:var(--ok)}
+.meter li.done::before{content:"✓ ";color:var(--ok)}.meter li:not(.done)::before{content:"○ ";color:var(--muted)}
+.side .btn-ai{display:block;width:100%;margin-top:8px;text-align:center}
+.chk li{font-size:.76rem;margin-bottom:6px;line-height:1.45}.chk .warn{color:var(--warn)}.chk .error{color:var(--danger)}.chk .info{color:var(--muted)}
+.stg{font-size:.76rem;display:grid;grid-template-columns:1fr auto;gap:2px 8px}.stg .y{color:var(--ok)}.stg .n{color:var(--muted)}
+dialog{border:1px solid var(--line);border-radius:16px;padding:24px;max-width:640px;width:92%}dialog::backdrop{background:rgba(0,0,0,.35)}
+dialog textarea{min-height:200px;font-family:var(--mono);font-size:.78rem}dialog .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+dialog .res{font-size:.8rem;margin-top:10px;color:var(--ok)}dialog .err{color:var(--danger)}
+</style></head><body>
+<nav class="topbar"><div class="brand-tag">COMPANY OS · BRAND STAGE 04F · 行銷內容與廣告 v3</div>
+<div class="nav-links"><a class="nav-pill active" href="edit.html">Edit</a><a class="nav-pill" href="view.html">View</a><a class="nav-pill" href="agent.html">AI Agent</a></div></nav>
+<div class="layout"><main>
+<span class="kicker">Stage 04F · Marketing &amp; Advertising · v3</span>
+<h1>行銷內容與廣告</h1>
+<p class="sub">v3 的<b>渠道模板庫共 91 個模板、12 個渠道</b>：Instagram（Reels／Story／Carousel）、Threads、Facebook、小紅書、TikTok、X、YouTube、LinkedIn、WhatsApp、EDM、Website SEO。模板選擇器讓 AI Agent 或人類按渠道、目標、漏斗與風險選出最合適的模板，並一鍵產生帶品牌背景的 AI 填寫提示。另有市場定位／影片／排版／廣告策略清單、發佈與成效紀錄，以及原有的模板預覽（SVG）、關鍵字掃描、成效試算、UTM 與 4 週日曆。</p>
+<div class="note"><b>注意：</b>原型資料只存在你的瀏覽器。選項與模板內容是依 2026-11-16 公開資料整理的起始草案，部分規格來自第三方整理而非官方文件；平台規格與政策會變，<b>以各平台最新說明為準</b>。<b>關鍵字掃描與合規提醒只是提示，不是法律判斷或法律意見；健康、美容、優惠、見證、前後對比與比較內容發布前必須由人類合規審核。WhatsApp 與 EDM 只可發給已 opt-in 的人，並須附寄件人資料與退訂方式（香港《非應邀電子訊息條例》第 593 章；對 WhatsApp 的適用性須專業人士確認）。</b>成效數字是你輸入的假設；樣本少於 5 筆時不要下結論。沒有風格相符度分數。AI 提案不等於核准。</div>
+<div id="cards"></div>
+</main>
+<aside class="side"><div class="meter"><b id="pct"></b><div class="bar"><i id="barfill"></i></div><ul id="mlist"></ul></div>
+<div class="meter"><b style="font-size:.84rem">前階段匯入</b><div class="stg" id="stg" style="margin-top:8px"></div><button class="btn-ai" id="impstage">匯入 Stage 0–4E brief JSON（可多選）</button><input type="file" id="stagefile" accept="application/json" multiple hidden/></div>
+<div class="meter chk"><b style="font-size:.84rem">一致性與硬限制檢查</b><ul id="chk" style="margin-top:8px"></ul></div>
+<div class="meter"><button class="btn-ai" id="copyctx" style="margin:0">複製『前階段＋目前選擇』給 AI</button><button class="btn-ai" id="paste">貼回 AI 結果</button><button class="btn-ai" id="expb">匯出 stage4f-brief.json</button><button class="btn-ai" id="imp">匯入 4F JSON</button><button class="btn-ai" id="reset" style="color:var(--danger);border-color:#f3c0c0;background:#fff">全部清空</button><input type="file" id="file" accept="application/json" hidden/></div></aside></div>
+<dialog id="dlg"><b>貼回 AI 結果</b><p class="hint" style="margin:6px 0 12px">把 AI 討論結尾附的 JSON 整段貼上。選項會自動對應，清單沒有的會加為自訂項；單選規則、文字欄與成效紀錄（pubs）會直接填入。</p>
+<textarea id="pt" placeholder='{"adGoal":["轉化"],"tplSel":["IG-CA-01"],"hook":"主 Hook"}'></textarea><div class="res" id="pres"></div>
+<div class="actions"><button class="btn-ai ghost" id="pc">關閉</button><button class="btn-ai" id="pa">套用</button></div></dialog>
+<div class="toast" id="toast"></div>
+<script src="options.js"></script><script src="tpl-data.js"></script><script src="core.js"></script><script src="tpl-logic.js"></script><script src="prompts.js"></script>
+<script>
+const $=id=>document.getElementById(id);const S=load();
+function toast(m){const t=$("toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2400)}
+const persist=()=>{save(S);meter()};
+const CARDS=[
+ {id:"strategy",num:"01",title:"策略：目標、漏斗、受眾與定位",prompt:"strategy",parts:[{text:["brandName"]},{cat:"adGoal"},{cat:"funnel"},{cat:"targeting"},{cat:"positioning"},{cat:"videoStrategy"},{cat:"adStrategy"},{text:["pos_line","aud"]}]},
+ {id:"channels",num:"02",title:"渠道、廣告格式與模板類型",prompt:"channels",parts:[{cat:"channels"},{cat:"adFormats"},{cat:"templateTypes"}]},
+ {id:"templates",num:"03",title:"渠道模板庫與選擇器（91 個模板）",prompt:"templates",parts:[{cat:"tplSel"},{dyn:"selector"}]},
+ {id:"tokens",num:"04",title:"模板視覺規則（來自 4A／4B／4E）",prompt:"tokens",parts:[{text:["c_primary","c_secondary","c_accent","c_ink","c_paper"],grid:1},{text:["f_head","f_body"],grid:1},{text:["g_a","g_b","g_c","g_angle"],grid:1},{dim:"tplBg"},{dim:"tplAlign"},{dim:"ctaStyle"},{dim:"safeMargin"},{dim:"headlineScale"},{dim:"patOverlay"},{dim:"logoPos"}]},
+ {id:"copy",num:"05",title:"Hook、CTA、文案框架與主文案",prompt:"copy",parts:[{cat:"hooks"},{cat:"ctas"},{cat:"copyFramework"},{cat:"pillars"},{text:["hook","sub","cta_text","disc_text"]},{dyn:"scan"}]},
+ {id:"studio",num:"06",title:"模板工作室：單圖、Carousel、展示廣告與簡報",prompt:"carousel",parts:[{dyn:"studio"},{cat:"layoutStrategy"},{text:["car_slides"]},{dyn:"carousel"},{dyn:"banners"},{cat:"slides"},{text:["ppt_lines"]},{dyn:"ppt"}]},
+ {id:"compliance",num:"07",title:"披露、宣稱與審稿",prompt:"compliance",parts:[{cat:"claimTypes"},{cat:"disclosures"},{dim:"reviewFlow"},{dim:"altText"},{dim:"emojiPolicy"},{dim:"adLang"}]},
+ {id:"kpi",num:"08",title:"成效指標與試算（假設）",prompt:"kpi",parts:[{cat:"kpis"},{text:["b_budget","b_cpm","b_ctr","b_cvr","b_value","b_margin"],grid:1},{dyn:"kpi"}]},
+ {id:"tracking",num:"09",title:"UTM 與 4 週內容日曆",prompt:"calendar",parts:[{text:["u_base","u_campaign","ppw"],grid:1},{dyn:"utm"},{dyn:"cal"}]},
+ {id:"publog",num:"10",title:"發佈與成效紀錄",prompt:"publog",parts:[{dyn:"pubs"}]},
+ {id:"avoid",num:"11",title:"禁區、3 個代表性內容與一句話",prompt:"avoid",parts:[{cat:"adAvoid"},{text:["ad1","ad2","ad3","st_note","statement"]}]}
+];
+function textPart(ids,grid){const h=ids.map(id=>{const t=TEXT_BY[id];const isHex=/^(c_|g_a|g_b|g_c)/.test(id);return `<div class="tf"><label for="t-${id}">${t.label}</label>${t.help?`<small>${t.help}</small>`:""}${isHex?`<div class="hexrow"><div class="sw" id="sw-${id}"></div><input type="text" id="t-${id}" data-t="${id}" placeholder="${esc(t.ph)}"/></div>`:t.rows>1?`<textarea id="t-${id}" data-t="${id}" rows="${t.rows}" placeholder="${esc(t.ph)}"></textarea>`:`<input type="text" id="t-${id}" data-t="${id}" placeholder="${esc(t.ph)}"/>`}</div>`}).join("");return grid?`<div class="numgrid">${h}</div>`:h}
+function catPart(k){const c=CAT[k];return `<div class="part"><h3>${c.title}</h3><p class="hint">${c.hint||""}</p><div class="count" id="cnt-${k}"></div><div id="cat-${k}"></div><div class="det" id="det-${k}"></div><div class="row"><input type="text" data-cust="${k}" placeholder="沒有適合的？自訂一項（Enter 新增）"/><button class="btn-ai" data-add="${k}" type="button">新增</button></div><div class="chips" id="chips-${k}"></div></div>`}
+function dimPart(id){const d=DIM(id);return `<div class="part"><h3>${d.title}</h3>${d.q?`<p class="hint">${d.q}</p>`:""}<div class="grid wide" id="dim-${id}" role="group"></div></div>`}
+const DYNT={selector:"模板選擇器（按渠道、目標、漏斗與風險推薦）",scan:"文案關鍵字掃描（提示，不是法律判斷）",studio:"模板預覽（SVG 示意）",carousel:"Carousel 各頁預覽",banners:"展示廣告尺寸組預覽",ppt:"簡報預覽（封面、內容、圖表、結語）",kpi:"成效試算（你的假設）",utm:"UTM 連結",cal:"4 週內容日曆",pubs:"發佈與成效紀錄（按模板彙總；樣本少於 5 筆不要下結論）"};
+const cardsEl=$("cards");
+CARDS.forEach(c=>{const el=document.createElement("section");el.className="card";el.id="c-"+c.id;
+  el.innerHTML=`<div class="head"><div><span class="num">${c.num}</span><h2>${c.title}</h2></div><button class="btn-ai" data-p="${c.prompt}">複製討論提示詞</button></div>`+c.parts.map(p=>p.cat?catPart(p.cat):p.dim?dimPart(p.dim):p.dyn?`<div class="part"><h3>${DYNT[p.dyn]}</h3><div id="dyn-${p.dyn}"></div></div>`:`<div class="part">${textPart(p.text,p.grid)}</div>`).join("");cardsEl.appendChild(el)});
+function tagsHTML(k,i){const a=[];if(i.risk)a.push("高風險／須注意");if(i.pro)a.push("須人類合規審核");if(i.n1&&i.n2&&k==="channels")a.push(i.n1+"×"+i.n2);return a.length?`<div class="tagrow">${a.map(x=>`<span class="tg">${x}</span>`).join("")}</div>`:""}
+function renderCat(k){const c=CAT[k];
+  $("cat-"+k).innerHTML=c.groups.map(g=>`<div class="gt">${g.g}</div><div class="grid">${g.items.map(i=>`<button type="button" class="opt" aria-pressed="${S[k].includes(i.id)}" data-k="${k}" data-id="${i.id}"><b>${esc(k==="tplSel"?i.id+"｜"+i.zh:i.zh)}</b><span class="d">${esc(i.desc)}</span>${tagsHTML(k,i)}</button>`).join("")}</div>`).join("");
+  $("cnt-"+k).textContent=`已選 ${count(k,S)}${c.max<90?" / 建議最多 "+c.max:""}`;
+  $("chips-"+k).innerHTML=S.custom[k].map((t,i)=>`<span class="chip">${esc(t)} <button data-del="${k}:${i}" aria-label="移除">✕</button></span>`).join("");
+  $("det-"+k).innerHTML=S[k].map(id=>byId(k,id)).filter(i=>i&&i.avoid&&i.avoid!=="-").map(i=>`<div><b>${esc(i.zh)}</b><dl><dt>風險</dt><dd>${esc(i.avoid)}</dd>${i.fit?`<dt>適用</dt><dd>${esc(i.fit)}</dd>`:""}${i.pair?`<dt>配搭</dt><dd>${esc(i.pair)}</dd>`:""}${i.note?`<dt>備註</dt><dd>${esc(i.note)}</dd>`:""}</dl></div>`).join("")}
+function renderDim(id){const d=DIM(id);$("dim-"+id).innerHTML=d.opts.map(o=>`<button type="button" class="opt" aria-pressed="${S.dims[id]===o.id}" data-dim="${id}" data-o="${o.id}"><b>${esc(o.zh)}</b><span class="d">${esc(o.desc)}</span></button>`).join("")}
+function fillTexts(){document.querySelectorAll("[data-t]").forEach(t=>{t.value=S.text[t.dataset.t]||""});swatches()}
+function swatches(){document.querySelectorAll(".sw").forEach(e=>{const h=hex(S.text[e.id.slice(3)]);e.style.background=h||""})}
+const SEL={ch:"all",goal:"",funnel:"",risk:false};
+function tplCard(t,r){const on=S.tplSel.includes(t.id);return `<div class="tpc"><h4>${esc(t.id)}｜${esc(t.name)}${t.hr?' <span class="wn">須人類合規審核</span>':""}</h4><small>${esc(chName(t.ch))}・${esc(t.purpose)}・${esc(t.fmt)}</small>${r?`<div class="why">推薦理由：${esc(r.why.join("、")||"—")}（分數 ${r.sc}）</div>`:""}
+  <details><summary>結構、欄位與合規</summary><div class="tw"><table class="ct"><tr><th>時間／區塊</th><th>內容</th></tr>${t.frames.map(f=>`<tr><td>${esc(f[0])}</td><td>${esc(f[1])}</td></tr>`).join("")}</table></div><p style="margin:6px 0 2px"><b>欄位：</b>${t.slots.map(a=>esc(a[1])).join("、")}</p><p style="margin:2px 0"><b>文案框架：</b>${esc(t.fw)}</p><p style="margin:2px 0"><b>平台規格：</b>${esc(tplSpec(t))}</p><p style="margin:2px 0"><b>合規：</b>${esc(t.comp||"—")}</p>${t.notes?`<p style="margin:2px 0"><b>備註：</b>${esc(t.notes)}</p>`:""}</details>
+  <div class="acts"><button class="btn-ai ${on?"ghost":""}" data-tpltog="${t.id}">${on?"取消選用":"選用此模板"}</button><button class="btn-ai" data-tplprompt="${t.id}">複製 AI 填寫提示</button></div></div>`}
+function dynSelector(){const chs=TPL_CHS,goals=CAT.adGoal.groups[0].items,fns=CAT.funnel.groups[0].items;
+  const rec=recommendTpls(S,{ch:SEL.ch,goal:SEL.goal,funnel:SEL.funnel,allowRisk:SEL.risk}).slice(0,12);
+  $("dyn-selector").innerHTML=`<div class="ctl"><label>渠道 <select id="sCh"><option value="all">已選渠道（或全部）</option>${chs.map(c=>`<option value="${c}" ${SEL.ch===c?"selected":""}>${esc(chName(c))}</option>`).join("")}</select></label><label>目標 <select id="sGoal"><option value="">不限</option>${goals.map(g=>`<option value="${g.id}" ${SEL.goal===g.id?"selected":""}>${esc(g.zh)}</option>`).join("")}</select></label><label>漏斗 <select id="sFn"><option value="">不限</option>${fns.map(g=>`<option value="${g.id}" ${SEL.funnel===g.id?"selected":""}>${esc(g.zh)}</option>`).join("")}</select></label><label><input type="checkbox" id="sRisk" ${SEL.risk?"checked":""}/> 包含高風險模板</label></div><p class="hint">推薦只是按渠道、目標、漏斗與風險的簡單評分，不代表內容一定有效；高風險模板預設不顯示。</p>${rec.map(r=>tplCard(r.t,r)).join("")||'<p class="hint">沒有符合條件的模板。</p>'}
+  <div class="ctl"><button class="btn-ai" id="cpLib">複製模板庫（Markdown）</button><button class="btn-ai ghost" id="cpCsv">複製模板清單（CSV）</button><button class="btn-ai ghost" id="cpSel">複製已選模板的 AI 填寫提示</button></div>
+  <div class="gt">各渠道規格與來源</div>${TPL_CHS.map(ch=>{const ci=CH_INFO[ch];return `<details class="tpc"><summary><b>${esc(ci.name)}</b>（${TPLS.filter(t=>t.ch===ch).length} 個模板）</summary><div class="tw"><table class="ct">${ci.specs.map(r=>`<tr><th>${esc(r[0])}</th><td>${esc(r[1])}</td></tr>`).join("")}</table></div><p style="font-size:.76rem;margin:6px 0 2px">來源：</p><ul style="margin:0;padding-left:18px;font-size:.74rem">${ci.sources.map(r=>`<li><a href="${esc(r[1])}" target="_blank" rel="noopener">${esc(r[0])}</a></li>`).join("")}</ul></details>`}).join("")}`;
+  $("sCh").onchange=e=>{SEL.ch=e.target.value;dynSelector()};$("sGoal").onchange=e=>{SEL.goal=e.target.value;dynSelector()};$("sFn").onchange=e=>{SEL.funnel=e.target.value;dynSelector()};$("sRisk").onchange=e=>{SEL.risk=e.target.checked;dynSelector()};
+  $("cpLib").onclick=()=>cp(tplLibMD());$("cpCsv").onclick=()=>cp("\uFEFF"+tplCSV(S));$("cpSel").onclick=()=>cp(tplPromptsMD(S))}
+function cp(t){navigator.clipboard.writeText(t).then(()=>toast("已複製"),()=>toast("無法寫入剪貼簿"))}
+function dynScan(){const h=scanAll(S);$("dyn-scan").innerHTML=h.length?`<div class="tw"><table class="ct"><tr><th>欄位</th><th>類別</th><th>命中字詞</th><th>提示</th></tr>${h.map(x=>`<tr><td>${x.field}</td><td class="${x.cat==="health"?"no":""}">${{health:"健康宣稱",absolute:"絕對／最高級",urgency:"限時限量",price:"價格優惠",testimonial:"見證／前後",compare:"比較",award:"獎項認證"}[x.cat]}</td><td>${esc(x.words.join("、"))}</td><td>${esc(x.note)}</td></tr>`).join("")}</table></div><p class="hint" style="margin-top:6px">只是關鍵字提示：沒有命中不代表合規，命中也不一定違規；請由人類與合資格專業人士審核。</p>`:'<p class="hint">目前沒有命中任何關鍵字（或尚未填寫文案）。沒有命中不代表合規。</p>'}
+let SHOWSAFE=true;
+function dynStudio(){const cws=cwList(S);if(!cws.length){$("dyn-studio").innerHTML='<p class="hint">填入主色、文字色與背景色（匯入 4A 會自動帶入）後，這裡顯示模板預覽。</p>';return}
+  const cur=cwPick(S),szid=S.text.tpl_size||"ig45",sz=sizeBy(szid)||SIZES[0],r=tplSVG(S,sz,{showSafe:SHOWSAFE});
+  const m=r.metrics,cell=(v,ok)=>`<td class="${ok?"ok":"no"}">${v}</td>`;
+  $("dyn-studio").innerHTML=`<div class="ctl"><label>尺寸 <select id="stSize">${SIZES.map(x=>`<option value="${x.id}" ${x.id===sz.id?"selected":""}>${x.name}（${x.w}×${x.h}）</option>`).join("")}</select></label><label>配色變體 <select id="stCw">${cws.map(c=>`<option ${c.name===cur.name?"selected":""}>${esc(c.name)}</option>`).join("")}</select></label>${sz.safe?`<label><input type="checkbox" id="stSafe" ${SHOWSAFE?"checked":""}/> 顯示 9:16 安全區（紅色虛線）</label>`:""}</div><div class="stage">${r.svg}</div>
+  <div class="tw" style="margin-top:8px"><table class="ct"><tr><th>標題對背景（最差）</th><th>CTA 文字對按鈕</th><th>標題字級（設計）</th><th>標題在手機（約 360px 寬）</th><th>小字在手機</th><th>文字是否放得下</th></tr><tr>${cell(fr(m.contrast)+":1",m.contrast>=4.5)}${m.ctaRatio!=null?cell(fr(m.ctaRatio)+":1",m.ctaRatio>=4.5):"<td>—</td>"}<td>${m.h1px?m.h1px.toFixed(0)+"px":"—"}</td>${sz.h>100&&!m.isPpt?cell(m.phoneH1.toFixed(0)+"px",m.phoneH1>=14):"<td>—</td>"}${m.phoneDisc&&!m.isPpt?cell(m.phoneDisc.toFixed(1)+"px",m.phoneDisc>=9):"<td>—</td>"}${cell(m.overflow?"放不下":m.shrink&&m.shrink<1?"已自動縮小到 "+(m.shrink*100).toFixed(0)+"%":"可以",!m.overflow)}</tr></table></div>${m.note?`<div class="warnbox">${esc(m.note)}</div>`:""}<p class="hint" style="margin-top:6px">手機字級＝設計字級 × 360 ÷ 畫布寬；14px 與 9px 只是常見的可讀性經驗門檻，不是標準。漸變取最差位置；圖案取最壞情況；照片須用實際照片測試。這是示意預覽，不是最終設計。</p>`;
+  $("stSize").onchange=e=>{S.text.tpl_size=e.target.value;persist();dynStudio()};$("stCw").onchange=e=>{S.text.tpl_cw=e.target.value;persist();renderDyn()};const sf=$("stSafe");if(sf)sf.onchange=e=>{SHOWSAFE=e.target.checked;dynStudio()}}
+const strip=(arr)=>arr.length?`<div class="strip">${arr.map(x=>`<figure>${x.svg.replace(/width="\d+" height="\d+"/,"")}<figcaption>${esc(x.cap)}</figcaption></figure>`).join("")}</div>`:'<p class="hint">尚無內容。</p>';
+function dynCarousel(){const c=carouselSVGs(S);$("dyn-carousel").innerHTML=c.length?strip(c.map(x=>({svg:x.svg,cap:`${x.i+1}/${c.length}（${{cover:"封面",content:"內容",cta:"CTA"}[x.role]}）`})))+`<p class="hint" style="margin-top:6px">每頁用同一模板規則；第一頁必須單獨成立。每頁圖片都需要替代文字。</p>`:'<p class="hint">在上方填入 Carousel 各頁內容（每行一頁）。</p>'}
+function dynBanners(){const b=bannerSVGs(S);$("dyn-banners").innerHTML=b.length?strip(b.map(x=>({svg:x.svg.replace(/viewBox/,'preserveAspectRatio="xMidYMid meet" viewBox'),cap:`${x.name}｜標題約 ${x.metrics.h1px.toFixed(0)}px`})))+`<p class="hint" style="margin-top:6px">常見的展示廣告標準尺寸；各平台仍須以最新規格為準。</p>`:""}
+function dynPpt(){const p=pptSVGs(S);$("dyn-ppt").innerHTML=p.length?strip(p.map(x=>({svg:x.svg,cap:x.name}))):'<p class="hint">在上方填入簡報各頁標題後顯示。</p>'}
+function dynKpi(){const k=kpiCalc(S);$("dyn-kpi").innerHTML=k?`<div class="tw"><table class="ct"><tr><th>預算</th><th>曝光</th><th>點擊</th><th>CPC</th><th>轉化</th><th>CPA</th><th>ROAS</th><th>扣除廣告費後</th></tr><tr><td>${k.b.toLocaleString()} HKD</td><td>${Math.round(k.imp).toLocaleString()}</td><td>${Math.round(k.clicks).toLocaleString()}</td><td>${k.cpc!=null?k.cpc.toFixed(1):"—"}</td><td>${k.conv.toFixed(1)}</td><td class="${k.cpa!=null&&k.mar!=null&&k.cpa>k.mar?"no":""}">${k.cpa!=null?k.cpa.toFixed(0):"—"}</td><td class="${k.roas!=null&&k.roas<1?"no":""}">${k.roas!=null?k.roas.toFixed(2):"—"}</td><td class="${k.profit!=null&&k.profit<0?"no":""}">${k.profit!=null?Math.round(k.profit).toLocaleString()+" HKD":"—"}</td></tr></table></div><p class="hint" style="margin-top:6px">公式：曝光＝預算÷CPM×1000；點擊＝曝光×CTR；轉化＝點擊×轉化率；CPA＝預算÷轉化；ROAS＝轉化×每次收入÷預算。全部是你輸入的假設，不是預測或行業基準。</p>`:'<p class="hint">填入預算、CPM、CTR 與轉化率後顯示試算。</p>'}
+function dynUtm(){const r=utmRows(S);$("dyn-utm").innerHTML=r.length?`<div class="tw"><table class="ct"><tr><th>渠道</th><th>source</th><th>medium</th><th>campaign</th><th>content</th><th>URL</th></tr>${r.map(x=>`<tr><td>${esc(x.channel)}</td><td>${x.source}</td><td>${x.medium}</td><td>${x.campaign}</td><td>${x.content}</td><td style="word-break:break-all;font-size:.7rem">${esc(x.url)}</td></tr>`).join("")}</table></div>`:'<p class="hint">選渠道並填入落地頁網址與活動名稱後顯示。</p>'}
+function dynCal(){const r=calendarRows(S);$("dyn-cal").innerHTML=`<div class="tw"><table class="ct"><tr><th>週</th><th>日</th><th>渠道</th><th>內容支柱</th><th>模板類型</th></tr>${r.map(x=>`<tr><td>${x.week}</td><td>${x.day}</td><td>${esc(x.channel)}</td><td>${esc(x.pillar)}</td><td>${esc(x.template)}</td></tr>`).join("")}</table></div><p class="hint" style="margin-top:6px">這是輪流分配的草稿，不是策略；實際內容、審稿與發布時間須由人類決定。</p>`}
+function dynPubs(){$("dyn-pubs").innerHTML=`<div class="ctl"><button class="btn-ai" data-addpub="1">＋ 新增一筆</button><button class="btn-ai ghost" id="cpPub">複製 CSV</button></div><div class="tw"><table class="ct"><tr>${PUBCOLS.map(c=>`<th>${c[1]}</th>`).join("")}<th></th></tr>${S.pubs.map((r,i)=>`<tr>${PUBCOLS.map(([f])=>{const v=r[f]||"";if(f==="tpl")return `<td><select data-row="pubs|${i}|tpl"><option value=""></option>${TPLS.map(t=>`<option value="${t.id}" ${v===t.id?"selected":""}>${esc(t.id+" "+t.name)}</option>`).join("")}</select></td>`;if(f==="ch")return `<td><select data-row="pubs|${i}|ch"><option value=""></option>${TPL_CHS.map(c=>`<option value="${esc(chName(c))}" ${v===chName(c)?"selected":""}>${esc(chName(c))}</option>`).join("")}</select></td>`;if(f==="disc")return `<td><select data-row="pubs|${i}|disc">${["","已披露","不適用","未披露"].map(x=>`<option ${v===x?"selected":""}>${x}</option>`).join("")}</select></td>`;return `<td><input type="text" data-row="pubs|${i}|${f}" value="${esc(v)}"/></td>`}).join("")}<td><button class="btn-ai ghost" data-delpub="${i}">刪除</button></td></tr>`).join("")||`<tr><td colspan="${PUBCOLS.length+1}" style="color:var(--muted)">還沒有紀錄。</td></tr>`}</table></div><div id="pubSum"></div><div id="pubIss"></div>`;
+  $("cpPub").onclick=()=>cp("\uFEFF"+pubCSV(S));updPub()}
+function updPub(){const sm=pubSummary(S);$("pubSum").innerHTML=sm.length?`<div class="tw" style="margin-top:8px"><table class="ct"><tr><th>模板</th><th>篇數</th><th>觸及</th><th>互動率</th><th>點擊率</th><th>轉化率</th><th>判讀</th></tr>${sm.map(e=>`<tr><td>${esc(e.tpl)}</td><td>${e.n}</td><td>${e.reach}</td><td>${e.engRate!=null?e.engRate.toFixed(2)+"%":"—"}</td><td>${e.ctr!=null?e.ctr.toFixed(2)+"%":"—"}</td><td>${e.cvr!=null?e.cvr.toFixed(2)+"%":"—"}</td><td class="${e.small?"wn":""}">${e.small?"樣本太少，不要下結論":"可初步比較"}</td></tr>`).join("")}</table></div><p class="hint" style="margin-top:6px">互動率＝互動÷觸及；點擊率＝點擊÷觸及；轉化率＝轉化÷點擊。各渠道的「觸及」定義不同，跨渠道比較要小心；觸及與互動受許多因素影響，不能單獨證明模板好壞。</p>`:"";const iss=pubIssues(S);$("pubIss").innerHTML=iss.length?`<ul style="margin:8px 0 0;padding-left:18px;font-size:.78rem">${iss.map(x=>`<li class="${x.level==="error"?"no":x.level==="warn"?"wn":""}">${x.level==="error"?"✕":x.level==="warn"?"⚠":"ℹ"} ${esc(x.msg)}</li>`).join("")}</ul>`:""}
+function renderStages(){const L={s0:"Stage 0 業務",s1:"Stage 1 定位",s2:"Stage 2 感官",s3:"Stage 3 語言",s4a:"Stage 4A 視覺語言",s4b:"Stage 4B 表面系統",s4c:"Stage 4C 動態影片",s4d:"Stage 4D 3D 與產品",s4e:"Stage 4E UI／UX 與空間"};$("stg").innerHTML=Object.entries(L).map(([k,l])=>`<span>${l}</span><span class="${S[k]?"y":"n"}">${S[k]?"已匯入":"未匯入"}</span>`).join("")}
+function renderDyn(){dynSelector();dynScan();dynStudio();dynCarousel();dynBanners();dynPpt();dynKpi();dynUtm();dynCal();dynPubs()}
+function renderDynLite(){dynScan();dynStudio();dynCarousel();dynBanners();dynPpt();dynKpi();dynUtm();dynCal()}
+function renderAll(){CAT_KEYS.forEach(renderCat);DIMS.forEach(d=>renderDim(d.id));fillTexts();renderDyn();renderStages()}
+document.addEventListener("input",e=>{const t=e.target.closest("[data-t]");if(t){S.text[t.dataset.t]=t.value;persist();swatches();renderDynLite();return}
+  const r=e.target.closest("input[data-row]");if(r){const[k,i,f]=r.dataset.row.split("|");S[k][+i][f]=r.value;persist();updPub()}});
+document.addEventListener("change",e=>{const r=e.target.closest("select[data-row]");if(r){const[k,i,f]=r.dataset.row.split("|");S[k][+i][f]=r.value;persist();updPub()}});
+document.addEventListener("keydown",e=>{const c=e.target.closest("[data-cust]");if(c&&e.key==="Enter"){e.preventDefault();addCust(c.dataset.cust)}});
+function addCust(k){const i=document.querySelector(`[data-cust="${k}"]`),v=i.value.trim();if(v&&!S.custom[k].includes(v)){S.custom[k].push(v);i.value="";persist();renderCat(k)}}
+document.addEventListener("click",e=>{
+  const o=e.target.closest(".opt[data-k]");if(o){const k=o.dataset.k,id=o.dataset.id,a=S[k],i=a.indexOf(id);if(i>-1)a.splice(i,1);else{if(CAT[k].max<90&&count(k,S)>=CAT[k].max){toast(`此項建議最多 ${CAT[k].max} 個，請先取消一個`);return}a.push(id)}persist();renderCat(k);if(k==="tplSel"||k==="channels")dynSelector();renderDynLite();return}
+  const tg=e.target.closest("[data-tpltog]");if(tg){const id=tg.dataset.tpltog,i=S.tplSel.indexOf(id);if(i>-1)S.tplSel.splice(i,1);else S.tplSel.push(id);persist();renderCat("tplSel");dynSelector();return}
+  const tp=e.target.closest("[data-tplprompt]");if(tp){cp(tplPrompt(S,TPL_BY[tp.dataset.tplprompt]));return}
+  const ap=e.target.closest("[data-addpub]");if(ap){const r={};PUBCOLS.forEach(([f])=>r[f]="");S.pubs.push(r);persist();dynPubs();return}
+  const dp=e.target.closest("[data-delpub]");if(dp){S.pubs.splice(+dp.dataset.delpub,1);persist();dynPubs();return}
+  const dm=e.target.closest(".opt[data-dim]");if(dm){const id=dm.dataset.dim,v=dm.dataset.o;if(S.dims[id]===v)delete S.dims[id];else S.dims[id]=v;persist();renderDim(id);renderDynLite();return}
+  const ad=e.target.closest("[data-add]");if(ad){addCust(ad.dataset.add);return}
+  const del=e.target.closest("[data-del]");if(del){const[k,i]=del.dataset.del.split(":");S.custom[k].splice(+i,1);persist();renderCat(k);return}
+  const p=e.target.closest("[data-p]");if(p)navigator.clipboard.writeText(PROMPTS[p.dataset.p](S)).then(()=>toast("已複製完整討論提示詞，貼給 AI 即可開始"),()=>toast("無法寫入剪貼簿，請檢查瀏覽器權限"))});
+function meter(){const c=completeness(S);$("pct").textContent=`完成度 ${c.pct}%（${c.done}/${c.total}）`;$("barfill").style.width=c.pct+"%";const miss=c.missing.map(m=>m.key);
+  const LIST=[["strategy","策略與定位","strategy"],["channels","渠道與模板類型","channels"],["tplcov","渠道模板覆蓋","templates"],["strat2","補充策略清單","strategy"],["tokens","模板視覺規則","tokens"],["hook","Hook／CTA／框架","copy"],["copy","主文案","copy"],["carousel","Carousel","studio"],["slides","簡報","studio"],["compliance","披露與宣稱","compliance"],["kpi","成效試算","kpi"],["utm","UTM 與日曆","tracking"],["publog","發佈與成效紀錄","publog"],["avoid","禁區","avoid"],["ads","3 個代表性內容","avoid"],["style","表情與語言","compliance"]];
+  $("mlist").innerHTML=LIST.map(([k,l,a])=>`<li class="${miss.includes(k)?"":"done"}"><a href="#c-${a}">${l}</a></li>`).join("");
+  const ck=checks(S);$("chk").innerHTML=ck.length?ck.map(x=>`<li class="${x.level}">${x.level==="error"?"✕":x.level==="warn"?"⚠":"ℹ"} ${esc(x.msg)}</li>`).join(""):"<li class='info'>目前沒有發現問題。</li>";renderStages()}
+$("copyctx").onclick=()=>navigator.clipboard.writeText("【我的品牌背景與目前行銷內容與廣告選擇】\n"+ctxStages(S)+"\n\n"+ctxMkt(S)).then(()=>toast("已複製，貼在任何 AI 對話的開頭"),()=>toast("無法寫入剪貼簿"));
+function handle(text){const r=applyPaste(text,S);if(r.applied.length){persist();renderAll()}return r}
+$("paste").onclick=()=>{$("pres").textContent="";$("pt").value="";$("dlg").showModal()};$("pc").onclick=()=>$("dlg").close();
+$("pa").onclick=()=>{const r=handle($("pt").value);$("pres").className="res"+(r.errors.length&&!r.applied.length?" err":"");$("pres").innerHTML=(r.applied.length?"已套用：<br>"+r.applied.map(esc).join("<br>"):"")+(r.custom.length?"<br>加入自訂項："+r.custom.map(esc).join("、"):"")+(r.errors.length?"<br><span class='err'>"+r.errors.map(esc).join("<br>")+"</span>":"")};
+$("expb").onclick=()=>{const b=new Blob([JSON.stringify(buildBrief(S),null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="stage4f-brief.json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+$("imp").onclick=()=>$("file").click();
+$("file").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const o=handle(r.result);toast(o.applied.length?"已匯入":"匯入失敗："+o.errors.join("；"))};r.readAsText(f);e.target.value=""};
+$("impstage").onclick=()=>$("stagefile").click();
+$("stagefile").onchange=async e=>{const fs=[...e.target.files];let ok=[],bad=[];for(const f of fs){const t=await f.text();const k=importBrief(t,S);if(k)ok.push(k);else bad.push(f.name)}persist();fillTexts();renderDyn();renderStages();toast((ok.length?"已匯入 "+ok.join("、"):"")+(bad.length?"｜無法辨識："+bad.join("、"):""));e.target.value=""};
+$("reset").onclick=()=>{if(confirm("確定清空 Stage 4F 的所有答案？（前階段匯入也會清除）此動作無法復原。")){Object.assign(S,emptyState());save(S);location.reload()}};
+renderAll();meter();
+</script></body></html>
