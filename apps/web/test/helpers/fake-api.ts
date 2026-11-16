@@ -61,7 +61,13 @@ export type FakeHandlers = Partial<
     | 'agentGrants'
     | 'agentGrantCreate'
     | 'agentGrantRevoke'
+    | 'agentTokens'
+    | 'agentTokenIssue'
+    | 'agentTokenRevoke'
     | 'agentAccess'
+    | 'projects'
+    | 'projectCreate'
+    | 'projectDetail'
     | 'appGrants'
     | 'appGrantDetail'
     | 'appGrantCreate'
@@ -239,6 +245,14 @@ function routeKey(path: string, method: string): keyof FakeHandlers | null {
   // 否則 `endsWith('/staff')` 永遠配不上，測試會以「沒有預期的請求」爆掉。
   const bare = path.split('?')[0] ?? path;
 
+  if (/\/agents\/[^/]+\/http-tokens\/[^/]+\/revoke$/.test(bare)) {
+    return method === 'POST' ? 'agentTokenRevoke' : null;
+  }
+
+  if (/\/agents\/[^/]+\/http-tokens$/.test(bare)) {
+    return method === 'GET' ? 'agentTokens' : method === 'POST' ? 'agentTokenIssue' : null;
+  }
+
   if (/\/agents\/[^/]+\/grants\/[^/]+\/revoke$/.test(bare)) {
     return method === 'POST' ? 'agentGrantRevoke' : null;
   }
@@ -316,6 +330,14 @@ function routeKey(path: string, method: string): keyof FakeHandlers | null {
 
   if (bare.endsWith('/modules')) {
     return method === 'GET' ? 'modules' : null;
+  }
+
+  if (/\/projects\/[^/]+$/.test(bare)) {
+    return method === 'GET' ? 'projectDetail' : null;
+  }
+
+  if (bare.endsWith('/projects')) {
+    return method === 'GET' ? 'projects' : method === 'POST' ? 'projectCreate' : null;
   }
 
   // ── 政策規則（issue 162）。次序有意義：/policy-rules/:id 先於 /policy-rules。

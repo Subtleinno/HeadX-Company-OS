@@ -152,8 +152,8 @@ export const DESIGN_NAV: AppNav = {
       groups: [
         {
           pages: [
-            { key: 'projects', label: 'Projects' },
-            { key: 'outputs', label: 'Outputs' },
+            { key: 'projects', labelKey: 'design.page.projects' },
+            { key: 'outputs', labelKey: 'design.page.outputs' },
           ],
         },
       ],
@@ -197,10 +197,10 @@ export const DESIGN_NAV: AppNav = {
     },
     {
       key: 'templates',
-      label: 'Templates',
+      labelKey: 'design.module.templates',
       groups: [
         {
-          pages: [{ key: 'library', label: 'Templates' }],
+          pages: [{ key: 'library', labelKey: 'design.page.templates' }],
         },
       ],
     },

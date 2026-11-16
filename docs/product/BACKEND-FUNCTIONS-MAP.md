@@ -107,9 +107,12 @@
 ### 1.4 Agent 身份與授權（`agents/routes.ts`）— 全組 `requireOwner`
 | Method | Path | 功能 | 前端 |
 |---|---|---|---|
-| POST | `/agents` | 建立 agent 身份（冇密碼、冇 token） | ✅ `StaffAgentsScreen` |
+| POST | `/agents` | 建立 agent 身份（冇密碼；HTTP token 另行簽發） | ✅ `StaffAgentsScreen` |
 | GET | `/agents` | agent 列表（分頁） | ✅ |
-| POST | `/agents/:id/disable` | 停用 agent | ✅ |
+| POST | `/agents/:id/disable` | 停用 agent，同一交易撤銷其 HTTP tokens | ✅ |
+| POST | `/agents/:id/http-tokens` | 簽發 request-scoped Bearer token；明文只在這次 201 回應出現，DB 只存 SHA-256 | ✅ `AgentTokensPanel` |
+| GET | `/agents/:id/http-tokens` | token metadata 列表，不回明文或 hash | ✅ |
+| POST | `/agents/:id/http-tokens/:tokenId/revoke` | 撤銷 token；下一請求即 401 | ✅ |
 | GET | `/agents/:id/grants` | 該 agent 嘅授權列表 | ✅ |
 | POST | `/agents/:id/grants` | 直接建立**生效**授權（role 固定 `member`） | ✅ |
 | POST | `/agents/:id/grants/:grantId/revoke` | 撤銷 agent 授權（帶 version） | ✅ |
@@ -122,6 +125,22 @@
 
 > 對外只輸出 `id`、`kind`、`title`、`department`、`order`、`available`、`route` 七欄。`exposure`、`sensitive` 唔對外輸出。
 > 前端唔可以自建 app 清單 —— 登入落點（`useLanding`）就是靠這條的 `route` 決定員工去哪一頁。
+
+### 1.5b Marketing Design Project／Brief（`projects/routes.ts`）
+
+人類路由：`requireUser`＋design 部門（owner 豁免）＋每次以現有 `app_grant`／policy 驗 design 存取。Agent 路由：`requireAgent` Bearer token＋同一套 policy；不提供 DB 憑證。
+
+| Method | Path | 功能 | 前端／client |
+|---|---|---|---|
+| GET | `/projects?brandId=` | 真實 Project 列表，可只讀目前品牌 | ✅ `ProjectsScreen` |
+| POST | `/projects` | Staff 建立 Project＋不可變原始要求；必要 `Idempotency-Key` | ✅ `ProjectCreateForm` |
+| GET | `/projects/:id` | 原始要求、接手 run、現行與歷史 Brief、推導狀態 | ✅ `ProjectDetailScreen` |
+| GET | `/agent/projects` | 外部 agent 讀可工作 Project 清單 | 外部 HTTP client |
+| GET | `/agent/projects/:id` | 外部 agent 讀同一 Project 真相 | 外部 HTTP client |
+| POST | `/agent/projects/:id/claim` | 建立 append-only agent run；記 token／request ID | 外部 HTTP client |
+| POST | `/agent/projects/:id/brief-versions` | 提交 Brief 新版本；記來源 request、基於舊版、actor 與 request ID | 外部 HTTP client |
+
+> Project、claim、Brief 寫入都以 actor 範圍的 idempotency key＋請求摘要處理重送；同 key 不同內容回 409。Brief、原始要求與 run 由 DB trigger 拒絕 UPDATE／DELETE。HTTP 合約測試不代表生產 agent 已接通。
 
 ### 1.6 公司設定與政策（`settings/routes.ts`）— 全組 `requireOwner`
 | Method | Path | 功能 | 前端 |
@@ -217,7 +236,7 @@
 | `AppGrantsScreen` | 申請／批准／生效／拒絕／撤銷／修改，人與 agent 兩視角 | `/app-grants*`、`/agents/:id/grants` 等 |
 | `WorkspacePrototype` | `#/app/*` 原型外殼，**唔叫任何真 API**、唔顯示業務數字 | 無（fixtures） |
 | `BossPortal`／`MembersScreen` | `#/boss/people/members`：員工名單、建立員工、指派部門、停用、恢復、重設密碼 | `/staff*`、`/modules` |
-| `DesignApp` | `#/design`：品牌模組的頁清單與自定義頁（建立／改名／刪除）、品牌主頁位置、記住上次品牌 | `/brands`、`/brands/:id/pages`、`/me/brand-focus` |
+| `DesignApp` | `#/design`：Create／Projects 新增、列表、詳情與 Brief 閱讀；品牌頁清單與自定義頁；記住上次品牌 | `/projects*`、`/brands`、`/brands/:id/pages`、`/me/brand-focus` |
 | `BrandEditorsPanel` | `#/boss/people/members` 下半：誰可以改這個品牌的頁 | `/brands`、`/brands/:id/editors` |
 | `BrandColorEditor` | `#/design/brand/color` 的表身：九個角色／淺色與深色／HEX・RGB・CMYK／階／准用與不准／標誌可用角色。內容是版本內容的一段 JSON（C105），儲存仍然走 `BrandPageScreen` 那一個鍵 | 無（純前端計算：對比與 RGB 都即時算） |
 | `BrandTypeEditor` | `#/design/brand/type` 的表身：四個層級（家族・尺寸・行距・字重・最小尺寸・文字顏色）＋家族與授權（最多兩個）＋配對・備用字・行長・對齊・錯誤用法。內容是版本內容的一段 JSON（C106），儲存仍然走 `BrandPageScreen` 那一個鍵 | 無（文字顏色由 `brandColors.ts` 的角色名單來） |

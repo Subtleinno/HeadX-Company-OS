@@ -17,18 +17,22 @@ import {
   createAgentAccount,
   disableAgentAccount,
   findAgent,
+  issueAgentHttpToken,
   listAgentGrants,
+  listAgentHttpTokens,
   listAgents,
   revokeAgentGrant,
+  revokeAgentHttpToken,
   toAgentView,
 } from './store.js';
+import { registerAgentRequestAuth } from './request-auth.js';
 import { toGrantView } from '../grants/store.js';
 
 /**
  * agent 身份與 agent 授權 API（issue #84）。全部只有已驗證的人類老闆可以用。
  *
- * agent 自己沒有任何入口：它未有 token（MCP token 是 S3-01），也永遠不會有密碼。
- * 所以這裡的每一條路由都是「人替 agent 做事」，審計的 actor 一定是那個人。
+ * 這裡的人類管理路由只有老闆可用。外部 agent 的業務入口則用 request-scoped
+ * Bearer token；明文只在簽發時回一次，資料庫只存 hash，agent 永遠沒有密碼。
  *
  * 存取判斷一定經 #82 的引擎，不在這裡另寫一套 —— 停用、未啟用 app、
  * 入口不符等情況都由引擎回答，這一層只負責把快照讀齊。
@@ -59,8 +63,18 @@ function toGrantStatus(state: string): GrantStatus {
   return 'expired';
 }
 
+function parseExpiryHours(body: unknown): number | null {
+  if (typeof body !== 'object' || body === null) return null;
+  const value = (body as Record<string, unknown>).expiresInHours;
+  if (value === undefined) return 720;
+  return typeof value === 'number' && Number.isInteger(value) && value >= 1 && value <= 8760
+    ? value
+    : null;
+}
+
 export function registerAgents(app: FastifyInstance, deps: AgentsDeps): void {
   const now = deps.now ?? ((): Date => new Date());
+  registerAgentRequestAuth(app, { pool: deps.pool, now });
 
   app.post('/agents', { preHandler: app.requireOwner }, async (request, reply) => {
     const parsed = parseCreateAgentInput(request.body);
@@ -98,6 +112,83 @@ export function registerAgents(app: FastifyInstance, deps: AgentsDeps): void {
 
     return { agents: rows.map(toAgentView), total };
   });
+
+  app.post<{ Params: { id: string } }>(
+    '/agents/:id/http-tokens',
+    { preHandler: app.requireOwner },
+    async (request, reply) => {
+      if (!isValidUuid(request.params.id)) {
+        return reply.code(422).send({ error: 'invalid_input', field: 'id' });
+      }
+
+      const hours = parseExpiryHours(request.body);
+      if (hours === null) {
+        return reply.code(422).send({
+          error: 'invalid_input',
+          reasons: ['expiresInHours 必須是 1 至 8760 的整數'],
+        });
+      }
+
+      const actor = request.currentUser;
+      if (actor === null) return reply.code(401).send({ error: 'not_signed_in' });
+
+      const at = now();
+      const result = await issueAgentHttpToken(deps.pool, {
+        agentId: request.params.id,
+        actorId: actor.id,
+        now: at,
+        expiresAt: new Date(at.getTime() + hours * 60 * 60 * 1000),
+      });
+
+      if (result.status === 'agent_not_found') return reply.code(404).send({ error: 'not_found' });
+      if (result.status === 'agent_disabled') return reply.code(409).send({ error: 'agent_disabled' });
+
+      // 這是明文唯一一次離開伺服器的地方；list／audit 永不回 token 或 hash。
+      return reply.code(201).send({ token: result.token, credential: result.credential });
+    },
+  );
+
+  app.get<{ Params: { id: string } }>(
+    '/agents/:id/http-tokens',
+    { preHandler: app.requireOwner },
+    async (request, reply) => {
+      if (!isValidUuid(request.params.id)) {
+        return reply.code(422).send({ error: 'invalid_input', field: 'id' });
+      }
+
+      const agent = await findAgent(deps.pool, request.params.id);
+      if (agent === null) return reply.code(404).send({ error: 'not_found' });
+
+      return { tokens: await listAgentHttpTokens(deps.pool, agent.id) };
+    },
+  );
+
+  app.post<{ Params: { id: string; tokenId: string } }>(
+    '/agents/:id/http-tokens/:tokenId/revoke',
+    { preHandler: app.requireOwner },
+    async (request, reply) => {
+      if (!isValidUuid(request.params.id) || !isValidUuid(request.params.tokenId)) {
+        return reply.code(422).send({ error: 'invalid_input', field: 'id' });
+      }
+
+      const actor = request.currentUser;
+      if (actor === null) return reply.code(401).send({ error: 'not_signed_in' });
+
+      const result = await revokeAgentHttpToken(deps.pool, {
+        agentId: request.params.id,
+        tokenId: request.params.tokenId,
+        actorId: actor.id,
+        now: now(),
+      });
+
+      if (result.status === 'not_found') return reply.code(404).send({ error: 'not_found' });
+      if (result.status === 'already_revoked') {
+        return reply.code(409).send({ error: 'already_revoked' });
+      }
+
+      return { credential: result.credential };
+    },
+  );
 
   app.post<{ Params: { id: string } }>(
     '/agents/:id/disable',

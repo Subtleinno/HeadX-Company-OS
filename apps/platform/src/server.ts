@@ -28,6 +28,7 @@ import { DEFAULT_PROFILE_DIR, registerSettings, seedSettings } from './settings/
 import type { Storage } from './storage/index.js';
 import { createStorageDiagnosis } from './storage/diagnose.js';
 import { createMinioStorage } from './storage/minio.js';
+import { registerProjects } from './projects/index.js';
 
 const port = Number(process.env.PORT ?? 4420);
 const host = process.env.HOST ?? '0.0.0.0';
@@ -266,6 +267,14 @@ async function main(): Promise<void> {
   });
 
   registerModules(app, { registry });
+
+  // Marketing Design Project／Brief：人與外部 agent 分別驗身份，
+  // 每一條都重新經現有 app_grant／policy 判斷 design 存取權。
+  registerProjects(app, {
+    pool,
+    registry,
+    resolveEntry: (request) => entryOfRequest(request),
+  });
 
   // 品牌頁與頁版本（issue #33）：讀要登入，寫只有老闆（品牌級授權見 #32）。
   registerBrandPages(app, { pool });

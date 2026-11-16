@@ -1,6 +1,7 @@
 import type { Pool, PoolClient } from 'pg';
 import type { UnitScope } from '@company-os/contracts';
 import { writeAudit } from '../audit.js';
+import { createSessionToken, hashSessionToken } from '../auth/token.js';
 import {
   createGrant,
   findGrant,
@@ -173,6 +174,13 @@ export async function disableAgentAccount(
       [input.id, input.now],
     );
 
+    // token 與身份在同一個交易失效；不能等背景工作稍後才封鎖舊請求。
+    await client.query(
+      `update agent_http_token set revoked_at = $2
+        where agent_id = $1 and revoked_at is null`,
+      [input.id, input.now],
+    );
+
     await writeAudit(
       { query: (text, values) => client.query(text, values) },
       {
@@ -180,7 +188,7 @@ export async function disableAgentAccount(
         actorId: input.actorId,
         action: 'agent.disable',
         target: input.id,
-        detail: { grantsKept: true },
+        detail: { grantsKept: true, httpTokensRevoked: true },
       },
     );
 
@@ -380,6 +388,163 @@ export async function revokeAgentGrant(
 
     return { status: 'ok' as const, grant: toGrantView(revoked) };
   });
+}
+
+/* ── request-scoped HTTP token ────────────────────────────────────── */
+
+export type AgentHttpTokenRow = {
+  id: string;
+  agent_id: string;
+  token_hash: string;
+  created_by: string;
+  created_at: Date;
+  expires_at: Date;
+  revoked_at: Date | null;
+};
+
+export type AgentHttpTokenView = {
+  id: string;
+  agentId: string;
+  createdAt: string;
+  expiresAt: string;
+  revokedAt: string | null;
+};
+
+function toAgentHttpTokenView(row: AgentHttpTokenRow): AgentHttpTokenView {
+  return {
+    id: row.id,
+    agentId: row.agent_id,
+    createdAt: row.created_at.toISOString(),
+    expiresAt: row.expires_at.toISOString(),
+    revokedAt: row.revoked_at?.toISOString() ?? null,
+  };
+}
+
+export type IssueAgentHttpTokenResult =
+  | { status: 'issued'; token: string; credential: AgentHttpTokenView }
+  | { status: 'agent_not_found' }
+  | { status: 'agent_disabled' };
+
+/** 明文只在這個回傳值出現一次；寫入資料庫與審計的只有雜湊和 metadata。 */
+export async function issueAgentHttpToken(
+  pool: Pool,
+  input: { agentId: string; actorId: string; now: Date; expiresAt: Date },
+): Promise<IssueAgentHttpTokenResult> {
+  return inTransaction(pool, async (client) => {
+    const agent = await client.query<{ disabled_at: Date | null }>(
+      'select disabled_at from agent_identity where id = $1 for update',
+      [input.agentId],
+    );
+
+    const agentRow = agent.rows[0];
+    if (agentRow === undefined) return { status: 'agent_not_found' as const };
+    if (agentRow.disabled_at !== null) return { status: 'agent_disabled' as const };
+
+    const token = createSessionToken();
+    const inserted = await client.query<AgentHttpTokenRow>(
+      `insert into agent_http_token
+        (agent_id, token_hash, created_by, created_at, expires_at)
+       values ($1, $2, $3, $4, $5)
+       returning id, agent_id, token_hash, created_by, created_at, expires_at, revoked_at`,
+      [input.agentId, hashSessionToken(token), input.actorId, input.now, input.expiresAt],
+    );
+
+    const row = inserted.rows[0];
+    if (row === undefined) throw new Error('簽發 agent token 之後沒有回傳列');
+
+    await audit(client, {
+      actorType: 'human',
+      actorId: input.actorId,
+      action: 'agent.http_token.issue',
+      target: input.agentId,
+      detail: { tokenId: row.id, expiresAt: row.expires_at.toISOString() },
+    });
+
+    return { status: 'issued' as const, token, credential: toAgentHttpTokenView(row) };
+  });
+}
+
+export async function listAgentHttpTokens(pool: Pool, agentId: string): Promise<AgentHttpTokenView[]> {
+  const rows = await pool.query<AgentHttpTokenRow>(
+    `select id, agent_id, token_hash, created_by, created_at, expires_at, revoked_at
+       from agent_http_token where agent_id = $1 order by created_at desc, id asc`,
+    [agentId],
+  );
+
+  return rows.rows.map(toAgentHttpTokenView);
+}
+
+export type RevokeAgentHttpTokenResult =
+  | { status: 'revoked'; credential: AgentHttpTokenView }
+  | { status: 'not_found' }
+  | { status: 'already_revoked' };
+
+export async function revokeAgentHttpToken(
+  pool: Pool,
+  input: { agentId: string; tokenId: string; actorId: string; now: Date },
+): Promise<RevokeAgentHttpTokenResult> {
+  return inTransaction(pool, async (client) => {
+    const locked = await client.query<AgentHttpTokenRow>(
+      `select id, agent_id, token_hash, created_by, created_at, expires_at, revoked_at
+         from agent_http_token where id = $1 and agent_id = $2 for update`,
+      [input.tokenId, input.agentId],
+    );
+
+    const found = locked.rows[0];
+    if (found === undefined) return { status: 'not_found' as const };
+    if (found.revoked_at !== null) return { status: 'already_revoked' as const };
+
+    const updated = await client.query<AgentHttpTokenRow>(
+      `update agent_http_token set revoked_at = $3 where id = $1 and agent_id = $2
+       returning id, agent_id, token_hash, created_by, created_at, expires_at, revoked_at`,
+      [input.tokenId, input.agentId, input.now],
+    );
+
+    const row = updated.rows[0];
+    if (row === undefined) throw new Error('撤銷 agent token 之後沒有回傳列');
+
+    await audit(client, {
+      actorType: 'human',
+      actorId: input.actorId,
+      action: 'agent.http_token.revoke',
+      target: input.agentId,
+      detail: { tokenId: row.id },
+    });
+
+    return { status: 'revoked' as const, credential: toAgentHttpTokenView(row) };
+  });
+}
+
+export type AgentRequestIdentity = {
+  id: string;
+  name: string;
+  tokenId: string;
+};
+
+/** Bearer token 只決定目前 request 的 agent；app 權限仍由每條業務路由重新判斷。 */
+export async function findAgentByHttpToken(
+  pool: Pool,
+  token: string,
+  now: Date,
+): Promise<AgentRequestIdentity | null> {
+  const rows = await pool.query<{
+    id: string;
+    name: string;
+    token_id: string;
+  }>(
+    `select a.id, a.name, t.id as token_id
+       from agent_http_token t
+       join agent_identity a on a.id = t.agent_id
+      where t.token_hash = $1
+        and t.revoked_at is null
+        and t.expires_at > $2
+        and a.disabled_at is null
+      limit 1`,
+    [hashSessionToken(token), now],
+  );
+
+  const row = rows.rows[0];
+  return row === undefined ? null : { id: row.id, name: row.name, tokenId: row.token_id };
 }
 
 /** 目前生效的授權列（給 #82 的引擎用）。 */

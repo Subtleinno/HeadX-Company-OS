@@ -10,10 +10,12 @@ import { chromium } from 'playwright-core';
 const baseUrl = process.env.HEADX_SMOKE_BASE_URL ?? 'http://127.0.0.1:4210';
 const email = process.env.HEADX_SMOKE_EMAIL;
 const password = process.env.HEADX_SMOKE_PASSWORD;
+/** 本機自動驗收可注入臨時 session；外部使用仍應走真登入。 */
+const sessionToken = process.env.HEADX_SMOKE_SESSION_TOKEN;
 const screenshotDir = process.env.HEADX_SMOKE_SCREENSHOTS ?? join(tmpdir(), 'headx-design-navigation-smoke');
 
-if (!email || !password) {
-  throw new Error('請用 HEADX_SMOKE_EMAIL 與 HEADX_SMOKE_PASSWORD 提供本機測試帳戶。');
+if (!sessionToken && (!email || !password)) {
+  throw new Error('請用 HEADX_SMOKE_EMAIL 與 HEADX_SMOKE_PASSWORD 提供本機測試帳戶，或注入臨時 HEADX_SMOKE_SESSION_TOKEN。');
 }
 
 await mkdir(screenshotDir, { recursive: true });
@@ -82,14 +84,42 @@ async function assertModuleTabsFullyVisible() {
 }
 
 try {
-  await page.goto(`${baseUrl}/#/login`, { waitUntil: 'networkidle' });
-  await page.locator('#login-email').fill(email);
-  await page.locator('#login-password').fill(password);
-  await page.getByRole('button', { name: '登入', exact: true }).click();
-  await page.waitForURL(/#\/(boss|design)/);
+  if (sessionToken) {
+    await page.context().addCookies([
+      { name: 'co_session', value: sessionToken, url: baseUrl, httpOnly: true, sameSite: 'Lax' },
+    ]);
+    await page.goto(`${baseUrl}/#/design/create/projects`, { waitUntil: 'networkidle' });
+    await page.locator('.projects-screen').waitFor();
+  } else {
+    await page.goto(`${baseUrl}/#/login`, { waitUntil: 'networkidle' });
+    await page.locator('#login-email').fill(email);
+    await page.locator('#login-password').fill(password);
+    await page.getByRole('button', { name: '登入', exact: true }).click();
+    await page.waitForURL(/#\/(boss|design)/);
+  }
+
+  const projectTitle = `Browser 驗收 Project ${Date.now()}`;
+  const originalRequest = '為 Moonic 建立五頁 IG Carousel；這是由真瀏覽器建立的本機驗收要求。';
+  await open('#/design/create/projects', '.projects-screen');
+  await page.locator('.projects-toolbar').getByRole('button', { name: '新增 Project', exact: true }).click();
+  await page.locator('#project-title').fill(projectTitle);
+  await page.locator('#project-request').fill(originalRequest);
+  await page.getByRole('button', { name: '保存並建立 Project', exact: true }).click();
+  await page.waitForURL(/#\/design\/create\/projects\/[0-9a-f-]+\/brief$/);
+  await page.locator('.project-detail').waitFor();
+  await page.getByText(originalRequest, { exact: true }).waitFor();
+  const detailUrl = page.url();
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.locator('.project-detail').waitFor();
+  await page.getByText(originalRequest, { exact: true }).waitFor();
+  assert.equal(page.url(), detailUrl);
+  await page.screenshot({ path: join(screenshotDir, 'project-detail-1440.png'), fullPage: true });
+  await open('#/design/create/projects', '.projects-screen');
+  await page.getByRole('button', { name: projectTitle, exact: true }).waitFor();
+  console.log('通過真實 Project：新增 → 詳情 → 重新整理 → 列表讀回');
 
   const routes = [
-    ['#/design/create/projects', '[data-design-page="projects"][data-design-module-state="empty"]'],
+    ['#/design/create/projects', '.projects-screen'],
     ['#/design/create/outputs', '[data-design-page="outputs"][data-design-module-state="empty"]'],
     ['#/design/material/library', '[data-design-page="library"][data-design-module="material"]'],
     ['#/design/knowledge/list', '[data-design-page="list"][data-design-module="knowledge"]'],
@@ -131,7 +161,7 @@ try {
       fullPage: true,
     });
 
-    console.log(`通過 ${width}px：Design 五個空態、Brand 深連結、五個頂層入口、Boss Portal 總覽、無橫向溢出`);
+    console.log(`通過 ${width}px：Projects 真列表、其餘四個工作區誠實空態、Brand 深連結、五個頂層入口、Boss Portal 總覽、無橫向溢出`);
   }
 
   await page.setViewportSize({ width: 768, height: 900 });

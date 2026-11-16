@@ -3,7 +3,7 @@
 > `docs/INDEX.md` 是文件地圖，`AGENTS.md` 是規則。這一頁只管四件事：
 > **現在有什麼、怎樣跑起來、下一步做什麼、哪幾個坑別踩。**
 
-最後更新：2026-11-16（Marketing Design v3 #94：Create 優先的五模組導覽、固定路由與誠實空狀態；既有 Brand 深連結保留。品牌模組 v2 驗收報告在 `BRAND-V2-ACCEPTANCE.md`，四項衝突待老闆決定，C126；#87 既有品牌固定頁補齊見 C127）
+最後更新：2026-11-16（Marketing Design v3 #95：Projects 真實列表／新增／詳情、原始要求、append-only Brief 版本、request-scoped agent HTTP token 與接手狀態；決策見 C129。#94 五模組導覽及既有 Brand 深連結保留）
 
 > **2026-11-16 Marketing Design v3 規劃入口：**老闆已判定現有 Brand 方向失敗，要求重做整個 Marketing Design 閉環。新工作先讀 `MARKETING-DESIGN-BLUEPRINT.md`（#93）與 Ardot `https://ardot.tencent.com/file/748070210348880`，以新 issue 理解依賴與驗收背景；不要繼續把 #89 的未完成逐頁修補當成新一輪方向。本頁以下仍描述**目前程式現況**，不是 v3 已完成驗收。
 >
@@ -28,7 +28,7 @@
 真停用登入、真恢復（停用的逆操作）、真重設密碼。Marketing Design 由 Create／Projects 進入，
 五個頂層模組是 Create、Brand、Materials、Knowledge、Templates；Needs 留在外殼。
 Brand 既有頁可以真讀真寫，會記住每位員工上次工作的品牌，開新品牌的入口只給老闆。
-Projects、Outputs、Materials、Knowledge、Templates 目前有固定路由與誠實空狀態，尚未接 CRUD。
+Projects 已可建立、列表、詳情與保存原始要求；外部 agent 可用有授權的 HTTP token 接手並追加 Brief。Outputs、Materials、Knowledge、Templates 仍是固定路由與誠實空狀態，尚未接 CRUD。
 其餘四個部門 app 仍然灰掉，並如實寫明未建。
 
 ## 1. 程式碼在哪
@@ -139,7 +139,8 @@ curl -s https://hxd.subtle-inno.com/api/auth/state    # 應回 {"setupRequired":
 | `#/boss/sites/add` | 新增據點 | 第一、二步可用，第三步端點未存在 |
 | `#/boss/people/members` | 人員與部門：名單、建立員工（可一併選部門）、改部門、停用、恢復、重設密碼 | 可用，全部真寫入 |
 | `#/boss/policy/brand` | 品牌頁策略：六個槽的標準全文、每次儲存新增一版 | 可用，全部真寫入 |
-| `#/design`、`#/design/create/projects` | Create／Projects：真實工作的固定入口；未接 Project API 前顯示「尚未建立」，不顯示虛構項目或 agent 進度 | 路由與空狀態可用（#94）；CRUD 未建 |
+| `#/design`、`#/design/create/projects` | Create／Projects：按目前品牌讀真實列表；Staff 可建立 Project＋不可變原始要求；無權者不見新增入口 | 可用（#95），真寫入與重讀 |
+| `#/design/create/projects/:id/brief` | Project Detail：原始要求、實際 agent run、現行與歷史 Brief、actor／request ID；未接手可複製請求 | 可用（#95）；Composition／Render 未建 |
 | `#/design/create/outputs` | Create／Outputs：由真實 Project 產生的成品入口；未接 Render／Output API 前不顯示示範成品 | 路由與空狀態可用（#94）；CRUD 未建 |
 | `#/design/material/library` | Materials：素材、權利與適用範圍入口；不假設素材權利 | 路由與空狀態可用（#94）；入庫未建 |
 | `#/design/knowledge/list` | Knowledge：有來源、有效期與核對狀態的知識入口；不顯示未核實內容 | 路由與空狀態可用（#94）；CRUD 未建 |
@@ -206,7 +207,7 @@ Boss Portal 的導覽是五組：總覽｜據點與機器｜人員｜策略｜�
 | 位 | issue | 交付 | 開工前額外閘 | 狀態 |
 |---|---|---|---|---|
 | 1 | #94 | Marketing Design 導覽、路由與誠實空狀態 | #93 文件基線已合併 | 功能已完成；待 integration 基線 #108 與 PR 合併 |
-| 2 | #95 | Project／Brief 與外部 agent 接手狀態 | U3 agent 身份與授權 | 待施工 |
+| 2 | #95 | Project／Brief 與外部 agent 接手狀態 | U3 已由 C129 落實 | 功能完成；真 DB、前端、Docker、三寬度真瀏覽器驗收通過；生產 agent 未宣稱接通 |
 | 3 | #96 | Need 詳情、交付／裁決與吸收閉環 | #95 已合併 | 待施工 |
 | 4 | #97 | Materials 相片入庫、權利與詳情 | U5 預設權利；Files 共享權限必須在本張明確補齊 | 待施工 |
 | 5 | #98 | Materials 檢索、L1／L2 與黃金查詢集 | 不以 pgvector 為前置 | 待施工 |
@@ -347,7 +348,7 @@ Boss Portal 的導覽是五組：總覽｜據點與機器｜人員｜策略｜�
 
 - Needs：開立（MCP 端）、交貨、吸收、驗收、詳情頁、我負責分頁
 - Design：品牌模組 v2 已完成（#55–#69；七頁＝主頁／平台／色彩／字體／標誌／語氣／圖像＋已核准範例）
-- Design：#94 已有 Create 優先的五模組導覽、Projects／Outputs／Materials／Knowledge／Templates 固定路由與誠實空狀態；這五個新工作區尚未接 CRUD，舊 Create board 會退回 Projects
+- Design：#94 已有 Create 優先的五模組導覽與固定路由；#95 已接通 Project／Brief。Outputs、Materials、Knowledge、Templates 尚未接 CRUD；Composition、Needs 吸收、Render、Output 與 Provenance 仍未形成作品閉環
 - Design：品牌版本的介面（後端有 `brand_release` 與每頁版號，前端未曝露）
 - Boss Portal：憑證與金鑰、批准紀錄、管理級成員、操作紀錄
 - 新增據點第三步（要後端收確認檔的端點）

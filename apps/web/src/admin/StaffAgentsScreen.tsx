@@ -9,13 +9,17 @@ import {
   disableAgent,
   disableStaff,
   fetchAgentGrants,
+  fetchAgentHttpTokens,
   fetchAgents,
+  issueAgentHttpToken,
+  revokeAgentHttpToken,
   fetchModules,
   fetchOrgUnits,
   fetchStaff,
   resetStaffPassword,
   revokeAgentGrant,
   type AccessDecision,
+  type AgentHttpCredential,
   type AgentIdentity,
   type ApiFailure,
   type GrantView,
@@ -981,17 +985,22 @@ function AgentsPanel({ onDirty }: { onDirty: (count: number) => void }) {
       )}
 
       {selected !== undefined && (
-        <AgentGrantsPanel
-          key={selected.id}
-          agent={selected}
-          modules={modules}
-          onChanged={(message) => {
-            afterMutation(message);
-          }}
-          onFailed={(reasons) => {
-            setAction({ kind: 'failed', reasons });
-          }}
-        />
+        <div key={selected.id} className="agent-manage-panels">
+          <AgentTokensPanel
+            agent={selected}
+            onFailed={(reasons) => setAction({ kind: 'failed', reasons })}
+          />
+          <AgentGrantsPanel
+            agent={selected}
+            modules={modules}
+            onChanged={(message) => {
+              afterMutation(message);
+            }}
+            onFailed={(reasons) => {
+              setAction({ kind: 'failed', reasons });
+            }}
+          />
+        </div>
       )}
 
       {disableTarget !== null && (
@@ -1094,6 +1103,128 @@ function CreateAgentForm({
         </button>
       </div>
     </div>
+  );
+}
+
+/* ── agent HTTP 憑證 ─────────────────────────────────────────────────── */
+
+function AgentTokensPanel({
+  agent,
+  onFailed,
+}: {
+  agent: AgentIdentity;
+  onFailed: (reasons: string[]) => void;
+}) {
+  const [tokens, setTokens] = useState<LoadState<AgentHttpCredential[]>>({ kind: 'loading' });
+  const [reloadKey, setReloadKey] = useState(0);
+  const [busy, setBusy] = useState(false);
+  const [issued, setIssued] = useState<{ token: string; credential: AgentHttpCredential } | null>(null);
+  const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>('idle');
+
+  useEffect(() => {
+    let active = true;
+    setTokens({ kind: 'loading' });
+    void fetchAgentHttpTokens(agent.id).then((result) => {
+      if (!active) return;
+      if (result.ok) {
+        setTokens({ kind: 'ready', data: result.data.tokens });
+      } else if (result.failure.kind === 'http' && (result.failure.status === 401 || result.failure.status === 403)) {
+        setTokens({ kind: 'denied', status: result.failure.status });
+      } else {
+        setTokens({ kind: 'failed', reasons: reasonsOf(result.failure, t('agent.tokens.failed')) });
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, [agent.id, reloadKey]);
+
+  async function issue(): Promise<void> {
+    if (busy) return;
+    setBusy(true);
+    const result = await issueAgentHttpToken(agent.id);
+    setBusy(false);
+    if (result.ok) {
+      setIssued(result.data);
+      setCopyState('idle');
+      setReloadKey((key) => key + 1);
+      return;
+    }
+    onFailed(reasonsOf(result.failure, t('agent.tokens.issueFailed')));
+  }
+
+  async function revoke(tokenId: string): Promise<void> {
+    if (busy) return;
+    setBusy(true);
+    const result = await revokeAgentHttpToken(agent.id, tokenId);
+    setBusy(false);
+    if (result.ok) {
+      if (issued?.credential.id === tokenId) setIssued(null);
+      setReloadKey((key) => key + 1);
+      return;
+    }
+    onFailed(reasonsOf(result.failure, t('agent.tokens.failed')));
+  }
+
+  return (
+    <section className="admin-subsection agent-tokens" aria-labelledby={`agent-tokens-${agent.id}`}>
+      <div className="admin-group__head">
+        <div>
+          <h3 id={`agent-tokens-${agent.id}`} className="admin-group__title">{t('agent.tokens.title')}</h3>
+          <p className="admin-row__reason">{t('agent.tokens.lead')}</p>
+        </div>
+        <button
+          type="button"
+          className="button button--text"
+          disabled={busy || agent.disabledAt !== null}
+          onClick={() => void issue()}
+        >
+          {busy ? t('agent.tokens.issuing') : t('agent.tokens.issue')}
+        </button>
+      </div>
+
+      {issued !== null && (
+        <div className="agent-token-once">
+          <p className="admin-row__reason">{t('agent.tokens.once')}</p>
+          <textarea className="input agent-token-once__value" readOnly value={issued.token} rows={3} />
+          <button
+            type="button"
+            className="button button--text"
+            onClick={() => {
+              void navigator.clipboard.writeText(issued.token).then(() => setCopyState('copied')).catch(() => setCopyState('failed'));
+            }}
+          >
+            {t('agent.tokens.copy')}
+          </button>
+          {copyState !== 'idle' && (
+            <p className="admin-row__reason" role="status">
+              {t(copyState === 'copied' ? 'agent.tokens.copied' : 'agent.tokens.copyFailed')}
+            </p>
+          )}
+        </div>
+      )}
+
+      {tokens.kind === 'loading' && <p className="admin-status" role="status">{t('agent.tokens.loading')}</p>}
+      {(tokens.kind === 'failed' || tokens.kind === 'denied') && (
+        <p className="admin-notice admin-notice--failed" role="alert">{t('agent.tokens.failed')}</p>
+      )}
+      {tokens.kind === 'ready' && tokens.data.length === 0 && <p className="page__empty">{t('agent.tokens.empty')}</p>}
+      {tokens.kind === 'ready' && tokens.data.length > 0 && (
+        <ul className="agent-token-list">
+          {tokens.data.map((credential) => (
+            <li key={credential.id}>
+              <span>{formatAt(credential.expiresAt)}</span>
+              <span>{credential.revokedAt === null ? t('agent.tokens.active') : t('agent.tokens.revokedAt')}</span>
+              {credential.revokedAt === null && (
+                <button type="button" className="button button--text" disabled={busy} onClick={() => void revoke(credential.id)}>
+                  {t('agent.tokens.revoke')}
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }
 

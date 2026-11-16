@@ -585,6 +585,9 @@ describe('舊資料庫升級', () => {
       '0017_brand_document.sql',
       '0018_brand_gap.sql',
       '0019_brand_suggestion.sql',
+      '0020_brand_fixed_pages_backfill.sql',
+      '0021_agent_http_tokens.sql',
+      'design/0001_projects.sql',
       ]);
 
       const after = await db.pool.query<{ name: string; checksum: string; applied_at: Date }>(
@@ -613,6 +616,9 @@ describe('舊資料庫升級', () => {
       '0017_brand_document.sql',
       '0018_brand_gap.sql',
       '0019_brand_suggestion.sql',
+      '0020_brand_fixed_pages_backfill.sql',
+      '0021_agent_http_tokens.sql',
+      'design/0001_projects.sql',
       ]);
 
       // 再跑一次才真的沒有待套用的，並且明講。
@@ -630,6 +636,13 @@ describe('舊資料庫升級', () => {
       for (const name of flatFiles) {
         await writeFile(resolve(dir, name), await readFile(resolve(FLAT_DIR, name), 'utf8'), 'utf8');
       }
+      // 已套用的 design 串也要保留在重建目錄，否則會被正確判定為 migration 失踪。
+      await mkdir(resolve(dir, 'design'), { recursive: true });
+      await writeFile(
+        resolve(dir, 'design/0001_projects.sql'),
+        await readFile(resolve(FLAT_DIR, 'design/0001_projects.sql'), 'utf8'),
+        'utf8',
+      );
       await mkdir(resolve(dir, 'app_alpha'), { recursive: true });
       await writeFile(
         resolve(dir, 'app_alpha/0001_alpha_one.sql'),
@@ -644,9 +657,9 @@ describe('舊資料庫升級', () => {
         'select name, checksum, applied_at from public.schema_migrations order by name',
       );
 
-      // 舊的每一筆逐字不變（包含 applied_at），新串排在後面。
-      // 用 `after.rows.length` 而唔寫死筆數：加 migration 唔應該要改呢一行。
-      expect(final.rows.slice(0, after.rows.length)).toEqual(after.rows);
+      // 舊的每一筆逐字不變（包含 applied_at）。新串按名字排序，可能插在
+      // design 之前，所以排除本次新增的 app_alpha 後逐列比對，而不是假設它永遠排最尾。
+      expect(final.rows.filter((row) => row.name !== 'app_alpha/0001_alpha_one.sql')).toEqual(after.rows);
       expect(final.rows.map((row) => row.name)).toEqual([
         '0001_audit_log.sql',
         '0002_users_sessions.sql',
@@ -669,7 +682,10 @@ describe('舊資料庫升級', () => {
       '0017_brand_document.sql',
       '0018_brand_gap.sql',
       '0019_brand_suggestion.sql',
+      '0020_brand_fixed_pages_backfill.sql',
+      '0021_agent_http_tokens.sql',
         'app_alpha/0001_alpha_one.sql',
+        'design/0001_projects.sql',
       ]);
 
       const audit = await db.pool.query<{ n: number }>(

@@ -1,3 +1,23 @@
+import type {
+  ProjectDetail,
+  ProjectList,
+  ProjectSummary,
+  ProjectState,
+  ProjectBriefDocument,
+  ProjectBriefVersion,
+  ProjectAgentRun,
+} from '@company-os/contracts';
+
+export type {
+  ProjectDetail,
+  ProjectList,
+  ProjectSummary,
+  ProjectState,
+  ProjectBriefDocument,
+  ProjectBriefVersion,
+  ProjectAgentRun,
+};
+
 /**
  * 網頁對 API 的唯一出入口。
  *
@@ -596,6 +616,38 @@ export function revokeAgentGrant(
   );
 }
 
+export type AgentHttpCredential = {
+  id: string;
+  agentId: string;
+  createdAt: string;
+  expiresAt: string;
+  revokedAt: string | null;
+};
+
+export function fetchAgentHttpTokens(id: string): Promise<ApiResult<{ tokens: AgentHttpCredential[] }>> {
+  return request<{ tokens: AgentHttpCredential[] }>(`/api/agents/${encodeURIComponent(id)}/http-tokens`);
+}
+
+/** 明文只會在這次成功回應出現；重新列表或稍後重讀都取不到。 */
+export function issueAgentHttpToken(
+  id: string,
+): Promise<ApiResult<{ token: string; credential: AgentHttpCredential }>> {
+  return request<{ token: string; credential: AgentHttpCredential }>(
+    `/api/agents/${encodeURIComponent(id)}/http-tokens`,
+    { method: 'POST', body: JSON.stringify({}) },
+  );
+}
+
+export function revokeAgentHttpToken(
+  id: string,
+  tokenId: string,
+): Promise<ApiResult<{ credential: AgentHttpCredential }>> {
+  return request<{ credential: AgentHttpCredential }>(
+    `/api/agents/${encodeURIComponent(id)}/http-tokens/${encodeURIComponent(tokenId)}/revoke`,
+    { method: 'POST', body: JSON.stringify({}) },
+  );
+}
+
 /** `via` 只有兩種：憑身份（owner）或憑授權（grant）。`reason` 是拒絕原因代碼。 */
 export type AccessDecision =
   | { allowed: true; via: 'owner' | 'grant' }
@@ -1040,6 +1092,27 @@ export function createBrand(input: { code: string; name: string }): Promise<ApiR
     method: 'POST',
     body: JSON.stringify(input),
   });
+}
+
+/** Marketing Design Create／Projects。列表可按目前品牌收窄，詳情永遠重新向伺服器讀。 */
+export function fetchProjects(brandId?: string): Promise<ApiResult<ProjectList>> {
+  const query = brandId === undefined ? '' : `?brandId=${encodeURIComponent(brandId)}`;
+  return request<ProjectList>(`/api/projects${query}`);
+}
+
+export function createProject(
+  input: { brandId: string; title: string; request: string },
+  idempotencyKey: string,
+): Promise<ApiResult<{ project: ProjectDetail; created: boolean }>> {
+  return request<{ project: ProjectDetail; created: boolean }>('/api/projects', {
+    method: 'POST',
+    headers: { 'idempotency-key': idempotencyKey },
+    body: JSON.stringify(input),
+  });
+}
+
+export function fetchProject(id: string): Promise<ApiResult<{ project: ProjectDetail }>> {
+  return request<{ project: ProjectDetail }>(`/api/projects/${encodeURIComponent(id)}`);
 }
 
 /**

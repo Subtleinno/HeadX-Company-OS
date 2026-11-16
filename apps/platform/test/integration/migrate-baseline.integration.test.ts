@@ -42,9 +42,12 @@ const BASELINE = [
   ['0017_brand_document.sql', 'ed349c59d91b3fbfec451bcd713be2253577e2d3c683e4c33e8b77f3c67b7957'],
   ['0018_brand_gap.sql', 'a7d77c8d78525693b2b138d0809f95a2b928403844545f0dcf3c3c6c96b61840'],
   ['0019_brand_suggestion.sql', '172971bbe4d191eb0ff4f7823f69bbdcf073fee7e77f94439c1d6eca4f9dc9a9'],
+  ['0020_brand_fixed_pages_backfill.sql', '8ae8702c277fbdf1f8c537cd48b6689950613764736cbadbc5464dca472c139f'],
+  ['0021_agent_http_tokens.sql', '7da820bcf7eea2597014a4ec472cd0c59a5c8b3ca93423eae6b5cb9ab865f838'],
+  ['design/0001_projects.sql', '47c45bab2389a444a1745657433e9bf6cfaa148d4246b4917688c8af522d0c7b'],
 ] as const;
 
-describe('基準線：現有執行器套用 0001 至 0019 之後的 ledger', () => {
+describe('基準線：現有執行器套用 platform 0001 至 0021 與 design 0001 之後的 ledger', () => {
   let db: TempDatabase;
 
   beforeAll(async () => {

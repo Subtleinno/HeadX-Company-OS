@@ -333,3 +333,6 @@ export * from './identity.ts';
  * 定義，所以「這一頁有哪些欄位」只有一個答案。
  */
 export * from './brand/index.ts';
+
+/** Marketing Design Project／Brief：API、Web 與外部 client 共用同一份契約。 */
+export * from './project/index.ts';

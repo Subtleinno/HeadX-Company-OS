@@ -6,6 +6,7 @@ import { buildServer } from '../../src/app';
 import { registerAuth } from '../../src/auth/routes';
 import { createHashLimiter, type HashLimiter } from '../../src/auth/hash-limits';
 import { registerAgents } from '../../src/agents/index';
+import { registerProjects } from '../../src/projects/index';
 import { registerGrants } from '../../src/grants/index';
 import { registerStaff } from '../../src/staff/index';
 import type { StaffHooks } from '../../src/staff/store';
@@ -52,11 +53,15 @@ export type Harness = {
  * 測試專用 app 清單：sales（內部、非敏感、已開放）與 hr（敏感）。
  * 真正嘅 manifest 全部 available: false，所以測試要自己有一份。
  */
-function testRegistry(): ModuleRegistry {
+function testRegistry(includeDesign = false): ModuleRegistry {
   const apps: Array<Pick<ModuleManifest, 'id' | 'sensitive' | 'available' | 'exposure'>> = [
     { id: 'sales', sensitive: false, available: true, exposure: 'internal' },
     { id: 'hr', sensitive: true, available: true, exposure: 'internal' },
   ];
+
+  if (includeDesign) {
+    apps.push({ id: 'design', sensitive: false, available: true, exposure: 'internal' });
+  }
 
   return {
     listModules: () =>
@@ -72,7 +77,7 @@ function testRegistry(): ModuleRegistry {
   };
 }
 
-export async function createHarness(): Promise<Harness> {
+export async function createHarness(options: { design?: boolean } = {}): Promise<Harness> {
   const db = await createTempDatabase();
   await migrate({ pool: db.pool, dir: migrationsDir, log: silent });
 
@@ -86,7 +91,7 @@ export async function createHarness(): Promise<Harness> {
   const hashRun = <T>(task: () => Promise<T>): Promise<T> => limiter.current.run(task);
 
   const app = buildServer({ checkDb: ok, checkStorage: ok });
-  const registry = testRegistry();
+  const registry = testRegistry(options.design === true);
   const staffHooks: StaffHooks = {};
   registerAuth(app, {
     pool: db.pool,
@@ -109,6 +114,13 @@ export async function createHarness(): Promise<Harness> {
     resolveEntry: () => entry.trusted,
     now: () => new Date(),
   });
+  if (options.design === true) {
+    registerProjects(app, {
+      pool: db.pool,
+      registry,
+      resolveEntry: () => entry.trusted,
+    });
+  }
   await app.ready();
 
   const units = await seedUnits(db);

@@ -37,6 +37,7 @@ function open(hash = '/#/design/create/projects') {
     brands: () => jsonResponse(200, { items: BRANDS }),
     brandFocus: () => jsonResponse(200, { brandId: 'b-moonic' }),
     brandPages: () => jsonResponse(200, { items: [], canEdit: true }),
+    projects: () => jsonResponse(200, { projects: [], total: 0 }),
   });
 
   render(<App />);
@@ -58,9 +59,7 @@ describe('Marketing Design v3 導覽', () => {
   it('五個頂層入口可見；Needs 不住在業務模組列', async () => {
     open();
 
-    await waitFor(() => {
-      expect(document.querySelector('[data-design-module-state="empty"]')).not.toBeNull();
-    });
+    expect(await screen.findByText('這個品牌尚未有 Project')).toBeTruthy();
 
     const tabs = moduleTabs();
     expect(Array.from(tabs.querySelectorAll('button')).map((button) => button.textContent)).toEqual([
@@ -83,7 +82,7 @@ describe('Marketing Design v3 導覽', () => {
     await waitFor(() => {
       expect(window.location.hash).toBe('#/design/create/projects');
     });
-    expect(await screen.findByText('Projects 未提供')).toBeTruthy();
+    expect(await screen.findByText('這個品牌尚未有 Project')).toBeTruthy();
   });
 
   it.each([

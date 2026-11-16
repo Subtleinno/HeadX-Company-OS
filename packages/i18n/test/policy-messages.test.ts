@@ -218,7 +218,7 @@ const INTERPOLATED: Record<string, Record<string, string>> = {
 // 「建立時一律是員工、沒有部門」改為「部門可以即刻揀，亦可以之後再改」。
 // 原因：建立員工時真的可以選部門了，舊句變成一句錯的說明。除此之外
 // 其餘既有鍵逐字不變（鍵數不變，只是那一條的值改了）。
-const FROZEN_ALL_SHA256 = '5b8a937e18088bbf027671c89802841ca4986834a7eac010291a79cd56d5c3f5';
+const FROZEN_ALL_SHA256 = '69382f41cdae76f06b2f2d919cf6517b17dbb28a6be77096dc780d0b28bababb';
 
 /**
  * 同步改寫（#163）：#163 起嘅 cat:packages 施工張會新增 files.* 前綴嘅鍵，

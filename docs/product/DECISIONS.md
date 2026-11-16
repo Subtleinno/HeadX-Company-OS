@@ -648,3 +648,9 @@
 - 老闆同時明確表示不必再受舊規則限制，由主要 agent 建立並使用新規則。因此 `AGENTS.md` 的舊「開工規則」及「Loop」已由 2026-11-16「項目管理與施工規則」取代：不再要求只改單頁／單 app、跨層必須另開 issue、規格空白一律停工，或機械地按舊佇列施工。
 - 新規則以完整產品閉環、根因診斷、真瀏覽器可見入口、跨應用驗收、文件同步與誠實狀態為主。一個分支交付一個連貫目標；必要時可跨 issue、跨 app、跨共享層，不以局部 workaround 維持過時邊界。
 - 這不是授權破壞資料或跳過驗證。真實資料、遷移、權限、秘密、審計與對外入口仍受保護；可逆技術方案可由主要 agent 決定，涉及真實資料、對外暴露或不可逆改動仍先取得老闆確認。舊技術決定與不變量若需替換，必須同時提供遷移、相容性、測試與文件。
+
+## C129　Project／Brief 使用 request-scoped HTTP agent 身份與事實投影狀態
+
+- #95 的 U3 採用既有 `agent_identity`＋`app_grant`＋policy，不建立 DB 憑證或繞過權限的通道。老闆在 Agents 管理畫面簽發 HTTP Bearer token；明文只在 201 簽發回應顯示一次，`agent_http_token` 只存 SHA-256、到期及撤銷事實。每個請求重新驗 token、agent 狀態與當時的 design grant；停用 agent 會在同一交易撤銷其 token。
+- Project 原始要求、agent run 與 Brief 版本在 `design` schema 只追加。Brief 記錄 agent、token、request ID、原始要求、基於哪個舊 Brief 及審計；建立 Project、claim 與 Brief 提交都以 actor 範圍的 Idempotency-Key＋請求摘要處理重送，同 key 不同內容回 409。
+- Project 沒有可寫入的萬能 `status`。共用 `deriveProjectState()` 覆蓋待接手、規劃中、等待補料、可輸出、輸出中、已產出及已收貨；#95 只提供 request／run／Brief 事實，其餘狀態待相應模組產生真事實後才會出現。測試 HTTP client 證明契約可用，不代表任何生產 agent 已接通。

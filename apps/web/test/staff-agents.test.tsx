@@ -564,6 +564,7 @@ function openAgents(handlers: Parameters<typeof installFakeApi>[0] = {}) {
         edges: [],
       }),
     agentGrants: () => jsonResponse(200, { grants: [grant()], total: 1 }),
+    agentTokens: () => jsonResponse(200, { tokens: [] }),
     ...handlers,
   });
 
@@ -923,6 +924,26 @@ describe('agent 存取檢查', () => {
     await waitFor(() => {
       expect(document.querySelector('[data-access-result]')?.textContent).toBe('允許（憑授權）');
     });
+  });
+
+  it('老闆可在管理畫面簽發一次性顯示的 HTTP 憑證', async () => {
+    const credential = {
+      id: 't-1', agentId: 'a-assist', createdAt: '2026-11-16T00:00:00.000Z',
+      expiresAt: '2026-12-16T00:00:00.000Z', revokedAt: null,
+    };
+    const api = openAgents({
+      agentTokenIssue: () => jsonResponse(201, { token: 'a'.repeat(43), credential }),
+    });
+
+    await openAgentTab();
+    await userEvent.click(within(agentRow('a-assist')).getByRole('button', { name: '管理授權' }));
+    expect(await screen.findByText('HTTP 接入憑證')).toBeTruthy();
+    expect(await screen.findByText('尚未簽發 HTTP 憑證。')).toBeTruthy();
+    await userEvent.click(screen.getByRole('button', { name: '簽發新憑證' }));
+
+    expect(await screen.findByDisplayValue('a'.repeat(43))).toBeTruthy();
+    expect(screen.getByText('請現在複製並安全保存。關閉或切換 agent 後，這串明文不會再顯示。')).toBeTruthy();
+    expect(api.count('agentTokenIssue')).toBe(1);
   });
 
   it('未接駁的 app 在選項上就要講清楚', async () => {

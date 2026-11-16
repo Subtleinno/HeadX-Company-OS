@@ -15,6 +15,9 @@ import { navigatePath, useHashPath } from '../router';
 import { BrandPageCreate } from './BrandPageCreate';
 import { BrandPageScreen } from './BrandPageScreen';
 import { DesignModuleState } from './DesignModuleState';
+import { ProjectDetailScreen } from './ProjectDetailScreen';
+import { ProjectsScreen } from './ProjectsScreen';
+import { parseProjectRoute } from './projectRoute';
 import { useBrandPages } from './useBrandPages';
 
 /**
@@ -262,6 +265,23 @@ export function DesignApp({ user, onSignedOut }: DesignAppProps) {
   function renderPage(current: NavPosition): ReactNode {
     if (current.navModule.key === 'brand') {
       return renderBrand(current);
+    }
+
+    const projectRoute = parseProjectRoute(path);
+    if (projectRoute?.kind === 'list') {
+      return (
+        <ProjectsScreen
+          brandId={brandId}
+          brandsKind={brands.state.kind}
+          onReloadBrands={brands.reload}
+        />
+      );
+    }
+    if (projectRoute?.kind === 'detail') {
+      return <ProjectDetailScreen projectId={projectRoute.projectId} />;
+    }
+    if (projectRoute?.kind === 'invalid') {
+      return <ProjectDetailScreen projectId={null} />;
     }
 
     return (

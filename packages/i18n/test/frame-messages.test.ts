@@ -67,7 +67,7 @@ const FRAME_MESSAGES: Record<string, string> = {
 // 原因：建立員工時真的可以選部門了，舊句變成一句錯的說明。除此之外
 // 其餘既有鍵逐字不變（鍵數不變，只是那一條的值改了）。
 const FROZEN_NON_FRAME_SHA256 =
-  'd870f58308893198313eb458c3af74d4caf745b59191302f4c4bef1330a091da';
+  '0fa830f657356e402a1d7c24334ae5a2578888645d81d39bce38fa6c29a7687e';
 
 // #163 新增 files.* 前綴；同 #161 嘅 policy.* 一樣，唔屬 #155 要守嘅既有鍵。
 // issue 168 新增 5 個 grant.detail.* 鍵，同樣唔屬 #155 要守嘅既有鍵；
