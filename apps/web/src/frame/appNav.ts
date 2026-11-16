@@ -59,9 +59,7 @@ export function navLabel(leaf: NavLeaf): string {
   return leaf.labelKey === undefined ? leaf.key : t(leaf.labelKey);
 }
 
-export type NavModule = {
-  key: string;
-  labelKey: MessageKey;
+export type NavModule = NavLeaf & {
   groups: readonly NavGroup[];
 };
 
@@ -149,25 +147,25 @@ export const DESIGN_NAV: AppNav = {
   scoped: true,
   modules: [
     {
+      key: 'create',
+      labelKey: 'design.module.create',
+      groups: [
+        {
+          pages: [
+            { key: 'projects', label: 'Projects' },
+            { key: 'outputs', label: 'Outputs' },
+          ],
+        },
+      ],
+    },
+    {
       key: 'brand',
       labelKey: 'design.module.brand',
       groups: [
         {
-          // 冇分組標題：一個模組只有一組頁時，標題只會重複上面個模組名
-          // （或重複左側欄最頂嘅「頁面 PAGES」）。分組標題留返俾真正
-          // 有兩組以上嘅模組（Boss Portal 嘅據點／權限與稽核）。
+          // 未讀到後端清單之前的骨架；真正頁名與自定義頁由 withBrandPages() 換入。
+          // 既有鍵與深連結保留，v3 只改變 Brand 在整個 app 的位置。
           pages: [
-            /**
-             * 五個固定頁（issue #32）。鍵固定，唔可以改名：鍵係網址的一部分。
-             *
-             * 這一組只是**未讀到品牌頁清單之前**的骨架 —— 真正列在左側的
-             * 是後端回的清單（自定義頁幾張、叫什麼，只有資料庫知）。
-             * `withBrandPages()` 讀到之後會整組換走，包括這五頁的名。
-             *
-             * 移走的三頁各有原因：儀表板與渠道沒有一頁定義它們；版本住在
-             * 各頁自己裡面（#33），不再是獨立一頁；「品牌識別」不在五頁之內，
-             * 留一個空殼當第六頁只會令人以為它存在。
-             */
             { key: 'home', labelKey: 'design.page.brandHome' },
             { key: 'logo', labelKey: 'design.page.brandLogo' },
             { key: 'color', labelKey: 'design.page.brandColor' },
@@ -184,11 +182,7 @@ export const DESIGN_NAV: AppNav = {
       labelKey: 'design.module.material',
       groups: [
         {
-          pages: [
-            { key: 'library', labelKey: 'design.page.materialLibrary' },
-            { key: 'categories', labelKey: 'design.page.materialCategories' },
-            { key: 'licence', labelKey: 'design.page.materialLicence' },
-          ],
+          pages: [{ key: 'library', labelKey: 'design.page.materialLibrary' }],
         },
       ],
     },
@@ -197,23 +191,16 @@ export const DESIGN_NAV: AppNav = {
       labelKey: 'design.module.knowledge',
       groups: [
         {
-          pages: [
-            { key: 'list', labelKey: 'design.page.knowledgeList' },
-            { key: 'register', labelKey: 'design.page.knowledgeRegister' },
-            { key: 'cta', labelKey: 'design.page.knowledgeCta' },
-          ],
+          pages: [{ key: 'list', labelKey: 'design.page.knowledgeList' }],
         },
       ],
     },
     {
-      key: 'create',
-      labelKey: 'design.module.create',
+      key: 'templates',
+      label: 'Templates',
       groups: [
         {
-          pages: [
-            { key: 'board', labelKey: 'design.page.createBoard' },
-            { key: 'outputs', labelKey: 'design.page.createOutputs' },
-          ],
+          pages: [{ key: 'library', label: 'Templates' }],
         },
       ],
     },

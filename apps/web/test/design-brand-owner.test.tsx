@@ -50,8 +50,8 @@ const DESIGN = {
 };
 
 function openDesign(user: typeof BOSS | typeof WAI, brands = BRANDS): FakeApi {
-  // 直接由 /design 開機：這一張測的是「有咩角色見到咩」，不是落點。
-  window.history.replaceState(null, '', '/#/design');
+  // 直接由 Brand Home 開機：這一張測的是「有咩角色見到咩」，不是 Create 落點。
+  window.history.replaceState(null, '', '/#/design/brand/home');
 
   const api = installFakeApi({
     state: () => jsonResponse(200, { setupRequired: false, signedIn: true, user }),

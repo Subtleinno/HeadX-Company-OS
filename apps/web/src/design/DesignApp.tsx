@@ -14,13 +14,14 @@ import { useBrands, useSelectedBrand } from '../frame/useDirectory';
 import { navigatePath, useHashPath } from '../router';
 import { BrandPageCreate } from './BrandPageCreate';
 import { BrandPageScreen } from './BrandPageScreen';
+import { DesignModuleState } from './DesignModuleState';
 import { useBrandPages } from './useBrandPages';
 
 /**
  * Design app（設計／內容／網站）。
  *
- * 四個模組：品牌、素材、知識、創作（老闆 2026-11-10：呢四個就係
- * Marketing Design app 的模組）。
+ * v3 五個模組：Create、Brand、Materials、Knowledge、Templates。
+ * Needs 留在外殼，不成為第六個業務模組。
  *
  * 品牌模組的形狀由 issue #32 定：
  *   - 左側是**這個品牌的一組頁**：品牌主頁、標誌、色彩、字體、語氣，加上
@@ -40,16 +41,6 @@ type DesignAppProps = {
   user: PublicUser;
   onSignedOut: () => void;
 };
-
-/** 未接內容的三個模組（素材、知識、創作）：如實講未接，不畫假表。 */
-function DesignStub() {
-  return (
-    <div className="design-stub">
-      <p className="design-stub__title">{t('design.stub.title')}</p>
-      <p className="design-stub__body">{t('design.stub.body')}</p>
-    </div>
-  );
-}
 
 function NoBrand(props: { canCreate: boolean; onCreated: () => void }) {
   return (
@@ -269,11 +260,17 @@ export function DesignApp({ user, onSignedOut }: DesignAppProps) {
   }
 
   function renderPage(current: NavPosition): ReactNode {
-    if (current.navModule.key !== 'brand') {
-      return <DesignStub />;
+    if (current.navModule.key === 'brand') {
+      return renderBrand(current);
     }
 
-    return renderBrand(current);
+    return (
+      <DesignModuleState
+        moduleKey={current.navModule.key as 'create' | 'material' | 'knowledge' | 'templates'}
+        pageKey={current.page.key}
+        status="empty"
+      />
+    );
   }
 
   const headerActions =

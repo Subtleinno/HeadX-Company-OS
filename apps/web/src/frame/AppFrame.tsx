@@ -88,7 +88,7 @@ export function AppFrame({
   // 第一格（app 名稱）唔喺呢度砌：名稱只有 manifest 一個來源，由
   // `FrameApps` 補上。呢度只講「模組 / 頁 / 章節」。
   const breadcrumbs = [
-    t(position.navModule.labelKey),
+    navLabel(position.navModule),
     navLabel(position.page),
     ...(position.section === null ? [] : [navLabel(position.section)]),
   ];
@@ -103,7 +103,7 @@ export function AppFrame({
     <FrameApps
       {...(withRail ? { withRail } : {})}
       currentAppRoute={nav.base}
-      moduleTabs={nav.modules.map((item) => ({ key: item.key, label: t(item.labelKey) }))}
+      moduleTabs={nav.modules.map((item) => ({ key: item.key, label: navLabel(item) }))}
       currentModuleTabKey={position.navModule.key}
       onSelectModuleTab={(key) => {
         // 轉模組一律由第一頁開始：留住上一模組的頁名會對唔到任何一頁。
