@@ -7,6 +7,9 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** DesignApp 收到的是去掉 `/design` 之後的 hash 段。 */
 export function parseProjectRoute(path: readonly string[]): ProjectRoute | null {
+  // `#/design` 落點（空段）＝ Create 的 project 列表：由 app selector 揀
+  // 「Design」進入時，第一眼就應該見到真實作品，而唔係一個「未提供」的 stub。
+  if (path.length === 0) return { kind: 'list' };
   if (path[0] !== 'create') return null;
   if (path.length === 2 && ['projects', 'carousel', 'presentation', 'video'].includes(path[1] ?? '')) {
     return { kind: 'list' };
