@@ -1,39 +1,3 @@
-import type {
-  ProjectDetail,
-  ProjectList,
-  ProjectFormat,
-  ProjectSummary,
-  ProjectState,
-  ProjectBriefDocument,
-  ProjectBriefVersion,
-  ProjectAgentRun,
-  CarouselSlide,
-  CarouselOutput,
-  CompositionView,
-  KnowledgeDocView,
-  MaterialView,
-  ProjectCreativeWorkspace,
-  CarouselTemplate,
-} from '@company-os/contracts';
-
-export type {
-  ProjectDetail,
-  ProjectList,
-  ProjectFormat,
-  ProjectSummary,
-  ProjectState,
-  ProjectBriefDocument,
-  ProjectBriefVersion,
-  ProjectAgentRun,
-  CarouselSlide,
-  CarouselOutput,
-  CompositionView,
-  KnowledgeDocView,
-  MaterialView,
-  ProjectCreativeWorkspace,
-  CarouselTemplate,
-};
-
 /**
  * 網頁對 API 的唯一出入口。
  *
@@ -173,58 +137,6 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<ApiResu
 
 export function fetchAuthState(): Promise<ApiResult<AuthState>> {
   return request<AuthState>('/api/auth/state');
-}
-
-/**
- * 讀一份**文字**回應（品牌四種輸出：tokens.json／prompt.md／HTML／印刷版，issue #57）。
- *
- * 這四條路回的不是 JSON，用 `request()` 會把 body 讀成 null 然後當成功 ——
- * 一個「下載成功但內容是空」的假象。所以另開一條，錯了照樣講錯在哪。
- */
-async function requestText(path: string): Promise<ApiResult<string>> {
-  let response: Response;
-
-  try {
-    response = await fetch(path, { headers: { accept: 'text/plain, text/html, */*' }, credentials: 'same-origin' });
-  } catch {
-    return { ok: false, failure: { kind: 'network' } };
-  }
-
-  if (!response.ok) {
-    // 錯的時候回應可能是 JSON（後端的錯誤物件），也可能是一頁純文字 / HTML。
-    // 讀不到就當沒有 body —— 但絕對不會當成成功。
-    const body: unknown = await response.json().catch(() => null);
-    const record = asRecord(body);
-
-    return {
-      ok: false,
-      failure: {
-        kind: 'http',
-        status: response.status,
-        error: typeof record.error === 'string' ? record.error : null,
-        field: null,
-        retryAfterSeconds: parseRetryAfter(response.headers.get('retry-after')),
-        reasons: [],
-        message: typeof record.message === 'string' && record.message !== '' ? record.message : null,
-      },
-    };
-  }
-
-  return { ok: true, data: await response.text() };
-}
-
-export type BrandOutputKind = 'tokens' | 'prompt' | 'html' | 'print';
-
-/** 品牌輸出的路徑：下載連結與預覽讀同一條，不會有一邊新一邊舊。 */
-export function brandOutputPath(brandId: string, kind: BrandOutputKind): string {
-  const tail = kind === 'tokens' ? 'tokens.json' : kind === 'prompt' ? 'prompt.md' : kind;
-
-  return `/api/brands/${encodeURIComponent(brandId)}/output/${tail}`;
-}
-
-/** 讀 prompt 包的文字（給「給 AI 用」區預覽）。 */
-export function fetchBrandPromptPack(brandId: string): Promise<ApiResult<string>> {
-  return requestText(brandOutputPath(brandId, 'prompt'));
 }
 
 export function submitSetup(input: {
@@ -968,8 +880,10 @@ export function deleteFile(id: string): Promise<ApiResult<null>> {
 }
 
 /** 下載網址：inline 定 attachment 由伺服器 `Content-Disposition` 決定，前端唔猜。 */
-export function fileDownloadUrl(id: string): string {
-  return `/api/files/${encodeURIComponent(id)}`;
+/** 檔案網址。`download` 為真時由伺服器回 attachment，預覽則用 inline。 */
+export function fileDownloadUrl(id: string, download = false): string {
+  const base = `/api/files/${encodeURIComponent(id)}`;
+  return download ? `${base}?download=1` : base;
 }
 
 /**
@@ -1110,430 +1024,702 @@ export function createBrand(input: { code: string; name: string }): Promise<ApiR
   });
 }
 
-/** Marketing Design Create／Projects。列表可按目前品牌收窄，詳情永遠重新向伺服器讀。 */
-export function fetchProjects(brandId?: string): Promise<ApiResult<ProjectList>> {
-  const query = brandId === undefined ? '' : `?brandId=${encodeURIComponent(brandId)}`;
-  return request<ProjectList>(`/api/projects${query}`);
-}
-
-export function createProject(
-  input: { brandId: string; title: string; request: string; format: ProjectFormat },
-  idempotencyKey: string,
-): Promise<ApiResult<{ project: ProjectDetail; created: boolean }>> {
-  return request<{ project: ProjectDetail; created: boolean }>('/api/projects', {
-    method: 'POST',
-    headers: { 'idempotency-key': idempotencyKey },
-    body: JSON.stringify(input),
-  });
-}
-
-export function fetchProject(id: string): Promise<ApiResult<{ project: ProjectDetail }>> {
-  return request<{ project: ProjectDetail }>(`/api/projects/${encodeURIComponent(id)}`);
-}
-
-export function fetchProjectCreative(id: string): Promise<ApiResult<{ workspace: ProjectCreativeWorkspace }>> {
-  return request<{ workspace: ProjectCreativeWorkspace }>(`/api/projects/${encodeURIComponent(id)}/creative`);
-}
-
-export function fetchMaterials(brandId: string, query = ''): Promise<ApiResult<{ materials: MaterialView[]; total: number }>> {
-  return request<{ materials: MaterialView[]; total: number }>(`/api/materials?brandId=${encodeURIComponent(brandId)}&q=${encodeURIComponent(query)}`);
-}
-
-export function uploadMaterial(input: {
-  brandId: string; file: File; description: string; tags: string[]; source: MaterialView['source'];
-}): Promise<ApiResult<{ material: MaterialView; created: boolean }>> {
-  return request<{ material: MaterialView; created: boolean }>(`/api/materials?brandId=${encodeURIComponent(input.brandId)}`, {
-    method: 'POST',
-    headers: {
-      'content-type': input.file.type,
-      'x-file-name': encodeURIComponent(input.file.name),
-      'x-material-description': encodeURIComponent(input.description),
-      'x-material-tags': encodeURIComponent(input.tags.join(',')),
-      'x-material-source': input.source,
-    },
-    body: input.file,
-  });
-}
-
-export type KnowledgeInput = {
-  brandId: string | null; title: string; summary: string; bodyMd: string;
-  sources: { title: string; url: string; retrieved: string }[]; jurisdiction: string[]; reviewBy: string | null;
-};
-export function fetchKnowledge(brandId: string, query = ''): Promise<ApiResult<{ knowledge: KnowledgeDocView[]; total: number }>> {
-  return request<{ knowledge: KnowledgeDocView[]; total: number }>(`/api/knowledge?brandId=${encodeURIComponent(brandId)}&q=${encodeURIComponent(query)}`);
-}
-export function createKnowledge(input: KnowledgeInput): Promise<ApiResult<{ knowledge: KnowledgeDocView }>> {
-  return request<{ knowledge: KnowledgeDocView }>('/api/knowledge', { method: 'POST', body: JSON.stringify(input) });
-}
-export function appendKnowledgeVersion(id: string, input: KnowledgeInput): Promise<ApiResult<{ knowledge: KnowledgeDocView }>> {
-  return request<{ knowledge: KnowledgeDocView }>(`/api/knowledge/${encodeURIComponent(id)}/versions`, { method: 'POST', body: JSON.stringify(input) });
-}
-export function reviewKnowledge(id: string, status: KnowledgeDocView['status']): Promise<ApiResult<{ knowledge: KnowledgeDocView }>> {
-  return request<{ knowledge: KnowledgeDocView }>(`/api/knowledge/${encodeURIComponent(id)}/review`, { method: 'POST', body: JSON.stringify({ status }) });
-}
-export function fetchTemplates(): Promise<ApiResult<{ templates: CarouselTemplate[]; total: number }>> {
-  return request<{ templates: CarouselTemplate[]; total: number }>('/api/templates');
-}
-export function createComposition(id: string, input: {
-  slides?: CarouselSlide[]; basedOnId?: string | null; materialIds?: string[]; knowledgeIds?: string[];
-}, key: string): Promise<ApiResult<{ composition: CompositionView; created: boolean }>> {
-  return request<{ composition: CompositionView; created: boolean }>(`/api/projects/${encodeURIComponent(id)}/compositions`, {
-    method: 'POST', headers: { 'idempotency-key': key }, body: JSON.stringify(input),
-  });
-}
-export function renderProjectCarousel(id: string, compositionId: string, key: string): Promise<ApiResult<{ output: CarouselOutput; created: boolean }>> {
-  return request<{ output: CarouselOutput; created: boolean }>(`/api/projects/${encodeURIComponent(id)}/render`, {
-    method: 'POST', headers: { 'idempotency-key': key }, body: JSON.stringify({ compositionId }),
-  });
-}
-export function fetchOutputs(filter: { brandId?: string; projectId?: string } = {}): Promise<ApiResult<{ outputs: CarouselOutput[] }>> {
-  const params = new URLSearchParams();
-  if (filter.brandId !== undefined) params.set('brandId', filter.brandId);
-  if (filter.projectId !== undefined) params.set('projectId', filter.projectId);
-  const query = params.size === 0 ? '' : `?${params.toString()}`;
-  return request<{ outputs: CarouselOutput[] }>(`/api/outputs${query}`);
-}
 
 /**
- * 品牌頁與頁版本（issue #33）。
+ * 品牌引導（brand guide）—— 建立品牌之前的引導式專家系統。
  *
- * `current` 是**伺服器算出來的**最新未刪版本，不是前端從列表推的：前端推的話，
- * 兩個分頁同時開著就會各自有一個「現行」。畫面只顯示伺服器說的那一個。
+ * 這條鏈與上面的 brand-pages（建立之後的識別管理）是兩回事：guide 讓一個
+ * 不懂品牌的人，由零開始揀方向、建立品牌。選項庫是參考資料（人人可讀），
+ * 答案寫入要品牌編輯權（同 brand-pages 一致）。
+ *
+ * progressive disclosure：Agent 由最輕一層開始，按需逐層深入攞（地圖 →
+ * 單維度選項 → 單維度答案），不用一次過載晒成個 stage 入 context window。
+ * 未設定的欄位一律省略 key（方案 A），防止 Agent 見到空值自己腦補。
  */
-export type BrandPageVersionSummary = {
-  id: string;
-  versionNo: number;
-  createdAt: string;
-  note: string | null;
-  preview: string;
-  /**
-   * 這一版當時用的是第幾版策略（#34）。`null`＝未記錄：策略功能之前的版本。
-   * 畫面要如實講「未記錄」，不要當成第 1 版。
-   */
-  policyVersionNo: number | null;
-  /**
-   * 相對上一版改了哪幾欄（#62）。路徑由 payload 出發，例如 `roles.ink.hex`；
-   * 第一版是空陣列 —— 沒有上一版可以比，不是「改了零項」。
-   */
-  changed: string[];
-};
 
-export type BrandPageVersionDetail = BrandPageVersionSummary & { content: string };
-
-export type BrandPageSummary = {
-  id: string;
-  brandId: string;
-  kind: 'fixed' | 'custom';
-  key: string;
-  name: string;
-  brief: string | null;
+/** 一個引導選項。行業帶規管 flag、牌照提醒、語氣，幫用家揀到「對」的方向。 */
+export type GuideOption = {
+  stage: string;
+  dimension: string;
+  optId: string;
+  zh: string;
   sortOrder: number;
-  /** 左側欄分組（#60）。由後端的固定頁表派生，前端不寫死一份次序。 */
-  group: 'home' | 'identity' | 'custom' | 'apply';
-  current: BrandPageVersionSummary | null;
+  /** 欄位類型：category（多選）、dim（單選）、dial（刻度）、text、number。 */
+  fieldType?: string;
+  description?: string;
+  groupName?: string;
+  regFlag?: string;
+  licence?: string;
+  tone?: string;
+  extra?: Record<string, unknown>;
 };
 
-export type BrandPageDetail = {
-  page: BrandPageSummary;
-  versions: BrandPageVersionSummary[];
-  current: BrandPageVersionDetail | null;
+/** 一個維度的答案。揀了的選項存 opt_id，自由文字存 textValue。未設定則省略。 */
+export type GuideAnswer = {
+  stage: string;
+  dimension: string;
+  picked?: string[];
+  textValue?: string;
+  updatedAt: string;
 };
 
-/** 一個品牌缺口（#58）。缺什麼由頁的文件講，這裡補「交了給誰跟」。 */
-export type BrandGapItem = {
-  pageKey: string;
-  pageName: string;
-  item: string;
-  what: string;
-  type: 'file' | 'judgement';
-  ruleId: string | null;
-  needId: string | null;
-  needCode: string | null;
-  needState: 'open' | 'claimed' | 'uploaded' | 'absorbed' | 'closed' | null;
-  assigneeName: string | null;
+/** Layer 1 —— 品牌維度地圖一行：有幾多選項、已答幾多。不帶選項內容。 */
+export type GuideMapDimension = {
+  stage: string;
+  dimension: string;
+  groupName: string;
+  total: number;
+  answered: boolean;
 };
 
-export type BrandGapCounts = { total: number; file: number; judgement: number; open: number };
+export const GUIDE_STAGES = [
+  'stage0',
+  'stage1',
+  'stage2',
+  'stage3',
+  'stage4a',
+  'stage4b',
+  'stage4c',
+  'stage4d',
+  'stage4e',
+  'stage4f',
+  'stage4g',
+  'stage4h',
+] as const;
 
-export function fetchBrandGaps(
+export type GuideStage = (typeof GUIDE_STAGES)[number];
+
+/**
+ * 讀一個 stage 的選項庫，可按維度過濾（progressive disclosure）。
+ * 不給 `dimension` 回整個 stage；給了就只回那一個維度。
+ */
+export function fetchGuideOptions(
   brandId: string,
-  pageKey?: string,
-): Promise<ApiResult<{ items: BrandGapItem[]; counts: BrandGapCounts }>> {
-  const query = pageKey === undefined ? '' : `?page=${encodeURIComponent(pageKey)}`;
-  return request<{ items: BrandGapItem[]; counts: BrandGapCounts }>(
-    `/api/brands/${encodeURIComponent(brandId)}/gaps${query}`,
+  stage: GuideStage,
+  dimension?: string,
+): Promise<ApiResult<{ items: GuideOption[]; dimension?: string }>> {
+  const query = dimension === undefined ? '' : `?dimension=${encodeURIComponent(dimension)}`;
+  return request<{ items: GuideOption[]; dimension?: string }>(
+    `/api/brands/${encodeURIComponent(brandId)}/guide/${stage}/options${query}`,
   );
 }
 
-/** 一鍵建立 Need。重複按會回同一張（`created: false`），不會開第二張。 */
-export function createGapNeed(
+/** 讀一個品牌在某 stage 的答案，可按維度過濾。未答的維度不會回。 */
+export function fetchGuideAnswers(
   brandId: string,
-  input: { pageKey: string; item: string },
-): Promise<ApiResult<{ need: { id: string; code: string }; created: boolean }>> {
-  return request<{ need: { id: string; code: string }; created: boolean }>(
-    `/api/brands/${encodeURIComponent(brandId)}/gaps/needs`,
-    { method: 'POST', body: JSON.stringify(input) },
+  stage: GuideStage,
+  dimension?: string,
+): Promise<ApiResult<{ items: GuideAnswer[]; dimension?: string }>> {
+  const query = dimension === undefined ? '' : `?dimension=${encodeURIComponent(dimension)}`;
+  return request<{ items: GuideAnswer[]; dimension?: string }>(
+    `/api/brands/${encodeURIComponent(brandId)}/guide/${stage}/answers${query}`,
   );
 }
 
-/** 一條檢查結果（#59）。三態：通過、不通過、無法判斷。缺資料回「無法判斷」，不是通過。 */
-export type BrandCheckItem = {
-  ruleId: string;
-  state: 'pass' | 'fail' | 'undetermined';
-  location: string;
-  detail: string;
-  fix: string;
-};
+/** 讀一個品牌的完整維度地圖（Layer 1，跨所有 stage）。 */
+export function fetchGuideMap(
+  brandId: string,
+): Promise<ApiResult<{ dimensions: GuideMapDimension[] }>> {
+  return request<{ dimensions: GuideMapDimension[] }>(
+    `/api/brands/${encodeURIComponent(brandId)}/guide-map`,
+  );
+}
 
-export type BrandCheckReport = {
-  items: BrandCheckItem[];
-  summary: { pass: number; fail: number; undetermined: number };
-  headline: BrandCheckItem | null;
-  pageKey: string | null;
+/** 寫入一批答案（upsert，逐個維度）。改答案就是更新，不是新增。 */
+export function saveGuideAnswers(
+  brandId: string,
+  stage: GuideStage,
+  answers: { dimension: string; picked: string[]; textValue: string }[],
+): Promise<ApiResult<{ items: GuideAnswer[] }>> {
+  return request<{ items: GuideAnswer[] }>(
+    `/api/brands/${encodeURIComponent(brandId)}/guide/${stage}/answers`,
+    { method: 'PUT', body: JSON.stringify({ stage, answers }) },
+  );
+}
+
+/* ── 引擎（v2）：每 stage 完整 state + brief + prompt ─────────── */
+
+/**
+ * 04A–04H 的 scope：同一個品牌可以有好幾套品牌集，答案互不相干。
+ * 沒有 setId 就是品牌層（01–03，以及未搬入品牌集的舊 04 資料）。
+ */
+function scopeQuery(setId: string | null | undefined): string {
+  return setId === undefined || setId === null || setId === '' ? '' : `?setId=${encodeURIComponent(setId)}`;
+}
+
+/**
+ * 一個 scope 的引導端點（`StageDetail` 實際會用到的九條）。
+ *
+ * 為什麼要做成一個物件而不是一堆 `fetchXxx(brandId, ...)`：品牌層、品牌集、
+ * 公司層三種 scope 的路徑不同（`/brands/:id/guide/:stage`、`?setId=`、
+ * `/company/guide/:stage`），但畫面上是同一組元件。把路徑收在這一層，
+ * `StageDetail` 只認一個 `api` 物件，就不會出現「品牌頁寫得、公司頁寫唔得」。
+ */
+export type GuideEndpoints = {
+  schema(stage: GuideStage): Promise<ApiResult<{ stage: string; schema: GuideSchema }>>;
+  state(stage: GuideStage): Promise<ApiResult<{ stage: string; state: GuideState }>>;
+  saveState(stage: GuideStage, state: GuideState): Promise<ApiResult<{ stage: string; brief: GuideBrief }>>;
+  brief(stage: GuideStage): Promise<ApiResult<{ stage: string; brief: GuideBrief | null }>>;
+  blocks(stage: GuideStage): Promise<ApiResult<{ stage: string; blocks: GuideBlock[] }>>;
+  saveDecision(
+    stage: GuideStage,
+    blockId: string,
+    input: BlockIdentity & { decision: string },
+  ): Promise<ApiResult<{ stage: string; block: GuideBlock }>>;
+  savePrompt(
+    stage: GuideStage,
+    blockId: string,
+    input: BlockIdentity & { prompt: string },
+  ): Promise<ApiResult<{ stage: string; block: GuideBlock }>>;
+  saveRationale(
+    stage: GuideStage,
+    blockId: string,
+    input: BlockIdentity & { rationale: string },
+  ): Promise<ApiResult<{ stage: string; block: GuideBlock }>>;
+  approval(stage: GuideStage): Promise<ApiResult<{ stage: string; approval: GuideApproval | null }>>;
+  saveApproval(
+    stage: GuideStage,
+    input: GuideApprovalInput,
+  ): Promise<ApiResult<{ stage: string; approval: GuideApproval }>>;
+  attachFile(
+    stage: GuideStage,
+    blockId: string,
+    input: BlockIdentity & { fileId: string; label?: string },
+  ): Promise<ApiResult<{ stage: string; block: GuideBlock }>>;
+  removeFile(
+    stage: GuideStage,
+    blockId: string,
+    attachmentId: string,
+  ): Promise<ApiResult<{ stage: string; block: GuideBlock }>>;
 };
 
 /**
- * 跑檢查。`pageKey` 給定時只回那一頁的規則；自定義頁回空的一組（沒有專屬規則）。
+ * `scope` 一定要接在所有路徑後面，不可以夾在中間。
  *
- * 用 POST 是因為它要能檢查一份未儲存的文件（`document`）—— 但前端只檢查現行
- * 版本，帶一份草稿去檢查會令人以為草稿已經合規。
+ * 之前寫成 `${base(stage)}?setId=…` 之後再拼 `/blocks`，實際送出的是
+ * `…/guide/stage4b?setId=xxx/blocks` —— query string 出現在路徑中間，伺服器
+ * 只看到 `stage4b` 加一個空 query，於是品牌集頁面全部 404。品牌層沒有 query
+ * 所以一直正常，這種錯最難看得出來。
  */
-export function runBrandCheck(brandId: string, pageKey?: string): Promise<ApiResult<BrandCheckReport>> {
-  return request<BrandCheckReport>(`/api/brands/${encodeURIComponent(brandId)}/check`, {
-    method: 'POST',
-    body: JSON.stringify(pageKey === undefined ? {} : { pageKey }),
-  });
+function guideEndpointsOf(base: (stage: GuideStage) => string, scope = ''): GuideEndpoints {
+  // 先砌好完整路徑，最後才接 query：`withScope('…/blocks')` ＝ `…/blocks?setId=…`。
+  const withScope = (path: string): string => `${path}${scope}`;
+  const blockPath = (stage: GuideStage, blockId: string): string =>
+    `${base(stage)}/blocks/${encodeURIComponent(blockId)}`;
+
+  return {
+    schema: (stage) => request(withScope(`${base(stage)}/schema`)),
+    state: (stage) => request(withScope(`${base(stage)}/state`)),
+    saveState: (stage, state) =>
+      request(withScope(`${base(stage)}/state`), { method: 'PUT', body: JSON.stringify({ state }) }),
+    brief: (stage) => request(withScope(`${base(stage)}/brief`)),
+    blocks: (stage) => request(withScope(`${base(stage)}/blocks`)),
+    saveDecision: (stage, blockId, input) =>
+      request(withScope(`${blockPath(stage, blockId)}/decision`), {
+        method: 'PUT',
+        body: JSON.stringify(input),
+      }),
+    savePrompt: (stage, blockId, input) =>
+      request(withScope(`${blockPath(stage, blockId)}/prompt`), {
+        method: 'PUT',
+        body: JSON.stringify(input),
+      }),
+    saveRationale: (stage, blockId, input) =>
+      request(withScope(`${blockPath(stage, blockId)}/rationale`), {
+        method: 'PUT',
+        body: JSON.stringify(input),
+      }),
+    approval: (stage) => request(withScope(`${base(stage)}/approval`)),
+    saveApproval: (stage, input) =>
+      request(withScope(`${base(stage)}/approval`), {
+        method: 'PUT',
+        body: JSON.stringify(input),
+      }),
+    attachFile: (stage, blockId, input) =>
+      request(withScope(`${blockPath(stage, blockId)}/files`), {
+        method: 'POST',
+        body: JSON.stringify(input),
+      }),
+    removeFile: (stage, blockId, attachmentId) =>
+      request(withScope(`${blockPath(stage, blockId)}/files/${encodeURIComponent(attachmentId)}`), {
+        method: 'DELETE',
+      }),
+  };
 }
 
-/** 一個「值得獨立成頁」的建議（#60）。三項判斷皆是才會存在。 */
-export type BrandSuggestion = {
+/** 品牌層（01–03、04A、04G）或某個品牌集（04B–04E、04H）。 */
+export function brandGuideApi(brandId: string, setId?: string | null): GuideEndpoints {
+  return guideEndpointsOf(
+    (stage) => `/api/brands/${encodeURIComponent(brandId)}/guide/${stage}`,
+    scopeQuery(setId),
+  );
+}
+
+/**
+ * 公司層（04F 行銷內容，Boss Portal › Marketing）。
+ *
+ * 沒有 brandId 也沒有 setId：答案只有一份，全公司共用，而且只有老闆讀得到。
+ */
+export function companyGuideApi(): GuideEndpoints {
+  return guideEndpointsOf((stage) => `/api/company/guide/${stage}`);
+}
+
+/**
+ * 範圍層 Prompt 的自訂版本（`brand_guide_prompt`）。
+ *
+ * `scope` 是範圍代號：品牌總覽＝`brand`、品牌集＝`set`、單一階段＝`stage4a`
+ * 一類的 stage id。空字串＝用自動版本（跟住決策更新），所以讀回來的
+ * `prompt` 空著就代表「未自訂」，不是「沒有內容」。
+ */
+export type ScopePromptRecord = { scope: string; prompt: string; updatedAt: string | null };
+
+/** 讀一個範圍的自訂 Prompt；未自訂回空字串。 */
+export function fetchScopePrompt(
+  brandId: string,
+  scope: string,
+  setId?: string | null,
+): Promise<ApiResult<ScopePromptRecord>> {
+  return request(
+    `/api/brands/${encodeURIComponent(brandId)}/scope-prompt/${encodeURIComponent(scope)}${scopeQuery(setId)}`,
+  );
+}
+
+/** 儲存／清空一個範圍的 Prompt（傳空字串＝還原自動版本）。 */
+export function saveScopePrompt(
+  brandId: string,
+  scope: string,
+  setId: string | null | undefined,
+  prompt: string,
+): Promise<ApiResult<ScopePromptRecord>> {
+  return request(
+    `/api/brands/${encodeURIComponent(brandId)}/scope-prompt/${encodeURIComponent(scope)}${scopeQuery(setId)}`,
+    { method: 'PUT', body: JSON.stringify({ prompt }) },
+  );
+}
+
+/** 一個 stage 的完整 state（reference 的 s 對象：category/dim/dial/text/custom）。 */
+export type GuideState = Record<string, unknown>;
+
+/** 一個 stage 的 brief（buildBrief 輸出：completeness/checks/hints/canvas...）。 */
+export type GuideBrief = Record<string, unknown>;
+
+/** 讀一個 stage 的完整 state。沒有就是空物件（未開始）。 */
+export function fetchGuideState(
+  brandId: string,
+  stage: GuideStage,
+  setId?: string | null,
+): Promise<ApiResult<{ stage: string; state: GuideState }>> {
+  return brandGuideApi(brandId, setId).state(stage);
+}
+/** 寫一個 stage 的完整 state（整份覆蓋）。後端會計算 brief 一併存。 */
+export function saveGuideState(
+  brandId: string,
+  stage: GuideStage,
+  state: GuideState,
+  setId?: string | null,
+): Promise<ApiResult<{ stage: string; brief: GuideBrief }>> {
+  return brandGuideApi(brandId, setId).saveState(stage, state);
+}
+/** 讀一個 stage 的 brief（含 completeness/checks/hints）。沒有就是 null。 */
+export function fetchGuideBrief(
+  brandId: string,
+  stage: GuideStage,
+  setId?: string | null,
+): Promise<ApiResult<{ stage: string; brief: GuideBrief | null }>> {
+  return brandGuideApi(brandId, setId).brief(stage);
+}
+/** 生成一個維度的討論 prompt（貼給外部 AI Agent）。 */
+export function fetchGuidePrompt(
+  brandId: string,
+  stage: GuideStage,
+  key: string,
+): Promise<ApiResult<{ stage: string; key: string; prompt: string }>> {
+  return request<{ stage: string; key: string; prompt: string }>(
+    `/api/brands/${encodeURIComponent(brandId)}/guide/${stage}/prompt/${encodeURIComponent(key)}`,
+  );
+}
+
+/** 列出一個 stage 的所有討論 prompt key。 */
+export function fetchGuidePromptKeys(
+  brandId: string,
+  stage: GuideStage,
+): Promise<ApiResult<{ stage: string; keys: string[] }>> {
+  return request<{ stage: string; keys: string[] }>(
+    `/api/brands/${encodeURIComponent(brandId)}/guide/${stage}/prompts`,
+  );
+}
+
+/** 讀全部 stage 的 brief（跨 stage 連繫）。 */
+export function fetchGuideBriefs(
+  brandId: string,
+  setId?: string | null,
+): Promise<ApiResult<{ briefs: Record<string, GuideBrief> }>> {
+  return request<{ briefs: Record<string, GuideBrief> }>(
+    `/api/brands/${encodeURIComponent(brandId)}/guide-briefs${scopeQuery(setId)}`,
+  );
+}
+
+/* ── 五層投影（design.md／tokens／模板／範例／檢查／不入層） ── */
+
+/** 層的種類。 */
+export type LayerKind = 'design-doc' | 'tokens' | 'templates' | 'examples' | 'checks' | 'unfiled';
+
+/** 一段產出物：來源 stage、標題、正文、核准狀態、rationale。 */
+export type LayerSection = {
+  stage: string;
+  title: string;
+  body: string;
+  approval: string | null;
+  approvedBy: string | null;
+  rationale: string;
+};
+
+export type TokenConflict = {
+  token: string;
+  label: string;
+  sources: { stage: string; value: string }[];
+};
+
+/** 一個層的合成結果。 */
+export type LayerProjection = {
+  kind: LayerKind;
+  title: string;
+  sections: LayerSection[];
+  completeness: { done: number; total: number; pct: number };
+  conflicts: TokenConflict[];
+  exportText: string;
+  exportName: string;
+};
+
+/** 讀一個層的投影（合成視圖 + 成熟度 + 衝突）。 */
+export function fetchLayer(
+  brandId: string,
+  kind: LayerKind,
+  setId?: string | null,
+): Promise<ApiResult<LayerProjection>> {
+  return request<LayerProjection>(
+    `/api/brands/${encodeURIComponent(brandId)}/layer/${encodeURIComponent(kind)}${scopeQuery(setId)}`,
+  );
+}
+
+/** 層的匯出 .md 網址（用 window.open 或 <a download> 下載）。 */
+export function layerExportUrl(brandId: string, kind: LayerKind, setId?: string | null): string {
+  return `/api/brands/${encodeURIComponent(brandId)}/layer/${encodeURIComponent(kind)}.md${scopeQuery(setId)}`;
+}
+
+/* ── 選項結構（schema）：前端畫 Edit 卡片用 ─────────── */
+
+/** 一個 category（多選）的選項。帶規管 flag、牌照提醒、下游提示等附屬欄。 */
+export type GuideCatItem = {
   id: string;
-  signature: string;
+  zh: string;
+  desc?: string;
+  /**
+   * 選項圖網址（`/brand-options/<stage>/<dimension>/<optId>.png`）。
+   * 沒有圖就沒有這個 key —— 前端見到才畫圖框，不留空位。
+   */
+  img?: string;
+  r?: string[];
+  s1?: string;
+  lic?: string;
+  t?: string[];
+  disc?: boolean;
+  f?: string;
+};
+
+/** 一個 category（多選）的結構：title / max / hint / groups。 */
+export type GuideCat = {
+  title: string;
+  max: number;
+  hint?: string;
+  groups: { g: string; items: GuideCatItem[] }[];
+};
+
+/** 一個 dim（單選）的選項。 */
+export type GuideDimOpt = { id: string; zh: string; desc?: string };
+
+/** 一個 dim（單選）的結構。 */
+export type GuideDim = {
+  set: string;
+  id: string;
+  title: string;
+  q?: string;
+  opts: GuideDimOpt[];
+};
+
+/** 一個文字／數字欄的結構。 */
+export type GuideText = {
+  id: string;
+  label: string;
+  ph?: string;
+  help?: string;
+  rows?: number;
+};
+
+/** 一個刻度（dial）的結構（stage1／stage3 的張力刻度）。 */
+export type GuideDial = {
+  id: string;
+  l: string;
+  r: string;
+  q?: string;
+  le?: string;
+  re?: string;
+};
+
+/** 一個核心張力（tension）的結構（stage1）。 */
+export type GuideTension = { id: string; zh: string; desc?: string };
+
+/** 一個 dim（單選）的結構（stage2-4h 用 DIMS，冇 set 分組）。 */
+export type GuideDimsItem = { id: string; title: string; q?: string; opts: GuideDimOpt[] };
+
+/** 一個 stage 的選項結構（由 reference 原封吐出）。 */
+export type GuideSchema = {
+  cat: Record<string, GuideCat>;
+  sets: Record<string, { title: string; dims: { id: string; title: string; q?: string; opts: GuideDimOpt[] }[] }>;
+  dimsAll: GuideDim[];
+  texts: GuideText[];
+  textBy: Record<string, GuideText>;
+  links: Record<string, [string, string]>;
+  // stage 專屬結構（stage1／stage2／stage3 等用）。
+  catKeys?: string[];
+  matKeys?: string[];
+  dials?: GuideDial[];
+  dialPos?: { v: number; t: string }[];
+  tensions?: GuideTension[];
+  dims?: GuideDimsItem[];
+  shifts?: { id: string; zh: string; desc?: string }[];
+  situations?: { id: string; zh: string; desc?: string }[];
+};
+
+/** 讀一個 stage 的選項結構（CAT/SETS/DIMS/TEXTS/LINKS）。 */
+export function fetchGuideSchema(
+  brandId: string,
+  stage: GuideStage,
+): Promise<ApiResult<{ stage: string; schema: GuideSchema }>> {
+  return brandGuideApi(brandId).schema(stage);
+}
+/* ── 區塊層：決策、歷史、附件 ─────────────────────────── */
+
+/** 掛在區塊上的一份檔案（附件列，不是 stored_file 本身）。 */
+export type GuideBlockFile = {
+  id: string;
+  fileId: string;
+  /** 顯示名：改過名就用標籤，否則原檔名。 */
   name: string;
-  slug: string;
-  brief: string;
-  checks: { unique: string; repeated: string; noRoom: string };
-  refs: string[];
-  /** 其實屬於哪一頁（固定頁鍵或自定義頁 slug）；null＝真的是新系統。 */
-  belongsTo: string | null;
-  state: 'pending' | 'dismissed' | 'accepted';
+  originalName: string;
+  contentType: string;
+  sizeBytes: number;
+  /** 上載者顯示名。檔案要講得出「邊個幾時放低」。 */
+  uploadedByName: string;
+  createdAt: string;
+  /** 非 null 代表已移除，只出現在歷史裡。 */
+  removedAt: string | null;
+  removedByName: string | null;
+};
+
+/** 一次儲存決策就留一版；只追加，不改舊版。 */
+export type GuideBlockRevision = {
+  id: string;
+  decision: string;
+  actorType: string;
+  actorName: string;
   createdAt: string;
 };
 
-export function fetchBrandSuggestions(
+/** 一個填寫區塊的紀錄：現況決策、歷史、附件、自訂 prompt。 */
+export type GuideBlock = {
+  blockId: string;
+  code: string;
+  title: string;
+  decision: string;
+  decisionAt: string | null;
+  decisionByName: string | null;
+  /** 目前決策由誰寫：人，還是經 MCP 的 agent。 */
+  decisionActorType: 'human' | 'agent';
+  /** 為甚麼這樣揀（原因），與 decision（結論）分開。 */
+  rationale: string;
+  /** 老闆改過的 prompt；空字串＝用自動版本（跟住選擇更新）。 */
+  promptOverride: string;
+  revisions: GuideBlockRevision[];
+  files: GuideBlockFile[];
+};
+
+/** stage 級核准狀態（可寫入、可追溯）。 */
+export type GuideApproval = {
+  stage: string;
+  status: 'draft' | 'in_review' | 'approved' | 'needs_revision';
+  approverName: string | null;
+  version: string;
+  note: string;
+  rationale: string;
+  updatedAt: string | null;
+};
+
+/** 寫入核准狀態的輸入（approver 由伺服器以寫入者身份填）。 */
+export type GuideApprovalInput = {
+  status: 'draft' | 'in_review' | 'approved' | 'needs_revision';
+  version: string;
+  note: string;
+  rationale: string;
+};
+
+/** 讀一個 stage 全部區塊的紀錄（決策／歷史／附件一次過）。 */
+export function fetchGuideBlocks(
   brandId: string,
-): Promise<ApiResult<{ items: BrandSuggestion[] }>> {
-  return request<{ items: BrandSuggestion[] }>(`/api/brands/${encodeURIComponent(brandId)}/suggestions`);
+  stage: GuideStage,
+  setId?: string | null,
+): Promise<ApiResult<{ stage: string; blocks: GuideBlock[] }>> {
+  return brandGuideApi(brandId, setId).blocks(stage);
+}
+type BlockIdentity = { code: string; title: string };
+
+/** 儲存決策記錄。內容有變才留一版歷史。 */
+export function saveGuideBlockDecision(
+  brandId: string,
+  stage: GuideStage,
+  blockId: string,
+  input: BlockIdentity & { decision: string },
+  setId?: string | null,
+): Promise<ApiResult<{ stage: string; block: GuideBlock }>> {
+  return brandGuideApi(brandId, setId).saveDecision(stage, blockId, input);
+}
+/** 把已上傳的檔案掛到區塊。上傳本身用 uploadFile()。 */
+export function attachGuideBlockFile(
+  brandId: string,
+  stage: GuideStage,
+  blockId: string,
+  input: BlockIdentity & { fileId: string; label?: string },
+  setId?: string | null,
+): Promise<ApiResult<{ stage: string; block: GuideBlock }>> {
+  return brandGuideApi(brandId, setId).attachFile(stage, blockId, input);
+}
+/** 儲存老闆自己改過的 prompt。空字串＝還原自動版本。 */
+export function saveGuideBlockPrompt(
+  brandId: string,
+  stage: GuideStage,
+  blockId: string,
+  input: BlockIdentity & { prompt: string },
+  setId?: string | null,
+): Promise<ApiResult<{ stage: string; block: GuideBlock }>> {
+  return brandGuideApi(brandId, setId).savePrompt(stage, blockId, input);
+}
+/** 移除附件（只標記，歷史仍然看得到）。 */
+export function removeGuideBlockFile(
+  brandId: string,
+  stage: GuideStage,
+  blockId: string,
+  attachmentId: string,
+  setId?: string | null,
+): Promise<ApiResult<{ stage: string; block: GuideBlock }>> {
+  return brandGuideApi(brandId, setId).removeFile(stage, blockId, attachmentId);
 }
 
-/** 接受：建立自定義頁並寫入 brief。撞頁鍵回 409 `page_key_taken`。 */
-export function acceptBrandSuggestion(
-  brandId: string,
-  suggestionId: string,
-  brief: string,
-): Promise<ApiResult<{ page: BrandPageSummary }>> {
-  return request<{ page: BrandPageSummary }>(
-    `/api/brands/${encodeURIComponent(brandId)}/suggestions/${encodeURIComponent(suggestionId)}/accept`,
-    { method: 'POST', body: JSON.stringify({ brief }) },
-  );
-}
-
-/** 略過是決定，不是取消：同一份內容之後不再提。 */
-export function dismissBrandSuggestion(
-  brandId: string,
-  suggestionId: string,
-): Promise<ApiResult<{ suggestion: BrandSuggestion }>> {
-  return request<{ suggestion: BrandSuggestion }>(
-    `/api/brands/${encodeURIComponent(brandId)}/suggestions/${encodeURIComponent(suggestionId)}/dismiss`,
-    { method: 'POST', body: JSON.stringify({}) },
-  );
-}
+/* ── 品牌集（brand set）：04A–04H 的收納單位 ─────────────────── */
 
 /**
- * 這個品牌的頁清單，以及「我是不是可以改這個品牌的頁」。
+ * 一個品牌集＝一套 04A–04H 的做法。
  *
- * `canEdit` 由伺服器回答（老闆，或者被老闆授予品牌編輯權的人）。前端用它決定
- * 顯示什麼表單，但**不決定可不可以做**：每一條寫入路徑後端都會自己再問一次
- * （issue #32 第 13 點）。
+ * 01–03 講「這個品牌是誰」，只有一份；04 講「這批東西點做」，同一副品牌
+ * 性格可以生很多套（2026 夏季、2026 冬季…），每套都可以重複套用到任何
+ * 產品／設計／輸出。所以 04 的答案屬於品牌集，不屬於品牌。
  */
-export function fetchBrandPages(
-  brandId: string,
-): Promise<ApiResult<{ items: BrandPageSummary[]; canEdit: boolean }>> {
-  return request<{ items: BrandPageSummary[]; canEdit: boolean }>(
-    `/api/brands/${encodeURIComponent(brandId)}/pages`,
-  );
+export type BrandSet = {
+  id: string;
+  name: string;
+  /** null ＝ 未分類。 */
+  folderId: string | null;
+  /** 已寫決策的格數：側欄用來講「這套寫到邊」。 */
+  filled: number;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+};
+
+export type BrandSetFolder = { id: string; name: string; count: number };
+
+export type BrandSetTree = {
+  folders: BrandSetFolder[];
+  sets: BrandSet[];
+  /** 安全刪除的那一批，可以還原。 */
+  deleted: BrandSet[];
+};
+
+export function fetchBrandSets(brandId: string): Promise<ApiResult<BrandSetTree>> {
+  return request<BrandSetTree>(`/api/brands/${encodeURIComponent(brandId)}/sets`);
 }
 
-/** 建立自定義頁。三樣一次過要齊，缺一樣由後端回 400 並講明欠什麼。 */
-export function createBrandPage(
+export function createBrandSet(
   brandId: string,
-  input: { name: string; slug: string; brief: string },
-): Promise<ApiResult<{ page: BrandPageSummary }>> {
-  return request<{ page: BrandPageSummary }>(`/api/brands/${encodeURIComponent(brandId)}/pages`, {
+  input: { name: string; folderId?: string | null },
+): Promise<ApiResult<BrandSet>> {
+  return request<BrandSet>(`/api/brands/${encodeURIComponent(brandId)}/sets`, {
+    method: 'POST',
+    body: JSON.stringify({ name: input.name, folderId: input.folderId ?? null }),
+  });
+}
+
+/** 改名與搬資料夾：folderId 傳 null 就是移去未分類。 */
+export function updateBrandSet(
+  setId: string,
+  input: { name?: string; folderId?: string | null },
+): Promise<ApiResult<{ ok: boolean }>> {
+  return request<{ ok: boolean }>(`/api/brand-sets/${encodeURIComponent(setId)}`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  });
+}
+
+export function duplicateBrandSet(
+  setId: string,
+  input: { name?: string; folderId?: string | null } = {},
+): Promise<ApiResult<BrandSet>> {
+  return request<BrandSet>(`/api/brand-sets/${encodeURIComponent(setId)}/duplicate`, {
     method: 'POST',
     body: JSON.stringify(input),
   });
 }
 
-/** 改顯示名。**沒有 slug**：改 slug 等於另一張頁，舊連結會斷（C101）。 */
-export function renameBrandPage(
-  brandId: string,
-  key: string,
-  input: { name: string },
-): Promise<ApiResult<{ page: BrandPageSummary }>> {
-  return request<{ page: BrandPageSummary }>(
-    `/api/brands/${encodeURIComponent(brandId)}/pages/${encodeURIComponent(key)}`,
-    { method: 'PATCH', body: JSON.stringify(input) },
-  );
+/** 安全刪除：只標記，隨時可以還原。 */
+export function deleteBrandSet(setId: string): Promise<ApiResult<{ ok: boolean }>> {
+  return request<{ ok: boolean }>(`/api/brand-sets/${encodeURIComponent(setId)}`, {
+    method: 'DELETE',
+  });
 }
 
-/** 軟刪除自定義頁（連它的版本）。被成品釘住時後端回 409，原樣顯示理由。 */
-export function deleteBrandPage(
-  brandId: string,
-  key: string,
-): Promise<ApiResult<{ deleted: boolean; key: string; versions: number }>> {
-  return request<{ deleted: boolean; key: string; versions: number }>(
-    `/api/brands/${encodeURIComponent(brandId)}/pages/${encodeURIComponent(key)}`,
-    { method: 'DELETE' },
-  );
-}
-
-/**
- * 誰可以改這個品牌的頁（issue #32）。
- *
- * 這是 (品牌, 人) 一對的授權，不是職位、不是部門，role 仍然是 staff。老闆
- * 永遠可以改，所以永遠不在名單裡 —— 寫進來只會出現「老闆被移除編輯權」這種
- * 講不通的狀態。
- */
-export type BrandEditor = {
-  userId: string;
-  displayName: string;
-  email: string;
-  grantedAt: string;
-};
-
-export function fetchBrandEditors(
-  brandId: string,
-): Promise<ApiResult<{ items: BrandEditor[] }>> {
-  return request<{ items: BrandEditor[] }>(
-    `/api/brands/${encodeURIComponent(brandId)}/editors`,
-  );
-}
-
-export function grantBrandEditor(
-  brandId: string,
-  userId: string,
-): Promise<ApiResult<{ items: BrandEditor[] }>> {
-  return request<{ items: BrandEditor[] }>(
-    `/api/brands/${encodeURIComponent(brandId)}/editors/${encodeURIComponent(userId)}`,
-    { method: 'PUT' },
-  );
-}
-
-export function revokeBrandEditor(
-  brandId: string,
-  userId: string,
-): Promise<ApiResult<{ items: BrandEditor[] }>> {
-  return request<{ items: BrandEditor[] }>(
-    `/api/brands/${encodeURIComponent(brandId)}/editors/${encodeURIComponent(userId)}`,
-    { method: 'DELETE' },
-  );
-}
-
-export function fetchBrandPage(
-  brandId: string,
-  key: string,
-): Promise<ApiResult<BrandPageDetail>> {
-  return request<BrandPageDetail>(
-    `/api/brands/${encodeURIComponent(brandId)}/pages/${encodeURIComponent(key)}`,
-  );
-}
-
-export function saveBrandPageVersion(
-  brandId: string,
-  key: string,
-  input: { content: string; note?: string },
-): Promise<ApiResult<{ version: BrandPageVersionDetail }>> {
-  return request<{ version: BrandPageVersionDetail }>(
-    `/api/brands/${encodeURIComponent(brandId)}/pages/${encodeURIComponent(key)}/versions`,
-    { method: 'POST', body: JSON.stringify(input) },
-  );
-}
-
-export function restoreBrandPageVersion(
-  brandId: string,
-  key: string,
-  versionId: string,
-): Promise<ApiResult<{ version: BrandPageVersionDetail }>> {
-  return request<{ version: BrandPageVersionDetail }>(
-    `/api/brands/${encodeURIComponent(brandId)}/pages/${encodeURIComponent(key)}/versions/${encodeURIComponent(versionId)}/restore`,
+export function restoreBrandSet(
+  setId: string,
+): Promise<ApiResult<{ ok: boolean; setId: string; name: string }>> {
+  return request<{ ok: boolean; setId: string; name: string }>(
+    `/api/brand-sets/${encodeURIComponent(setId)}/restore`,
     { method: 'POST' },
   );
 }
 
-export function deleteBrandPageVersion(
+export function createBrandSetFolder(
   brandId: string,
-  key: string,
-  versionId: string,
-): Promise<ApiResult<{ deleted: boolean; versionNo: number }>> {
-  return request<{ deleted: boolean; versionNo: number }>(
-    `/api/brands/${encodeURIComponent(brandId)}/pages/${encodeURIComponent(key)}/versions/${encodeURIComponent(versionId)}`,
-    { method: 'DELETE' },
-  );
+  name: string,
+): Promise<ApiResult<{ id: string }>> {
+  return request<{ id: string }>(`/api/brands/${encodeURIComponent(brandId)}/set-folders`, {
+    method: 'POST',
+    body: JSON.stringify({ name }),
+  });
 }
 
-/**
- * 品牌頁策略（#34、#56）：一份策略、九個槽，只加不改。
- *
- * `current` 同樣由伺服器算（該槽最大版號），前端不推。`current === null` 代表
- * 這個槽真的沒有內容 —— 畫面要講缺，不要畫一個空的第 1 版。
- */
-export type PolicyVersionSummary = {
-  id: string;
-  versionNo: number;
-  createdAt: string;
-  note: string | null;
-  preview: string;
-};
-
-export type PolicyVersionDetail = PolicyVersionSummary & { content: string };
-
-export type PolicySlotView = {
-  slot: string;
-  current: PolicyVersionDetail | null;
-  versions: PolicyVersionSummary[];
-  /** 現行這一版正在支撐哪些頁的現行版本（最多五個）。 */
-  usedBy: { brand: string; page: string; versionNo: number }[];
-};
-
-/**
- * 規則 id 表（#56）。id 是「策略句」與「檢查器」之間唯一的契約 —— 前端只
- * 顯示，不另存一份；後端換一條定義，畫面就跟著換。
- */
-export type BrandPolicyRule = {
-  id: string;
-  slot: string;
-  summary: string;
-  threshold: string;
-  pass: string;
-  fail: string;
-  undetermined: string;
-};
-
-export function fetchPolicy(): Promise<
-  ApiResult<{ slots: PolicySlotView[]; rules: BrandPolicyRule[] }>
-> {
-  return request<{ slots: PolicySlotView[]; rules: BrandPolicyRule[] }>('/api/policy');
+export function renameBrandSetFolder(
+  folderId: string,
+  name: string,
+): Promise<ApiResult<{ ok: boolean }>> {
+  return request<{ ok: boolean }>(`/api/brand-set-folders/${encodeURIComponent(folderId)}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ name }),
+  });
 }
 
-export function savePolicyVersion(
-  slot: string,
-  input: { content: string; note?: string },
-): Promise<ApiResult<{ version: PolicyVersionDetail }>> {
-  return request<{ version: PolicyVersionDetail }>(
-    `/api/policy/${encodeURIComponent(slot)}/versions`,
-    { method: 'POST', body: JSON.stringify(input) },
-  );
+/** 刪資料夾不會刪品牌集：裡面的會回到未分類。 */
+export function deleteBrandSetFolder(folderId: string): Promise<ApiResult<{ ok: boolean }>> {
+  return request<{ ok: boolean }>(`/api/brand-set-folders/${encodeURIComponent(folderId)}`, {
+    method: 'DELETE',
+  });
 }
 
 export function fetchSites(): Promise<ApiResult<{ items: SiteItem[] }>> {
@@ -1563,4 +1749,175 @@ export type CompanyIdentity = {
 
 export function fetchCompanyIdentity(): Promise<ApiResult<CompanyIdentity>> {
   return request<CompanyIdentity>('/api/company');
+}
+
+/* ── Create：Project Library（格式／資料夾／專案集／專案）─────────────── */
+
+export type ProjectFormat = { id: string; name: string; sortOrder: number };
+
+export type ProjectFolder = { id: string; name: string; count: number };
+
+export type ProjectSet = {
+  id: string;
+  name: string;
+  folderId: string | null;
+  count: number;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+};
+
+export type ProjectSummary = {
+  id: string;
+  title: string;
+  formatId: string | null;
+  formatName: string | null;
+  setId: string | null;
+  coverFileId: string | null;
+  createdAt: string;
+};
+
+export type ProjectLibrary = {
+  formats: ProjectFormat[];
+  folders: ProjectFolder[];
+  sets: ProjectSet[];
+  deletedSets: ProjectSet[];
+};
+
+export function fetchProjectLibrary(brandId: string): Promise<ApiResult<ProjectLibrary>> {
+  return request<ProjectLibrary>(`/api/brands/${encodeURIComponent(brandId)}/library`);
+}
+
+export function fetchProjects(
+  brandId: string,
+  filter: { setId?: string | 'none'; formatId?: string; q?: string } = {},
+): Promise<ApiResult<{ projects: ProjectSummary[] }>> {
+  const params = new URLSearchParams();
+
+  if (filter.setId !== undefined) params.set('setId', filter.setId);
+  if (filter.formatId !== undefined) params.set('formatId', filter.formatId);
+  if (filter.q !== undefined && filter.q !== '') params.set('q', filter.q);
+
+  const suffix = params.size === 0 ? '' : `?${params.toString()}`;
+
+  return request<{ projects: ProjectSummary[] }>(
+    `/api/brands/${encodeURIComponent(brandId)}/projects${suffix}`,
+  );
+}
+
+export function createFormat(
+  brandId: string,
+  name: string,
+): Promise<ApiResult<ProjectFormat>> {
+  return request<ProjectFormat>(`/api/brands/${encodeURIComponent(brandId)}/formats`, {
+    method: 'POST',
+    body: JSON.stringify({ name }),
+  });
+}
+
+export function createProjectFolder(
+  brandId: string,
+  name: string,
+): Promise<ApiResult<{ id: string }>> {
+  return request<{ id: string }>(`/api/brands/${encodeURIComponent(brandId)}/folders`, {
+    method: 'POST',
+    body: JSON.stringify({ name }),
+  });
+}
+
+export function renameProjectFolder(
+  folderId: string,
+  name: string,
+): Promise<ApiResult<{ ok: boolean }>> {
+  return request<{ ok: boolean }>(`/api/project-folders/${encodeURIComponent(folderId)}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ name }),
+  });
+}
+
+export function deleteProjectFolder(folderId: string): Promise<ApiResult<{ ok: boolean }>> {
+  return request<{ ok: boolean }>(`/api/project-folders/${encodeURIComponent(folderId)}`, {
+    method: 'DELETE',
+  });
+}
+
+export function createProjectSet(
+  brandId: string,
+  input: { name: string; folderId?: string | null },
+): Promise<ApiResult<ProjectSet>> {
+  return request<ProjectSet>(`/api/brands/${encodeURIComponent(brandId)}/project-sets`, {
+    method: 'POST',
+    body: JSON.stringify({ name: input.name, folderId: input.folderId ?? null }),
+  });
+}
+
+export function updateProjectSet(
+  setId: string,
+  input: { name?: string; folderId?: string | null },
+): Promise<ApiResult<{ ok: boolean }>> {
+  return request<{ ok: boolean }>(`/api/project-sets/${encodeURIComponent(setId)}`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  });
+}
+
+export function duplicateProjectSet(
+  setId: string,
+  input: { name?: string; folderId?: string | null } = {},
+): Promise<ApiResult<ProjectSet>> {
+  return request<ProjectSet>(`/api/project-sets/${encodeURIComponent(setId)}/duplicate`, {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+}
+
+export function deleteProjectSet(setId: string): Promise<ApiResult<{ ok: boolean }>> {
+  return request<{ ok: boolean }>(`/api/project-sets/${encodeURIComponent(setId)}`, {
+    method: 'DELETE',
+  });
+}
+
+export function restoreProjectSet(setId: string): Promise<ApiResult<{ ok: boolean }>> {
+  return request<{ ok: boolean }>(`/api/project-sets/${encodeURIComponent(setId)}/restore`, {
+    method: 'POST',
+  });
+}
+
+export function createProject(
+  brandId: string,
+  input: { title: string; formatId: string; setId?: string | null },
+): Promise<ApiResult<{ project: ProjectSummary }>> {
+  return request<{ project: ProjectSummary }>(
+    `/api/brands/${encodeURIComponent(brandId)}/projects`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ title: input.title, formatId: input.formatId, setId: input.setId ?? null }),
+    },
+  );
+}
+
+export function updateProject(
+  projectId: string,
+  input: { title?: string; formatId?: string; setId?: string | null; coverFileId?: string | null },
+): Promise<ApiResult<{ ok: boolean }>> {
+  return request<{ ok: boolean }>(`/api/projects/${encodeURIComponent(projectId)}`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  });
+}
+
+export function duplicateProject(
+  projectId: string,
+  input: { title?: string } = {},
+): Promise<ApiResult<{ project: ProjectSummary }>> {
+  return request<{ project: ProjectSummary }>(
+    `/api/projects/${encodeURIComponent(projectId)}/duplicate`,
+    { method: 'POST', body: JSON.stringify(input) },
+  );
+}
+
+export function deleteProject(projectId: string): Promise<ApiResult<{ ok: boolean }>> {
+  return request<{ ok: boolean }>(`/api/projects/${encodeURIComponent(projectId)}`, {
+    method: 'DELETE',
+  });
 }

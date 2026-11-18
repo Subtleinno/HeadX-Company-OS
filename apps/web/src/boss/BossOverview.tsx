@@ -1,67 +1,42 @@
 import { t } from '@company-os/i18n';
-import { useSharedNeeds } from '../frame/FrameApps';
+import { BrandBusinessSummary } from '../design/BrandScreen';
 import { useBrands } from '../frame/useDirectory';
-import type { SitesState } from './useSites';
 
 /**
- * Boss Portal 總覽。
+ * Boss Portal 首頁：全公司業務。
  *
- * 只讀已經存在的事實：有幾台機已登記、幾台等批准、幾個品牌、幾件未關閉的
- * Needs。刻意**唔**做一個「公司健康分」—— 一個由四條數砌出來的分數，
- * 睇落好科學，但冇人講得出 73 分同 68 分分別代表咩。
+ * 2026-11-17 老闆定：原本四個 KPI 數（幾台機、幾多待批准、幾個品牌、幾件 Needs）
+ * 唔係他要在這裡睇的東西 —— 那四個數字冇講到「公司怎麼運作」。首頁改成業務
+ * 本身：每個品牌一節，由它自己的 00 業務基礎自動生成業務畫布、單位經濟、
+ * 起步清單。
  *
- * 讀唔到嘅數字顯示破折號，唔顯示 0：0 係一個結論（真係冇），破折號係
- * 「我唔知」。呢兩件事唔可以混。
+ * 這裡**只讀**。要改就打開左欄該品牌的頁；兩邊讀同一份資料，沒有第二份
+ * 「首頁版」的答案。跨品牌匯總（例如全公司收入來源合併）等老闆之後再定，
+ * 現在唔自己砌一個聽起來好科學的總數。
  */
-
-type BossOverviewProps = {
-  sites: SitesState;
-};
-
-function Metric(props: { label: string; value: string }) {
-  return (
-    <div className="boss-metric">
-      <span className="boss-metric__value">{props.value}</span>
-      <span className="boss-metric__label">{props.label}</span>
-    </div>
-  );
-}
-
-const UNKNOWN = '—';
-
-export function BossOverview({ sites }: BossOverviewProps) {
-  const needs = useSharedNeeds();
+export function BossOverview() {
   const brands = useBrands(true);
-
-  const sitesReady = sites.kind === 'ready';
-  const registered = sitesReady ? sites.items.filter((item) => item.status === 'registered').length : null;
-  const pending = sitesReady ? sites.items.filter((item) => item.status === 'pending').length : null;
-  const brandCount = brands.state.kind === 'ready' ? brands.state.items.length : null;
-  const needsCount =
-    needs.counts === null ? null : needs.counts.total - needs.counts.closed;
-
-  const anyUnknown =
-    registered === null || pending === null || brandCount === null || needsCount === null;
+  const items = brands.state.kind === 'ready' ? brands.state.items : [];
 
   return (
-    <>
-      <div className="boss-metrics">
-        <Metric
-          label={t('boss.overview.sites')}
-          value={registered === null ? UNKNOWN : String(registered)}
-        />
-        <Metric label={t('boss.overview.pending')} value={pending === null ? UNKNOWN : String(pending)} />
-        <Metric
-          label={t('boss.overview.brands')}
-          value={brandCount === null ? UNKNOWN : String(brandCount)}
-        />
-        <Metric
-          label={t('boss.overview.needs')}
-          value={needsCount === null ? UNKNOWN : String(needsCount)}
-        />
-      </div>
+    <div className="boss-business" data-boss-overview>
+      <header className="boss-business__head">
+        <h2 className="boss-business__title">{t('boss.overview.business')}</h2>
+        <p className="boss-business__lead">{t('boss.overview.businessLead')}</p>
+      </header>
 
-      {anyUnknown && <p className="boss-note">{t('boss.overview.readFailed')}</p>}
-    </>
+      {brands.state.kind === 'loading' && <p className="boss-note">{t('brandBuild.loading')}</p>}
+      {brands.state.kind === 'failed' && <p className="boss-note">{t('boss.overview.readFailed')}</p>}
+      {brands.state.kind === 'ready' && items.length === 0 && (
+        <p className="boss-note">{t('boss.overview.noBrand')}</p>
+      )}
+
+      {items.map((brand) => (
+        <section key={brand.id} className="boss-business__brand" data-boss-brand={brand.id}>
+          <h3 className="boss-business__brandName">{brand.name}</h3>
+          <BrandBusinessSummary brandId={brand.id} />
+        </section>
+      ))}
+    </div>
   );
 }

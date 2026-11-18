@@ -117,7 +117,19 @@ export type FakeHandlers = Partial<
     | 'brandCheck'
     | 'brandSuggestions'
     | 'brandSuggestionAccept'
-    | 'brandSuggestionDismiss',
+    | 'brandSuggestionDismiss'
+    | 'library'
+    | 'formats'
+    | 'projectFolders'
+    | 'projectFolderCreate'
+    | 'projectSetCreate'
+    | 'projectSetPatch'
+    | 'projectSetDelete'
+    | 'projectSetRestore'
+    | 'projectSetDuplicate'
+    | 'projectPatch'
+    | 'projectDuplicate'
+    | 'projectDelete',
     Handler
   >
 >;
@@ -346,7 +358,10 @@ function routeKey(path: string, method: string): keyof FakeHandlers | null {
   if (/\/projects\/[^/]+\/creative$/.test(bare)) return method === 'GET' ? 'projectCreative' : null;
   if (/\/projects\/[^/]+\/compositions$/.test(bare)) return method === 'POST' ? 'compositionCreate' : null;
   if (/\/projects\/[^/]+\/render$/.test(bare)) return method === 'POST' ? 'render' : null;
+  if (/\/projects\/[^/]+\/duplicate$/.test(bare)) return method === 'POST' ? 'projectDuplicate' : null;
   if (/\/projects\/[^/]+$/.test(bare)) {
+    if (method === 'PATCH') return 'projectPatch';
+    if (method === 'DELETE') return 'projectDelete';
     return method === 'GET' ? 'projectDetail' : null;
   }
   if (bare.endsWith('/materials')) return method === 'GET' ? 'materials' : method === 'POST' ? 'materialUpload' : null;
@@ -359,6 +374,24 @@ function routeKey(path: string, method: string): keyof FakeHandlers | null {
   if (bare.endsWith('/projects')) {
     return method === 'GET' ? 'projects' : method === 'POST' ? 'projectCreate' : null;
   }
+
+  // ── 作品庫（Create 模組）。次序有意義：更具體的 /library、/project-sets、
+  // /project-folders、/formats 要先於 `/brands` 配對；/project-sets/:id 與
+  // /project-folders/:id 的動作（restore／duplicate）先於裸路徑。
+  if (/\/project-sets\/[^/]+\/restore$/.test(bare)) return method === 'POST' ? 'projectSetRestore' : null;
+  if (/\/project-sets\/[^/]+\/duplicate$/.test(bare)) return method === 'POST' ? 'projectSetDuplicate' : null;
+  if (/\/project-sets\/[^/]+$/.test(bare)) {
+    if (method === 'PATCH') return 'projectSetPatch';
+    return method === 'DELETE' ? 'projectSetDelete' : null;
+  }
+  if (/\/project-folders\/[^/]+$/.test(bare)) {
+    if (method === 'PATCH') return 'projectFolders';
+    return method === 'DELETE' ? 'projectFolders' : null;
+  }
+  if (/\/brands\/[^/]+\/library$/.test(bare)) return method === 'GET' ? 'library' : null;
+  if (/\/brands\/[^/]+\/formats$/.test(bare)) return method === 'GET' ? 'formats' : method === 'POST' ? 'formats' : null;
+  if (/\/brands\/[^/]+\/folders$/.test(bare)) return method === 'GET' ? 'projectFolders' : method === 'POST' ? 'projectFolderCreate' : null;
+  if (/\/brands\/[^/]+\/project-sets$/.test(bare)) return method === 'POST' ? 'projectSetCreate' : null;
 
   // ── 政策規則（issue 162）。次序有意義：/policy-rules/:id 先於 /policy-rules。
   if (/\/policy-rules\/[^/]+$/.test(bare)) {
@@ -553,6 +586,8 @@ export function installFakeApi(handlers: FakeHandlers): FakeApi {
         if (key === 'knowledge') return jsonResponse(200, { knowledge: [], total: 0 });
         if (key === 'templates') return jsonResponse(200, { templates: [], total: 0 });
         if (key === 'outputs') return jsonResponse(200, { outputs: [] });
+        if (key === 'library') return jsonResponse(200, { formats: [], folders: [], sets: [], deletedSets: [] });
+        if (key === 'projects') return jsonResponse(200, { projects: [], total: 0 });
 
         throw new Error(`測試沒有為 ${key} 準備回應`);
       }

@@ -8,12 +8,10 @@ import { LOGIN_HASH_KEY_ENV, loginHashKeyWarning, readLoginHashKey } from './aut
 import { createHashLimiter, parseHashLimits, type HashLimitsConfig } from './auth/hash-limits.js';
 import { registerAuth } from './auth/routes.js';
 import { registerAgents } from './agents/index.js';
-import { registerBrandPages } from './brand-pages/index.js';
-import { registerBrandOutput } from './brand-output/index.js';
-import { registerBrandGaps } from './brand-gaps/index.js';
-import { registerBrandCheck } from './brand-check/index.js';
-import { registerBrandSuggestions } from './brand-suggestions/index.js';
-import { registerBrandPolicy } from './brand-policy/index.js';
+import { registerBrandGuide, registerBrandGuideAgent } from './brand-guide/index.js';
+import { registerBrandSets } from './brand-sets/index.js';
+import { registerMarketing } from './marketing/index.js';
+import { registerProjectLibrary } from './project-library/index.js';
 import { registerStaff } from './staff/index.js';
 import { attachPoolErrorHandler, createDbCheck } from './db.js';
 import { DEFAULT_MAX_UPLOAD_BYTES, registerFiles } from './files/routes.js';
@@ -28,8 +26,6 @@ import { DEFAULT_PROFILE_DIR, registerSettings, seedSettings } from './settings/
 import type { Storage } from './storage/index.js';
 import { createStorageDiagnosis } from './storage/diagnose.js';
 import { createMinioStorage } from './storage/minio.js';
-import { registerProjects } from './projects/index.js';
-import { registerCarousel, registerCarouselMcp } from './carousel/index.js';
 
 const port = Number(process.env.PORT ?? 4420);
 const host = process.env.HOST ?? '0.0.0.0';
@@ -269,45 +265,23 @@ async function main(): Promise<void> {
 
   registerModules(app, { registry });
 
-  // Marketing Design Project／Brief：人與外部 agent 分別驗身份，
-  // 每一條都重新經現有 app_grant／policy 判斷 design 存取權。
-  registerProjects(app, {
-    pool,
-    registry,
-    resolveEntry: (request) => entryOfRequest(request),
-  });
-  registerCarousel(app, {
-    pool,
-    storage,
-    registry,
-    resolveEntry: (request) => entryOfRequest(request),
-    maxUploadBytes: readMaxUploadBytes(),
-  });
-  registerCarouselMcp(app, {
-    pool,
-    storage,
-    registry,
-    resolveEntry: (request) => entryOfRequest(request),
-  });
+  // 品牌引導（stage0–4h）：選項庫（行業／牌照／語氣）＋引導答案。
+  // 選項庫是參考資料，人人可讀；答案寫入要品牌編輯權。
+  registerBrandGuide(app, { pool });
 
-  // 品牌頁與頁版本（issue #33）：讀要登入，寫只有老闆（品牌級授權見 #32）。
-  registerBrandPages(app, { pool });
+  // 品牌集（04B–04E、04H 的收納單位）：資料夾、複製、搬移、安全刪除。
+  registerBrandSets(app, { pool });
 
-  // 品牌輸出（issue #57）：HTML、tokens、prompt 包、A4 印刷版。四者只讀，
-  // 由同一份現行版本計算 —— 所以不會有一份手寫的副本。
-  registerBrandOutput(app, { pool });
+  // 公司層 04F 行銷內容（Boss Portal › Marketing）：全公司一份，只有老闆讀得到。
+  registerMarketing(app, { pool });
 
-  // 品牌缺口（issue #58）：缺什麼由文件講，這裡只記「交了給誰跟」。
-  registerBrandGaps(app, { pool });
+  // Create 模組的 Project Library：格式、資料夾、專案集、專案的三層收納與
+  // CRUD、複製、搬移。讀要登入，寫要有品牌編輯權。
+  registerProjectLibrary(app, { pool });
 
-  // 品牌驗證規則（issue #59）：一個規則 id 一個 checker，只報告不阻止儲存。
-  registerBrandCheck(app, { pool });
-
-  // 品牌專屬系統建議（issue #60）：三項判斷皆是才是一頁；略過會記錄。
-  registerBrandSuggestions(app, { pool });
-
-  // 品牌頁策略（issue #34）：六個槽，只加不改，寫只有老闆。
-  registerBrandPolicy(app, { pool });
+  // Agent（MCP）讀寫品牌區塊：Bearer token ＋ design app 有效授權。
+  // 一定要排在 registerAgents 之後 —— `requireAgent` 由那邊 decorate。
+  registerBrandGuideAgent(app, { pool });
 
   // 公司設定與政策規則：全部要老闆，寫入留審計。
   registerSettings(app, { pool });

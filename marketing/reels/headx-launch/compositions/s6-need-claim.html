@@ -1,0 +1,233 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      background: #fff;
+      overflow: hidden;
+    }
+
+    #s6-eyebrow {
+      top: 188px;
+      font-size: 22px;
+      font-weight: 500;
+      letter-spacing: 0.16em;
+      color: var(--ink-3);
+    }
+    #s6-title {
+      top: 232px;
+      font-size: 50px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    #s6-card {
+      position: absolute;
+      left: 64px;
+      top: 358px;
+      width: 952px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: #fff;
+      padding: 32px 34px 34px;
+    }
+
+    .s6-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+    .s6-dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: var(--warn);
+      display: block;
+    }
+    .s6-kind {
+      font-size: 20px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      color: var(--ink-2);
+    }
+    .s6-id {
+      margin-left: auto;
+      font-family: var(--mono);
+      font-size: 17px;
+      color: var(--ink-3);
+    }
+
+    .s6-claim-line {
+      font-size: 40px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      line-height: 1.4;
+      margin-bottom: 28px;
+    }
+    .s6-mark {
+      position: relative;
+      display: inline-block;
+    }
+    .s6-bar {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 2px;
+      height: 4px;
+      display: block;
+      background: var(--black);
+      transform-origin: left center;
+      transform: scaleX(0);
+    }
+
+    .s6-rec {
+      background: var(--surface);
+      border-radius: 14px;
+      padding: 26px 28px;
+    }
+    .s6-rec-label {
+      font-size: 18px;
+      font-weight: 500;
+      letter-spacing: 0.16em;
+      color: var(--ink-3);
+      margin-bottom: 14px;
+    }
+    .s6-rec-main {
+      font-size: 33px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      line-height: 1.35;
+      margin-bottom: 16px;
+    }
+    .s6-src {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 20px;
+      color: var(--ink-2);
+    }
+    .s6-src i {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--ok);
+      display: block;
+    }
+
+    .s6-quote {
+      margin-top: 22px;
+      padding-left: 22px;
+      border-left: 2px solid var(--line-2);
+      font-size: 23px;
+      line-height: 1.6;
+      color: var(--ink-2);
+    }
+
+    .s6-actions {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      margin-top: 32px;
+      overflow: hidden;
+    }
+    #s6-btn {
+      width: 220px;
+      height: 88px;
+      border-radius: 14px;
+      background: var(--black);
+      color: #fff;
+      font-family: var(--font);
+      font-size: 30px;
+      font-weight: 600;
+      display: grid;
+      place-items: center;
+    }
+    #s6-hint {
+      font-size: 21px;
+      color: var(--ink-3);
+    }
+
+    #s6-done {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 4px;
+      font-size: 23px;
+      color: var(--ok);
+      opacity: 0;
+    }
+    #s6-done span {
+      font-size: 21px;
+      color: var(--ink-2);
+    }
+  </style>
+
+  <div id="root" data-composition-id="s6" data-width="1080" data-height="1920">
+    <p id="s6-eyebrow" class="safe">NEEDS　·　判斷型</p>
+    <h1 id="s6-title" class="safe">呢句，AI 唔敢自己講</h1>
+
+    <div id="s6-card">
+      <div class="s6-head">
+        <i class="s6-dot"></i>
+        <span class="s6-kind">判斷型　·　對外聲明</span>
+        <span class="s6-id">NEED-0143</span>
+      </div>
+
+      <p class="s6-claim-line">批准對外講：<span class="s6-mark">無添加糖<span class="s6-bar" id="s6-bar"></span></span></p>
+
+      <div class="s6-rec" id="s6-rec">
+        <p class="s6-rec-label">AI 建議</p>
+        <p class="s6-rec-main">可以講。有來源支持。</p>
+        <div class="s6-src"><i></i>來源　產品資料 v3　·　第 2 段</div>
+      </div>
+
+      <p class="s6-quote" id="s6-quote">「成分只有咖啡豆同水，糖分 0 g。」</p>
+
+      <div class="s6-actions" id="s6-actions">
+        <div id="s6-btn">確認</div>
+        <p id="s6-hint">你按下，才代表公司講得出。</p>
+      </div>
+
+      <div id="s6-done">已接受<span>·　已寫入作品，可以出貨</span></div>
+    </div>
+  </div>
+
+  <script>
+    const tl = gsap.timeline({ paused: true });
+
+    tl.fromTo("#s6-eyebrow", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" }, 0.05);
+    tl.fromTo("#s6-title", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.55, ease: "power3.out" }, 0.12);
+
+    tl.fromTo(
+      "#s6-card",
+      { opacity: 0, y: 34 },
+      { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" },
+      0.3
+    );
+
+    tl.fromTo("#s6-rec", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 1.05);
+    tl.fromTo("#s6-quote", { opacity: 0 }, { opacity: 1, duration: 0.6 }, 1.7);
+    tl.fromTo("#s6-btn", { opacity: 0, scale: 0.96 }, { opacity: 1, scale: 1, duration: 0.5, ease: "power3.out" }, 2.3);
+    tl.fromTo("#s6-hint", { opacity: 0 }, { opacity: 1, duration: 0.5 }, 2.6);
+
+    /* 按下確認 */
+    tl.to("#s6-btn", { scale: 0.94, duration: 0.1, ease: "power2.in" }, 4.55);
+    tl.to("#s6-btn", { scale: 1, duration: 0.26, ease: "power3.out" }, 4.65);
+    tl.call(
+      () => {
+        document.querySelector(".s6-dot").style.background = "var(--ok)";
+        document.querySelector(".s6-kind").textContent = "已接受　·　對外聲明";
+      },
+      null,
+      4.75
+    );
+    tl.to("#s6-bar", { scaleX: 1, duration: 0.42, ease: "power3.out" }, 4.85);
+    tl.to("#s6-actions", { opacity: 0, height: 0, marginTop: 0, duration: 0.38, ease: "power2.inOut" }, 5.0);
+    tl.fromTo("#s6-done", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 5.4);
+
+    tl.to("#s6-card", { scale: 1.014, duration: 3.0, ease: "sine.inOut" }, 6.2);
+
+    window.__timelines["s6"] = tl;
+  </script>
+</template>

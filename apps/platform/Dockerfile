@@ -52,6 +52,9 @@ LABEL org.opencontainers.image.revision=$GIT_REVISION
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/apps/platform/package.json ./apps/platform/package.json
 COPY --from=build /app/apps/platform/dist ./apps/platform/dist
+# 選項圖（材質／工藝／表面示範）：跟源碼走，不進物件儲存 —— 新環境一裝就要有。
+# 位置與 brand-guide/option-images.ts 的解析一致：dist/brand-guide → ../../assets。
+COPY --from=build /app/apps/platform/assets ./apps/platform/assets
 # node_modules/@company-os/contracts 是符號連結，指回 packages/contracts；
 # 沒有這一行，require('@company-os/contracts') 會找不到。
 COPY --from=build /app/packages/contracts ./packages/contracts

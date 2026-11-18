@@ -26,10 +26,10 @@ describe('resolveNav', () => {
     expect(position.page.key).toBe('library');
   });
 
-  it('舊書籤指向已移走的頁（品牌設定）：退回品牌主頁，唔會白畫面', () => {
+  it('舊書籤指向已移走的頁（品牌設定）：退回品牌第一頁（品牌總覽），唔會白畫面', () => {
     const position = resolveNav(DESIGN_NAV, ['brand', 'settings']);
 
-    expect(position.page.key).toBe('home');
+    expect(position.page.key).toBe('dashboard');
     expect(position.section).toBeNull();
   });
 
@@ -43,7 +43,7 @@ describe('resolveNav', () => {
               groups: [
                 {
                   pages: [
-                    { key: 'home', labelKey: 'design.page.brandHome' as const },
+                    { key: 'dashboard', labelKey: 'brandBuild.overview.nav' as const },
                     { key: 'p/packaging', label: '包裝' },
                   ],
                 },
@@ -72,15 +72,27 @@ describe('resolveNav', () => {
     expect(position.page.key).toBe('projects');
   });
 
-  it('Boss Portal 冇品牌範圍，模組係總覽／據點與機器／人員／策略／存取紀錄', () => {
+  it('Boss Portal 冇品牌範圍（唔跟品牌切換），模組係總覽／品牌／據點與機器／人員／存取紀錄', () => {
     expect(BOSS_NAV.scoped).toBe(false);
+    // 「品牌」是 2026-11-17 加的公司層模組：00 業務基礎與新增品牌都在這裡，
+    // 但它是「全公司有哪幾個品牌」，不是 scoped 的品牌切換。
     expect(BOSS_NAV.modules.map((item) => item.key)).toEqual([
       'overview',
+      'brand',
+      // 行銷（2026-11-17 晚）：04F 行銷內容是全公司共用的策略，住在這裡，
+      // 不屬於任何品牌，也只有老闆讀得到。
+      'marketing',
       'sites',
       'people',
-      'policy',
       'access',
     ]);
+  });
+
+  it('品牌模組永遠有「全部品牌」第一頁，連一個品牌都未有時都到得了', () => {
+    const brand = BOSS_NAV.modules.find((item) => item.key === 'brand');
+    const pages = brand?.groups.flatMap((group) => group.pages.map((page) => page.key)) ?? [];
+
+    expect(pages).toEqual(['brands']);
   });
 
   it('「人員與部門」只出現在人員模組一次，唔會喺兩處各寫一次', () => {
@@ -102,49 +114,43 @@ describe('resolveNav', () => {
     ]);
   });
 
-  it('Create 有 Library、Outputs 與三種格式；Needs 不會變成第六個業務模組', () => {
+  it('Create 有 Library 與 Outputs；格式改為作品庫內的過濾器，唔再係獨立頁', () => {
     const create = DESIGN_NAV.modules.find((item) => item.key === 'create');
 
     expect(create?.groups.flatMap((group) => group.pages.map((page) => page.key))).toEqual([
       'projects',
       'outputs',
-      'carousel',
-      'presentation',
-      'video',
     ]);
     expect(DESIGN_NAV.modules.some((item) => item.key === 'needs')).toBe(false);
   });
 
-  it('舊 Create 工作台深連結退回 Projects；舊 Brand 深連結仍然對到原頁', () => {
+  it('舊 Create 工作台深連結退回 Projects；舊 Brand 深連結退回品牌總覽', () => {
     expect(resolveNav(DESIGN_NAV, ['create', 'board']).page.key).toBe('projects');
-    expect(resolveNav(DESIGN_NAV, ['brand', 'home']).page.key).toBe('home');
-    expect(resolveNav(DESIGN_NAV, ['brand', 'color']).page.key).toBe('color');
-    expect(resolveNav(DESIGN_NAV, ['brand', 'examples']).page.key).toBe('examples');
+    expect(resolveNav(DESIGN_NAV, ['brand', 'home']).page.key).toBe('dashboard');
+    expect(resolveNav(DESIGN_NAV, ['brand', 'color']).page.key).toBe('dashboard');
+    expect(resolveNav(DESIGN_NAV, ['brand', 'examples']).page.key).toBe('dashboard');
   });
 
-  it('品牌模組七頁：品牌主頁、標誌、色彩、字體、語氣、圖像、已核准範例（#32、#66、#68）', () => {
+  it('品牌模組兩頁：品牌總覽（01–03）與品牌集（04A–04H），但都不上第二行頁籤', () => {
     const brand = DESIGN_NAV.modules.find((item) => item.key === 'brand');
+    const pages = brand?.groups.flatMap((group) => group.pages) ?? [];
 
-    expect(brand?.groups.flatMap((group) => group.pages.map((page) => page.key))).toEqual([
-      'home',
-      'logo',
-      'color',
-      'type',
-      'tone',
-      'image',
-      'examples',
-    ]);
+    expect(pages.map((page) => page.key)).toEqual(['dashboard', 'sets']);
+    // 第二行頁籤只收 subbar !== false 的頁；品牌集靠左欄的樹進出。
+    expect(pages.every((page) => page.subbar === false)).toBe(true);
   });
 
-  it('儀表板、渠道、版本、品牌設定、品牌識別都已經移走（issue #32）', () => {
+  it('品牌集深連結屬於「品牌集」這一頁，不會被當成品牌總覽', () => {
+    expect(resolveNav(DESIGN_NAV, ['brand', 'sets', 'abc']).page.key).toBe('sets');
+    expect(resolveNav(DESIGN_NAV, ['brand', 'sets', 'abc', 'stage4a']).page.key).toBe('sets');
+  });
+
+  it('舊品牌多頁（主頁／標誌／色彩／字體／語氣／圖像／範例）都已經移走', () => {
     const pages = DESIGN_NAV.modules.flatMap((item) => item.groups.flatMap((group) => group.pages));
     const keys = pages.map((page) => page.key);
-    const sections = pages.flatMap((page) => page.sections ?? []).map((section) => section.key);
 
-    for (const gone of ['dashboard', 'channel', 'versions', 'settings', 'page']) {
+    for (const gone of ['build', 'home', 'logo', 'color', 'type', 'tone', 'image', 'examples', 'settings', 'page']) {
       expect(keys.includes(gone), gone).toBe(false);
     }
-
-    expect(sections.includes('identity'), 'identity').toBe(false);
   });
 });

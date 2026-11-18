@@ -1,0 +1,73 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* 字幕帶：底邊對齊 1330，唔侵入平台 UI */
+    .cap {
+      position: absolute;
+      left: 64px;
+      width: 952px;
+      bottom: 600px;
+      font-size: 32px;
+      line-height: 1.5;
+      font-weight: 500;
+      letter-spacing: 0.005em;
+      text-align: center;
+    }
+    .cap.dark {
+      color: #ffffff;
+      text-shadow: 0 2px 14px rgba(0, 0, 0, 0.55), 0 1px 3px rgba(0, 0, 0, 0.4);
+    }
+    .cap.light {
+      color: #1d1d1f;
+    }
+  </style>
+
+  <div id="root" data-composition-id="caps" data-width="1080" data-height="1920">
+    <p class="cap light clip" id="cap2" data-start="3.95" data-duration="6.35" data-track-index="3">
+      咖啡烘焙店嘅店員，淨係打咗一句。
+    </p>
+
+    <p class="cap light clip" id="cap3" data-start="10.65" data-duration="7.2" data-track-index="3">
+      AI 自己去品牌、知識、素材三個庫攞料。
+    </p>
+
+    <p class="cap light clip" id="cap4" data-start="18.15" data-duration="8.1" data-track-index="3">
+      五版稿，半分鐘砌好，跟足品牌。
+    </p>
+
+    <p class="cap light clip" id="cap5" data-start="26.55" data-duration="8.3" data-track-index="3">
+      但仲差一張街景相。AI 開咗個任務，連 shot list 都寫埋。
+    </p>
+
+    <p class="cap light clip" id="cap6" data-start="35.15" data-duration="8.9" data-track-index="3">
+      「無添加糖」要你拍板。AI 附埋來源同建議。
+    </p>
+
+    <p class="cap light clip" id="cap7" data-start="44.35" data-duration="8.1" data-track-index="3">
+      相片上載，自動填入。五張 PNG、一個 ZIP，出處都記低。
+    </p>
+  </div>
+
+  <script>
+    const tl = gsap.timeline({ paused: true });
+
+    const groups = [
+      ["#cap2", 3.95],
+      ["#cap3", 10.65],
+      ["#cap4", 18.15],
+      ["#cap5", 26.55],
+      ["#cap6", 35.15],
+      ["#cap7", 44.35],
+    ];
+
+    groups.forEach(([sel, at]) => {
+      tl.fromTo(sel, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.3, ease: "power2.out" }, at);
+    });
+
+    window.__timelines["caps"] = tl;
+  </script>
+</template>

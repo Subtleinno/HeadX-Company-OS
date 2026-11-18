@@ -294,13 +294,18 @@ export function registerFiles(app: FastifyInstance, deps: FilesDeps): void {
         }
 
         const size = Number(row.size_bytes);
+        // `?download=1`：同一份檔案，預覽用 inline、下載用 attachment。
+        const forceDownload = (request.query as { download?: unknown }).download === '1';
 
         reply.header('content-type', row.content_type);
         reply.header('accept-ranges', 'bytes');
         reply.header('etag', `"${row.sha256}"`);
         reply.header('x-content-type-options', 'nosniff');
         reply.header('cache-control', 'private');
-        reply.header('content-disposition', buildContentDisposition(row.original_name, row.content_type));
+        reply.header(
+          'content-disposition',
+          buildContentDisposition(row.original_name, row.content_type, forceDownload),
+        );
 
         if (request.method === 'HEAD') {
           // Fastify 對 HEAD 不會覆寫已設定的 content-length，所以這裡就是整個檔案的大小。

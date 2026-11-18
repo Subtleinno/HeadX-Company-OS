@@ -92,6 +92,34 @@ export const BOSS_NAV: AppNav = {
       groups: [{ pages: [{ key: 'overview', labelKey: 'boss.page.overview' }] }],
     },
     {
+      /**
+       * 品牌：一頁「全部品牌」＋ 每個品牌一頁。
+       *
+       * 這一條是常駐的（2026-11-17 老闆：新增品牌的入口屬於公司層，不放在
+       * Design）。常駐的另一個好處是：一個品牌都未有時，`#/boss/brand` 仍然
+       * 到得了 —— 否則連第一個品牌都無處可開。
+       *
+       * 每個品牌那一頁由 `BossPortal` 依 `/brands` 清單即時接在「全部品牌」
+       * 之後（`brand` 模組的 groups 會被換掉），所以這裡只列固定的第一頁。
+       */
+      key: 'brand',
+      labelKey: 'boss.module.brand',
+      groups: [{ pages: [{ key: 'brands', labelKey: 'boss.page.brands' }] }],
+    },
+    {
+      /**
+       * 行銷（2026-11-17 晚老闆加）：04F 行銷內容由老闆自己定、全公司共用，
+       * 其他同事不應該看到。所以它有一個自己的模組，而不是躲在品牌之下 ——
+       * 品牌是「這個品牌是誰」，行銷策略是「公司怎麼賣」，兩件事。
+       *
+       * 資料在 `brand_id is null` 那一列（見 `apps/platform/src/marketing`），
+       * 只有一個 stage（04F），所以這一頁是固定的，不隨品牌清單變。
+       */
+      key: 'marketing',
+      labelKey: 'boss.module.marketing',
+      groups: [{ pages: [{ key: 'marketing', labelKey: 'boss.page.marketing' }] }],
+    },
+    {
       key: 'sites',
       labelKey: 'boss.module.sites',
       groups: [
@@ -118,18 +146,6 @@ export const BOSS_NAV: AppNav = {
       key: 'people',
       labelKey: 'boss.module.people',
       groups: [{ pages: [{ key: 'members', labelKey: 'boss.page.people' }] }],
-    },
-    {
-      /**
-       * 策略獨立成一個模組（issue #34）。
-       *
-       * 它不屬於任何一個品牌：策略講的是「這一類頁要怎樣做」，同一套專業標準
-       * 用於所有品牌。所以放在公司範圍的 Boss Portal，而不是品牌模組。
-       * 放在「人員」之後、「存取紀錄」之前：前者是工作區，後者是唯讀紀錄。
-       */
-      key: 'policy',
-      labelKey: 'boss.module.policy',
-      groups: [{ pages: [{ key: 'brand', labelKey: 'boss.page.brandPolicy' }] }],
     },
     {
       key: 'access',
@@ -159,14 +175,6 @@ export const DESIGN_NAV: AppNav = {
             { key: 'outputs', labelKey: 'design.page.outputs', subbar: false },
           ],
         },
-        {
-          titleKey: 'design.group.formats',
-          pages: [
-            { key: 'carousel', labelKey: 'design.page.carousel' },
-            { key: 'presentation', labelKey: 'design.page.presentation' },
-            { key: 'video', labelKey: 'design.page.video' },
-          ],
-        },
       ],
     },
     {
@@ -174,16 +182,16 @@ export const DESIGN_NAV: AppNav = {
       labelKey: 'design.module.brand',
       groups: [
         {
-          // 未讀到後端清單之前的骨架；真正頁名與自定義頁由 withBrandPages() 換入。
-          // 既有鍵與深連結保留，v3 只改變 Brand 在整個 app 的位置。
+          /*
+           * 兩頁，但都不出現在第二行頁籤（`subbar: false`）：品牌模組左欄
+           * 是一棵「資料夾 → 品牌集」的樹，在頁籤再加一次只會兩處講同一件事。
+           *
+           * `sets` 這一頁存在的理由是麵包屑與深連結：04A–04H 的品牌集不是
+           * 品牌總覽，標題不可以寫成「品牌總覽」。
+           */
           pages: [
-            { key: 'home', labelKey: 'design.page.brandHome' },
-            { key: 'logo', labelKey: 'design.page.brandLogo' },
-            { key: 'color', labelKey: 'design.page.brandColor' },
-            { key: 'type', labelKey: 'design.page.brandType' },
-            { key: 'tone', labelKey: 'design.page.brandTone' },
-            { key: 'image', labelKey: 'design.page.brandImage' },
-            { key: 'examples', labelKey: 'design.page.brandExamples' },
+            { key: 'dashboard', labelKey: 'brandBuild.overview.nav', subbar: false },
+            { key: 'sets', labelKey: 'brandBuild.set.title', subbar: false },
           ],
         },
       ],
@@ -281,110 +289,4 @@ export function resolveNav(nav: AppNav, segments: readonly string[]): NavPositio
   const section = page.sections?.find((item) => item.key === segments[2]) ?? page.sections?.[0] ?? null;
 
   return { navModule, page, section };
-}
-
-/* ── 品牌頁清單（issue #32） ─────────────────────────────────── */
-
-/** 後端回的一頁，只取導覽要用的欄位 —— 這樣這一支仍然是純資料轉換。 */
-export type BrandNavPage = {
-  key: string;
-  name: string;
-  kind: 'fixed' | 'custom';
-  /** 左側欄分組（#60）：品牌主頁、識別、品牌專屬、應用。 */
-  group?: 'home' | 'identity' | 'custom' | 'apply';
-  /** 這一頁未有版本。名稱右側顯示「缺」。 */
-  missing?: boolean;
-};
-
-/**
- * 把導覽裡品牌模組的頁，換成後端真正有的那些頁。
- *
- * **次序不重排**：後端按 `sort_order` 回，那是一條建立時就固定的數（固定頁
- * 10–50，自定義頁由 60 起遞增）。按最後修改時間排會令改完一頁就跳位，人會
- * 以為自己按錯；按字母排則會令「包裝／攝影／命名」變成「命名／包裝／攝影」。
- *
- * 自定義頁的鍵是 `p/<slug>`，不是 `<slug>`：五頁的網址是
- * `#/design/brand/<鍵>`，自定義頁是 `#/design/brand/p/<slug>`，兩者永遠
- * 不會撞 —— 就算有人把頁改名做 `logo`，技術上也撞不入（後端另外會擋）。
- */
-export function withBrandPages(
-  nav: AppNav,
-  pages: readonly BrandNavPage[],
-): AppNav {
-  if (pages.length === 0) {
-    return nav;
-  }
-
-  const mapped: NavPage[] = pages.map((page) => ({
-    key: page.kind === 'custom' ? `p/${page.key}` : page.key,
-    label: page.name,
-    ...(page.missing === true ? { badge: t('brand.nav.missing'), badgeTone: 'warning' as const } : {}),
-  }));
-
-  // 四組（#60）：品牌主頁／識別 IDENTITY／品牌專屬 CUSTOM／應用 APPLY。
-  // 空組不畫 —— 一個沒有頁的分組標題只是一個問題。次序寫死在這裡而不是由
-  // 後端的 `sort_order` 推：分組是一個決定，不是一個數。
-  const order = ['home', 'identity', 'custom', 'apply'] as const;
-  const titles: Record<(typeof order)[number], MessageKey | null> = {
-    home: null,
-    identity: 'design.group.identity',
-    custom: 'design.group.custom',
-    apply: 'design.group.apply',
-  };
-
-  const groups = order
-    .map((group) => {
-      const inGroup = pages
-        .map((page, index) => ({ page, nav: mapped[index] }))
-        .filter((entry) => (entry.page.group ?? (entry.page.kind === 'custom' ? 'custom' : 'identity')) === group)
-        .map((entry) => entry.nav as NavPage);
-
-      const titleKey = titles[group];
-
-      return { ...(titleKey === null ? {} : { titleKey }), pages: inGroup };
-    })
-    .filter((group) => group.pages.length > 0);
-
-  return {
-    ...nav,
-    modules: nav.modules.map((navModule) =>
-      navModule.key === 'brand' ? { ...navModule, groups } : navModule,
-    ),
-  };
-}
-
-export type KnowledgeNavDocument = {
-  id: string;
-  title: string;
-  status: 'unverified' | 'verified' | 'outdated';
-};
-
-/** Knowledge 左欄是一份可按狀態展開的文件樹；文件仍是頁的章節，不另造 app 路由。 */
-export function withKnowledgeDocuments(
-  nav: AppNav,
-  documents: readonly KnowledgeNavDocument[],
-): AppNav {
-  return {
-    ...nav,
-    modules: nav.modules.map((navModule) => navModule.key !== 'knowledge' ? navModule : {
-      ...navModule,
-      groups: navModule.groups.map((group) => ({
-        ...group,
-        pages: group.pages.map((page) => {
-          const inFolder = page.key === 'list'
-            ? documents
-            : documents.filter((document) => document.status === page.key);
-          return {
-            ...page,
-            sections: inFolder.map((document) => ({ key: document.id, label: document.title })),
-          };
-        }),
-      })),
-    }),
-  };
-}
-
-/** 導覽鍵 → 後端路徑上的頁鍵。`p/packaging` → `packaging`；`logo` → `logo`。 */
-export function pageApiKey(navKey: string): string {
-  return navKey.startsWith('p/') ? navKey.slice(2) : navKey;
 }

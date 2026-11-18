@@ -1,0 +1,364 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      background: #fff;
+      overflow: hidden;
+    }
+
+    /* ---- A：相片填入 ---- */
+    #s7-stage {
+      position: absolute;
+      left: 240px;
+      top: 330px;
+      width: 600px;
+      height: 750px;
+    }
+    #s7-card {
+      position: absolute;
+      inset: 0;
+      border-radius: 4px;
+      overflow: hidden;
+      background: var(--surface);
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.13);
+    }
+    #s7-dash {
+      position: absolute;
+      inset: 0;
+      border: 2px dashed var(--line-2);
+      border-radius: 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      background: var(--surface);
+    }
+    #s7-dash .idx {
+      position: absolute;
+      top: 38px;
+      left: 46px;
+      font-family: var(--mono);
+      font-size: 14px;
+      color: var(--ink-3);
+    }
+    #s7-dash .miss {
+      font-size: 40px;
+      font-weight: 600;
+      color: var(--ink-2);
+    }
+    #s7-dash .spec {
+      font-size: 19px;
+      color: var(--ink-3);
+      margin-top: 16px;
+    }
+
+    #s7-photo {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      transform-origin: center;
+    }
+    #s7-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: 50% 45%;
+    }
+    #s7-photo .grad {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(0, 0, 0, 0.18) 0%, rgba(0, 0, 0, 0) 40%, rgba(0, 0, 0, 0.66) 100%);
+    }
+    #s7-photo .copy {
+      position: absolute;
+      left: 44px;
+      right: 44px;
+      bottom: 46px;
+      color: #fff;
+    }
+    #s7-photo .copy .head {
+      font-size: 58px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+    }
+    #s7-photo .copy .sub {
+      font-size: 24px;
+      color: rgba(255, 255, 255, 0.8);
+      margin-top: 16px;
+      letter-spacing: 0.04em;
+    }
+    #s7-photo .idx {
+      position: absolute;
+      top: 38px;
+      left: 46px;
+      font-family: var(--mono);
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    #s7-chip {
+      position: absolute;
+      left: 240px;
+      top: 254px;
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      height: 46px;
+      padding: 0 20px;
+      border-radius: 999px;
+      background: var(--surface);
+      font-size: 21px;
+      color: var(--ink-2);
+    }
+    #s7-chip i {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--ok);
+      display: block;
+    }
+
+    /* ---- B：成品 ---- */
+    #s7-out {
+      position: absolute;
+      inset: 0;
+      background: #fff;
+    }
+    #s7-eyebrow {
+      top: 300px;
+      font-size: 22px;
+      font-weight: 500;
+      letter-spacing: 0.16em;
+      color: var(--ink-3);
+    }
+    #s7-title {
+      top: 344px;
+      font-size: 50px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    #s7-tiles {
+      position: absolute;
+      left: 64px;
+      width: 952px;
+      top: 470px;
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+    }
+    .s7-tile {
+      width: 172px;
+      height: 215px;
+      border-radius: 3px;
+      overflow: hidden;
+      position: relative;
+      background: #fff;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+    }
+    .s7-tile img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .s7-tile .t {
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      line-height: 1.2;
+    }
+    .s7-tile .ink {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .s7-tile .ink .n {
+      font-size: 54px;
+      font-weight: 700;
+      letter-spacing: -0.05em;
+      line-height: 1;
+    }
+    .s7-tile .ink .l {
+      font-size: 12px;
+      color: var(--ink-2);
+    }
+    .s7-tile .ink.dark {
+      background: #000;
+      color: #fff;
+    }
+    .s7-tile .ink.dark .l {
+      color: rgba(255, 255, 255, 0.6);
+    }
+    .s7-tile .claim {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    #s7-meta {
+      position: absolute;
+      left: 64px;
+      top: 718px;
+      font-size: 26px;
+      color: var(--ink-2);
+      letter-spacing: 0.01em;
+    }
+    #s7-meta b {
+      color: var(--ink);
+      font-weight: 600;
+    }
+    #s7-zip {
+      position: absolute;
+      left: 64px;
+      top: 768px;
+      display: inline-flex;
+      align-items: center;
+      height: 46px;
+      padding: 0 18px;
+      border: 1px solid var(--line-2);
+      border-radius: 8px;
+      font-family: var(--mono);
+      font-size: 20px;
+      color: var(--ink-2);
+      letter-spacing: 0.04em;
+    }
+
+    #s7-prov {
+      position: absolute;
+      left: 64px;
+      top: 900px;
+      width: 952px;
+      padding-top: 30px;
+      border-top: 1px solid var(--line);
+    }
+    #s7-prov .k {
+      font-size: 19px;
+      font-weight: 500;
+      letter-spacing: 0.16em;
+      color: var(--ink-3);
+      margin-bottom: 14px;
+    }
+    #s7-prov .v {
+      font-size: 25px;
+      color: var(--ink-2);
+      line-height: 1.6;
+    }
+    #s7-reuse {
+      position: absolute;
+      left: 64px;
+      top: 1030px;
+      font-size: 23px;
+      color: var(--ink-3);
+    }
+  </style>
+
+  <div id="root" data-composition-id="s7" data-width="1080" data-height="1920">
+    <div id="s7-stage">
+      <div id="s7-card">
+        <div id="s7-dash">
+          <p class="idx">04 / 05</p>
+          <p class="miss">缺　街景相</p>
+          <p class="spec">4:5 · 黃昏 · 無招牌字</p>
+        </div>
+        <div id="s7-photo">
+          <img src="assets/img/street.png" alt="" />
+          <div class="grad"></div>
+          <p class="idx">04 / 05</p>
+          <div class="copy">
+            <p class="head">黃昏六點<br />斜路</p>
+            <p class="sub">坡道咖啡　·　西營盤</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="s7-chip"><i></i>相片已填入　·　已存入素材庫</div>
+
+    <div id="s7-out">
+      <p id="s7-eyebrow" class="safe">成品</p>
+      <h1 id="s7-title" class="safe">五張，加一個 ZIP</h1>
+
+      <div id="s7-tiles">
+        <div class="s7-tile" id="s7-t1">
+          <img src="assets/img/coldbrew.png" alt="" />
+          <p class="t">冷萃 №1</p>
+        </div>
+        <div class="s7-tile" id="s7-t2">
+          <div class="ink"><span class="n">18</span><span class="l">小時低溫萃取</span></div>
+        </div>
+        <div class="s7-tile" id="s7-t3">
+          <div class="claim">無添加糖</div>
+        </div>
+        <div class="s7-tile" id="s7-t4">
+          <img src="assets/img/street.png" alt="" />
+          <p class="t">黃昏　斜路</p>
+        </div>
+        <div class="s7-tile" id="s7-t5">
+          <div class="ink dark"><span class="n">試一杯</span><span class="l">本週限定</span></div>
+        </div>
+      </div>
+
+      <p id="s7-meta"><b>1080 × 1350</b>　·　PNG × 5</p>
+      <div id="s7-zip">ZIP　·　12.4 MB</div>
+
+      <div id="s7-prov">
+        <p class="k">PROVENANCE</p>
+        <p class="v">品牌 v12　·　知識 v3　·　素材 ×4　·　模板 carousel/cover/body/cta</p>
+      </div>
+
+      <p id="s7-reuse">下次做新產品，呢張相直接再用。</p>
+    </div>
+  </div>
+
+  <script>
+    const tl = gsap.timeline({ paused: true });
+
+    /* A：補位 */
+    tl.fromTo("#s7-stage", { opacity: 0, scale: 0.98 }, { opacity: 1, scale: 1, duration: 0.6, ease: "power3.out" }, 0);
+    tl.fromTo("#s7-photo", { opacity: 0, scale: 1.14 }, { opacity: 1, scale: 1, duration: 0.85, ease: "power3.out" }, 0.85);
+    tl.to("#s7-dash", { opacity: 0, duration: 0.45, ease: "power2.out" }, 0.9);
+    tl.fromTo("#s7-photo .copy", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.55, ease: "power3.out" }, 1.5);
+    tl.fromTo("#s7-chip", { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 2.15);
+
+    /* 換到成品 */
+    tl.to("#s7-stage", { opacity: 0, y: -30, duration: 0.4, ease: "power2.in" }, 3.05);
+    tl.to("#s7-chip", { opacity: 0, duration: 0.3 }, 3.1);
+
+    tl.fromTo("#s7-eyebrow", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" }, 3.55);
+    tl.fromTo("#s7-title", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.55, ease: "power3.out" }, 3.7);
+
+    tl.fromTo(
+      ".s7-tile",
+      { opacity: 0, y: 24 },
+      { opacity: 1, y: 0, duration: 0.5, stagger: 0.09, ease: "power3.out" },
+      3.95
+    );
+    tl.fromTo("#s7-meta", { opacity: 0 }, { opacity: 1, duration: 0.5 }, 4.7);
+    tl.fromTo("#s7-zip", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" }, 4.95);
+    tl.fromTo("#s7-prov", { opacity: 0 }, { opacity: 1, duration: 0.6 }, 5.5);
+    tl.fromTo("#s7-reuse", { opacity: 0 }, { opacity: 1, duration: 0.6 }, 6.2);
+
+    window.__timelines["s7"] = tl;
+
+    /* 初始狀態：成品層未出現 */
+    gsap.set("#s7-out", { opacity: 0 });
+    tl.fromTo("#s7-out", { opacity: 0 }, { opacity: 1, duration: 0.32, ease: "power2.out" }, 3.28);
+  </script>
+</template>

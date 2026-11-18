@@ -1,0 +1,205 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      background: #fff;
+      overflow: hidden;
+    }
+
+    #s3-eyebrow {
+      top: 188px;
+      font-size: 22px;
+      font-weight: 500;
+      letter-spacing: 0.16em;
+      color: var(--ink-3);
+    }
+    #s3-title {
+      top: 232px;
+      font-size: 50px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.16;
+    }
+
+    #s3-list {
+      position: absolute;
+      left: 64px;
+      top: 372px;
+      width: 952px;
+      display: flex;
+      flex-direction: column;
+      gap: 26px;
+    }
+
+    .s3-card {
+      width: 952px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: #fff;
+      padding: 30px 34px 32px;
+      display: flex;
+      gap: 28px;
+      align-items: flex-start;
+    }
+
+    .s3-num {
+      flex: 0 0 auto;
+      width: 64px;
+      height: 64px;
+      border: 1px solid var(--line-2);
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-family: var(--mono);
+      font-size: 21px;
+      letter-spacing: 0.04em;
+      color: var(--ink-2);
+    }
+
+    .s3-body {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .s3-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .s3-name {
+      font-size: 36px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    .s3-name span {
+      font-size: 21px;
+      font-weight: 400;
+      color: var(--ink-3);
+      letter-spacing: 0.1em;
+      margin-left: 16px;
+    }
+
+    .s3-count {
+      font-family: var(--mono);
+      font-size: 32px;
+      font-weight: 500;
+      color: var(--ink);
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+    }
+
+    .s3-desc {
+      margin-top: 14px;
+      font-size: 24px;
+      line-height: 1.5;
+      color: var(--ink-2);
+    }
+
+    #s3-note {
+      position: absolute;
+      left: 64px;
+      top: 1000px;
+      font-size: 23px;
+      color: var(--ink-3);
+      letter-spacing: 0.02em;
+    }
+  </style>
+
+  <div id="root" data-composition-id="s3" data-width="1080" data-height="1920">
+    <p id="s3-eyebrow" class="safe">AI 接手</p>
+    <h1 id="s3-title" class="safe">唔使等人派料</h1>
+
+    <div id="s3-list">
+      <div class="s3-card" id="s3-c1">
+        <div class="s3-num">01</div>
+        <div class="s3-body">
+          <div class="s3-row">
+            <p class="s3-name">品牌<span>BRAND</span></p>
+            <p class="s3-count">v12</p>
+          </div>
+          <p class="s3-desc">坡道咖啡　·　色彩、字體、語氣，12 頁規則</p>
+        </div>
+      </div>
+
+      <div class="s3-card" id="s3-c2">
+        <div class="s3-num">02</div>
+        <div class="s3-body">
+          <div class="s3-row">
+            <p class="s3-name">知識<span>KNOWLEDGE</span></p>
+            <p class="s3-count" id="s3-n2">0</p>
+          </div>
+          <p class="s3-desc">低溫萃取、糖分、產地　·　已核對來源</p>
+        </div>
+      </div>
+
+      <div class="s3-card" id="s3-c3">
+        <div class="s3-num">03</div>
+        <div class="s3-body">
+          <div class="s3-row">
+            <p class="s3-name">素材<span>MATERIALS</span></p>
+            <p class="s3-count" id="s3-n3">0</p>
+          </div>
+          <p class="s3-desc">產品、店舖、包裝　·　權利已確認</p>
+        </div>
+      </div>
+    </div>
+
+    <p id="s3-note">只用你公司自己入咗嘅資料。</p>
+  </div>
+
+  <script>
+    const tl = gsap.timeline({ paused: true });
+
+    tl.fromTo("#s3-eyebrow", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 0.05);
+    tl.fromTo("#s3-title", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.65, ease: "power3.out" }, 0.14);
+
+    tl.fromTo(
+      ".s3-card",
+      { opacity: 0, y: 40 },
+      { opacity: 1, y: 0, duration: 0.7, stagger: 0.16, ease: "power3.out" },
+      0.34
+    );
+
+    /* 數字捲上去：真數字，唔係動畫假數 */
+    const n2 = { v: 0 };
+    tl.to(
+      n2,
+      {
+        v: 218,
+        duration: 1.1,
+        ease: "power2.out",
+        onUpdate: () => {
+          document.getElementById("s3-n2").textContent = String(Math.round(n2.v));
+        },
+      },
+      1.35
+    );
+    tl.call(() => {
+      document.getElementById("s3-n2").textContent = "218 段";
+    }, null, 2.45);
+
+    const n3 = { v: 0 };
+    tl.to(
+      n3,
+      {
+        v: 1204,
+        duration: 1.2,
+        ease: "power2.out",
+        onUpdate: () => {
+          document.getElementById("s3-n3").textContent = Math.round(n3.v).toLocaleString("en-US");
+        },
+      },
+      1.7
+    );
+    tl.call(() => {
+      document.getElementById("s3-n3").textContent = "1,204 張";
+    }, null, 2.9);
+
+    tl.fromTo("#s3-note", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 4.3);
+
+    window.__timelines["s3"] = tl;
+  </script>
+</template>

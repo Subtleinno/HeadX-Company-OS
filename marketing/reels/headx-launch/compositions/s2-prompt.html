@@ -1,0 +1,211 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      background: #fff;
+      overflow: hidden;
+    }
+
+    #s2-head {
+      top: 300px;
+    }
+    #s2-eyebrow {
+      font-size: 22px;
+      font-weight: 500;
+      letter-spacing: 0.16em;
+      color: var(--ink-3);
+      margin-bottom: 18px;
+    }
+    #s2-title {
+      font-size: 56px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      margin-bottom: 16px;
+    }
+    #s2-sub {
+      font-size: 26px;
+      line-height: 1.5;
+      color: var(--ink-2);
+    }
+
+    #s2-field {
+      top: 620px;
+    }
+    #s2-label {
+      font-size: 22px;
+      font-weight: 500;
+      color: var(--ink-2);
+      margin-bottom: 16px;
+    }
+    #s2-card {
+      width: 952px;
+      height: 284px;
+      border: 1.5px solid var(--line-2);
+      border-radius: 20px;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 34px 34px 30px;
+    }
+    #s2-text {
+      font-size: 38px;
+      line-height: 1.5;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+    }
+    #s2-text .ch {
+      display: inline-block;
+    }
+    #s2-foot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    #s2-btn {
+      flex: 0 0 auto;
+      width: 176px;
+      height: 84px;
+      border-radius: 14px;
+      background: var(--black);
+      color: #fff;
+      font-family: var(--font);
+      font-size: 30px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      display: grid;
+      place-items: center;
+      border: 0;
+    }
+    #s2-hint {
+      font-size: 21px;
+      color: var(--ink-3);
+      letter-spacing: 0.02em;
+    }
+
+    /* 提交之後：Library 出現一件新作品 */
+    #s2-item {
+      position: absolute;
+      left: 64px;
+      width: 952px;
+      top: 620px;
+      display: flex;
+      align-items: center;
+      gap: 30px;
+      padding: 0;
+    }
+    #s2-item-thumb {
+      width: 132px;
+      height: 165px;
+      border-radius: 8px;
+      border: 1.5px dashed var(--line-2);
+      background: var(--surface);
+      flex: 0 0 auto;
+    }
+    #s2-item-body {
+      flex: 1;
+    }
+    #s2-item-title {
+      font-size: 36px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      margin-bottom: 12px;
+    }
+    #s2-item-meta {
+      font-size: 23px;
+      color: var(--ink-2);
+      margin-bottom: 18px;
+    }
+    #s2-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      height: 44px;
+      padding: 0 20px;
+      border-radius: 999px;
+      background: var(--surface);
+      font-size: 21px;
+      color: var(--ink-2);
+    }
+    #s2-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--warn);
+    }
+  </style>
+
+  <div id="root" data-composition-id="s2" data-width="1080" data-height="1920">
+    <div id="s2-head" class="safe">
+      <p id="s2-eyebrow">創作　·　工作台</p>
+      <h1 id="s2-title">工作台</h1>
+      <p id="s2-sub">從一句話開始，品牌規則會自動帶入。</p>
+    </div>
+
+    <div id="s2-field" class="safe">
+      <p id="s2-label">用一句話說你想做什麼</p>
+      <div id="s2-card">
+        <p id="s2-text"><span class="ch">幫</span><span class="ch">做</span><span class="ch">我</span><span class="ch">個</span><span class="ch">&nbsp;</span><span class="ch">c</span><span class="ch">o</span><span class="ch">l</span><span class="ch">d</span><span class="ch">&nbsp;</span><span class="ch">b</span><span class="ch">r</span><span class="ch">e</span><span class="ch">w</span><span class="ch">&nbsp;</span><span class="ch">嘅</span><span class="ch">&nbsp;</span><span class="ch">I</span><span class="ch">G</span><span class="ch">&nbsp;</span><span class="ch">c</span><span class="ch">a</span><span class="ch">r</span><span class="ch">o</span><span class="ch">u</span><span class="ch">s</span><span class="ch">e</span><span class="ch">l</span></p>
+        <div id="s2-foot">
+          <p id="s2-hint">使用　坡道咖啡　·　品牌 v12</p>
+          <div id="s2-btn">開始</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="s2-item">
+      <div id="s2-item-thumb"></div>
+      <div id="s2-item-body">
+        <p id="s2-item-title">冷萃 №1 上市　IG Carousel</p>
+        <p id="s2-item-meta">坡道咖啡　·　5 頁　·　4:5　·　剛剛</p>
+        <div id="s2-chip"><span id="s2-dot"></span>規劃中</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const tl = gsap.timeline({ paused: true });
+
+    /* 版面進場 */
+    tl.fromTo("#s2-eyebrow", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 0.05);
+    tl.fromTo("#s2-title", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 0.14);
+    tl.fromTo("#s2-sub", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 0.26);
+    tl.fromTo("#s2-label", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power2.out" }, 0.36);
+    tl.fromTo(
+      "#s2-card",
+      { opacity: 0, y: 22, scale: 0.985 },
+      { opacity: 1, y: 0, scale: 1, duration: 0.65, ease: "power3.out" },
+      0.42
+    );
+    tl.fromTo("#s2-hint", { opacity: 0 }, { opacity: 1, duration: 0.5 }, 0.62);
+
+    /* 逐字打 */
+    tl.fromTo(
+      "#s2-text .ch",
+      { opacity: 0 },
+      { opacity: 1, duration: 0.01, stagger: 0.07, ease: "none" },
+      0.78
+    );
+
+    /* 按下開始 */
+    tl.to("#s2-btn", { scale: 0.94, duration: 0.09, ease: "power2.in" }, 3.42);
+    tl.to("#s2-btn", { scale: 1, duration: 0.22, ease: "power3.out" }, 3.51);
+
+    /* 收走輸入、換成 Library 一件作品 */
+    tl.to("#s2-head", { y: -26, opacity: 0, duration: 0.5, ease: "power2.inOut" }, 3.62);
+    tl.to("#s2-field", { y: -34, opacity: 0, duration: 0.5, ease: "power2.inOut" }, 3.62);
+
+    tl.fromTo("#s2-item", { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.65, ease: "power3.out" }, 3.95);
+    tl.fromTo("#s2-chip", { opacity: 0, scale: 0.94 }, { opacity: 1, scale: 1, duration: 0.4, ease: "power3.out" }, 4.5);
+    tl.fromTo(
+      "#s2-dot",
+      { opacity: 0.35 },
+      { opacity: 1, duration: 0.7, yoyo: true, repeat: 2, ease: "sine.inOut" },
+      4.8
+    );
+
+    window.__timelines["s2"] = tl;
+  </script>
+</template>

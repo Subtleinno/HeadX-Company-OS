@@ -150,6 +150,12 @@ export type FrameShellProps = {
   onSignOut: () => void;
   sidebarOpen: boolean;
   onToggleSidebar: () => void;
+  /**
+   * 呢一頁自己畫一條左欄（例如品牌／作品的「資料夾 → 集合」樹），
+   * 外殼唔再畫 `sidebarGroups`。但左上角漢堡掣仍然要能用嚟開關佢：
+   * 傳 `true` 會令漢堡掣保持可用，並以 `sidebarOpen` 反映開關狀態。
+   */
+  hasCustomSidebar?: boolean;
 
   /** 第二層：目前模組嘅頁面級導覽。 */
   modulePages: readonly ShellNavItem[];
@@ -168,6 +174,17 @@ export type FrameShellProps = {
   needs?: FrameNeedsEntry;
   /** 右側 Needs 欄；要 `needs.railOpen === true` 才會渲染。 */
   needsRail?: FrameNeedsRail;
+
+  /**
+   * 只畫骨架：第二層頂欄、左側欄、內容區一律留空。
+   *
+   * 2026-11-17 老闆指示：Design 四個模組連前後端清空重做，畫面上只需要見到
+   * 「有空左欄、有空第二行、有空內容區」，唔要任何頁名、麵包屑、假列表或
+   * 「未提供」佔位卡 —— 佔位卡會令人以為嗰頁已經有嘢。所以呢個模式連
+   * `modulePages`、`sidebarGroups`、`breadcrumbs`、`pageTitle` 都會被忽略，
+   * 免得有人一邊傳空白一邊傳標題，出現一個講唔通的中間狀態。
+   */
+  blank?: boolean;
 
   /** 內容區。 */
   breadcrumbs?: readonly string[];
@@ -222,6 +239,7 @@ export function FrameShell({
   onSignOut,
   sidebarOpen,
   onToggleSidebar,
+  hasCustomSidebar = false,
   modulePages,
   currentPageKey,
   onSelectPage,
@@ -231,6 +249,7 @@ export function FrameShell({
   sidebarSearch,
   needs,
   needsRail,
+  blank = false,
   breadcrumbs,
   pageTitle,
   pageSubtitle,
@@ -247,10 +266,15 @@ export function FrameShell({
     applyTheme(theme);
   }, [theme]);
 
-  const groups = sidebarGroups ?? [];
+  const groups = blank ? [] : (sidebarGroups ?? []);
   const sidebarItemCount = groups.reduce((total, group) => total + group.items.length, 0);
-  const hasSidebar = sidebarItemCount > 0;
-  const showSidebar = hasSidebar && sidebarOpen;
+  // blank 模式刻意照畫那條左欄（即使一格都冇）：老闆要見到的就是空欄本身。
+  // 有自訂左欄（品牌／作品樹）時，外殼唔畫 groups，但漢堡掣仍要開關嗰條欄。
+  const hasSidebar = blank || sidebarItemCount > 0 || hasCustomSidebar;
+  // 外殼自己畫嗰條「頁面」左欄：blank 或真係有 shell 頁 items 時由外殼負責畫；
+  // 有自訂左欄（hasCustomSidebar）時外殼唔畫，交返俾模組自己嗰條欄。
+  const showShellSidebar = (blank || sidebarItemCount > 0) && !hasCustomSidebar && sidebarOpen;
+  const pages = blank ? [] : (modulePages ?? []);
   const showRail = needsRail !== undefined && needs?.railOpen === true;
 
   const showBrandSelector =
@@ -419,14 +443,16 @@ export function FrameShell({
         </div>
       </header>
 
-      {/* 冇頁就唔畫一條空嘅第二行：一條空白 bar 會令人以為載入失敗。 */}
+      {/* 冇頁就唔畫一條空嘅第二行：一條空白 bar 會令人以為載入失敗。
+          blank 模式例外 —— 那條空 bar 正是要畫出來的骨架。 */}
       <nav
         className="frame-subbar"
         data-frame-subbar
+        data-frame-blank={blank ? 'true' : undefined}
         aria-label={t('frame.landmark.subbar')}
-        hidden={modulePages.length === 0}
+        hidden={pages.length === 0 && !blank}
       >
-        {modulePages.map((item) => (
+        {pages.map((item) => (
           <button
             key={item.key}
             type="button"
@@ -443,16 +469,24 @@ export function FrameShell({
 
       <div
         className="frame-body"
-        data-frame-has-sidebar={showSidebar ? 'true' : 'false'}
+        data-frame-has-sidebar={showShellSidebar ? 'true' : 'false'}
         data-frame-has-rail={showRail ? 'true' : 'false'}
       >
-        {showSidebar && (
-          <aside className="frame-sidebar" data-frame-rail aria-label={t('frame.landmark.sidebar')}>
+        {showShellSidebar && (
+          <aside
+            className="frame-sidebar"
+            data-frame-rail
+            data-frame-blank={blank ? 'true' : undefined}
+            aria-label={t('frame.landmark.sidebar')}
+          >
             {/* 左側欄最頂嘅小標：講明「呢條欄列嘅係頁」。佢同下面嘅分組
-                標題（據點 MACHINES／權限與稽核）係兩層唔同嘅意思。 */}
-            <p className="frame-sidebar__legend">{t('frame.sidebar.legend')}</p>
+                標題（據點 MACHINES／權限與稽核）係兩層唔同嘅意思。
+                blank 模式連這行小標都唔畫：空欄就是空欄。 */}
+            {!blank && (
+              <p className="frame-sidebar__legend">{t('frame.sidebar.legend')}</p>
+            )}
 
-            {sidebarSearch !== undefined && (
+            {sidebarSearch !== undefined && !blank && (
               <div className="frame-sidebar__search">
                 <input
                   type="search"
@@ -528,7 +562,7 @@ export function FrameShell({
           tabIndex={-1}
           aria-label={t('frame.landmark.content')}
         >
-          {breadcrumbs !== undefined && breadcrumbs.length > 0 && (
+          {!blank && breadcrumbs !== undefined && breadcrumbs.length > 0 && (
             <nav className="frame-breadcrumb" data-frame-breadcrumb aria-label={t('frame.landmark.breadcrumb')}>
               <ol className="frame-breadcrumb__list">
                 {breadcrumbs.map((crumb, index) => (
@@ -538,15 +572,18 @@ export function FrameShell({
             </nav>
           )}
 
-          <div className="frame-content__head">
-            {pageTitle !== undefined && <h1 className="frame-content__title">{pageTitle}</h1>}
-            {pageSubtitle !== undefined && (
-              <p className="frame-content__subtitle">{pageSubtitle}</p>
-            )}
-            {primaryAction !== undefined && (
-              <div className="frame-content__action">{primaryAction}</div>
-            )}
-          </div>
+          {/* blank 模式連頁名同主動作都唔畫：一格字都會令人以為呢頁做完。 */}
+          {!blank && (
+            <div className="frame-content__head">
+              {pageTitle !== undefined && <h1 className="frame-content__title">{pageTitle}</h1>}
+              {pageSubtitle !== undefined && (
+                <p className="frame-content__subtitle">{pageSubtitle}</p>
+              )}
+              {primaryAction !== undefined && (
+                <div className="frame-content__action">{primaryAction}</div>
+              )}
+            </div>
+          )}
 
           {prototype && (
             <p className="frame-proto">

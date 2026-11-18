@@ -34,6 +34,13 @@ describe('buildContentDisposition：不安全的類型強制 attachment', () => 
     expect(buildContentDisposition('x.bin', 'application/octet-stream')).toContain('attachment;');
     expect(buildContentDisposition('x.json', 'application/json')).toContain('attachment;');
   });
+
+  it('按下載時，安全類型也強制 attachment', () => {
+    // 預覽與下載用同一個網址：只有 ?download=1 這一下改變 disposition。
+    expect(buildContentDisposition('a.png', 'image/png')).toContain('inline;');
+    expect(buildContentDisposition('a.png', 'image/png', true)).toContain('attachment;');
+    expect(buildContentDisposition('報告.pdf', 'application/pdf', true)).toContain('attachment;');
+  });
 });
 
 describe('buildContentDisposition：不能造成標頭注入', () => {

@@ -33,8 +33,7 @@
     "deploy:revision": "node scripts/deploy-revision.mjs"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1161.0",
-    "hyperframes": "^0.9.58"
+    "@aws-sdk/client-s3": "^3.1161.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

@@ -1,0 +1,507 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      background: #fff;
+      overflow: hidden;
+    }
+
+    #s4-eyebrow {
+      top: 188px;
+      font-size: 22px;
+      font-weight: 500;
+      letter-spacing: 0.16em;
+      color: var(--ink-3);
+    }
+    #s4-title {
+      top: 232px;
+      font-size: 50px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    #s4-stage {
+      position: absolute;
+      left: 240px;
+      top: 366px;
+      width: 600px;
+      height: 750px;
+    }
+    #s4-card {
+      position: absolute;
+      inset: 0;
+      border-radius: 4px;
+      overflow: hidden;
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.13);
+      background: #fff;
+    }
+    .s4-page {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+    }
+
+    /* P1 封面 */
+    #s4-p1 img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: 50% 58%;
+    }
+    #s4-p1 .grad {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(0, 0, 0, 0.22) 0%, rgba(0, 0, 0, 0) 38%, rgba(0, 0, 0, 0.72) 100%);
+    }
+    #s4-p1 .copy {
+      position: absolute;
+      left: 44px;
+      right: 44px;
+      bottom: 46px;
+      color: #fff;
+    }
+    #s4-p1 .brand {
+      font-size: 15px;
+      letter-spacing: 0.26em;
+      color: rgba(255, 255, 255, 0.72);
+      margin-bottom: 14px;
+    }
+    #s4-p1 .head {
+      font-size: 62px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+    }
+    #s4-p1 .sub {
+      font-size: 20px;
+      color: rgba(255, 255, 255, 0.7);
+      margin-top: 16px;
+    }
+
+    /* P2 數字頁 */
+    #s4-p2,
+    #s4-p3 {
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 0 50px;
+    }
+    #s4-p2 .idx,
+    #s4-p3 .idx {
+      position: absolute;
+      top: 38px;
+      left: 46px;
+      font-family: var(--mono);
+      font-size: 14px;
+      color: var(--ink-3);
+      letter-spacing: 0.08em;
+    }
+    #s4-p2 .big {
+      font-size: 200px;
+      font-weight: 700;
+      letter-spacing: -0.06em;
+      line-height: 0.9;
+    }
+    #s4-p2 .cap {
+      font-size: 34px;
+      font-weight: 600;
+      margin-top: 26px;
+      letter-spacing: -0.01em;
+    }
+    #s4-p2 .foot,
+    #s4-p3 .foot {
+      position: absolute;
+      left: 50px;
+      bottom: 40px;
+      font-size: 15px;
+      color: var(--ink-3);
+      letter-spacing: 0.06em;
+    }
+
+    /* P3 聲明頁 */
+    #s4-p3 .claim {
+      font-size: 64px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+    }
+    #s4-p3 .body {
+      font-size: 27px;
+      color: var(--ink-2);
+      margin-top: 24px;
+      line-height: 1.5;
+    }
+    #s4-p3 .src {
+      position: absolute;
+      left: 50px;
+      bottom: 84px;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 16px;
+      color: var(--ink-3);
+    }
+    #s4-p3 .src i {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--ok);
+      display: block;
+    }
+
+    /* P4 缺相頁 */
+    #s4-p4 {
+      background: var(--surface);
+      border: 2px dashed var(--line-2);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    #s4-p4 .idx {
+      position: absolute;
+      top: 38px;
+      left: 46px;
+      font-family: var(--mono);
+      font-size: 14px;
+      color: var(--ink-3);
+    }
+    #s4-p4 .miss {
+      font-size: 40px;
+      font-weight: 600;
+      color: var(--ink-2);
+      letter-spacing: -0.01em;
+    }
+    #s4-p4 .spec {
+      font-size: 19px;
+      color: var(--ink-3);
+      margin-top: 16px;
+      letter-spacing: 0.02em;
+    }
+
+    /* P5 CTA */
+    #s4-p5 {
+      background: #000;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 0 50px;
+    }
+    #s4-p5 .cta {
+      font-size: 70px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+    #s4-p5 .sub {
+      font-size: 22px;
+      color: rgba(255, 255, 255, 0.6);
+      margin-top: 22px;
+    }
+    #s4-p5 .foot {
+      position: absolute;
+      left: 50px;
+      bottom: 42px;
+      font-size: 14px;
+      letter-spacing: 0.24em;
+      color: rgba(255, 255, 255, 0.45);
+    }
+
+    /* 縮圖列：真縮圖，同主卡同一版面縮到 0.14 */
+    #s4-thumbs {
+      position: absolute;
+      left: 0;
+      top: 1150px;
+      width: 1080px;
+      display: flex;
+      justify-content: center;
+      gap: 14px;
+    }
+    .s4-thumb {
+      width: 84px;
+      height: 105px;
+      border-radius: 2px;
+      overflow: hidden;
+      position: relative;
+      border: 1px solid var(--line-2);
+      background: #fff;
+    }
+    .s4-thumb.on {
+      outline: 2px solid #000;
+      outline-offset: 3px;
+    }
+    .s4-thumb .mini {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 600px;
+      height: 750px;
+      transform: scale(0.14);
+      transform-origin: top left;
+      overflow: hidden;
+    }
+    .mini img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .mini .ph {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      padding: 34px;
+      color: #fff;
+      background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.78) 100%);
+    }
+    .mini .ph b {
+      display: block;
+      font-size: 50px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .mini .ph span {
+      display: block;
+      font-size: 22px;
+      margin-top: 6px;
+      color: rgba(255, 255, 255, 0.78);
+    }
+    .mini .mid {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    .mini .num {
+      font-size: 150px;
+      font-weight: 700;
+      line-height: 0.9;
+      letter-spacing: -0.06em;
+    }
+    .mini .lbl {
+      font-size: 26px;
+      color: var(--ink-2);
+    }
+    .mini .claim {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      font-size: 76px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+    .mini .miss {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      border: 6px dashed var(--line-2);
+      background: var(--surface);
+      color: var(--ink-3);
+      font-size: 96px;
+    }
+    .mini .dark {
+      position: absolute;
+      inset: 0;
+      background: #000;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 0 40px;
+    }
+    .mini .dark b {
+      font-size: 88px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+    .mini .dark span {
+      font-size: 24px;
+      color: rgba(255, 255, 255, 0.62);
+      margin-top: 12px;
+    }
+    .mini .dark i {
+      position: absolute;
+      left: 40px;
+      bottom: 34px;
+      font-size: 18px;
+      font-style: normal;
+      letter-spacing: 0.24em;
+      color: rgba(255, 255, 255, 0.45);
+    }
+
+    #s4-flag {
+      position: absolute;
+      right: 64px;
+      top: 242px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      height: 44px;
+      padding: 0 20px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      font-size: 21px;
+      color: var(--ink-2);
+      background: #fff;
+    }
+    #s4-flag i {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--warn);
+      display: block;
+    }
+
+    #s4-counter {
+      position: absolute;
+      left: 64px;
+      top: 1150px;
+      height: 105px;
+      display: flex;
+      align-items: center;
+      font-family: var(--mono);
+      font-size: 22px;
+      color: var(--ink-3);
+      letter-spacing: 0.06em;
+    }
+  </style>
+
+  <div id="root" data-composition-id="s4" data-width="1080" data-height="1920">
+    <p id="s4-eyebrow" class="safe">組稿</p>
+    <h1 id="s4-title" class="safe">五頁，跟足品牌</h1>
+
+    <div id="s4-flag"><i></i>1 個缺口</div>
+
+    <div id="s4-stage">
+      <div id="s4-card">
+        <div class="s4-page" id="s4-p1">
+          <img src="assets/img/coldbrew.png" alt="" />
+          <div class="grad"></div>
+          <div class="copy">
+            <p class="brand">SLOPE COFFEE</p>
+            <p class="head">冷萃 №1</p>
+            <p class="sub">18 小時低溫萃取</p>
+          </div>
+        </div>
+
+        <div class="s4-page" id="s4-p2">
+          <p class="idx">02 / 05</p>
+          <p class="big">18</p>
+          <p class="cap">小時低溫萃取</p>
+          <p class="foot">坡道咖啡　·　西營盤</p>
+        </div>
+
+        <div class="s4-page" id="s4-p3">
+          <p class="idx">03 / 05</p>
+          <p class="claim">無添加糖</p>
+          <p class="body">成分只有咖啡豆同水。</p>
+          <p class="src"><i></i>來源　產品資料 v3 · 第 2 段</p>
+          <p class="foot">坡道咖啡</p>
+        </div>
+
+        <div class="s4-page" id="s4-p4">
+          <p class="idx">04 / 05</p>
+          <p class="miss">缺　街景相</p>
+          <p class="spec">4:5 · 黃昏 · 無招牌字</p>
+        </div>
+
+        <div class="s4-page" id="s4-p5">
+          <p class="cta">試一杯</p>
+          <p class="sub">本週限定　·　西營盤店</p>
+          <p class="foot">SLOPE COFFEE</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="s4-thumbs">
+      <div class="s4-thumb" id="s4-t1">
+        <div class="mini">
+          <img src="assets/img/coldbrew.png" alt="" />
+          <div class="ph"><b>冷萃 №1</b><span>18 小時低溫萃取</span></div>
+        </div>
+      </div>
+      <div class="s4-thumb" id="s4-t2">
+        <div class="mini">
+          <div class="mid"><span class="num">18</span><span class="lbl">小時低溫萃取</span></div>
+        </div>
+      </div>
+      <div class="s4-thumb" id="s4-t3">
+        <div class="mini"><div class="claim">無添加糖</div></div>
+      </div>
+      <div class="s4-thumb" id="s4-t4">
+        <div class="mini"><div class="miss">缺</div></div>
+      </div>
+      <div class="s4-thumb" id="s4-t5">
+        <div class="mini">
+          <div class="dark"><b>試一杯</b><span>本週限定</span><i>SLOPE COFFEE</i></div>
+        </div>
+      </div>
+    </div>
+
+    <p id="s4-counter">01 / 05</p>
+  </div>
+
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    const pages = ["#s4-p1", "#s4-p2", "#s4-p3", "#s4-p4", "#s4-p5"];
+    const thumbs = ["#s4-t1", "#s4-t2", "#s4-t3", "#s4-t4", "#s4-t5"];
+    const counter = document.getElementById("s4-counter");
+    const labels = ["01 / 05", "02 / 05", "03 / 05", "04 / 05", "05 / 05"];
+
+    function show(i, at) {
+      tl.call(() => {
+        counter.textContent = labels[i];
+      }, null, at);
+      /* 硬切，不做交叉淡入：兩頁都是實色，blend 會出現雙重影像 */
+      tl.set(pages, { opacity: 0 }, at);
+      tl.fromTo(pages[i], { opacity: 0 }, { opacity: 1, duration: 0.14, ease: "power1.out" }, at);
+      tl.call(
+        () => {
+          thumbs.forEach((t, k) => document.querySelector(t).classList.toggle("on", k === i));
+        },
+        null,
+        at
+      );
+    }
+
+    tl.fromTo("#s4-eyebrow", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" }, 0.05);
+    tl.fromTo("#s4-title", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.55, ease: "power3.out" }, 0.12);
+    tl.fromTo(
+      "#s4-stage",
+      { opacity: 0, y: 26, scale: 0.975 },
+      { opacity: 1, y: 0, scale: 1, duration: 0.7, ease: "power3.out" },
+      0.3
+    );
+    tl.fromTo("#s4-thumbs", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 0.55);
+
+    show(0, 0.8);
+    show(1, 1.95);
+    show(2, 3.05);
+    show(3, 4.1);
+    show(4, 5.35);
+
+    /* 五頁砌完，但缺口仍然在：拉回第 4 頁 */
+    tl.call(
+      () => {
+        counter.textContent = "04 / 05";
+        thumbs.forEach((t, k) => document.querySelector(t).classList.toggle("on", k === 3));
+      },
+      null,
+      6.75
+    );
+    tl.to("#s4-p5", { opacity: 0, duration: 0.26 }, 6.72);
+    tl.fromTo("#s4-p4", { opacity: 0 }, { opacity: 1, duration: 0.26 }, 6.72);
+    tl.fromTo("#s4-flag", { opacity: 0, y: -8 }, { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" }, 6.95);
+
+    window.__timelines["s4"] = tl;
+  </script>
+</template>

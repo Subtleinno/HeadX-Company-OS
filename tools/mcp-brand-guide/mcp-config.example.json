@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "headx-brand": {
+      "command": "node",
+      "args": ["/Users/riderhin/Dev/Dev/Github/HeadX-Company-OS/tools/mcp-brand-guide/server.mjs"],
+      "env": {
+        "HEADX_API_BASE": "http://127.0.0.1:4210/api",
+        "HEADX_AGENT_TOKEN": "貼上 HeadX 簽發的 agent token（43 字元）"
+      }
+    }
+  }
+}

@@ -1,0 +1,119 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      background: #000;
+      overflow: hidden;
+    }
+
+    #s8-bg {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+    #s8-bg img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: 50% 38%;
+      opacity: 0.56;
+      transform-origin: 50% 40%;
+    }
+    #s8-scrim {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        180deg,
+        rgba(0, 0, 0, 0.38) 0%,
+        rgba(0, 0, 0, 0.14) 20%,
+        rgba(0, 0, 0, 0.58) 44%,
+        rgba(0, 0, 0, 0.86) 66%,
+        rgba(0, 0, 0, 0.95) 100%
+      );
+    }
+
+    #s8-copy {
+      position: absolute;
+      left: 64px;
+      width: 952px;
+      top: 690px;
+      color: #fff;
+    }
+    #s8-rule {
+      width: 64px;
+      height: 2px;
+      background: rgba(255, 255, 255, 0.7);
+      margin-bottom: 40px;
+      transform-origin: left center;
+    }
+    #s8-l1,
+    #s8-l2 {
+      font-size: 94px;
+      font-weight: 700;
+      letter-spacing: -0.035em;
+      line-height: 1.14;
+    }
+    #s8-l2 {
+      color: rgba(255, 255, 255, 0.84);
+    }
+    #s8-l1 .pt,
+    #s8-l2 .pt {
+      margin-left: -0.34em;
+    }
+    #s8-l2 .pm {
+      margin-right: -0.2em;
+    }
+    #s8-en {
+      font-size: 31px;
+      line-height: 1.5;
+      color: rgba(255, 255, 255, 0.66);
+      letter-spacing: 0.005em;
+      margin-top: 46px;
+    }
+    #s8-mark {
+      display: flex;
+      align-items: baseline;
+      gap: 16px;
+      margin-top: 90px;
+    }
+    #s8-mark b {
+      font-size: 40px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #fff;
+    }
+    #s8-mark span {
+      font-size: 16px;
+      letter-spacing: 0.28em;
+      color: rgba(255, 255, 255, 0.45);
+    }
+  </style>
+
+  <div id="root" data-composition-id="s8" data-width="1080" data-height="1920">
+    <div id="s8-bg"><img src="assets/img/hands-phone.png" alt="" /></div>
+    <div id="s8-scrim"></div>
+
+    <div id="s8-copy">
+      <div id="s8-rule"></div>
+      <p id="s8-l1">AI 幫你做<span class="pt">。</span></p>
+      <p id="s8-l2">你嘅團隊<span class="pm">，</span>補位<span class="pt">。</span></p>
+      <p id="s8-en">AI makes it. Your team fills the gaps.</p>
+      <div id="s8-mark"><b>HeadX</b><span>MARKETING DESIGN</span></div>
+    </div>
+  </div>
+
+  <script>
+    const tl = gsap.timeline({ paused: true });
+
+    tl.fromTo("#s8-bg img", { scale: 1.1 }, { scale: 1.02, duration: 8, ease: "none" }, 0);
+
+    tl.fromTo("#s8-rule", { scaleX: 0 }, { scaleX: 1, duration: 0.6, ease: "power3.out" }, 0.12);
+    tl.fromTo("#s8-l1", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.75, ease: "power3.out" }, 0.3);
+    tl.fromTo("#s8-l2", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.75, ease: "power3.out" }, 1.1);
+    tl.fromTo("#s8-en", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, 2.15);
+    tl.fromTo("#s8-mark", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" }, 3.3);
+
+    window.__timelines["s8"] = tl;
+  </script>
+</template>

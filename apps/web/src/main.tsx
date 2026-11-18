@@ -6,8 +6,8 @@ import './styles/frame.css';
 import './styles/admin.css';
 import './styles/files.css';
 import './styles/needs.css';
-import './styles/projects.css';
-import './styles/creative.css';
+import './styles/design-shell.css';
+import './styles/create.css';
 import './styles/app-pages.css';
 import { App } from './App';
 

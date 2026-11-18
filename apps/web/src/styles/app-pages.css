@@ -361,38 +361,43 @@
   font: var(--hx-frame-font-small);
 }
 
-/* ── Boss Portal：總覽 ────────────────────────────────────────── */
+/* ── Boss Portal：首頁＝全公司業務（2026-11-17） ─────────────── */
 
-.boss-metrics {
+/* 每個品牌一節。標題小一級，因為頁標題已經係「總覽」；
+ * 品牌名要一眼掃到，所以用 ink 而不是 secondary。 */
+.boss-business {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
-  gap: var(--hx-space-4);
-  margin-bottom: var(--hx-space-5);
+  gap: var(--hx-space-6);
 }
 
-.boss-metric {
-  display: flex;
-  flex-direction: column;
-  gap: var(--hx-space-2);
-  padding: var(--hx-space-5) var(--hx-space-4);
-  border: 1px solid var(--hx-frame-border);
-  border-radius: var(--hx-radius-md);
-  background: var(--hx-chrome-white);
+.boss-business__head {
+  display: grid;
+  gap: var(--hx-space-1);
 }
 
-/* 數字係呢張卡唯一要睇嘅嘢，所以明顯大一級；
- * 唔好用標題字級（會同頁標題打架），用介乎兩者嘅尺寸。 */
-.boss-metric__value {
+.boss-business__title {
+  margin: 0;
   color: var(--hx-frame-ink);
-  font-size: 30px;
-  font-weight: 600;
-  line-height: 1.1;
-  letter-spacing: -0.01em;
+  font-size: 1.15rem;
 }
 
-.boss-metric__label {
+.boss-business__lead {
+  margin: 0;
   color: var(--hx-frame-secondary);
   font: var(--hx-frame-font-small);
+}
+
+.boss-business__brand {
+  display: grid;
+  gap: var(--hx-space-4);
+}
+
+.boss-business__brandName {
+  margin: 0;
+  padding-bottom: var(--hx-space-2);
+  border-bottom: 1px solid var(--hx-frame-border);
+  color: var(--hx-frame-ink);
+  font-size: 1.05rem;
 }
 
 /* ── Boss Portal：新增據點 ────────────────────────────────────── */
@@ -514,6 +519,75 @@
   gap: var(--hx-space-3);
 }
 
+/* ── Boss Portal：品牌清單與新增品牌（2026-11-17） ─────────────── */
+
+.boss-brands {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hx-space-5);
+}
+
+/* 表單貼在清單上面：填完就在同一頁看到新一行，不用跳頁。 */
+.boss-brandform {
+  max-width: 34rem;
+  padding: var(--hx-space-5);
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-md);
+  background: var(--hx-chrome-white);
+}
+
+.boss-brandform__title {
+  margin: 0;
+  color: var(--hx-frame-ink);
+  font: var(--hx-frame-font-subtitle);
+}
+
+.boss-brandlist {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--hx-frame-border);
+}
+
+/* 一行一個品牌：名、代碼、然後「打開」。整行可點，不必瞄準某個小字。 */
+.boss-brandlist__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: baseline;
+  gap: var(--hx-space-3);
+  padding: var(--hx-space-4) var(--hx-space-2);
+  border-bottom: 1px solid var(--hx-frame-border);
+  color: var(--hx-frame-ink);
+  text-decoration: none;
+}
+
+.boss-brandlist__row:hover {
+  background: var(--hx-frame-surface);
+}
+
+.boss-brandlist__row:focus-visible {
+  outline: 2px solid var(--hx-frame-ink);
+  outline-offset: -2px;
+}
+
+.boss-brandlist__name {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.boss-brandlist__code {
+  color: var(--hx-frame-secondary);
+  font: var(--hx-frame-font-small);
+  font-variant-numeric: tabular-nums;
+}
+
+.boss-brandlist__go {
+  color: var(--hx-frame-secondary);
+  font: var(--hx-frame-font-small);
+}
+
 .boss-invite {
   display: flex;
   flex-direction: column;
@@ -522,9 +596,7 @@
   padding: var(--hx-space-5);
   border: 1px solid var(--hx-frame-border);
   border-radius: var(--hx-radius-md);
-}
-
-.boss-invite__step {
+}.boss-invite__step {
   margin: 0;
   color: var(--hx-frame-secondary);
   font: var(--hx-frame-font-small);
@@ -561,23 +633,20 @@
 
 /* ── 未接內容 ────────────────────────────────────────────────── */
 
-.boss-stub,
-.design-stub {
+.boss-stub {
   padding: var(--hx-space-6);
   border: 1px solid var(--hx-frame-border);
   border-radius: var(--hx-radius-md);
   background: var(--hx-frame-surface);
 }
 
-.boss-stub__title,
-.design-stub__title {
+.boss-stub__title {
   margin: 0 0 var(--hx-space-2);
   color: var(--hx-frame-ink);
   font: var(--hx-frame-font-subtitle);
 }
 
-.boss-stub__body,
-.design-stub__body {
+.boss-stub__body {
   margin: 0;
   color: var(--hx-frame-secondary);
   font: var(--hx-frame-font-body);
@@ -666,8 +735,8 @@
     border-top: 0;
   }
 
-  .boss-metrics {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .boss-business__brandName {
+    font-size: 1rem;
   }
 }
 
@@ -785,175 +854,6 @@
   max-width: 880px;
 }
 
-.brand-page__head {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-}
-
-.brand-page__meta {
-  margin: 0;
-  color: var(--hx-frame-secondary);
-  font: var(--hx-frame-font-small);
-}
-
-.brand-page__editor {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.brand-page__textarea {
-  width: 100%;
-  min-height: 180px;
-  resize: vertical;
-  padding: 10px 12px;
-  border: 1px solid var(--hx-frame-border);
-  border-radius: var(--hx-radius-sm);
-  font: inherit;
-  line-height: 1.6;
-  background: var(--hx-chrome-white);
-  color: var(--hx-frame-ink);
-}
-
-/* 員工見到的是唯讀：底色凹入去，避免他以為可以打字而打了十分鐘才發現存不了。 */
-.brand-page__textarea:read-only {
-  background: var(--hx-frame-surface);
-  color: var(--hx-frame-secondary);
-}
-
-.brand-page__versions {
-  border-top: 1px solid var(--hx-frame-border);
-  padding-top: var(--hx-space-4);
-}
-
-.brand-page__versionsTitle {
-  margin: 0 0 10px;
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.brand-page__list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.brand-page__version {
-  padding: var(--hx-space-3) 0;
-  border-bottom: 1px solid var(--hx-frame-border);
-}
-
-.brand-page__versionHead {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.brand-page__versionNo {
-  font-weight: 600;
-}
-
-/* 「現行」用 accent-soft 底：它是狀態，不是按鈕，所以不用實心 accent。 */
-.brand-page__tag {
-  font-size: 12px;
-  padding: 1px 8px;
-  border-radius: 999px;
-  background: var(--hx-frame-accent-soft);
-  color: var(--hx-frame-accent-fg);
-}
-
-.brand-page__time {
-  color: var(--hx-frame-muted);
-  font-size: 12px;
-}
-
-.brand-page__note {
-  margin: 6px 0 0;
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-secondary);
-}
-
-.brand-page__preview {
-  margin: 4px 0 0;
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-secondary);
-  white-space: pre-wrap;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.brand-page__actions {
-  display: flex;
-  gap: 12px;
-  margin-top: 8px;
-}
-
-.brand-page__action {
-  border: 0;
-  background: none;
-  padding: 0;
-  font: inherit;
-  font-size: 13px;
-  color: var(--hx-frame-accent-fg);
-  cursor: pointer;
-}
-
-.brand-page__action:disabled {
-  color: var(--hx-frame-muted);
-  cursor: default;
-}
-
-.brand-page__action--danger {
-  color: var(--hx-danger-text);
-}
-
-.brand-page__currentNote {
-  margin: 6px 0 0;
-  font-size: 12px;
-  color: var(--hx-frame-muted);
-}
-
-/* 版本差異（#62）：講改了哪一欄。細一級 —— 它是版本列表的註腳。 */
-.brand-page__changed {
-  display: flex;
-  align-items: baseline;
-  gap: var(--hx-space-2);
-  flex-wrap: wrap;
-  margin-top: 6px;
-  font-size: 12px;
-  color: var(--hx-frame-secondary);
-}
-
-.brand-page__changedTitle {
-  color: var(--hx-frame-muted);
-}
-
-.brand-page__changedList {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px var(--hx-space-3);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.brand-page__changedNone {
-  color: var(--hx-frame-muted);
-}
-
-/* 這一版當時用的策略版本（#34）。細一級：它是註腳，不是內容。 */
-.brand-page__policy {
-  margin: 6px 0 0;
-  font-size: 12px;
-  color: var(--hx-frame-muted);
-}
-
 /* ── 品牌模組：頁清單與自定義頁（issue #32）──────────────────── */
 
 /* 頁頭右上角的動作（新增頁／新增品牌）。兩個都是次要動作，所以排在一起、
@@ -985,1671 +885,6 @@
   background: var(--hx-chrome-white);
 }
 
-.brand-manage__title {
-  margin: 0 0 var(--hx-space-3);
-  font-size: 16px;
-  font-weight: 600;
-}
-
-/* 自定義頁的 brief：它是這一頁的方向，所以放在標題下面、內容之前。 */
-.brand-page__brief {
-  margin: 0;
-  color: var(--hx-frame-secondary);
-  font: var(--hx-frame-font-small);
-  line-height: 1.7;
-}
-
-/* 改名與刪頁：只在自定義頁出現，而且只在可以改這個品牌的人面前出現。 */
-.brand-page__manage {
-  display: flex;
-  flex-direction: column;
-  gap: var(--hx-space-2);
-  padding: var(--hx-space-2) 0 var(--hx-space-3);
-  border-bottom: 1px solid var(--hx-frame-border);
-}
-
-.brand-page__rename {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-/* 誰可以改這個品牌的頁（issue #32）：一行一個人，勾選即儲存。 */
-.brand-editors {
-  margin: var(--hx-space-2) 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.brand-editors__item {
-  border-top: 1px solid var(--hx-frame-border);
-}
-
-.brand-editors__label {
-  display: flex;
-  align-items: center;
-  gap: var(--hx-space-2);
-  padding: var(--hx-space-2) 0;
-  cursor: pointer;
-}
-
-/* 人員表與「誰可以改這個品牌的頁」是兩件事，中間要有一道明顯的距離：
-   貼在一起會令人以為它是表格的一部分。 */
-.brand-editors-panel {
-  margin-top: var(--hx-space-6);
-}
-
-/* ── 色彩頁（issue #35） ───────────────────────────────────── */
-
-/*
- * 一張有角色的色表。刻意不像「色票牆」：每一行先講角色名，再講值。
- * 色塊只是輔助 —— 認色的是人，認得出這是哪一個角色的，是那個名。
- */
-.brand-color {
-  display: flex;
-  flex-direction: column;
-  gap: var(--hx-space-5);
-}
-
-.brand-page__body {
-  display: flex;
-  flex-direction: column;
-  gap: var(--hx-space-3);
-}
-
-.brand-color__modes {
-  display: flex;
-  align-items: center;
-  gap: var(--hx-space-2);
-  flex-wrap: wrap;
-}
-
-.brand-color__mode {
-  border: 1px solid var(--hx-frame-border);
-  background: transparent;
-  color: var(--hx-frame-secondary);
-  border-radius: var(--hx-radius-sm);
-  padding: 6px 14px;
-  font: var(--hx-frame-font-ui);
-  cursor: pointer;
-}
-
-.brand-color__mode[aria-pressed='true'] {
-  border-color: var(--hx-frame-ink);
-  color: var(--hx-frame-ink);
-  background: var(--hx-frame-surface);
-}
-
-.brand-color__missing {
-  margin: 0;
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-secondary);
-}
-
-.brand-color__roles,
-.brand-color__section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--hx-space-2);
-}
-
-.brand-color__group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding-top: var(--hx-space-2);
-  border-top: 1px solid var(--hx-frame-border);
-}
-
-.brand-color__groupTitle {
-  margin: 0;
-  font: var(--hx-frame-font-small);
-  font-weight: 600;
-  color: var(--hx-frame-secondary);
-}
-
-/* 一個角色一張卡：角色名獨佔一行，下面幾個欄位自動排。
-   #62 之後一個角色有六七格（叫法、HEX、CMYK、深色值、用途、理由），
-   硬塞一行會令每一格窄到打不出一個色值。 */
-.brand-color__row {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: var(--hx-space-2);
-  padding: var(--hx-space-3) 0;
-  border-top: 1px solid var(--hx-frame-border);
-}
-
-.brand-color__row:first-of-type {
-  border-top: 0;
-}
-
-.brand-color__row > .brand-color__roleHead {
-  grid-column: 1 / -1;
-}
-
-@media (max-width: 900px) {
-  .brand-color__row {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-.brand-color__roleHead {
-  display: flex;
-  align-items: center;
-  gap: var(--hx-space-2);
-  min-width: 0;
-}
-
-.brand-color__swatch {
-  width: 22px;
-  height: 22px;
-  flex: none;
-  border-radius: var(--hx-radius-sm);
-  border: 1px solid var(--hx-frame-border);
-}
-
-/* 冇 HEX 的角色：一個虛線空格，不是一個猜出來的顏色。 */
-.brand-color__swatch--empty {
-  background: repeating-linear-gradient(
-    45deg,
-    transparent,
-    transparent 3px,
-    var(--hx-frame-border) 3px,
-    var(--hx-frame-border) 6px
-  );
-}
-
-.brand-color__swatch--small {
-  width: 14px;
-  height: 14px;
-  border-radius: 4px;
-}
-
-.brand-color__name {
-  font-family: var(--hx-font-mono);
-  font-size: 13px;
-  color: var(--hx-frame-ink);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.brand-color__badge {
-  flex: none;
-  border-radius: var(--hx-radius-sm);
-  padding: 1px 6px;
-  font: var(--hx-frame-font-small);
-  color: var(--hx-danger-text);
-  border: 1px solid var(--hx-danger-text);
-}
-
-.brand-color__badge--quiet {
-  color: var(--hx-frame-muted);
-  border-color: var(--hx-frame-border);
-}
-
-.brand-color__field {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-}
-
-.brand-color__field--wide {
-  min-width: 0;
-}
-
-.brand-color__fieldLabel {
-  flex: none;
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-muted);
-}
-
-.brand-color__derived {
-  font-family: var(--hx-font-mono);
-  font-size: 12px;
-  color: var(--hx-frame-secondary);
-  white-space: nowrap;
-}
-
-.brand-color__rampList,
-.brand-color__pairList {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.brand-color__ramp {
-  display: flex;
-  align-items: center;
-  gap: var(--hx-space-2);
-  flex-wrap: wrap;
-  padding: 4px 0;
-}
-
-.brand-color__step {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border: 1px solid var(--hx-frame-border);
-  border-radius: var(--hx-radius-sm);
-  padding: 2px 8px;
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-secondary);
-}
-
-.brand-color__iconButton {
-  border: 0;
-  background: transparent;
-  color: var(--hx-frame-muted);
-  cursor: pointer;
-  font-size: 14px;
-  line-height: 1;
-  padding: 0 2px;
-}
-
-.brand-color__adder {
-  display: flex;
-  align-items: center;
-  gap: var(--hx-space-2);
-  flex-wrap: wrap;
-}
-
-.brand-color__adder .design-input {
-  max-width: 180px;
-}
-
-.brand-color__pair {
-  display: flex;
-  align-items: center;
-  gap: var(--hx-space-2);
-  flex-wrap: wrap;
-  padding: 4px 0;
-  border-bottom: 1px solid var(--hx-frame-border);
-}
-
-.brand-color__pairText {
-  font-family: var(--hx-font-mono);
-  font-size: 13px;
-  color: var(--hx-frame-ink);
-}
-
-.brand-color__pairNote {
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-secondary);
-}
-
-.brand-color__ratio {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--hx-space-2);
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-secondary);
-}
-
-.brand-color__ratioValue {
-  font-family: var(--hx-font-mono);
-  color: var(--hx-frame-ink);
-}
-
-/* 不過的門檻要看得見：同一個色放在不同地方，一邊過一邊不過是常態。 */
-.brand-color__pair[data-color-pair-state='fail'] .brand-color__check {
-  color: var(--hx-danger-text);
-}
-
-.brand-color__pair[data-color-pair-state='pass'] .brand-color__check {
-  color: var(--hx-frame-secondary);
-}
-
-/* 替代色（#62）：只講「不過」等於把問題丟回去；旁邊要有下一個可以按的決定，
-   而且要有實測數字 —— 一個沒有數字的建議只是另一個意見。 */
-.brand-color__alt {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--hx-space-2);
-  flex-wrap: wrap;
-  padding: 2px 8px;
-  border-radius: var(--hx-radius-sm);
-  background: var(--hx-frame-surface);
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-secondary);
-}
-
-.brand-color__altText {
-  color: var(--hx-frame-ink);
-}
-
-.brand-color__altRatio {
-  font-family: var(--hx-font-mono);
-}
-
-/* 立場句（#62）：這一頁的第一屏，沿用平台頁那句，所以字大、不加引號裝飾。 */
-.brand-color__stanceText {
-  margin: 4px 0;
-  font: var(--hx-frame-font-body);
-  color: var(--hx-frame-ink);
-}
-
-/* 版本列表的色彩頁：色點代表那一版有哪幾個色，不印 JSON。 */
-.brand-page__swatches {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-
-.brand-page__swatch {
-  width: 16px;
-  height: 16px;
-  border-radius: 4px;
-  border: 1px solid var(--hx-frame-border);
-}
-
-/* ── 字體頁（issue #63） ───────────────────────────────────── */
-
-/*
- * 四個層級 × 兩個家族的表。左邊永遠是角色名（寫死的鍵），數值在右邊。
- * 這一頁的閱讀次序是「哪個層級用哪個家族、幾多 px」，不是「哪個字好看」。
- */
-.brand-type {
-  display: flex;
-  flex-direction: column;
-  gap: var(--hx-space-5);
-}
-
-.brand-type__missing {
-  margin: 0;
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-secondary);
-}
-
-.brand-type__missing--gap {
-  color: var(--hx-danger-text);
-}
-
-.brand-type__section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--hx-space-2);
-}
-
-.brand-type__key {
-  font-family: var(--hx-font-mono);
-  font-size: 13px;
-  color: var(--hx-frame-ink);
-}
-
-.brand-type__family {
-  display: flex;
-  flex-direction: column;
-  gap: var(--hx-space-2);
-  padding: var(--hx-space-2) 0;
-  border-top: 1px solid var(--hx-frame-border);
-}
-
-.brand-type__familyHead {
-  display: flex;
-  align-items: center;
-  gap: var(--hx-space-2);
-  flex-wrap: wrap;
-}
-
-/* 刪除鍵推到最右：貼住家族名會令人以為那是家族狀態。 */
-.brand-type__familyHead [data-type-family-remove] {
-  margin-left: auto;
-}
-
-.brand-type__familyName {
-  font: var(--hx-frame-font-ui);
-  color: var(--hx-frame-ink);
-}
-
-.brand-type__badge {
-  flex: none;
-  border-radius: var(--hx-radius-sm);
-  padding: 1px 6px;
-  font: var(--hx-frame-font-small);
-  color: var(--hx-danger-text);
-  border: 1px solid var(--hx-danger-text);
-}
-
-.brand-type__familyFields {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--hx-space-2) var(--hx-space-3);
-}
-
-.brand-type__field {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-}
-
-.brand-type__field .design-input {
-  max-width: 160px;
-}
-
-.brand-type__field--wide .design-input {
-  max-width: 240px;
-}
-
-.brand-type__fieldLabel {
-  flex: none;
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-muted);
-}
-
-.brand-type__check {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-secondary);
-}
-
-.brand-type__adder {
-  display: flex;
-  align-items: center;
-  gap: var(--hx-space-2);
-  flex-wrap: wrap;
-}
-
-.brand-type__adder .design-input {
-  max-width: 260px;
-}
-
-/*
- * 一個層級一行：角色名、家族、字級、行高、字重、最小 px、每行字數、文字色、
- * 理由。九欄。窄過 1100px 就換成四欄，角色名與徽章自己佔一行 —— 硬壓成
- * 一行只會令「最小 px」與「文字色」互相蓋住。
- */
-.brand-type__row {
-  display: grid;
-  grid-template-columns:
-    78px
-    minmax(120px, 1.4fr)
-    repeat(3, minmax(68px, 0.9fr))
-    minmax(86px, 0.9fr)
-    minmax(92px, 1fr)
-    minmax(140px, 1.6fr);
-  align-items: center;
-  gap: var(--hx-space-2);
-  padding: var(--hx-space-2) 0;
-  border-top: 1px solid var(--hx-frame-border);
-}
-
-.brand-type__row .design-input {
-  max-width: 100%;
-}
-
-/* 一行的標籤壓在輸入框上面：七欄橫排，標籤與輸入框爭位只會有人被切走。 */
-.brand-type__row .brand-type__field {
-  flex-direction: column;
-  align-items: stretch;
-  gap: 2px;
-}
-
-.brand-type__row [data-type-unit-error] {
-  grid-column: 1 / -1;
-  margin: 0;
-}
-
-@media (max-width: 1100px) {
-  .brand-type__row {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-
-  .brand-type__roleHead {
-    grid-column: 1 / -1;
-  }
-}
-
-.brand-type__roleHead {
-  display: flex;
-  align-items: center;
-  gap: var(--hx-space-2);
-  min-width: 0;
-}
-
-.brand-type__textarea {
-  min-height: 72px;
-  width: 100%;
-  max-width: 620px;
-}
-
-/* 配對那一節：標籤、說明、長文框由上而下，不是橫排。 */
-.brand-type__field--stack {
-  flex-direction: column;
-  align-items: stretch;
-  gap: 4px;
-}
-
-.brand-type__stanceText {
-  margin: 0;
-  font: var(--hx-frame-font-ui);
-  color: var(--hx-frame-ink);
-}
-
-/* 印刷矩陣與錯誤用法：一行一個記錄，左邊是項目，右邊是規格。 */
-.brand-type__recordList {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.brand-type__record {
-  display: flex;
-  align-items: baseline;
-  gap: var(--hx-space-2);
-  padding: 4px 0;
-  border-top: 1px solid var(--hx-frame-border);
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-secondary);
-}
-
-.brand-type__recordSpec {
-  flex: 1;
-  min-width: 0;
-  color: var(--hx-frame-ink);
-}
-
-/* 版本列表的字體頁：家族名，不印 JSON。 */
-.brand-page__families {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-
-.brand-page__familyChip {
-  border: 1px solid var(--hx-frame-border);
-  border-radius: var(--hx-radius-sm);
-  padding: 1px 6px;
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-secondary);
-}
-
-/* ── 標誌頁（issue #36） ───────────────────────────────────── */
-
-/*
- * 這一頁的閱讀次序是「這個品牌有哪幾件資產、每一件在甚麼底上用哪一個色、
- * 最小幾大」。色塊是顯示色彩頁的值，不是可以改的輸入 —— 所以它是 14px 的
- * 方塊，不是 color input。
- */
-.brand-logo {
-  display: flex;
-  flex-direction: column;
-  gap: var(--hx-space-5);
-}
-
-.brand-logo__missing {
-  margin: 0;
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-secondary);
-}
-
-.brand-logo__missing--gap {
-  color: var(--hx-danger-text);
-}
-
-.brand-logo__section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--hx-space-2);
-}
-
-.brand-logo__asset {
-  display: flex;
-  flex-direction: column;
-  gap: var(--hx-space-2);
-  padding: var(--hx-space-3) 0;
-  border-top: 1px solid var(--hx-frame-border);
-}
-
-.brand-logo__assetHead {
-  display: flex;
-  align-items: center;
-  gap: var(--hx-space-2);
-  flex-wrap: wrap;
-}
-
-/* 刪除鍵推到最右：貼住類別名會令人以為那是類別狀態。 */
-.brand-logo__assetHead [data-logo-asset-remove] {
-  margin-left: auto;
-}
-
-.brand-logo__kind {
-  font: var(--hx-frame-font-ui);
-  color: var(--hx-frame-ink);
-}
-
-.brand-logo__key {
-  font-family: var(--hx-font-mono);
-  font-size: 13px;
-  color: var(--hx-frame-secondary);
-}
-
-.brand-logo__badge {
-  flex: none;
-  border-radius: var(--hx-radius-sm);
-  padding: 1px 6px;
-  font: var(--hx-frame-font-small);
-  color: var(--hx-danger-text);
-  border: 1px solid var(--hx-danger-text);
-}
-
-/* 一件資產三個欄位：名稱、主檔、預覽。窄的時候自動落行。 */
-.brand-logo__fields {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--hx-space-2) var(--hx-space-3);
-}
-
-.brand-logo__field {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 2px;
-  flex: 1 1 200px;
-  min-width: 0;
-}
-
-.brand-logo__field--wide {
-  flex: 1 1 240px;
-}
-
-.brand-logo__field--full {
-  flex: 0 0 100%;
-}
-
-.brand-logo__field .design-input {
-  max-width: 100%;
-}
-
-.brand-logo__fieldLabel {
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-muted);
-}
-
-.brand-logo__adder {
-  display: flex;
-  align-items: flex-end;
-  gap: var(--hx-space-2);
-  flex-wrap: wrap;
-}
-
-.brand-logo__adder .brand-logo__field {
-  flex: 0 0 200px;
-}
-
-/* 一個顏色模式一塊：類別與角色在上，色彩頁的值在下面，尺寸兩格並排。 */
-.brand-logo__mode {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: var(--hx-space-2) var(--hx-space-3);
-  padding: var(--hx-space-3) 0;
-  border-top: 1px solid var(--hx-frame-border);
-}
-
-.brand-logo__modeHead,
-.brand-logo__modeValue,
-.brand-logo__mode [data-logo-unit-error] {
-  flex: 0 0 100%;
-}
-
-.brand-logo__modeHead {
-  display: flex;
-  align-items: center;
-  gap: var(--hx-space-2);
-}
-
-.brand-logo__mode .brand-logo__field {
-  flex: 0 0 190px;
-}
-
-.brand-logo__modeValue {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin: 0;
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-secondary);
-}
-
-.brand-logo__swatch {
-  width: 14px;
-  height: 14px;
-  border-radius: 3px;
-  border: 1px solid var(--hx-frame-border);
-}
-
-.brand-logo__textarea {
-  min-height: 56px;
-  width: 100%;
-  max-width: 620px;
-}
-
-/* 組合與誤用：一行一個記錄，左邊是名字，右邊是規格。 */
-.brand-logo__recordList {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.brand-logo__record {
-  display: flex;
-  align-items: baseline;
-  gap: var(--hx-space-2);
-  padding: 4px 0;
-  border-top: 1px solid var(--hx-frame-border);
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-secondary);
-}
-
-.brand-logo__recordSpec {
-  flex: 1;
-  min-width: 0;
-  color: var(--hx-frame-ink);
-}
-
-.brand-logo__recordMeta {
-  flex: none;
-  color: var(--hx-frame-muted);
-}
-
-/* 標籤、說明、長文框由上而下。 */
-.brand-logo__field--stack {
-  flex-direction: column;
-  align-items: stretch;
-  gap: 4px;
-}
-
-.brand-logo__stanceText {
-  margin: 0;
-  font: var(--hx-frame-font-ui);
-  color: var(--hx-frame-ink);
-}
-
-/* 主標誌的標記：它不是一個可以揀的欄位，是一個由類別派生的事實。 */
-.brand-logo__primaryTag {
-  flex: none;
-  border-radius: var(--hx-radius-sm);
-  padding: 1px 6px;
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-secondary);
-  border: 1px solid var(--hx-frame-border);
-}
-
-.brand-logo__hex {
-  font-family: var(--hx-font-mono);
-  font-size: 12px;
-  color: var(--hx-frame-secondary);
-}
-
-.brand-logo__modeMissing {
-  font: var(--hx-frame-font-small);
-  color: var(--hx-danger-text);
-}
-
-/* 版本列表的標誌頁：資產名，不印 JSON。 */
-.brand-page__assets {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-
-.brand-page__assetChip {
-  border: 1px solid var(--hx-frame-border);
-  border-radius: var(--hx-radius-sm);
-  padding: 1px 6px;
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-secondary);
-}
-
-
-/* ── 語氣頁（issue #65；取代 #37） ─────────────────────────── */
-
-/*
- * 這一頁的閱讀次序是「立場句、有哪幾把聲音（特質）、每把聲音會與不會怎樣講
- * 加一句真句、不准講的字與原因、用哪種語言、五句像五句不像、五個場合、
- * 最難的一句」。所以每個特質是一塊：名、會、不會在上，示範句在下 ——
- * 句子才是證據，形容詞不是。
- */
-.brand-tone {
-  display: flex;
-  flex-direction: column;
-  gap: var(--hx-space-5);
-}
-
-.brand-tone__missing {
-  margin: 0;
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-secondary);
-}
-
-.brand-tone__missing--gap {
-  color: var(--hx-danger-text);
-}
-
-.brand-tone__section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--hx-space-2);
-}
-
-.brand-tone__trait {
-  display: flex;
-  flex-direction: column;
-  gap: var(--hx-space-2);
-  padding: var(--hx-space-3) 0;
-  border-top: 1px solid var(--hx-frame-border);
-}
-
-.brand-tone__traitHead {
-  display: flex;
-  align-items: center;
-  gap: var(--hx-space-2);
-  flex-wrap: wrap;
-}
-
-/* 刪除鍵推到最右：貼住特質名會令人以為那是特質狀態。 */
-.brand-tone__traitHead [data-tone-trait-remove] {
-  margin-left: auto;
-}
-
-.brand-tone__badge {
-  flex: none;
-  border-radius: var(--hx-radius-sm);
-  padding: 1px 6px;
-  font: var(--hx-frame-font-small);
-  color: var(--hx-danger-text);
-  border: 1px solid var(--hx-danger-text);
-}
-
-.brand-tone__fields {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--hx-space-2) var(--hx-space-3);
-}
-
-.brand-tone__field {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 2px;
-  flex: 1 1 180px;
-  min-width: 0;
-}
-
-.brand-tone__field--wide {
-  flex: 1 1 240px;
-}
-
-.brand-tone__field--half {
-  flex: 1 1 320px;
-}
-
-.brand-tone__field .design-input {
-  max-width: 100%;
-}
-
-.brand-tone__fieldLabel {
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-muted);
-}
-
-.brand-tone__textarea {
-  min-height: 56px;
-}
-
-.brand-tone__adder {
-  display: flex;
-  align-items: center;
-  gap: var(--hx-space-2);
-  flex-wrap: wrap;
-}
-
-.brand-tone__adder .design-input {
-  max-width: 260px;
-}
-
-.brand-tone__words {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.brand-tone__word {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  border: 1px solid var(--hx-frame-border);
-  border-radius: var(--hx-radius-sm);
-  padding: 1px 4px 1px 8px;
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-secondary);
-}
-
-.brand-tone__wordRemove {
-  border: none;
-  background: none;
-  padding: 0 2px;
-  cursor: pointer;
-  color: var(--hx-frame-muted);
-  font: var(--hx-frame-font-small);
-}
-
-/* 一個情境一行：左邊是場合，右邊是句子。 */
-.brand-tone__situation {
-  display: grid;
-  grid-template-columns: 72px minmax(0, 1fr);
-  align-items: start;
-  gap: var(--hx-space-2);
-  padding: var(--hx-space-2) 0;
-  border-top: 1px solid var(--hx-frame-border);
-}
-
-.brand-tone__situationLabel {
-  padding-top: 6px;
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-muted);
-}
-
-/* 第幾個特質：刪完之後名會移位，編號是唯一穩定的參照。 */
-.brand-tone__traitIndex {
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-muted);
-}
-
-/* 禁用詞：左邊那個詞窄，右邊「為咩禁」寬 —— 原因才是要讀的部份。 */
-.brand-tone__recordList {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.brand-tone__record {
-  display: grid;
-  grid-template-columns: 160px minmax(0, 1fr) auto auto;
-  align-items: center;
-  gap: var(--hx-space-2);
-  padding: 4px 0;
-  border-top: 1px solid var(--hx-frame-border);
-}
-
-.brand-tone__record .design-input {
-  max-width: 100%;
-}
-
-.brand-tone__recordTerm {
-  font-weight: 600;
-}
-
-/* 樣本：像與不像兩組，各佔一半，因為「不像」同樣是規則。 */
-.brand-tone__sampleGroup {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: var(--hx-space-2) 0;
-  border-top: 1px solid var(--hx-frame-border);
-}
-
-.brand-tone__sampleHead {
-  display: flex;
-  align-items: baseline;
-  gap: var(--hx-space-2);
-}
-
-.brand-tone__sampleLabel {
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-ink);
-}
-
-.brand-tone__sampleCount {
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-muted);
-}
-
-.brand-tone__sampleRow {
-  display: grid;
-  grid-template-columns: 32px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: var(--hx-space-2);
-}
-
-.brand-tone__sampleRow .design-input {
-  max-width: 100%;
-}
-
-.brand-tone__sampleIndex {
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-muted);
-}
-
-@media (max-width: 900px) {
-  .brand-tone__record {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
-/* 版本列表的語氣頁：特質名，不印 JSON。 */
-.brand-page__traits {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-
-.brand-page__traitChip {
-  border: 1px solid var(--hx-frame-border);
-  border-radius: var(--hx-radius-sm);
-  padding: 1px 6px;
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-secondary);
-}
-
-/* ── 自定義頁（issue #41） ─────────────────────────────────── */
-
-/*
- * 這一頁的閱讀次序是「brief 講要決定什麼 → 內容回應它 → 引用哪些角色」。
- * brief 用一個框登出來（它是這一頁的來源，不是標題），衝突與禁用詞各自
- * 一句紅字，不與長長的「未填」混在一起。
- */
-.brand-custom {
-  display: flex;
-  flex-direction: column;
-  gap: var(--hx-space-5);
-}
-
-.brand-custom__brief {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: var(--hx-space-3) var(--hx-space-4);
-  border: 1px solid var(--hx-frame-border);
-  border-radius: var(--hx-radius-md);
-  background: var(--hx-frame-surface);
-}
-
-.brand-custom__briefLabel {
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-muted);
-}
-
-.brand-custom__briefText {
-  margin: 0;
-  font: var(--hx-frame-font-ui);
-  color: var(--hx-frame-ink);
-  line-height: 1.7;
-}
-
-.brand-custom__conflict {
-  padding: var(--hx-space-3) var(--hx-space-4);
-  border: 1px solid var(--hx-danger-text);
-  border-radius: var(--hx-radius-md);
-}
-
-.brand-custom__conflictTitle {
-  margin: 0 0 4px;
-  font: var(--hx-frame-font-ui);
-  font-weight: 600;
-  color: var(--hx-danger-text);
-}
-
-.brand-custom__conflictLine {
-  margin: 0;
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-secondary);
-  line-height: 1.7;
-}
-
-.brand-custom__missing {
-  margin: 0;
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-secondary);
-}
-
-.brand-custom__missing--gap {
-  color: var(--hx-danger-text);
-}
-
-.brand-custom__section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--hx-space-2);
-}
-
-.brand-custom__textarea {
-  min-height: 56px;
-}
-
-.brand-custom__lines {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.brand-custom__line {
-  display: flex;
-  align-items: center;
-  gap: var(--hx-space-2);
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-secondary);
-}
-
-.brand-custom__adder {
-  display: flex;
-  align-items: center;
-  gap: var(--hx-space-2);
-  flex-wrap: wrap;
-}
-
-.brand-custom__adder .design-input {
-  max-width: 320px;
-}
-
-/* 引用角色：一件一行，左邊勾、右邊名字與值。值只用來顯示，不可以改。 */
-/* 九個色彩角色加四個文字層級：單欄排是一條十三行的表單，兩欄才像一份
-   可以掃的名單。視窗窄就自動落返一欄。 */
-.brand-custom__roles {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 4px 16px;
-}
-
-.brand-custom__roleGroup {
-  grid-column: 1 / -1;
-  margin-top: var(--hx-space-2);
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-muted);
-}
-
-.brand-custom__role {
-  display: flex;
-  align-items: center;
-  gap: var(--hx-space-2);
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-secondary);
-}
-
-.brand-custom__roleName {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-family: var(--hx-font-mono);
-  font-size: 13px;
-}
-
-.brand-custom__roleGap {
-  color: var(--hx-danger-text);
-  font-family: var(--hx-frame-font-small);
-}
-
-/* 逐句標出犯禁用詞的那一句：貼在句子後面，不另起一行搶走清單的節奏。 */
-.brand-custom__lineFlag {
-  margin-left: var(--hx-space-2);
-  color: var(--hx-danger-text);
-  font-family: var(--hx-frame-font-small);
-  white-space: nowrap;
-}
-
-.brand-custom__roleValue {
-  font-family: var(--hx-font-mono);
-  font-size: 13px;
-  color: var(--hx-frame-ink);
-}
-
-.brand-custom__swatch {
-  width: 14px;
-  height: 14px;
-  border-radius: 3px;
-  border: 1px solid var(--hx-frame-border);
-}
-
-/* ── 品牌主頁（#67，取代 #39）────────────────────────────── */
-
-/* 主頁是集大成：一段自己的字，其餘四塊都是讀回來的樣本。所以四塊共用同一
-   個「卡片」外形，讀的人一眼看得出邊幾塊是引用、邊一段是自己寫。 */
-.brand-home {
-  display: flex;
-  flex-direction: column;
-  gap: var(--hx-space-4);
-}
-
-.brand-home__missing {
-  margin: 0;
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-secondary);
-}
-
-.brand-home__missing--gap {
-  color: var(--hx-danger-text);
-}
-
-.brand-home__missingLead {
-  margin: 0;
-}
-
-.brand-home__missingList {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin: 4px 0 0;
-  padding-left: 1.1em;
-}
-
-.brand-home__section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--hx-space-2);
-  padding: var(--hx-space-3) var(--hx-space-4);
-  border: 1px solid var(--hx-frame-border);
-  border-radius: var(--hx-radius-md);
-  background: var(--hx-frame-surface);
-}
-
-.brand-home__textarea {
-  min-height: 72px;
-}
-
-.brand-home__gap {
-  margin-left: var(--hx-space-2);
-  color: var(--hx-danger-text);
-  font: var(--hx-frame-font-small);
-}
-
-/* 標誌的預設用法：一件資產＋一個角色＋兩個最小尺寸。 */
-.brand-home__logo {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.brand-home__logoAsset {
-  margin: 0;
-  font: var(--hx-frame-font-ui);
-  font-weight: 600;
-  color: var(--hx-frame-ink);
-}
-
-.brand-home__logoMeta {
-  display: flex;
-  align-items: center;
-  gap: var(--hx-space-2);
-  margin: 0;
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-secondary);
-}
-
-.brand-home__swatch {
-  width: 14px;
-  height: 14px;
-  border-radius: 3px;
-  border: 1px solid var(--hx-frame-border);
-}
-
-.brand-home__roleValue {
-  font-family: var(--hx-font-mono);
-  font-size: 12px;
-  color: var(--hx-frame-secondary);
-}
-
-/* 色彩樣本：一排色塊，掃一眼就見到整個色盤。 */
-.brand-home__swatches {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: var(--hx-space-2) var(--hx-space-4);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.brand-home__swatchItem {
-  display: flex;
-  align-items: center;
-  gap: var(--hx-space-2);
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-secondary);
-}
-
-.brand-home__swatchChip {
-  width: 22px;
-  height: 22px;
-  flex: none;
-  border-radius: var(--hx-radius-sm);
-  border: 1px solid var(--hx-frame-border);
-}
-
-.brand-home__swatchName {
-  font-family: var(--hx-font-mono);
-  font-size: 12px;
-}
-
-/* 字體樣本：左邊規格、右邊同一句排出來。 */
-.brand-home__types {
-  display: flex;
-  flex-direction: column;
-  gap: var(--hx-space-3);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.brand-home__typeRow {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding-bottom: var(--hx-space-3);
-  border-bottom: 1px solid var(--hx-frame-border);
-}
-
-.brand-home__typeRow:last-child {
-  padding-bottom: 0;
-  border-bottom: none;
-}
-
-.brand-home__typeHead {
-  display: flex;
-  align-items: center;
-  gap: var(--hx-space-2);
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-secondary);
-}
-
-.brand-home__typeMeta {
-  color: var(--hx-frame-muted);
-}
-
-.brand-home__typeSample {
-  color: var(--hx-frame-ink);
-  line-height: 1.4;
-}
-
-/* 語氣短例：一句真的會講出口的話，用引言排。 */
-.brand-home__tone {
-  margin: 0;
-  padding-left: var(--hx-space-3);
-  border-left: 2px solid var(--hx-frame-border);
-  font: var(--hx-frame-font-ui);
-  color: var(--hx-frame-ink);
-  line-height: 1.7;
-}
-
-/* 每一頁的入口：一條一行，缺的標在名字後面。 */
-.brand-home__pages {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 4px var(--hx-space-4);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.brand-home__page {
-  display: flex;
-  align-items: baseline;
-  gap: var(--hx-space-2);
-  font: var(--hx-frame-font-small);
-}
-
-.brand-home__pageLink {
-  color: var(--hx-frame-accent);
-  text-decoration: none;
-}
-
-.brand-home__pageLink:hover {
-  text-decoration: underline;
-}
-
-/* 關鍵詞：短而少（三到五個），所以是 chip 行，不是清單。 */
-.brand-home__chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--hx-space-2);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.brand-home__chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 4px 2px 10px;
-  border: 1px solid var(--hx-frame-border);
-  border-radius: 999px;
-  background: var(--hx-frame-raised);
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-ink);
-}
-
-.brand-home__chipRemove {
-  padding: 0 4px;
-  border: none;
-  background: none;
-  color: var(--hx-frame-muted);
-  font: inherit;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.brand-home__chipRemove:hover {
-  color: var(--hx-danger-text);
-}
-
-/* 加一個：輸入與按鈕同一行，讀的人一眼見到「未滿五個所以可以再加」。 */
-.brand-home__adder {
-  display: flex;
-  align-items: center;
-  gap: var(--hx-space-2);
-}
-
-.brand-home__adder .design-input {
-  flex: 1;
-  min-width: 0;
-}
-
-/* 版面次序：一塊一行，四件事（種類、來源、重點、理由）都在同一行內講完。 */
-.brand-home__layout {
-  display: flex;
-  flex-direction: column;
-  gap: var(--hx-space-2);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  counter-reset: none;
-}
-
-.brand-home__layoutRow {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: var(--hx-space-2) var(--hx-space-3);
-  border: 1px solid var(--hx-frame-border);
-  border-radius: var(--hx-radius-sm);
-  background: var(--hx-frame-raised);
-}
-
-.brand-home__layoutRow[data-missing='true'] {
-  border-color: var(--hx-danger-border, var(--hx-frame-border));
-}
-
-.brand-home__layoutHead {
-  display: flex;
-  align-items: center;
-  gap: var(--hx-space-2);
-  flex-wrap: wrap;
-}
-
-.brand-home__layoutIndex {
-  font-family: var(--hx-font-mono);
-  font-size: 12px;
-  color: var(--hx-frame-muted);
-}
-
-.brand-home__layoutBlock {
-  flex: none;
-  width: auto;
-}
-
-.brand-home__layoutSource {
-  flex: 1;
-  min-width: 120px;
-}
-
-.brand-home__layoutEmphasis {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-secondary);
-  white-space: nowrap;
-}
-
-.brand-home__layoutActions {
-  display: inline-flex;
-  gap: 4px;
-  margin-left: auto;
-}
-
-/* 引用：左邊是被引用的東西、右邊是來源頁與版本 —— 這是「追得回去」的長相。 */
-.brand-home__refs {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.brand-home__ref {
-  display: flex;
-  align-items: baseline;
-  gap: var(--hx-space-2);
-  padding: 2px 0;
-  border-bottom: 1px solid var(--hx-frame-border);
-  font: var(--hx-frame-font-small);
-}
-
-.brand-home__ref:last-child {
-  border-bottom: none;
-}
-
-.brand-home__refItem {
-  color: var(--hx-frame-ink);
-}
-
-.brand-home__refSource {
-  margin-left: auto;
-  font-family: var(--hx-font-mono);
-  font-size: 12px;
-  color: var(--hx-frame-muted);
-}
-
-/* 兩格並排：襯線／無襯線、名稱／解釋。900px 以下疊成一欄。 */
-.brand-home__split {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--hx-space-3);
-}
-
-/* 語氣樣本：一句一句，與語氣頁逐字對應，所以用引言排而不是 chip。 */
-.brand-home__quotes {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.brand-home__quote {
-  display: flex;
-  align-items: baseline;
-  gap: var(--hx-space-2);
-  padding-left: var(--hx-space-3);
-  border-left: 2px solid var(--hx-frame-border);
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-secondary);
-}
-
-/* 品牌專屬系統：一個一行，名與解釋並排。 */
-.brand-home__systems {
-  display: flex;
-  flex-direction: column;
-  gap: var(--hx-space-2);
-}
-
-.brand-home__system {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: var(--hx-space-2) var(--hx-space-3);
-  border: 1px solid var(--hx-frame-border);
-  border-radius: var(--hx-radius-sm);
-}
-
-.brand-home__system .design-field {
-  flex: 1;
-  min-width: 0;
-}
-
-.brand-home__pageVersion {
-  font-family: var(--hx-font-mono);
-  font-size: 12px;
-  color: var(--hx-frame-muted);
-}
-
-/* 給 AI 用：四個輸出入口一排，prompt 包逐字顯示（換行要保留）。 */
-.brand-home__outputs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--hx-space-3);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  font: var(--hx-frame-font-small);
-}
-
-.brand-home__aiHead {
-  margin: var(--hx-space-2) 0 0;
-  font: var(--hx-frame-font-small);
-  font-weight: 600;
-  color: var(--hx-frame-secondary);
-}
-
-.brand-home__prompt {
-  max-height: 320px;
-  margin: 0;
-  padding: var(--hx-space-3);
-  overflow: auto;
-  border: 1px solid var(--hx-frame-border);
-  border-radius: var(--hx-radius-sm);
-  background: var(--hx-frame-raised);
-  font-family: var(--hx-font-mono);
-  font-size: 12px;
-  line-height: 1.6;
-  color: var(--hx-frame-ink);
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
 /* 1024（筆電）：側欄收成 200px，內容區約 824px。版面那一行放不下四件事，
    所以來源與理由各佔一行；引用變成兩行（名在上、來源在下）。 */
 @media (max-width: 1024px) {
@@ -2678,293 +913,6 @@
   }
 }
 
-/* ── 已核准範例（#68）───────────────────────────────────── */
-
-/* 範例卡三欄：縮圖在上，四格在下面。三欄是因為「做對的樣子」要一眼見幾件；
-   一欄會變成一份清單，看不到系列感。 */
-.brand-examples {
-  display: flex;
-  flex-direction: column;
-  gap: var(--hx-space-4);
-}
-
-.brand-examples__missing {
-  margin: 0;
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-secondary);
-}
-
-.brand-examples__missing--gap {
-  color: var(--hx-danger-text);
-}
-
-.brand-examples__missingLead {
-  margin: 0;
-}
-
-.brand-examples__missingList {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin: 4px 0 0;
-  padding-left: 1.1em;
-}
-
-.brand-examples__section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--hx-space-2);
-  padding: var(--hx-space-3) var(--hx-space-4);
-  border: 1px solid var(--hx-frame-border);
-  border-radius: var(--hx-radius-md);
-  background: var(--hx-frame-surface);
-}
-
-.brand-examples__cards {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--hx-space-3);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.brand-examples__card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--hx-space-2);
-  padding: var(--hx-space-3);
-  border: 1px solid var(--hx-frame-border);
-  border-radius: var(--hx-radius-sm);
-  background: var(--hx-frame-raised);
-}
-
-.brand-examples__thumb {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 170px;
-  overflow: hidden;
-  border: 1px dashed var(--hx-frame-border);
-  border-radius: var(--hx-radius-sm);
-  background: var(--hx-frame-sunken, var(--hx-frame-surface));
-}
-
-.brand-examples__thumbImage {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.brand-examples__thumbEmpty {
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-muted);
-}
-
-.brand-examples__chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-
-.brand-examples__chipBtn {
-  padding: 2px 8px;
-  border: 1px solid var(--hx-frame-border);
-  border-radius: 999px;
-  background: var(--hx-frame-surface);
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-secondary);
-  cursor: pointer;
-}
-
-.brand-examples__chipBtn:hover {
-  color: var(--hx-frame-ink);
-  border-color: var(--hx-frame-muted);
-}
-
-/* 用了哪幾頁版本：一頁一行，版本跟在後面 —— 這是「舊範例仍標示它用的版本」。 */
-.brand-examples__refs {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.brand-examples__refRow {
-  display: flex;
-  align-items: center;
-  gap: var(--hx-space-2);
-  flex-wrap: wrap;
-  font: var(--hx-frame-font-small);
-}
-
-.brand-examples__check {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  color: var(--hx-frame-ink);
-}
-
-.brand-examples__refVersion {
-  width: 68px;
-  flex: none;
-}
-
-.brand-examples__versions {
-  display: flex;
-  align-items: center;
-  gap: var(--hx-space-2);
-  margin: 0;
-  font-family: var(--hx-font-mono);
-  font-size: 12px;
-  color: var(--hx-frame-muted);
-}
-
-.brand-examples__staleTag {
-  padding: 0 6px;
-  border-radius: 999px;
-  background: var(--hx-warning-surface, var(--hx-frame-raised));
-  font-family: var(--hx-frame-font-family);
-  font-size: 11px;
-  color: var(--hx-warning-text, var(--hx-frame-secondary));
-}
-
-.brand-examples__gap {
-  margin: 0;
-  font: var(--hx-frame-font-small);
-  color: var(--hx-danger-text);
-}
-
-.brand-examples__adder {
-  display: flex;
-  align-items: center;
-  gap: var(--hx-space-2);
-}
-
-/* 成功 prompt：一張卡一段。prompt 是主角，所以字級比備註大一級、行高闊些。 */
-.brand-examples__prompts {
-  display: flex;
-  flex-direction: column;
-  gap: var(--hx-space-3);
-}
-
-.brand-examples__prompt {
-  display: flex;
-  flex-direction: column;
-  gap: var(--hx-space-2);
-  padding: var(--hx-space-3);
-  border: 1px solid var(--hx-frame-border);
-  border-radius: var(--hx-radius-sm);
-  background: var(--hx-frame-raised);
-}
-
-.brand-examples__split {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--hx-space-3);
-}
-
-.brand-examples__promptText {
-  font-family: var(--hx-font-mono);
-  font-size: 12px;
-  line-height: 1.6;
-}
-
-.brand-examples__actions {
-  display: flex;
-  align-items: center;
-  gap: var(--hx-space-2);
-}
-
-/* 重用面板：先把「這次用哪一版」講清楚，再講差在哪，最後才是 prompt。 */
-.brand-examples__reuse {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: var(--hx-space-3);
-  border: 1px solid var(--hx-frame-border);
-  border-radius: var(--hx-radius-sm);
-  background: var(--hx-frame-surface);
-}
-
-.brand-examples__reuseHead {
-  margin: 0;
-  font: var(--hx-frame-font-small);
-  font-weight: 600;
-  color: var(--hx-frame-ink);
-}
-
-.brand-examples__reuseNow {
-  margin: 0;
-  font-family: var(--hx-font-mono);
-  font-size: 12px;
-  color: var(--hx-frame-secondary);
-}
-
-.brand-examples__reuseList {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin: 0;
-  padding-left: 1.1em;
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-secondary);
-}
-
-.brand-examples__reusePrompt {
-  max-height: 240px;
-  margin: 0;
-  padding: var(--hx-space-2);
-  overflow: auto;
-  border: 1px solid var(--hx-frame-border);
-  border-radius: var(--hx-radius-sm);
-  background: var(--hx-frame-raised);
-  font-family: var(--hx-font-mono);
-  font-size: 12px;
-  line-height: 1.6;
-  color: var(--hx-frame-ink);
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
-/* 載體示範：三個載體並列，每個一句「這個載體會變甚麼」。 */
-.brand-examples__carriers {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--hx-space-3);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.brand-examples__carrierName {
-  display: block;
-  font: var(--hx-frame-font-small);
-  font-weight: 600;
-  color: var(--hx-frame-ink);
-}
-
-.brand-examples__outputs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--hx-space-3);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  font: var(--hx-frame-font-small);
-}
-
-.brand-examples__link {
-  color: var(--hx-frame-accent);
-  text-decoration: none;
-}
-
-.brand-examples__link:hover {
-  text-decoration: underline;
-}
-
 /* 1024（筆電）：三欄太窄（每欄約 260px，縮圖 170px 高會壓扁標題），
    所以兩欄；載體示範同樣兩欄。 */
 @media (max-width: 1024px) {
@@ -2989,40 +937,6 @@
   }
 }
 
-/* 圖像頁的「已核准範例」引用：一行一件，版本在右。 */
-.brand-image__approved {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.brand-image__approvedRow {
-  display: flex;
-  align-items: baseline;
-  gap: var(--hx-space-2);
-  padding: 2px 0;
-  border-bottom: 1px solid var(--hx-frame-border);
-  font: var(--hx-frame-font-small);
-}
-
-.brand-image__approvedRow:last-child {
-  border-bottom: none;
-}
-
-.brand-image__approvedName {
-  color: var(--hx-frame-ink);
-}
-
-.brand-image__approvedVersion {
-  margin-left: auto;
-  font-family: var(--hx-font-mono);
-  font-size: 12px;
-  color: var(--hx-frame-muted);
-}
-
 /* 「這一頁」面板（#53）：現況、策略、給 agent 的接口。
    淺底 + 細線，不用陰影 —— 內容區的區塊靠線分，陰影留給浮層。 */
 .brand-guide {
@@ -3033,168 +947,6 @@
   border-radius: var(--hx-radius-md);
   background: var(--hx-frame-surface);
 }
-
-/*
- * 三段各一行、各自收起（v2.1）。預設見到三行：
- *   現況 / 這一頁的標準 / 給 agent
- * 每一行右邊一個「展開」。一打開不是一屏說明文字。
- */
-.brand-guide__row {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 2px var(--hx-space-3);
-  align-items: center;
-}
-
-.brand-guide__rowText {
-  display: grid;
-  gap: 2px;
-  min-width: 0;
-}
-
-.brand-guide__rowLead {
-  margin: 0;
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-secondary);
-}
-
-.brand-guide__body {
-  display: grid;
-  gap: 6px;
-  padding-top: 8px;
-}
-
-.brand-guide__instruction {
-  margin: 0;
-  padding: 10px 12px;
-  border-left: 2px solid var(--hx-frame-border);
-  background: var(--hx-frame-sunken);
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-ink);
-}
-
-.brand-guide__title {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.brand-guide__toggle {
-  justify-self: end;
-  height: 26px;
-  padding: 0 10px;
-  border: 1px solid var(--hx-frame-border);
-  border-radius: var(--hx-radius-sm);
-  background: transparent;
-  color: var(--hx-frame-secondary);
-  font: var(--hx-frame-font-small);
-  cursor: pointer;
-}
-
-.brand-guide__toggle:hover {
-  border-color: var(--hx-frame-muted);
-  color: var(--hx-frame-ink);
-}
-
-.brand-guide__section {
-  display: grid;
-  gap: 6px;
-  padding-top: var(--hx-space-3);
-  border-top: 1px solid var(--hx-frame-border);
-}
-
-.brand-guide__heading {
-  margin: 0;
-  font: var(--hx-frame-font-small);
-  font-weight: 600;
-  color: var(--hx-frame-ink);
-}
-
-.brand-guide__line {
-  margin: 0;
-  font: var(--hx-frame-font-small);
-}
-
-.brand-guide__line--muted {
-  color: var(--hx-frame-secondary);
-}
-
-.brand-guide__line--gap {
-  color: var(--hx-danger-text);
-}
-
-.brand-guide__refs {
-  margin: 0;
-  padding-left: 18px;
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-secondary);
-}
-
-.brand-guide__policyNo {
-  display: flex;
-  align-items: baseline;
-  gap: var(--hx-space-2);
-  margin: 0;
-  font: var(--hx-frame-font-small);
-  font-weight: 600;
-}
-
-.brand-guide__policyTime {
-  font: var(--hx-frame-font-small);
-  font-weight: 400;
-  color: var(--hx-frame-secondary);
-}
-
-.brand-guide__policyBody {
-  margin: 0;
-  font: var(--hx-frame-font-body);
-  white-space: pre-wrap;
-}
-
-.brand-guide__editor {
-  display: grid;
-  gap: var(--hx-space-3);
-}
-
-.brand-guide__actions {
-  display: flex;
-  gap: var(--hx-space-2);
-}
-
-.brand-guide__agent {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: var(--hx-space-4);
-}
-
-.brand-guide__agentTitle {
-  margin: 0 0 4px;
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-secondary);
-}
-
-.brand-guide__agentList {
-  margin: 0;
-  padding-left: 18px;
-  font: var(--hx-frame-font-small);
-}
-
-.brand-guide__agentList--blocked {
-  color: var(--hx-frame-secondary);
-}
-
-.brand-guide__code {
-  margin: 0;
-  padding: var(--hx-space-3);
-  border: 1px solid var(--hx-frame-border);
-  border-radius: var(--hx-radius-sm);
-  background: var(--hx-frame-surface);
-  font: var(--hx-frame-font-small);
-  font-family: var(--hx-font-mono);
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-
 
 /* ── 策略頁三欄（#56，09-strategy-boss-portal.md） ─────────────────────
    左：九個槽；中：編輯區與版本；右：這一槽的規則 id 與「正在支撐哪幾頁」。
@@ -3345,24 +1097,6 @@
   }
 
   .policy-side {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
-/* ── 品牌頁 + 右側 Needs 欄（#58） ───────────────────────────────
-   主內容與 Needs 欄同一個 grid：欄收起來的時候，主內容會用到整行，
-   而不是留一條空白。1280 以下欄疊在主內容之後 —— 設計稿講「自動收起」，
-   但收起不等於看不到：疊在下面仍然讀得到，只是不佔側邊。 */
-
-.brand-frame {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
-  gap: 32px;
-  align-items: start;
-}
-
-@media (max-width: 1279px) {
-  .brand-frame {
     grid-template-columns: minmax(0, 1fr);
   }
 }
@@ -3648,208 +1382,6 @@
   color: var(--hx-frame-danger);
 }
 
-/* 檢查摘要條與不通過橫幅（#59）。
-   三個數字一起出，因為單看「不通過 0」會令人以為全部合格。
-   橙與紅只用於字與標籤，不做大面積填色。 */
-
-.brand-check {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  border: 1px solid var(--hx-frame-line);
-  border-radius: 12px;
-  background: var(--hx-frame-paper);
-  padding: 12px 16px;
-}
-
-.brand-check--waiting,
-.brand-check--none {
-  margin: 0;
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-secondary);
-  border-style: dashed;
-}
-
-.brand-check--failed {
-  border-color: var(--hx-frame-warning);
-}
-
-.brand-check__failed {
-  margin: 0;
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-warning);
-  font-weight: 600;
-}
-
-.brand-check__bar {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px 12px;
-}
-
-.brand-check__count {
-  font: var(--hx-frame-font-small);
-  font-weight: 600;
-  color: var(--hx-frame-success);
-  white-space: nowrap;
-}
-
-.brand-check__count--fail {
-  color: var(--hx-frame-secondary);
-}
-
-.brand-check__count--fail[data-nonzero='true'] {
-  color: var(--hx-frame-danger);
-}
-
-.brand-check__count--undetermined {
-  color: var(--hx-frame-secondary);
-}
-
-.brand-check__headline {
-  margin: 0;
-  flex: 1 1 240px;
-  font-size: 14px;
-  color: var(--hx-frame-ink);
-}
-
-.brand-check__toggle {
-  margin-left: auto;
-  border: 1px solid var(--hx-frame-line);
-  border-radius: 8px;
-  background: transparent;
-  padding: 6px 12px;
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-accent);
-  cursor: pointer;
-}
-
-.brand-check__list {
-  list-style: none;
-  margin: 4px 0 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  border-top: 1px solid var(--hx-frame-line);
-  padding-top: 8px;
-}
-
-.brand-check__row {
-  display: grid;
-  grid-template-columns: 88px 64px minmax(120px, 180px) 1fr;
-  align-items: baseline;
-  gap: 4px 12px;
-  font: var(--hx-frame-font-small);
-}
-
-.brand-check__rule {
-  font-family: var(--hx-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
-  font-size: 12px;
-  color: var(--hx-frame-secondary);
-}
-
-.brand-check__state {
-  font-weight: 600;
-  font-size: 12px;
-}
-
-.brand-check__state--pass {
-  color: var(--hx-frame-success);
-}
-
-.brand-check__state--fail {
-  color: var(--hx-frame-danger);
-}
-
-.brand-check__state--undetermined {
-  color: var(--hx-frame-warning);
-}
-
-.brand-check__where {
-  color: var(--hx-frame-secondary);
-}
-
-.brand-check__detail {
-  color: var(--hx-frame-ink);
-}
-
-.brand-check__fix,
-.brand-check__gapLink {
-  grid-column: 4 / -1;
-  color: var(--hx-frame-secondary);
-}
-
-.brand-check__gapLink {
-  justify-self: start;
-  border: none;
-  background: transparent;
-  padding: 0;
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-accent);
-  cursor: pointer;
-  text-decoration: underline;
-}
-
-.brand-check__reason {
-  margin: 0;
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-muted);
-}
-
-/* 不通過橫幅：橙框、橙字標籤，不做大面積填色。 */
-
-.brand-banner {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  border: 1px solid var(--hx-frame-warning);
-  border-left-width: 3px;
-  border-radius: 10px;
-  background: var(--hx-frame-paper);
-  padding: 12px 16px;
-}
-
-.brand-banner__tag {
-  flex: none;
-  border-radius: 999px;
-  background: var(--hx-frame-surface);
-  color: var(--hx-frame-warning);
-  font-size: 12px;
-  font-weight: 600;
-  padding: 2px 10px;
-}
-
-.brand-banner__body {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.brand-banner__line {
-  margin: 0;
-  font-size: 14px;
-  color: var(--hx-frame-ink);
-}
-
-.brand-banner__fix {
-  margin: 0;
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-secondary);
-}
-
-@media (max-width: 1024px) {
-  .brand-check__row {
-    grid-template-columns: 88px 64px 1fr;
-  }
-
-  .brand-check__fix,
-  .brand-check__gapLink {
-    grid-column: 3 / -1;
-  }
-}
-
 /* 專屬系統建議（#60）。640px，一張卡＋三項判斷＋邊界。
 
    三項判斷用文字「是」＋理由，不用三個綠色勾：勾只講「通過了」，理由才
@@ -4030,227 +1562,6 @@
   }
 }
 
-/* 平台頁（#61）：立場句一屏、定位六格、價值、三檢。
-
-   立場句用大一級的字：它是整本書的第一句，不是七個欄位之一。 */
-
-.brand-platform {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.brand-platform__stance {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  border: 1px solid var(--hx-frame-line);
-  border-radius: 12px;
-  background: var(--hx-frame-paper);
-  padding: 16px 20px;
-}
-
-.brand-platform__stanceHead {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.brand-platform__stanceText {
-  margin: 0;
-  font-size: 20px;
-  line-height: 1.5;
-  color: var(--hx-frame-ink);
-}
-
-.brand-platform__stanceEmpty {
-  margin: 0;
-  font-size: 16px;
-  color: var(--hx-frame-warning);
-}
-
-.brand-platform__section {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.brand-platform__grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px 16px;
-}
-
-.brand-platform__field {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.brand-platform__evidence {
-  resize: vertical;
-}
-
-.brand-platform__missing {
-  color: var(--hx-frame-warning);
-  font-weight: 600;
-}
-
-/* 標籤輸入（v2.1）：關鍵詞與個性一個一個加，不用逗號分隔文字。 */
-.brand-platform__tags {
-  display: grid;
-  gap: 8px;
-}
-
-.brand-platform__tagList {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.brand-platform__tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
-  border: 1px solid var(--hx-frame-border);
-  border-radius: var(--hx-radius-sm);
-  background: var(--hx-frame-sunken);
-  font: var(--hx-frame-font-small);
-}
-
-.brand-platform__tagRemove {
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--hx-frame-secondary);
-  font: inherit;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.brand-platform__tagRemove:hover {
-  color: var(--hx-frame-ink);
-}
-
-.brand-platform__tagInput {
-  max-width: 320px;
-}
-
-.brand-platform__count {
-  margin-left: 8px;
-  font: var(--hx-frame-font-small);
-  font-weight: 400;
-  color: var(--hx-frame-secondary);
-}
-
-/* 全空狀態（v2.1）：一個主要動作 ＋ 一張「這一頁要寫的」清單。
-   不用八個空表 —— 空格不會告訴人第一件事是甚麼。 */
-.brand-empty {
-  display: grid;
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-.brand-empty__lead {
-  border: 1px solid var(--hx-frame-border);
-  border-radius: var(--hx-radius-md);
-  padding: 40px 32px;
-  text-align: center;
-}
-
-.brand-empty__title {
-  margin: 0 0 8px;
-  font: var(--hx-frame-font-title);
-}
-
-.brand-empty__text {
-  max-width: 520px;
-  margin: 0 auto;
-  color: var(--hx-frame-secondary);
-}
-
-.brand-empty__actions {
-  display: flex;
-  justify-content: center;
-  margin-top: 20px;
-}
-
-.brand-empty__todo {
-  border: 1px solid var(--hx-frame-border);
-  border-radius: var(--hx-radius-md);
-  padding: 20px 24px;
-}
-
-.brand-empty__todoTitle {
-  margin: 0 0 4px;
-  font: var(--hx-frame-font-subtitle);
-}
-
-.brand-empty__list {
-  list-style: none;
-  margin: 12px 0 0;
-  padding: 0;
-}
-
-.brand-empty__item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--hx-frame-line);
-}
-
-.brand-empty__item:last-child {
-  border-bottom: 0;
-}
-
-.brand-empty__itemLabel {
-  font: var(--hx-frame-font-body);
-}
-
-.brand-empty__pill {
-  flex: none;
-  padding: 2px 10px;
-  border-radius: 999px;
-  font: var(--hx-frame-font-small);
-  white-space: nowrap;
-}
-
-.brand-empty__pill--todo {
-  background: var(--hx-frame-sunken);
-  color: var(--hx-frame-warning);
-}
-
-.brand-empty__pill--done {
-  background: var(--hx-frame-sunken);
-  color: var(--hx-frame-success);
-}
-
-.brand-platform__values {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.brand-platform__value {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
-  align-items: end;
-  gap: 8px 12px;
-  border: 1px solid var(--hx-frame-line);
-  border-radius: 10px;
-  padding: 12px;
-}
-
 /* 立場句選擇（05）：720px，三個候選卡＋自己寫一句＋三檢。 */
 
 .stance-backdrop {
@@ -4408,220 +1719,12 @@
   cursor: pointer;
 }
 
-@media (max-width: 1024px) {
-  .brand-platform__grid,
-  .stance__tests {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .brand-platform__value {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
-/* ── 圖像頁（issue #66） ───────────────────────────────────── */
-
-/*
- * 這一頁的閱讀次序是「立場句、攝影六格、真範例、要與不要、顏色引用、授權、
- * 禁止」。六格排兩欄：它們是同一張照片的六個決定，橫排六格會變成六段互不相
- * 關的文字。範例一件一行，因為「哪一件有檔案」是這一頁最重要的一格。
- */
-.brand-image {
-  display: flex;
-  flex-direction: column;
-  gap: var(--hx-space-5);
-}
-
-.brand-image__section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--hx-space-2);
-}
-
-.brand-image__missing {
-  margin: 0;
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-secondary);
-}
-
-.brand-image__missing--gap {
-  color: var(--hx-danger-text);
-}
-
-.brand-image__photo {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--hx-space-3);
-}
-
-.brand-image__field {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.brand-image__field .design-input {
-  max-width: 100%;
-}
-
-.brand-image__fieldLabel {
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-muted);
-}
-
-.brand-image__textarea {
-  min-height: 56px;
-  width: 100%;
-  max-width: 620px;
-}
-
-.brand-image__fields {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--hx-space-2) var(--hx-space-3);
-}
-
-.brand-image__field--wide {
-  flex: 1 1 260px;
-}
-
-.brand-image__example {
-  display: flex;
-  flex-direction: column;
-  gap: var(--hx-space-2);
-  padding: var(--hx-space-3) 0;
-  border-top: 1px solid var(--hx-frame-border);
-}
-
-.brand-image__exampleHead {
-  display: flex;
-  align-items: center;
-  gap: var(--hx-space-2);
-  flex-wrap: wrap;
-}
-
-.brand-image__exampleHead [data-image-example-remove] {
-  margin-left: auto;
-}
-
-.brand-image__badge {
-  flex: none;
-  border-radius: var(--hx-radius-sm);
-  padding: 1px 6px;
-  font: var(--hx-frame-font-small);
-  color: var(--hx-danger-text);
-  border: 1px solid var(--hx-danger-text);
-}
-
-.brand-image__adder {
-  display: flex;
-  align-items: center;
-  gap: var(--hx-space-2);
-  flex-wrap: wrap;
-}
-
-.brand-image__adder .design-input {
-  max-width: 260px;
-}
-
-.brand-image__list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: var(--hx-space-2) 0;
-  border-top: 1px solid var(--hx-frame-border);
-}
-
-.brand-image__head {
-  display: flex;
-  align-items: baseline;
-  gap: var(--hx-space-2);
-}
-
-.brand-image__label {
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-ink);
-}
-
-.brand-image__count {
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-muted);
-}
-
-.brand-image__words {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.brand-image__word {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border: 1px solid var(--hx-frame-border);
-  border-radius: var(--hx-radius-sm);
-  padding: 1px 4px 1px 8px;
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-secondary);
-}
-
-.brand-image__wordRemove {
-  border: none;
-  background: none;
-  padding: 0 2px;
-  cursor: pointer;
-  color: var(--hx-frame-muted);
-  font: var(--hx-frame-font-small);
-}
-
-/* 色樣：值來自色彩頁，所以這裡只畫一個方塊加 hex，不畫色值輸入。 */
-.brand-image__swatch {
-  width: 14px;
-  height: 14px;
-  border-radius: 3px;
-  border: 1px solid var(--hx-frame-border);
-}
-
-.brand-image__hex {
-  font-variant-numeric: tabular-nums;
-  color: var(--hx-frame-ink);
-}
-
-.brand-image__note {
-  color: var(--hx-danger-text);
-}
-
 /* 768（平板）：六格兩欄每格只剩 290px，而六格是「同一張照片的六個決定」，
    擠成兩欄會讀成六段。所以一欄。 */
 @media (max-width: 768px) {
   .brand-image__photo {
     grid-template-columns: minmax(0, 1fr);
   }
-}
-
-/* 閱讀態／編輯態（v2.1）：預設閱讀。動作在最上面，寫完不用捲到底才找到。 */
-.brand-page__toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 16px;
-}
-
-.brand-page__toolbarActions {
-  display: flex;
-  gap: 8px;
-  margin-left: auto;
-}
-
-.brand-page__modeLead {
-  margin: 0;
-  font: var(--hx-frame-font-small);
-  color: var(--hx-frame-secondary);
 }
 
 /* 閱讀態把框收成字：同一個 DOM，只是不再畫成「這是你可以打字的地方」。
@@ -4632,4 +1735,2346 @@
   padding-left: 0;
   border-color: transparent;
   background: transparent;
+}
+
+/* ── 品牌建立引導（stage0–4h） ─────────────────────────────── */
+
+.brand-build {
+  display: grid;
+  gap: var(--hx-space-5);
+}
+
+.brand-dash__ctx {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-sm);
+  background: var(--hx-bg-primary);
+  font: var(--hx-frame-font-code);
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--hx-frame-secondary);
+}
+
+/* ── 品牌建立引導：View Dashboard（圖像化） ─────────────── */
+
+.brand-dash {
+  display: grid;
+  /* 唔用預設 auto 欄：頂欄的按鈕組 min-content 會撐闊整頁，窄螢幕就出橫向捲軸。 */
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--hx-space-6);
+}
+
+.brand-dash__title {
+  margin: 0;
+  font: var(--hx-frame-font-card);
+  color: var(--hx-frame-ink);
+}
+
+.brand-dash__progress {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-3);
+}
+
+.brand-dash__pct {
+  font: var(--hx-frame-font-small-lg);
+  font-weight: 600;
+  color: var(--hx-frame-ink);
+  min-width: 44px;
+}
+
+.brand-dash__bar {
+  flex: 1;
+  height: 10px;
+  border-radius: 99px;
+  background: var(--hx-frame-border);
+  overflow: hidden;
+}
+
+.brand-dash__bar i {
+  display: block;
+  height: 100%;
+  background: var(--hx-frame-accent);
+  transition: width 0.25s;
+}
+
+.brand-dash__sec {
+  display: grid;
+  gap: var(--hx-space-3);
+  padding-top: var(--hx-space-5);
+  border-top: 1px solid var(--hx-frame-border);
+}
+
+.brand-dash__secTitle {
+  margin: 0;
+  font: var(--hx-frame-font-small);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--hx-frame-muted);
+}
+
+/* Business Model Canvas 九宮格 */
+.brand-dash__canvas {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  grid-template-rows: auto auto auto;
+  gap: var(--hx-space-2);
+}
+
+.brand-dash__block {
+  padding: var(--hx-space-3);
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-sm);
+  background: var(--hx-bg-primary);
+}
+
+.brand-dash__block h4 {
+  margin: 0 0 var(--hx-space-2);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--hx-frame-ink);
+}
+
+.brand-dash__block h4 small {
+  display: block;
+  font-family: var(--hx-font-mono);
+  font-size: 0.62rem;
+  font-weight: 400;
+  color: var(--hx-frame-muted);
+}
+
+.brand-dash__block p {
+  margin: 0 0 4px;
+  font-size: 0.8rem;
+  color: var(--hx-frame-secondary);
+}
+
+.brand-dash__block--key_partners { grid-column: 1 / 3; grid-row: 1 / 3; }
+.brand-dash__block--key_activities { grid-column: 3 / 5; grid-row: 1; }
+.brand-dash__block--key_resources { grid-column: 3 / 5; grid-row: 2; }
+.brand-dash__block--value_propositions { grid-column: 5 / 7; grid-row: 1 / 3; }
+.brand-dash__block--customer_relationships { grid-column: 7 / 9; grid-row: 1; }
+.brand-dash__block--channels { grid-column: 7 / 9; grid-row: 2; }
+.brand-dash__block--customer_segments { grid-column: 9 / 11; grid-row: 1 / 3; }
+.brand-dash__block--cost_structure { grid-column: 1 / 6; grid-row: 3; }
+.brand-dash__block--revenue_streams { grid-column: 6 / 11; grid-row: 3; }
+
+@media (max-width: 860px) {
+  .brand-dash__canvas { display: block; }
+  .brand-dash__block { margin-bottom: var(--hx-space-2); }
+}
+
+/* 單位經濟表 */
+.brand-dash__table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-sm);
+  background: var(--hx-bg-primary);
+  overflow: hidden;
+}
+
+.brand-dash__table th,
+.brand-dash__table td {
+  border-bottom: 1px solid var(--hx-frame-border);
+  padding: var(--hx-space-2) var(--hx-space-3);
+  text-align: left;
+  vertical-align: top;
+}
+
+.brand-dash__table th {
+  width: 46%;
+  font: var(--hx-frame-font-small);
+  font-weight: 500;
+  color: var(--hx-frame-muted);
+}
+
+.brand-dash__table b {
+  font-family: var(--hx-font-mono);
+  font-weight: 600;
+  color: var(--hx-frame-ink);
+}
+
+.brand-dash__table small {
+  display: block;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-muted);
+}
+
+/* 檢查清單（分級色） */
+.brand-dash__checks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--hx-space-2);
+}
+
+.brand-dash__check {
+  display: flex;
+  gap: var(--hx-space-2);
+  align-items: flex-start;
+  font-size: 0.86rem;
+  color: var(--hx-frame-ink);
+}
+
+.brand-dash__checkIcon {
+  flex: none;
+  font-weight: 700;
+}
+
+/* 圖示用 CSS 畫，不放 emoji（專案門禁：不用 emoji）。 */
+.brand-dash__check--error .brand-dash__checkIcon::before { content: '\00D7'; color: var(--hx-frame-danger); }
+.brand-dash__check--warn .brand-dash__checkIcon::before { content: '!'; color: var(--hx-frame-warning); }
+.brand-dash__check--info .brand-dash__checkIcon::before { content: 'i'; color: var(--hx-frame-muted); font-style: italic; }
+
+/* 起步清單 */
+.brand-dash__checklist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--hx-space-2);
+}
+
+.brand-dash__checklistItem {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: var(--hx-space-3);
+  padding: var(--hx-space-3);
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-sm);
+  background: var(--hx-bg-primary);
+}
+
+.brand-dash__checklistItem b {
+  display: block;
+  font-size: 0.88rem;
+  color: var(--hx-frame-ink);
+  margin-bottom: 2px;
+}
+
+.brand-dash__checklistItem p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--hx-frame-secondary);
+}
+
+.brand-dash__status {
+  font: var(--hx-frame-font-small);
+  font-weight: 600;
+  border: 1px solid var(--hx-frame-border);
+  border-radius: 99px;
+  padding: 2px 10px;
+  align-self: start;
+  text-align: center;
+  color: var(--hx-frame-secondary);
+}
+
+.brand-dash__checklistItem--done .brand-dash__status { color: var(--hx-frame-success); }
+.brand-dash__checklistItem--doing .brand-dash__status { color: var(--hx-frame-accent); }
+
+/* 下游建議 */
+.brand-dash__hints {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--hx-space-2);
+}
+
+.brand-dash__hints li {
+  font-size: 0.86rem;
+  color: var(--hx-frame-ink);
+  line-height: 1.5;
+}
+
+.brand-dash__hints li b {
+  color: var(--hx-frame-accent);
+}
+
+.brand-dash__hints small {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--hx-frame-muted);
+}
+
+.brand-dash__empty {
+  color: var(--hx-frame-muted);
+  font-style: italic;
+}
+
+/* 標題 eyebrow 與進度 pill */
+.brand-dash__eyebrow {
+  font: var(--hx-frame-font-small);
+  font-family: var(--hx-font-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--hx-frame-muted);
+}
+
+.brand-dash__prog {
+  display: inline-block;
+  justify-self: start;
+  font: var(--hx-frame-font-small);
+  font-family: var(--hx-font-mono);
+  border: 1px solid var(--hx-frame-border);
+  border-radius: 99px;
+  padding: 4px 12px;
+  background: var(--hx-bg-primary);
+  color: var(--hx-frame-secondary);
+}
+
+.brand-dash__secLead {
+  margin: 0;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-muted);
+  max-width: 72ch;
+}
+
+/* 下游建議卡片 */
+.brand-dash__hint {
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-sm);
+  padding: 12px 16px;
+  font-size: 0.82rem;
+  color: var(--hx-frame-ink);
+  line-height: 1.5;
+}
+
+.brand-dash__hint b {
+  color: var(--hx-frame-accent);
+}
+
+.brand-dash__hint small {
+  display: block;
+  color: var(--hx-frame-muted);
+  margin-top: 2px;
+}
+
+/* 起步清單狀態色（todo=待辦、doing=進行中、done=完成、later=稍後、check=查證）。 */
+.brand-dash__status--todo { color: var(--hx-frame-warning); border-color: var(--hx-frame-warning); background: var(--hx-frame-surface); }
+.brand-dash__status--doing { color: var(--hx-frame-accent); border-color: var(--hx-frame-accent); background: var(--hx-frame-accent-soft); }
+.brand-dash__status--done { color: var(--hx-frame-success); border-color: var(--hx-frame-success); background: var(--hx-frame-surface); }
+.brand-dash__status--later { color: var(--hx-frame-muted); border-color: var(--hx-frame-border); background: var(--hx-frame-surface); }
+.brand-dash__status--check { color: var(--hx-frame-warning); border-color: var(--hx-frame-warning); background: var(--hx-frame-surface); }
+
+.brand-dash__checklistItem a {
+  font-size: 0.78rem;
+  margin-right: 12px;
+  color: var(--hx-frame-accent);
+}
+
+/* ── Brand 全景 dashboard（overview grid + stage 卡片） ────── */
+
+.brand-overview {
+  display: grid;
+  gap: var(--hx-space-6);
+}
+
+.brand-dash__progLabel {
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+  white-space: nowrap;
+}
+
+.brand-overview__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--hx-space-3);
+}
+
+.brand-overview__card {
+  display: grid;
+  gap: var(--hx-space-2);
+  align-content: start;
+  text-align: left;
+  padding: var(--hx-space-4);
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-md);
+  background: var(--hx-bg-primary);
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+  font: inherit;
+  color: inherit;
+}
+
+.brand-overview__card:hover {
+  border-color: var(--hx-frame-accent);
+  transform: translateY(-1px);
+}
+
+.brand-overview__card:focus-visible {
+  outline: 2px solid var(--hx-frame-accent);
+  outline-offset: 2px;
+}
+
+.brand-overview__cardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--hx-space-2);
+}
+
+.brand-overview__cardNum {
+  font-family: var(--hx-font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  color: var(--hx-frame-muted);
+}
+
+.brand-overview__cardStatus {
+  font: var(--hx-frame-font-small);
+  border: 1px solid var(--hx-frame-border);
+  border-radius: 99px;
+  padding: 2px 10px;
+  color: var(--hx-frame-secondary);
+  background: var(--hx-bg-primary);
+}
+
+.brand-overview__card--done .brand-overview__cardStatus {
+  color: var(--hx-frame-success);
+  border-color: var(--hx-frame-success);
+}
+
+.brand-overview__card--doing .brand-overview__cardStatus {
+  color: var(--hx-frame-accent);
+  border-color: var(--hx-frame-accent);
+  background: var(--hx-frame-accent-soft);
+}
+
+.brand-overview__card--todo {
+  opacity: 0.72;
+}
+
+.brand-overview__cardName {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--hx-frame-ink);
+  line-height: 1.3;
+}
+
+.brand-overview__cardBar {
+  height: 6px;
+  border-radius: 99px;
+  background: var(--hx-frame-border);
+  overflow: hidden;
+}
+
+.brand-overview__cardBar i {
+  display: block;
+  height: 100%;
+  background: var(--hx-frame-accent);
+  transition: width 0.25s;
+}
+
+.brand-overview__card--done .brand-overview__cardBar i {
+  background: var(--hx-frame-success);
+}
+
+.brand-overview__cardSummary {
+  font-size: 0.82rem;
+  color: var(--hx-frame-secondary);
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.brand-overview__cardMissing {
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-warning);
+}
+
+/* 返回按鈕（stage 詳情內） */
+.brand-build__back {
+  justify-self: start;
+  font: var(--hx-frame-font-small);
+  border: 1px solid var(--hx-frame-border);
+  border-radius: 99px;
+  padding: 5px 14px;
+  background: var(--hx-bg-primary);
+  color: var(--hx-frame-secondary);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.brand-build__back:hover {
+  border-color: var(--hx-frame-accent);
+  color: var(--hx-frame-accent);
+}
+
+.brand-build__back::before {
+  content: '\2190\00A0';
+  font-family: var(--hx-font-mono);
+}
+
+/* ── Stage 專屬 dashboard（view 卡片 grid + edit 卡片 + agent） ────── */
+
+.brand-dash__body {
+  display: grid;
+  /* 同上：卡片的 min-content 會撐闊欄，窄螢幕就出橫向捲軸。 */
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--hx-space-5);
+}
+
+.brand-dash__topbar .brand-dash__progress {
+  flex: 1;
+  max-width: 420px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--hx-space-2);
+  align-items: center;
+}
+
+/* view 模式：卡片 grid（每張卡可點入） */
+.brand-cardgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--hx-space-3);
+}
+
+.brand-cardgrid__card {
+  display: grid;
+  gap: var(--hx-space-2);
+  align-content: start;
+  text-align: left;
+  /* 卡片內容（長標題／膠囊）min-content 可以大過欄寬：唔鎖 0 就會撐出橫向捲軸。 */
+  min-width: 0;
+  padding: var(--hx-space-4);
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-md);
+  background: var(--hx-bg-primary);
+  cursor: default;
+  font: inherit;
+  color: inherit;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+}
+
+.brand-cardgrid__card:hover {
+  border-color: var(--hx-frame-accent);
+  box-shadow: var(--hx-shadow-sm);
+  transform: translateY(-1px);
+}
+
+.brand-cardgrid__card:focus-visible {
+  outline: 2px solid var(--hx-frame-accent);
+  outline-offset: 2px;
+}
+
+.brand-cardgrid__cardTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--hx-space-2);
+}
+
+.brand-cardgrid__cardTitle {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--hx-frame-ink);
+  line-height: 1.35;
+}
+
+.brand-cardgrid__cardCount {
+  flex: none;
+  font: var(--hx-frame-font-small);
+  border: 1px solid var(--hx-frame-border);
+  border-radius: 99px;
+  padding: 2px 9px;
+  color: var(--hx-frame-secondary);
+  white-space: nowrap;
+}
+
+/* 卡片右上角：檔案數（有先出）＋ 填寫進度 */
+.brand-cardgrid__cardMeta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+}
+
+.brand-cardgrid__cardFiles {
+  font: var(--hx-frame-font-small);
+  border: 1px solid var(--hx-frame-border);
+  border-radius: 99px;
+  padding: 2px 9px;
+  color: var(--hx-frame-secondary);
+  background: var(--hx-frame-surface);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.brand-edit__error {
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-danger);
+}
+
+
+
+
+
+.brand-edit__group {
+  margin-top: var(--hx-space-3);
+}
+
+.brand-edit__groupTitle {
+  display: block;
+  margin-bottom: var(--hx-space-2);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--hx-frame-muted);
+}
+
+.brand-edit__dim {
+  margin-top: var(--hx-space-4);
+  padding-top: var(--hx-space-3);
+  border-top: 1px solid var(--hx-frame-border);
+}
+
+.brand-edit__dimTitle {
+  display: block;
+  margin-bottom: var(--hx-space-1);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--hx-frame-ink);
+}
+
+.brand-edit__dimQ {
+  margin: 0 0 var(--hx-space-2);
+  font-size: 0.8rem;
+  color: var(--hx-frame-secondary);
+}
+
+.brand-edit__options {
+  display: grid;
+  gap: var(--hx-space-2);
+}
+
+.brand-edit__opt {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--hx-space-2);
+  align-items: baseline;
+  padding: var(--hx-space-2) var(--hx-space-3);
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-sm);
+  background: var(--hx-bg-primary);
+  cursor: pointer;
+  font-size: 0.86rem;
+  color: var(--hx-frame-ink);
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.brand-edit__opt:hover {
+  border-color: var(--hx-frame-accent);
+}
+
+.brand-edit__opt--on {
+  border-color: var(--hx-frame-accent);
+  background: var(--hx-frame-accent-soft);
+}
+
+.brand-edit__opt input[type='checkbox'] {
+  flex: none;
+  margin: 0;
+  accent-color: var(--hx-frame-accent);
+}
+
+.brand-edit__optLabel {
+  font-weight: 600;
+}
+
+/* 有圖的選項：圖在上、字在下，像一張材質卡｜顏色卡，而不是純文字 checkbox。 */
+.brand-edit__opt--img {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+}
+
+.brand-edit__optImg {
+  display: block;
+  width: 100%;
+  /* 4:3 比 1:1 省位，一面牆的選項仍然一眼掃得完。 */
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: var(--hx-radius-sm);
+  background: var(--hx-frame-surface);
+  margin-bottom: 2px;
+}
+
+.brand-edit__optMain {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+}
+
+.brand-edit__optDesc {
+  color: var(--hx-frame-secondary);
+  font-size: 0.8rem;
+}
+
+.brand-edit__optLic {
+  flex-basis: 100%;
+  font-size: 0.76rem;
+  color: var(--hx-frame-warning);
+  line-height: 1.4;
+}
+
+/* radio 型（單選維度） */
+button.brand-edit__opt--radio {
+  text-align: left;
+  font: inherit;
+}
+
+.brand-edit__text {
+  margin-top: var(--hx-space-3);
+}
+
+.brand-edit__input,
+.brand-edit__textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--hx-space-2) var(--hx-space-3);
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-sm);
+  background: var(--hx-bg-primary);
+  font: inherit;
+  color: var(--hx-frame-ink);
+}
+
+.brand-edit__input:focus,
+.brand-edit__textarea:focus {
+  outline: 2px solid var(--hx-frame-accent);
+  outline-offset: 0;
+  border-color: var(--hx-frame-accent);
+}
+
+.brand-edit__textarea {
+  resize: vertical;
+  min-height: 64px;
+  line-height: 1.5;
+}
+
+/* 刻度 slider */
+.brand-edit__dial {
+  margin-top: var(--hx-space-4);
+  padding-top: var(--hx-space-3);
+  border-top: 1px solid var(--hx-frame-border);
+}
+
+/* ── Brand 階段頁：頂欄、KPI、區塊卡、詳細面板、表單 ─────────── */
+
+.brand-overview__summary {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-4);
+  flex-wrap: wrap;
+}
+
+.brand-overview__summary .brand-dash__progress {
+  flex: 1;
+  min-width: 280px;
+}
+
+.brand-overview__total {
+  font: var(--hx-frame-font-small);
+  font-family: var(--hx-font-mono);
+  color: var(--hx-frame-secondary);
+  border: 1px solid var(--hx-frame-border);
+  border-radius: 99px;
+  padding: 4px 12px;
+  white-space: nowrap;
+}
+
+.brand-overview__cardBar {
+  display: block;
+  height: 6px;
+  border-radius: 99px;
+  background: var(--hx-frame-surface);
+  overflow: hidden;
+}
+
+.brand-overview__cardBar i {
+  display: block;
+  height: 100%;
+  background: var(--hx-frame-accent);
+  transition: width 0.25s;
+}
+
+.brand-overview__cardFoot {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-muted);
+}
+
+.brand-overview__cardPct {
+  font-family: var(--hx-font-mono);
+  color: var(--hx-frame-ink);
+}
+
+.brand-stage__bar {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-4);
+  flex-wrap: wrap;
+  padding-bottom: var(--hx-space-3);
+  border-bottom: 1px solid var(--hx-frame-border);
+}
+
+.brand-stage__ident {
+  display: flex;
+  align-items: baseline;
+  gap: var(--hx-space-2);
+}
+
+.brand-stage__progress {
+  flex: 1;
+  min-width: 220px;
+  max-width: 420px;
+  margin-left: auto;
+}
+
+/* 失效答案提示 */
+.brand-dash__stale {
+  display: grid;
+  gap: var(--hx-space-1);
+  padding: var(--hx-space-3) var(--hx-space-4);
+  border: 1px solid var(--hx-frame-warning);
+  border-radius: var(--hx-radius-md);
+  background: var(--hx-bg-primary);
+}
+
+.brand-dash__stale b {
+  font-size: 0.88rem;
+  color: var(--hx-frame-warning);
+}
+
+.brand-dash__stale p {
+  margin: 0;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+}
+
+.brand-dash__staleList {
+  font-family: var(--hx-font-mono);
+  font-size: 0.78rem;
+  color: var(--hx-frame-muted);
+  word-break: break-all;
+}
+
+/* 區塊 band */
+.brand-dash__band {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--hx-space-3);
+}
+
+.brand-dash__bandTitle {
+  margin: 0;
+  font: var(--hx-frame-font-small);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--hx-frame-muted);
+}
+
+.brand-cardgrid__cardBar {
+  display: block;
+  height: 4px;
+  border-radius: 99px;
+  background: var(--hx-frame-surface);
+  overflow: hidden;
+}
+
+.brand-cardgrid__cardBar i {
+  display: block;
+  height: 100%;
+  background: var(--hx-frame-accent);
+  transition: width 0.25s;
+}
+
+.brand-cardgrid__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.brand-cardgrid__chip {
+  font-size: 0.78rem;
+  line-height: 1.4;
+  padding: 2px 9px;
+  border-radius: 99px;
+  background: var(--hx-frame-surface);
+  color: var(--hx-frame-secondary);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.brand-cardgrid__chip--more {
+  font-family: var(--hx-font-mono);
+  color: var(--hx-frame-muted);
+}
+
+.brand-cardgrid__card--empty {
+  border-style: dashed;
+}
+
+.brand-cardgrid__card--empty .brand-cardgrid__cardTitle {
+  color: var(--hx-frame-secondary);
+  font-weight: 500;
+}
+
+.brand-dash__block--empty {
+  border-style: dashed;
+}
+
+/* 編輯模式 */
+.brand-edit__state {
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-muted);
+}
+
+.brand-edit__state--dirty {
+  color: var(--hx-frame-warning);
+}
+
+
+.brand-edit__opt--off {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.brand-edit__staleNote {
+  margin: var(--hx-space-2) 0 0;
+  font: var(--hx-frame-font-small);
+  font-family: var(--hx-font-mono);
+  color: var(--hx-frame-warning);
+}
+
+.brand-edit__clear {
+  margin-top: var(--hx-space-2);
+  font: var(--hx-frame-font-small);
+  padding: 3px 10px;
+  border: 1px solid var(--hx-frame-border);
+  border-radius: 99px;
+  background: var(--hx-bg-primary);
+  color: var(--hx-frame-secondary);
+  cursor: pointer;
+}
+
+.brand-edit__clear:hover {
+  border-color: var(--hx-frame-accent);
+  color: var(--hx-frame-accent);
+}
+
+.brand-edit__dialRow {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.brand-edit__dialStep {
+  font: var(--hx-frame-font-small);
+  padding: 6px 12px;
+  border: 1px solid var(--hx-frame-border);
+  border-radius: 99px;
+  background: var(--hx-bg-primary);
+  color: var(--hx-frame-secondary);
+  cursor: pointer;
+}
+
+.brand-edit__dialStep--on {
+  border-color: var(--hx-frame-accent);
+  background: var(--hx-frame-accent-soft);
+  color: var(--hx-frame-accent);
+}
+
+.brand-edit__dialEnds {
+  display: flex;
+  justify-content: space-between;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-muted);
+  margin-top: 4px;
+}
+
+/* ── 收緊排版：4 欄總覽、選項多欄、編輯工具列固定 ───────────── */
+
+.brand-overview__grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+@media (max-width: 1280px) {
+  .brand-overview__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 900px) {
+  .brand-overview__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 620px) {
+  .brand-overview__grid { grid-template-columns: minmax(0, 1fr); }
+  /* 窄螢幕：進度獨佔一行，唔好同「返回／上一站／下一站」爭位。 */
+  .brand-stage__bar { gap: var(--hx-space-2); }
+  .brand-stage__ident { padding-left: 0; border-left: 0; }
+  .brand-stage__progress { flex: 1 1 100%; min-width: 0; max-width: none; margin-left: 0; }
+}
+
+.brand-stage__ident h2 {
+  font-size: 1.35rem;
+}
+
+.brand-cardgrid__cardTitle {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.brand-cardgrid__cardTop {
+  align-items: flex-start;
+}
+
+.brand-edit__options {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 6px;
+}
+
+.brand-edit__opt {
+  height: 100%;
+}
+
+
+.brand-stage__saved {
+  margin: 0;
+  align-self: start;
+  padding: 6px 12px;
+  border: 1px solid var(--hx-frame-success);
+  border-radius: 99px;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-success);
+  background: var(--hx-bg-primary);
+  justify-self: start;
+}
+
+.brand-stage__ident {
+  padding-left: var(--hx-space-3);
+  border-left: 1px solid var(--hx-frame-border);
+}
+
+.brand-edit__opt {
+  align-items: flex-start;
+  text-align: left;
+}
+
+
+/* 文字欄多的區塊排兩至三欄，唔使一路捲 */
+
+
+/* Agent JSON 可以很長（stage4f 54KB），限制高度並可捲，唔好推走其他內容 */
+.brand-dash__ctx {
+  max-height: 420px;
+  overflow: auto;
+}
+
+/* ── 卡片直接顯示內容，點一下就地編輯 ───────────────────── */
+
+.brand-stage__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+  flex-wrap: wrap;
+}
+
+.brand-cardgrid {
+  grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+  align-items: start;
+}
+
+.brand-cardgrid__rows {
+  display: grid;
+  gap: 7px;
+}
+
+.brand-cardgrid__row {
+  display: grid;
+  grid-template-columns: minmax(0, 124px) minmax(0, 1fr);
+  gap: var(--hx-space-3);
+  align-items: start;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.brand-cardgrid__rowLabel {
+  color: var(--hx-frame-muted);
+}
+
+.brand-cardgrid__rowValue {
+  color: var(--hx-frame-ink);
+  min-width: 0;
+}
+
+.brand-cardgrid__rowValue--empty {
+  color: var(--hx-frame-muted);
+}
+
+.brand-cardgrid__text {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.brand-cardgrid__more {
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-muted);
+}
+
+
+.brand-cardgrid__cardCount--done {
+  border-color: var(--hx-frame-success);
+  color: var(--hx-frame-success);
+}
+
+
+
+
+
+.brand-edit__fields {
+  display: grid;
+  gap: var(--hx-space-4);
+}
+
+.brand-edit__fields[data-edit-kind='text'] {
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  column-gap: var(--hx-space-5);
+}
+
+
+/* AI Agent JSON 面板 */
+.brand-agent {
+  display: grid;
+  gap: var(--hx-space-4);
+  padding: var(--hx-space-4);
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-md);
+  background: var(--hx-frame-surface);
+}
+
+.brand-agent__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--hx-space-3);
+  flex-wrap: wrap;
+}
+
+.brand-agent__title {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--hx-frame-ink);
+}
+
+.brand-agent__lead {
+  margin: 2px 0 0;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+}
+
+/* 一格都未填：講清楚為甚麼是空，不要放一個空 pre 扮有資料。 */
+.brand-agent__empty {
+  margin: 0;
+  padding: var(--hx-space-4);
+  border: 1px dashed var(--hx-frame-border);
+  border-radius: var(--hx-radius-md);
+  color: var(--hx-frame-secondary);
+  font: var(--hx-frame-font-small);
+  text-align: center;
+}
+
+/* stage 級核准狀態面板。 */
+.brand-approval__body {
+  display: grid;
+  gap: var(--hx-space-3);
+}
+
+.brand-approval__field {
+  display: grid;
+  gap: var(--hx-space-1);
+}
+
+.brand-approval__field > span {
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+}
+
+.brand-approval__field select,
+.brand-approval__field input,
+.brand-approval__field textarea {
+  width: 100%;
+  padding: var(--hx-space-2);
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-sm);
+  background: var(--hx-frame-bg);
+  color: var(--hx-frame-ink);
+  font: var(--hx-frame-font);
+}
+
+.brand-approval__field textarea {
+  resize: vertical;
+  min-height: 56px;
+}
+
+.brand-approval__meta {
+  margin: 0;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-muted);
+}
+
+.brand-approval__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* 卡片值唔好拉成橫條 */
+.brand-cardgrid__rowValue > .brand-cardgrid__chip {
+  display: inline-block;
+  max-width: 100%;
+}
+
+.brand-cardgrid {
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+}
+
+/* 窄螢幕：400px 起的固定欄放唔落，改單欄，唔好出橫向捲軸。 */
+@media (max-width: 720px) {
+  .brand-cardgrid { grid-template-columns: minmax(0, 1fr); }
+}
+
+.brand-cardgrid__row {
+  grid-template-columns: minmax(0, 148px) minmax(0, 1fr);
+}
+
+
+
+/* Agent 面板內按鈕唔好撐滿 */
+.brand-agent .design-btn {
+  justify-self: start;
+}
+
+.brand-cardgrid__row--solo {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.brand-cardgrid__row--solo .brand-cardgrid__rowValue {
+  font-size: 0.86rem;
+}
+
+/* ── 區塊卡：內容可按，工具列另計 ─────────────────────────── */
+
+/*
+ * 一張卡有兩個可互動區：上半是按了就改選項的內容，下半是 prompt／檔案／
+ * 決策／歷史四個工具。按鈕包不住按鈕，所以卡本身是 article，
+ * 內容那個 area 自己是一個 button。
+ */
+.brand-cardgrid__hit {
+  display: grid;
+  gap: var(--hx-space-2);
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.brand-cardgrid__hit:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.brand-cardgrid__cardIdent {
+  display: flex;
+  align-items: baseline;
+  gap: var(--hx-space-2);
+  min-width: 0;
+}
+
+.brand-cardgrid__cardCode {
+  flex: none;
+  padding: 1px 5px;
+  border: 1px solid var(--hx-frame-border);
+  border-radius: 4px;
+  font: var(--hx-frame-font-small);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.03em;
+  color: var(--hx-frame-muted);
+}
+
+
+
+
+
+
+
+
+
+
+/* ── 卡內面板（prompt／檔案／決策／歷史） ─────────────────── */
+
+.brand-block {
+  display: grid;
+  gap: var(--hx-space-3);
+  margin-top: var(--hx-space-3);
+  padding-top: var(--hx-space-3);
+  border-top: 1px solid var(--hx-frame-border);
+}
+
+.brand-block__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--hx-space-3);
+  flex-wrap: wrap;
+}
+
+.brand-block__headText {
+  min-width: 0;
+}
+
+.brand-block__title {
+  display: block;
+  font-size: 0.88rem;
+  color: var(--hx-frame-ink);
+}
+
+.brand-block__lead {
+  margin: 2px 0 0;
+  max-width: 62ch;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+  line-height: 1.5;
+}
+
+.brand-block__headActions {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+  flex-wrap: wrap;
+}
+
+.brand-block__promptEdit {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: var(--hx-space-3);
+  min-height: 260px;
+  max-height: 520px;
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-sm);
+  background: var(--hx-frame-surface);
+  font-family: var(--hx-font-mono);
+  font-size: 0.76rem;
+  line-height: 1.6;
+  color: var(--hx-frame-ink);
+  resize: vertical;
+}
+
+.brand-block__empty {
+  margin: 0;
+  padding: var(--hx-space-3);
+  border: 1px dashed var(--hx-frame-border);
+  border-radius: var(--hx-radius-sm);
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-muted);
+}
+
+.brand-block__fileInput {
+  display: none;
+}
+
+.brand-block__files {
+  display: grid;
+  gap: var(--hx-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.brand-block__file {
+  display: grid;
+  gap: var(--hx-space-2);
+  padding: var(--hx-space-2) var(--hx-space-3);
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-sm);
+  background: var(--hx-bg-primary);
+}
+
+.brand-block__fileText {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.brand-block__fileName {
+  font-size: 0.84rem;
+  color: var(--hx-frame-ink);
+  overflow-wrap: anywhere;
+}
+
+.brand-block__fileMeta {
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.brand-block__fileActions {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+  flex-wrap: wrap;
+}
+
+a.design-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.brand-block__nameInput {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.brand-block__decision {
+  min-height: 120px;
+}
+
+.brand-block__foot {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-3);
+  flex-wrap: wrap;
+}
+
+.brand-block__meta {
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-muted);
+}
+
+.brand-block__saved {
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-success);
+}
+
+.brand-block__foot .design-btn {
+  margin-left: auto;
+}
+
+.brand-block__history {
+  display: grid;
+  gap: var(--hx-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.brand-block__event {
+  display: grid;
+  grid-template-columns: 96px 108px minmax(0, 1fr);
+  gap: var(--hx-space-2);
+  align-items: start;
+  padding: var(--hx-space-2) var(--hx-space-3);
+  border-left: 2px solid var(--hx-frame-border);
+  background: var(--hx-frame-surface);
+  border-radius: var(--hx-radius-sm);
+}
+
+.brand-block__event--decision {
+  border-left-color: var(--hx-frame-accent);
+}
+
+.brand-block__event--file-add {
+  border-left-color: var(--hx-frame-success);
+}
+
+.brand-block__event--file-remove {
+  border-left-color: var(--hx-frame-muted);
+}
+
+.brand-block__eventAt {
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.brand-block__eventKind {
+  font: var(--hx-frame-font-small);
+  font-weight: 600;
+  color: var(--hx-frame-secondary);
+}
+
+.brand-block__eventText {
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--hx-frame-ink);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.brand-block__eventWho {
+  grid-column: 3;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-muted);
+}
+
+/* 編輯模式的位置編號與 prompt 列 */
+
+
+
+
+
+
+@media (max-width: 900px) {
+  .brand-block__event {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .brand-block__eventWho {
+    grid-column: 1;
+  }
+}
+
+/* 卡片上的決策摘要：不開面板都睇得到最後定了甚麼 */
+.brand-cardgrid__decisionLine {
+  display: grid;
+  gap: 1px;
+  margin-top: var(--hx-space-2);
+  padding-top: var(--hx-space-2);
+  border-top: 1px solid var(--hx-frame-border);
+}
+
+.brand-cardgrid__decisionLine b {
+  font: var(--hx-frame-font-small);
+  font-weight: 600;
+  color: var(--hx-frame-success);
+}
+
+.brand-cardgrid__decisionLine span {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--hx-frame-secondary);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ── 打開的卡：一格的完整工作面 ─────────────────────────── */
+
+/*
+ * 格上只睇內容，工具全部收在卡內：點開之後才見 prompt、決策、檔案、歷史。
+ * 頂欄 sticky，捲到卡底仍然按得到「複製 Prompt」與「關閉」。
+ */
+.brand-cardgrid__card--open {
+  grid-column: 1 / -1;
+  /* 開關 prompt 會改變卡的高度：唔好讓 browser 自己補捲，位置由程式決定。 */
+  overflow-anchor: none;
+  gap: var(--hx-space-4);
+  padding: var(--hx-space-4) var(--hx-space-5) var(--hx-space-5);
+  border-color: var(--hx-frame-accent);
+  box-shadow: var(--hx-shadow-md);
+  cursor: default;
+}
+
+.brand-cardgrid__card--open:hover {
+  transform: none;
+  border-color: var(--hx-frame-accent);
+}
+
+.brand-open__head {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--hx-space-3);
+  flex-wrap: wrap;
+  padding: var(--hx-space-2) 0 var(--hx-space-3);
+  border-bottom: 1px solid var(--hx-frame-border);
+  /* sticky 之後內容會由下面滑過：一個淡影令邊界讀起來是「工具列」，不是斷字。 */
+  box-shadow: var(--hx-shadow-sm);
+  background: var(--hx-bg-primary);
+}
+
+.brand-open__ident {
+  display: flex;
+  align-items: baseline;
+  gap: var(--hx-space-2);
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.brand-open__code {
+  flex: none;
+  padding: 1px 6px;
+  border: 1px solid var(--hx-frame-border);
+  border-radius: 4px;
+  font: var(--hx-frame-font-small);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.03em;
+  color: var(--hx-frame-muted);
+}
+
+.brand-open__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--hx-frame-ink);
+}
+
+.brand-open__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-2);
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+/* 關閉：圓形 ×，hover 才轉紅，唔搶走「儲存」的注意力。 */
+.brand-open__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--hx-frame-border);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--hx-frame-secondary);
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.brand-open__close:hover {
+  border-color: var(--hx-frame-danger);
+  color: var(--hx-frame-danger);
+  background: var(--hx-frame-surface);
+}
+
+.brand-open__close:focus-visible {
+  outline: 2px solid var(--hx-frame-accent);
+  outline-offset: 2px;
+}
+
+.brand-open__body {
+  display: grid;
+  gap: var(--hx-space-5);
+}
+
+.brand-open__body .brand-block {
+  margin-top: 0;
+}
+
+/* 節數標題右邊的計數（檔案幾份、歷史幾條）。 */
+.brand-block__count {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 7px;
+  border: 1px solid var(--hx-frame-border);
+  border-radius: 99px;
+  font: var(--hx-frame-font-small);
+  font-variant-numeric: tabular-nums;
+  color: var(--hx-frame-muted);
+}
+
+/* 打開的卡比格上的卡闊：決策與歷史都讀得舒服。 */
+.brand-cardgrid__card--open .brand-block__promptEdit,
+.brand-cardgrid__card--open .brand-block__decision {
+  max-width: 100%;
+}
+
+@media (max-width: 720px) {
+  .brand-cardgrid__card--open {
+    padding: var(--hx-space-3);
+  }
+
+  .brand-open__actions {
+    width: 100%;
+    margin-left: 0;
+  }
+}
+
+/* 檔案列：一行資料＋右邊動作，預覽另開一行（否則會把檔名擠到斷行） */
+.brand-block__fileRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--hx-space-3);
+  flex-wrap: wrap;
+}
+
+.brand-block__preview {
+  display: grid;
+  gap: var(--hx-space-2);
+  padding: var(--hx-space-2);
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-sm);
+  background: var(--hx-bg-primary);
+}
+
+.brand-block__previewImg {
+  display: block;
+  max-width: 100%;
+  max-height: 420px;
+  margin: 0 auto;
+  border-radius: var(--hx-radius-sm);
+  object-fit: contain;
+}
+
+.brand-block__previewFrame {
+  width: 100%;
+  height: 520px;
+  border: 0;
+  border-radius: var(--hx-radius-sm);
+  background: var(--hx-chrome-white);
+}
+
+.brand-block__previewMedia {
+  width: 100%;
+  max-height: 360px;
+  border-radius: var(--hx-radius-sm);
+}
+
+@media (max-width: 720px) {
+  .brand-block__previewFrame {
+    height: 380px;
+  }
+}
+
+/* ── 品牌模組：左欄品牌集樹 ＋ 內容 ───────────────────────── */
+
+/*
+ * 品牌模組自己帶一條左欄（資料夾 → 品牌集）。外殼那條由 `hideSidebar`
+ * 收起來，否則會出現兩條左欄，兩邊都叫「品牌」，內容卻不一樣。
+ */
+.brand-module {
+  display: grid;
+  grid-template-columns: 264px minmax(0, 1fr);
+  gap: var(--hx-space-5);
+  align-items: start;
+}
+
+.brand-module[data-brand-rail-open='false'] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.brand-module__main {
+  display: grid;
+  min-width: 0;
+  gap: var(--hx-space-4);
+}
+
+.brand-rail {
+  position: sticky;
+  top: 0;
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  /*
+   * 高度寫死到視窗：內容短嘅時候，右邊那條分隔線唔會在半空斷開；
+   * 內容長嘅時候自己捲，唔會把整頁拉長。
+   */
+  height: calc(100dvh - 190px);
+  overflow-y: auto;
+  padding-right: var(--hx-space-4);
+  border-right: 1px solid var(--hx-frame-border);
+}
+
+.brand-rail__search {
+  width: 100%;
+  margin-bottom: var(--hx-space-2);
+  padding: 7px 10px;
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-md);
+  background: var(--hx-bg-primary);
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-ink);
+}
+
+.brand-rail__search:focus-visible {
+  outline: 2px solid var(--hx-frame-accent);
+  outline-offset: 1px;
+}
+
+.brand-rail__overview {
+  display: grid;
+  gap: 1px;
+  justify-items: start;
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid transparent;
+  border-radius: var(--hx-radius-md);
+  background: none;
+  font: var(--hx-frame-font-small-lg);
+  color: var(--hx-frame-ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.brand-rail__overview small {
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-muted);
+}
+
+.brand-rail__overview:hover {
+  background: var(--hx-frame-surface);
+}
+
+.brand-rail__overview--active {
+  /* 用淡 tint 而唔用一條藍色 border：border 會讀成「呢格被 focus 住」。 */
+  background: var(--hx-frame-accent-soft);
+  color: var(--hx-frame-accent-fg);
+  font-weight: 600;
+}
+
+/* 五個用途組：左欄導航主軸。每組一個 header，下面列出歸屬的 stage 卡。 */
+.brand-rail__layerGroup {
+  margin-top: var(--hx-space-2);
+}
+
+.brand-rail__layerHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 2px 2px 10px;
+  font: var(--hx-frame-font-small);
+  letter-spacing: 0.06em;
+  color: var(--hx-frame-ink);
+  text-transform: uppercase;
+}
+
+.brand-rail__layerHeadLabel {
+  flex: 1;
+}
+
+/* 組 header 右邊的匯出 .md 按鈕（design.md／tokens）。 */
+.brand-rail__layerExport {
+  padding: 1px 7px;
+  border: 1px solid var(--hx-frame-border);
+  border-radius: 99px;
+  background: var(--hx-bg-primary);
+  font: var(--hx-frame-font-small);
+  letter-spacing: 0;
+  color: var(--hx-frame-secondary);
+  text-transform: none;
+  cursor: pointer;
+}
+
+.brand-rail__layerExport:hover {
+  border-color: var(--hx-frame-accent);
+  color: var(--hx-frame-accent);
+}
+
+.brand-rail__stage {
+  /* 與 .brand-rail__overview 同款，只是組內縮排一級。 */
+  padding-left: 20px;
+}
+
+.brand-rail__stage--set {
+  /* 品牌集卡：用淡色標示它們住在品牌集（多套），不是品牌層固定卡。 */
+  color: var(--hx-frame-secondary);
+}
+
+.brand-rail__stage--set small {
+  color: var(--hx-frame-muted);
+}
+
+.brand-rail__stage--set:hover {
+  color: var(--hx-frame-ink);
+}
+
+.brand-rail__head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: var(--hx-space-3);
+  padding: 0 2px 2px 10px;
+}
+
+.brand-rail__headLabel {
+  flex: 1;
+  font: var(--hx-frame-font-small);
+  letter-spacing: 0.06em;
+  color: var(--hx-frame-muted);
+  text-transform: uppercase;
+}
+
+.brand-rail__headBtn {
+  padding: 3px 7px;
+  border: 1px solid var(--hx-frame-border);
+  border-radius: 99px;
+  background: var(--hx-bg-primary);
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+  cursor: pointer;
+}
+
+.brand-rail__headBtn:hover {
+  border-color: var(--hx-frame-accent);
+  color: var(--hx-frame-accent);
+}
+
+.brand-rail__headBtn--strong {
+  color: var(--hx-frame-accent);
+  border-color: var(--hx-frame-accent);
+}
+
+.brand-rail__row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border-radius: var(--hx-radius-md);
+}
+
+.brand-rail__row:hover {
+  background: var(--hx-frame-surface);
+}
+
+.brand-rail__row--active {
+  background: var(--hx-frame-surface);
+}
+
+.brand-rail__rowMain {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 6px 4px 6px 10px;
+  border: 0;
+  background: none;
+  font: var(--hx-frame-font-small-lg);
+  color: var(--hx-frame-ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.brand-rail__row--active .brand-rail__rowMain {
+  font-weight: 600;
+  color: var(--hx-frame-accent);
+}
+
+.brand-rail__rowName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.brand-rail__row--folder .brand-rail__rowName {
+  color: var(--hx-frame-secondary);
+}
+
+.brand-rail__rowCount,
+.brand-rail__rowBadge {
+  flex: none;
+  min-width: 18px;
+  padding: 0 5px;
+  border: 1px solid var(--hx-frame-border);
+  border-radius: 99px;
+  font: var(--hx-frame-font-small);
+  font-variant-numeric: tabular-nums;
+  color: var(--hx-frame-secondary);
+  text-align: center;
+}
+
+.brand-rail__rowBadge {
+  border-color: transparent;
+  background: var(--hx-frame-surface);
+}
+
+.brand-rail__rowMenuBtn {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin-right: 4px;
+  border: 0;
+  border-radius: var(--hx-radius-sm);
+  background: none;
+  cursor: pointer;
+  opacity: 0;
+}
+
+.brand-rail__row:hover .brand-rail__rowMenuBtn,
+.brand-rail__rowMenuBtn:focus-visible {
+  opacity: 1;
+}
+
+.brand-rail__dots,
+.brand-rail__dots::before,
+.brand-rail__dots::after {
+  display: block;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--hx-frame-secondary);
+}
+
+.brand-rail__dots {
+  position: relative;
+}
+
+.brand-rail__dots::before,
+.brand-rail__dots::after {
+  content: '';
+  position: absolute;
+  top: 0;
+}
+
+.brand-rail__dots::before {
+  left: -5px;
+}
+
+.brand-rail__dots::after {
+  left: 5px;
+}
+
+.brand-rail__chev {
+  display: grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  color: var(--hx-frame-muted);
+  transition: transform 0.12s ease;
+}
+
+.brand-rail__chev--closed {
+  transform: rotate(-90deg);
+}
+
+.brand-rail__children {
+  display: grid;
+  gap: 1px;
+  margin-left: 12px;
+  padding-left: 8px;
+  border-left: 1px solid var(--hx-frame-border);
+}
+
+.brand-rail__childEmpty {
+  margin: 0;
+  padding: 4px 10px;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-muted);
+}
+
+.brand-rail__menu {
+  position: absolute;
+  top: calc(100% - 2px);
+  right: 2px;
+  z-index: 20;
+  display: grid;
+  min-width: 132px;
+  padding: 4px;
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-md);
+  background: var(--hx-bg-primary);
+  box-shadow: var(--hx-shadow-sm);
+}
+
+.brand-rail__menu button {
+  padding: 6px 10px;
+  border: 0;
+  border-radius: var(--hx-radius-sm);
+  background: none;
+  font: var(--hx-frame-font-small-lg);
+  color: var(--hx-frame-ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.brand-rail__menu button:hover {
+  background: var(--hx-frame-surface);
+}
+
+.brand-rail__danger {
+  color: var(--hx-frame-warning);
+}
+
+.brand-rail__move {
+  display: grid;
+  gap: 2px;
+  margin: 2px 0 2px 12px;
+  padding: 6px;
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-md);
+  background: var(--hx-bg-primary);
+}
+
+.brand-rail__moveLabel {
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-muted);
+}
+
+.brand-rail__moveItem,
+.brand-rail__moveCancel {
+  padding: 5px 8px;
+  border: 0;
+  border-radius: var(--hx-radius-sm);
+  background: none;
+  font: var(--hx-frame-font-small-lg);
+  color: var(--hx-frame-ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.brand-rail__moveItem:hover,
+.brand-rail__moveCancel:hover {
+  background: var(--hx-frame-surface);
+}
+
+.brand-rail__inline {
+  display: grid;
+  gap: 4px;
+  margin: 2px 0 4px 12px;
+}
+
+.brand-rail__inline--stack {
+  margin-left: 0;
+}
+
+.brand-rail__input {
+  width: 100%;
+  padding: 5px 8px;
+  border: 1px solid var(--hx-frame-accent);
+  border-radius: var(--hx-radius-sm);
+  background: var(--hx-bg-primary);
+  font: var(--hx-frame-font-small-lg);
+  color: var(--hx-frame-ink);
+}
+
+.brand-rail__inlineActions {
+  display: flex;
+  gap: 4px;
+}
+
+.brand-rail__miniBtn {
+  padding: 3px 9px;
+  border: 1px solid var(--hx-frame-border);
+  border-radius: 99px;
+  background: var(--hx-bg-primary);
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+  cursor: pointer;
+}
+
+.brand-rail__miniBtn:hover {
+  border-color: var(--hx-frame-accent);
+  color: var(--hx-frame-accent);
+}
+
+.brand-rail__note {
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+  margin: 4px 0 0 10px;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-muted);
+}
+
+.brand-rail__error {
+  margin: 4px 0 0 10px;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-warning);
+}
+
+.brand-rail__deleted {
+  margin-top: var(--hx-space-3);
+  padding-top: var(--hx-space-2);
+  border-top: 1px solid var(--hx-frame-border);
+}
+
+.brand-rail__deletedToggle {
+  padding: 4px 10px;
+  border: 0;
+  background: none;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-muted);
+  cursor: pointer;
+}
+
+.brand-rail__restore {
+  margin-right: 4px;
+  padding: 2px 8px;
+  border: 1px solid var(--hx-frame-border);
+  border-radius: 99px;
+  background: var(--hx-bg-primary);
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-accent);
+  cursor: pointer;
+}
+
+/* 品牌集自己的頁頭：麵包屑已經講「品牌集」，這裡只講是哪一套。 */
+.brand-set__head {
+  display: grid;
+  gap: 2px;
+  padding-bottom: var(--hx-space-3);
+  border-bottom: 1px solid var(--hx-frame-border);
+}
+
+.brand-set__title {
+  margin: 0;
+  font: var(--hx-frame-font-card);
+  color: var(--hx-frame-ink);
+}
+
+.brand-set__lead,
+.brand-core__lead {
+  margin: 0;
+  font: var(--hx-frame-font-small-lg);
+  color: var(--hx-frame-secondary);
+}
+
+.brand-core__lead {
+  padding-bottom: var(--hx-space-2);
+  border-bottom: 1px solid var(--hx-frame-border);
+}
+
+@media (max-width: 980px) {
+  .brand-module {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .brand-rail {
+    position: static;
+    height: auto;
+    padding: 0 0 var(--hx-space-4);
+    border-right: 0;
+    border-bottom: 1px solid var(--hx-frame-border);
+  }
+}
+
+/* ── 五層投影頁（LayerScreen） ─────────────────────────────── */
+
+.brand-layer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hx-space-4);
+}
+
+.brand-layer__head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hx-space-2);
+}
+
+.brand-layer__title {
+  margin: 0;
+  font-size: var(--hx-font-size-xl);
+  line-height: 1.25;
+}
+
+.brand-layer__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--hx-space-3);
+}
+
+.brand-layer__maturity {
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-muted);
+}
+
+.brand-layer__conflicts {
+  padding: var(--hx-space-3);
+  border: 1px solid var(--hx-frame-border);
+  border-left: 3px solid var(--hx-frame-accent-fg);
+  border-radius: var(--hx-radius-md);
+}
+
+.brand-layer__conflicts ul {
+  margin: var(--hx-space-2) 0 0;
+  padding-left: var(--hx-space-4);
+}
+
+.brand-layer__sub {
+  margin: 0;
+  font-size: var(--hx-font-size-base);
+  line-height: 1.4;
+}
+
+.brand-layer__section {
+  padding: var(--hx-space-4);
+  border: 1px solid var(--hx-frame-border);
+  border-radius: var(--hx-radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--hx-space-2);
+}
+
+.brand-layer__sectionHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--hx-space-2);
+}
+
+.brand-layer__body {
+  margin: 0;
+  padding: var(--hx-space-3);
+  background: var(--hx-frame-subtle, var(--hx-frame-bg));
+  border-radius: var(--hx-radius-sm);
+  white-space: pre-wrap;
+  font: var(--hx-frame-font-mono);
+  line-height: 1.6;
+}
+
+.brand-layer__rationale {
+  margin: 0;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+}
+
+.brand-layer__approval {
+  margin: 0;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-muted);
+}
+
+.brand-layer__raw {
+  padding: var(--hx-space-3);
+  border: 1px dashed var(--hx-frame-border);
+  border-radius: var(--hx-radius-md);
+}
+
+.brand-layer__raw summary {
+  cursor: pointer;
+  font: var(--hx-frame-font-small);
+  color: var(--hx-frame-secondary);
+}
+
+.brand-layer__raw pre {
+  margin: var(--hx-space-2) 0 0;
+  white-space: pre-wrap;
+  font: var(--hx-frame-font-mono);
+  line-height: 1.6;
 }

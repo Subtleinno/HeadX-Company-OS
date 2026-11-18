@@ -1,56 +1,28 @@
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { t } from '@company-os/i18n';
-import {
-  createBrand,
-  type BrandItem,
-  type KnowledgeDocView,
-  type MaterialView,
-  type ProjectFormat,
-  type PublicUser,
-} from '../api';
+import type { ReactNode } from 'react';
+import type { BrandItem, PublicUser } from '../api';
 import { AppFrame } from '../frame/AppFrame';
-import {
-  DESIGN_NAV,
-  navLabel,
-  pageApiKey,
-  resolveNav,
-  withBrandPages,
-  withKnowledgeDocuments,
-  type KnowledgeNavDocument,
-  type NavPosition,
-} from '../frame/appNav';
+import { DESIGN_NAV, resolveNav, type NavPosition } from '../frame/appNav';
 import { useBrands, useSelectedBrand } from '../frame/useDirectory';
 import { navigatePath, useHashPath } from '../router';
-import { BrandPageCreate } from './BrandPageCreate';
-import { BrandPageScreen } from './BrandPageScreen';
-import { DesignModuleState } from './DesignModuleState';
-import { ProjectDetailScreen } from './ProjectDetailScreen';
-import { ProjectsScreen, type ProjectCounts } from './ProjectsScreen';
-import { MaterialsScreen } from './MaterialsScreen';
-import { KnowledgeScreen } from './KnowledgeScreen';
-import { TemplatesScreen } from './TemplatesScreen';
-import { OutputsScreen } from './OutputsScreen';
-import { parseProjectRoute } from './projectRoute';
-import { useBrandPages } from './useBrandPages';
+import { BrandScreen } from './BrandScreen';
+import { CreateLibrary } from './CreateLibrary';
 
 /**
  * Design app（設計／內容／網站）。
  *
- * v3 五個模組：Create、Brand、Materials、Knowledge、Templates。
+ * 五個模組：Create、Brand、Materials、Knowledge、Templates。
  * Needs 留在外殼，不成為第六個業務模組。
  *
- * 品牌模組的形狀由 issue #32 定：
- *   - 左側是**這個品牌的一組頁**：品牌主頁、標誌、色彩、字體、語氣，加上
- *     零到多張自定義頁。不是儀表板、不是渠道、不是版本紀錄 —— 版本住在
- *     每一頁自己裡面（#33）。
- *   - 第一格是品牌主頁。它的內容由 #39 交付；未交付就講未交付，不畫假總覽。
- *   - 品牌清單不在這裡：它住在頂欄的品牌切換。一間公司還未開第一個品牌時，
- *     這裡講明「只有老闆可以開第一個」，不是白畫面。
- *   - 自定義頁的鍵是 `p/<slug>`，網址 `#/design/brand/p/<slug>`，與五頁
- *     的 `#/design/brand/<鍵>` 永遠不會撞。
+ * 2026-11-17 老闆指示：Create／Materials／Knowledge／Templates 四個模組的
+ * 前後端全部清空，由零重做。所以這四個模組**只畫骨架**：第二層頂欄、
+ * 左欄、內容區全部留空（`AppFrame` 的 `blank`），連頁名、麵包屑同
+ * 「未提供」佔位卡都不畫 —— 任何一格字都會令人以為那頁已經做好。
+ * 路由與 `DESIGN_NAV` 保留，重做時在同一個位置接著做。
  *
- * 頁清單由 `useBrandPages` 讀一次，左側導覽與頁面都由它推出來。兩處各讀
- * 一次，早晚會出現「左側有四頁、頁籤有五頁」這種講不通的分別。
+ * 2026-11-17 另一項：**品牌只在 Boss Portal 建立**（`#/boss/brand`）。
+ * 這裡不再有「新增品牌」按鈕與表單 —— 品牌一開全公司都用得，屬公司層動作。
+ * 沒有品牌時，這一頁只講清楚去哪裡開，不放一個半功能的表單。
  */
 
 type DesignAppProps = {
@@ -58,16 +30,24 @@ type DesignAppProps = {
   onSignedOut: () => void;
 };
 
-function NoBrand(props: { canCreate: boolean; onCreated: () => void }) {
+function NoBrand(props: { canCreate: boolean }) {
   return (
     <div className="design-empty" data-brand-nobrand>
       <p className="design-empty__title">{t('brand.page.noBrand')}</p>
       <p className="design-empty__body">{t('brand.page.noBrandBody')}</p>
 
       {props.canCreate ? (
-        <CreateBrandForm onCreated={props.onCreated} />
+        <button
+          type="button"
+          className="design-btn design-btn--primary"
+          data-brand-open-boss
+          onClick={() => {
+            navigatePath('/boss', 'brand');
+          }}
+        >
+          {t('brand.page.openBoss')}
+        </button>
       ) : (
-        // 唔畫一個按落去會 403 的表單：講錯原因比唔講更差。
         <p className="design-footnote" data-brand-create="owner-only">
           {t('design.brand.ownerOnly')}
         </p>
@@ -76,391 +56,52 @@ function NoBrand(props: { canCreate: boolean; onCreated: () => void }) {
   );
 }
 
-function CreateBrandForm(props: { onCreated: () => void }) {
-  const [code, setCode] = useState('');
-  const [name, setName] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function handleCreate(): Promise<void> {
-    if (busy) {
-      return;
-    }
-
-    const trimmedCode = code.trim().toLowerCase();
-    const trimmedName = name.trim();
-
-    if (trimmedCode.length === 0 || trimmedName.length === 0) {
-      setError(t('design.brand.invalid'));
-      return;
-    }
-
-    setError(null);
-    setBusy(true);
-
-    const result = await createBrand({ code: trimmedCode, name: trimmedName });
-
-    setBusy(false);
-
-    if (result.ok) {
-      setCode('');
-      setName('');
-      props.onCreated();
-      return;
-    }
-
-    if (result.failure.kind === 'http') {
-      setError(
-        result.failure.error === 'duplicate_code'
-          ? t('design.brand.duplicate')
-          : t('design.brand.invalid'),
-      );
-      return;
-    }
-
-    setError(t('design.brand.createFailed'));
-  }
-
-  return (
-    <>
-      <h2 className="design-form__heading">{t('design.brand.add')}</h2>
-
-      <form
-        className="design-form"
-        onSubmit={(event) => {
-          event.preventDefault();
-          void handleCreate();
-        }}
-      >
-        <label className="design-field">
-          <span className="design-field__label">{t('design.brand.newCode')}</span>
-          <input
-            className="design-input"
-            value={code}
-            onChange={(event) => {
-              setCode(event.target.value);
-            }}
-            placeholder="moonic"
-            autoComplete="off"
-            spellCheck={false}
-          />
-          <span className="design-field__hint">{t('design.brand.newCodeHint')}</span>
-        </label>
-
-        <label className="design-field">
-          <span className="design-field__label">{t('design.brand.newName')}</span>
-          <input
-            className="design-input"
-            value={name}
-            onChange={(event) => {
-              setName(event.target.value);
-            }}
-            autoComplete="off"
-          />
-        </label>
-
-        {error !== null && (
-          <p className="design-note design-note--error" role="alert">
-            {error}
-          </p>
-        )}
-
-        <div className="design-form__actions">
-          <button type="submit" className="design-btn design-btn--primary" disabled={busy}>
-            {t('design.brand.create')}
-          </button>
-        </div>
-      </form>
-    </>
-  );
-}
-
-function projectFormatOf(pageKey: string): ProjectFormat | 'all' {
-  return pageKey === 'carousel' || pageKey === 'presentation' || pageKey === 'video' ? pageKey : 'all';
-}
-
-function materialSourceOf(pageKey: string): MaterialView['source'] | 'all' {
-  const sources: Record<string, MaterialView['source']> = {
-    human: 'human_shot', ai: 'ai_generated', stock: 'stock', client: 'client_provided',
-  };
-  return sources[pageKey] ?? 'all';
-}
-
-function knowledgeStatusOf(pageKey: string): KnowledgeDocView['status'] | 'all' {
-  return pageKey === 'unverified' || pageKey === 'verified' || pageKey === 'outdated' ? pageKey : 'all';
-}
-
 export function DesignApp({ user, onSignedOut }: DesignAppProps) {
   const path = useHashPath();
   const brands = useBrands(true);
   const items: readonly BrandItem[] = brands.state.kind === 'ready' ? brands.state.items : [];
   const { brandId } = useSelectedBrand(brands.state);
   const selected = items.find((item) => item.id === brandId) ?? null;
-  const pages = useBrandPages(brandId);
-  const [knowledgeDocuments, setKnowledgeDocuments] = useState<readonly KnowledgeNavDocument[]>([]);
-  const handleKnowledgeDocuments = useCallback((documents: readonly KnowledgeNavDocument[]) => {
-    setKnowledgeDocuments(documents);
-  }, []);
 
-  const nav = withKnowledgeDocuments(withBrandPages(
-    DESIGN_NAV,
-    pages.items.map((page) => ({
-      key: page.key,
-      name: page.name,
-      kind: page.kind,
-      group: page.group,
-      missing: page.current === null,
-    })),
-  ), knowledgeDocuments);
-
-  /**
-   * 品牌主頁過時之頁（#60）：主頁之後改過的頁。算出來，不存 flag。
-   *
-   * 主頁冇有版本而其他頁有＝一樣是過時：主頁由其他頁砌出來，它未有版本就
-   * 代表從未反映過任何一頁。
-   */
-  const homeCurrent = pages.items.find((page) => page.key === 'home')?.current?.createdAt ?? null;
-  const newerPages = pages.items
-    .filter((page) => page.key !== 'home' && page.current !== null)
-    .filter((page) => homeCurrent === null || page.current !== null && page.current.createdAt > homeCurrent)
-    .map((page) => page.name);
+  const nav = DESIGN_NAV;
   const position = resolveNav(nav, path);
   const inBrand = position.navModule.key === 'brand';
-  const inCreateLibrary = position.navModule.key === 'create' && position.page.key !== 'outputs';
-  const [libraryQuery, setLibraryQuery] = useState('');
-  const [projectCounts, setProjectCounts] = useState<ProjectCounts | null>(null);
-  const handleProjectCounts = useCallback((counts: ProjectCounts) => setProjectCounts(counts), []);
+  const inCreate = position.navModule.key === 'create';
 
-  useEffect(() => {
-    setLibraryQuery('');
-    setProjectCounts(null);
-    setKnowledgeDocuments([]);
-  }, [brandId]);
-
-  const [panel, setPanel] = useState<'page' | 'brand' | null>(null);
-  /**
-   * 「已經幫你搬過去」的提示。連著它應該出現的那一條路徑一起存 —— 提示跟著
-   * 目的地走，換了頁就自然消失，不會在品牌主頁上講一件已經過去的事。
-   */
-  const [moved, setMoved] = useState<{ text: string; at: string } | null>(null);
-
-  // 網址上這一頁的鍵：自定義頁是 `p/<slug>`，佔兩段。
-  const requestedKey = path[0] === 'brand' ? path.slice(1).join('/') : '';
-  const pathKey = path.join('/');
-  const pageMissing =
-    pages.state.kind === 'ready' &&
-    requestedKey.startsWith('p/') &&
-    !pages.items.some((item) => `p/${item.key}` === requestedKey);
-
-  function renderBrand(current: NavPosition): ReactNode {
-    if (brandId === null) {
-      return (
-        <NoBrand
-          canCreate={user.role === 'owner'}
-          onCreated={() => {
-            brands.reload();
-          }}
-        />
-      );
-    }
-
-    if (pages.state.kind === 'loading' || pages.state.kind === 'idle') {
-      return <p className="design-empty">{t('brand.page.manage.loading')}</p>;
-    }
-
-    if (pages.state.kind === 'failed') {
-      return (
-        <div className="design-empty" data-brand-pages-failed>
-          <p>{t('brand.page.manage.loadFailed')}</p>
-          <button type="button" className="design-btn" onClick={pages.reload}>
-            {t('common.retry')}
-          </button>
-        </div>
-      );
-    }
-
-    if (pageMissing) {
-      return (
-        <p className="design-empty" data-brand-page-missing>
-          {t('brand.page.manage.missingPage')}
-        </p>
-      );
-    }
-
-    return (
-      <BrandPageScreen
-        brandId={brandId}
-        pageKey={pageApiKey(current.page.key)}
-        canEdit={pages.canEdit}
-        isOwner={user.role === 'owner'}
-        brandName={selected?.name ?? null}
-        onPagesChanged={pages.reload}
-        newerPages={newerPages}
-        onRemoved={() => {
-          pages.reload();
-          navigatePath('/design', 'brand', 'home');
-        }}
-      />
-    );
-  }
-
-  function renderPage(current: NavPosition): ReactNode {
+  function renderPage(current: NavPosition, sidebar: { open: boolean; toggle: () => void }): ReactNode {
     if (current.navModule.key === 'brand') {
-      return renderBrand(current);
+      if (brandId === null) {
+        return <NoBrand canCreate={user.role === 'owner'} />;
+      }
+
+      return <BrandScreen brandId={brandId} brandName={selected?.name} railOpen={sidebar.open} onToggleRail={sidebar.toggle} />;
     }
 
-    const projectRoute = parseProjectRoute(path);
-    if (projectRoute?.kind === 'list') {
-      return (
-        <ProjectsScreen
-          brandId={brandId}
-          brandsKind={brands.state.kind}
-          onReloadBrands={brands.reload}
-          format={projectFormatOf(current.page.key)}
-          query={libraryQuery}
-          onCountsChange={handleProjectCounts}
-        />
-      );
-    }
-    if (projectRoute?.kind === 'detail') {
-      return <ProjectDetailScreen projectId={projectRoute.projectId} />;
-    }
-    if (projectRoute?.kind === 'invalid') {
-      return <ProjectDetailScreen projectId={null} />;
-    }
-    if (current.navModule.key === 'create' && current.page.key === 'outputs') {
-      return <OutputsScreen brandId={brandId} />;
-    }
-    if (current.navModule.key === 'material') {
-      return <MaterialsScreen brandId={brandId} sourceFilter={materialSourceOf(current.page.key)} />;
-    }
-    if (current.navModule.key === 'knowledge') {
-      return <KnowledgeScreen
-        brandId={brandId}
-        status={knowledgeStatusOf(current.page.key)}
-        selectedDocumentId={current.section?.key ?? null}
-        onDocumentsChange={handleKnowledgeDocuments}
-        onSelectDocument={(id) => navigatePath('/design', 'knowledge', current.page.key, id)}
-      />;
-    }
-    if (current.navModule.key === 'templates') {
-      return <TemplatesScreen format={projectFormatOf(current.page.key)} />;
+    if (current.navModule.key === 'create') {
+      if (brandId === null) {
+        return <NoBrand canCreate={user.role === 'owner'} />;
+      }
+
+      return <CreateLibrary brandId={brandId} railOpen={sidebar.open} onToggleRail={sidebar.toggle} />;
     }
 
-    return (
-      <DesignModuleState
-        moduleKey={current.navModule.key as 'create' | 'material' | 'knowledge' | 'templates'}
-        pageKey={current.page.key}
-        status="empty"
-      />
-    );
+    // Materials／Knowledge／Templates：前後端已清空、由老闆重做，
+    // 所以連佔位卡都不畫，只留下空骨架（見下面的 `blank`）。
+    return null;
   }
-
-  const projectBadges = projectCounts === null ? undefined : {
-    projects: String(projectCounts.projects),
-    carousel: String(projectCounts.carousel),
-    presentation: String(projectCounts.presentation),
-    video: String(projectCounts.video),
-  };
-
-  const headerActions =
-    inBrand && (user.role === 'owner' || pages.canEdit) ? (
-      <div className="design-actions">
-        {pages.canEdit && brandId !== null && (
-          <button
-            type="button"
-            className="design-btn"
-            data-brand-page-create-open
-            onClick={() => {
-              setMoved(null);
-              setPanel((open) => (open === 'page' ? null : 'page'));
-            }}
-          >
-            {t('brand.page.manage.new')}
-          </button>
-        )}
-
-        {/* 只有老闆可以開新品牌（後端 `POST /brands` 已經是 requireOwner）。 */}
-        {user.role === 'owner' && (
-          <button
-            type="button"
-            className="design-btn design-btn--primary"
-            onClick={() => {
-              setPanel((open) => (open === 'brand' ? null : 'brand'));
-            }}
-          >
-            {t('design.brand.add')}
-          </button>
-        )}
-      </div>
-    ) : undefined;
 
   return (
     <div className="design-modern">
-    <AppFrame
-      nav={nav}
-      user={user}
-      path={path}
-      onSignOut={onSignedOut}
-      pageTitle={navLabel(position.page)}
-      pageSubtitle={inBrand && selected !== null ? selected.name : undefined}
-      {...(inCreateLibrary ? { sidebarSearch: {
-        label: t('design.sidebar.searchProjects'),
-        placeholder: t('design.sidebar.searchProjects'),
-        value: libraryQuery,
-        onChange: setLibraryQuery,
-      } } : {})}
-      {...(projectBadges === undefined ? {} : { sidebarBadges: projectBadges })}
-      {...(headerActions === undefined ? {} : { primaryAction: headerActions })}
-    >
-      {(current: NavPosition) => (
-        <>
-          {/* 加頁時選了「其實屬於某一頁」：不開新頁，帶去那一頁並講明原因。 */}
-          {moved !== null && moved.at === pathKey && (
-            <p className="design-note" role="status" data-brand-page-moved>
-              {moved.text}
-            </p>
-          )}
-
-          {panel === 'page' && brandId !== null && (
-            <BrandPageCreate
-              brandId={brandId}
-              pages={pages.items}
-              onClose={() => {
-                setPanel(null);
-              }}
-              onMoved={(key, name) => {
-                setPanel(null);
-                setMoved({ text: t('brand.page.manage.belongsMoved', { name }), at: `brand/${key}` });
-                navigatePath('/design', 'brand', key);
-              }}
-              onCreated={(name, key) => {
-                setPanel(null);
-                pages.reload();
-                setMoved({
-                  text: t('brand.page.manage.created', { name }),
-                  at: `brand/p/${key}`,
-                });
-                navigatePath('/design', 'brand', 'p', key);
-              }}
-            />
-          )}
-
-          {panel === 'brand' && (
-            <section className="brand-manage" data-brand-create-panel>
-              <CreateBrandForm
-                onCreated={() => {
-                  setPanel(null);
-                  brands.reload();
-                }}
-              />
-            </section>
-          )}
-
-          {renderPage(current)}
-        </>
-      )}
-    </AppFrame>
+      <AppFrame
+        nav={nav}
+        user={user}
+        path={path}
+        onSignOut={onSignedOut}
+        {...(inBrand || inCreate ? { hideSidebar: true } : {})}
+        {...(inBrand || inCreate ? {} : { blank: true })}
+      >
+        {(current: NavPosition, sidebar) => renderPage(current, sidebar)}
+      </AppFrame>
     </div>
   );
 }

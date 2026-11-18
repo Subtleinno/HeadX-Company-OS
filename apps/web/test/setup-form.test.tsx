@@ -156,8 +156,9 @@ describe('建立老闆帳戶：改動欄位就收起該欄位的錯誤', () => {
 
     await submit();
     // 全套一起跑時 jsdom 會被其他檔拖慢，1 秒的預設等待會隨機紅 —— 這一格
-    // 等的是「設定完成後真的入到首頁」，不是「一秒內入到」。
-    expect(await screen.findByRole('heading', { name: '今日' }, { timeout: 5000 })).toBeTruthy();
+    // 等的是「設定完成後真的入到落點頁」，不是「一秒內入到」。
+    // 老闆的落點係 Boss Portal（/boss），唔再係「今日」首頁。
+    expect(await screen.findByRole('heading', { name: '總覽' }, { timeout: 5000 })).toBeTruthy();
     expect(api.count('setup')).toBe(1);
   });
 
@@ -254,7 +255,7 @@ describe('建立老闆帳戶：送出流程', () => {
 
     // 這一步要等登入後的首頁載入（多個 API 並行）。並行跑測試時 1 秒不夠，
     // 會偶發紅 —— 放寬到 5 秒只影響慢機器，不會令壞掉的東西變綠。
-    expect(await screen.findByRole('heading', { name: '今日' }, { timeout: 5000 })).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: '總覽' }, { timeout: 5000 })).toBeTruthy();
     expect(screen.getByText('陳老闆')).toBeTruthy();
   });
 });

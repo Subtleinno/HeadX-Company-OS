@@ -3,7 +3,9 @@
 > `docs/INDEX.md` 是文件地圖，`AGENTS.md` 是規則。這一頁只管四件事：
 > **現在有什麼、怎樣跑起來、下一步做什麼、哪幾個坑別踩。**
 
-最後更新：2026-11-17（Marketing Design 完整產品總圖已由老闆修訂為 `MARKETING-DESIGN-BLUEPRINT.md` v4.1；本頁部分路由與空殼描述仍是舊施工記錄，待目前工作樹驗證及部署後同步）
+最後更新：2026-11-17（行銷設計四個模組已清空；Marketing Design 完整產品總圖已由老闆修訂為 `MARKETING-DESIGN-BLUEPRINT.md` v4.1；本頁部分路由與空殼描述仍是舊施工記錄，待目前工作樹驗證及部署後同步）
+
+> **2026-11-17 老闆指示（已施工）：**`#/design/create/projects`、`#/design/create/outputs`、`#/design/material/library`、`#/design/knowledge/list`、`#/design/templates/library` 連同依附的 Project Detail／創作工作台／Composition／Render／HyperFrames／MCP，前後端一併刪除，只留空骨架（第二行頂欄、左欄、內容區三塊全空，冇頁名、冇麵包屑、冇佔位字），由老闆重做。platform 的 `projects` 與 `carousel` 模組、contracts 的 `project`／`carousel` 型別、相關 API 與整合測試已移除；DB 的 `design.*` migration 檔與資料表保留（已套用的 migration 只向前，未刪資料）。以下舊段落凡講「Projects 可用」「素材／知識／模板已接 CRUD」，一律以這一段為準。
 
 > **新 session 的產品入口：**先讀 `MARKETING-DESIGN-BLUEPRINT.md` v4.1。它已整合完整 Carousel 業務鏈、最新 Project Library／Knowledge 截圖資訊架構、五模組專用左欄、多格式骨架、HyperFrames、MCP／Skills、App／Brand selector、Boss／Super Admin、據點與機器，以及真實完成／未完成狀態。不要再由舊對話重新推測產品。
 >
@@ -40,7 +42,7 @@
 真停用登入、真恢復（停用的逆操作）、真重設密碼。Marketing Design 由 Create／Projects 進入，
 五個頂層模組是 Create、Brand、Materials、Knowledge、Templates；Needs 留在外殼。
 Brand 既有頁可以真讀真寫，會記住每位員工上次工作的品牌，開新品牌的入口只給老闆。
-Projects 已可建立、列表、詳情與保存原始要求；外部 agent 可用有授權的 HTTP token 接手並追加 Brief。Outputs、Materials、Knowledge、Templates 仍是固定路由與誠實空狀態，尚未接 CRUD。
+Create（作品與成品）、Materials、Knowledge、Templates 現時只有固定路由與空骨架：前後端已於 2026-11-17 清空，畫面上只剩第二行頂欄、左欄與內容區三塊空白（`AppFrame` 的 `blank`），冇頁名、冇麵包屑、冇「未提供」佔位字，等老闆由零重做。
 其餘四個部門 app 仍然灰掉，並如實寫明未建。
 
 ## 1. 程式碼在哪
@@ -151,12 +153,11 @@ curl -s https://hxd.subtle-inno.com/api/auth/state    # 應回 {"setupRequired":
 | `#/boss/sites/add` | 新增據點 | 第一、二步可用，第三步端點未存在 |
 | `#/boss/people/members` | 人員與部門：名單、建立員工（可一併選部門）、改部門、停用、恢復、重設密碼 | 可用，全部真寫入 |
 | `#/boss/policy/brand` | 品牌頁策略：六個槽的標準全文、每次儲存新增一版 | 可用，全部真寫入 |
-| `#/design`、`#/design/create/projects` | Create／Projects：按目前品牌讀真實列表；Staff 可建立 Project＋不可變原始要求；無權者不見新增入口 | 可用（#95），真寫入與重讀 |
-| `#/design/create/projects/:id/brief` | Project Detail：原始要求、實際 agent run、現行與歷史 Brief、actor／request ID；未接手可複製請求 | 可用（#95）；Composition／Render 未建 |
-| `#/design/create/outputs` | Create／Outputs：由真實 Project 產生的成品入口；未接 Render／Output API 前不顯示示範成品 | 路由與空狀態可用（#94）；CRUD 未建 |
-| `#/design/material/library` | Materials：素材、權利與適用範圍入口；不假設素材權利 | 路由與空狀態可用（#94）；入庫未建 |
-| `#/design/knowledge/list` | Knowledge：有來源、有效期與核對狀態的知識入口；不顯示未核實內容 | 路由與空狀態可用（#94）；CRUD 未建 |
-| `#/design/templates/library` | Templates：模板、版本、slots 與檢查結果入口；不顯示假模板或假預覽 | 路由與空狀態可用（#94）；CRUD 未建 |
+| `#/design`、`#/design/create/projects` | Create／Project Library（作品庫） | 2026-11-18 重做：左欄「資料夾 → 專案集」樹＋頂部格式過濾（ALL／PPT／排版／Video，格式可動態新增），右欄專案卡片網格。三層都有 CRUD，專案可複製、可自由搬到另一個專案集。後端 `apps/platform/src/project-library`，前端 `apps/web/src/design/CreateLibrary.tsx` |
+| `#/design/create/projects/:id/brief` | Project Detail | 已刪除；深連結落到 Create 空白頁 |
+| `#/design/create/outputs` | Create／Outputs | 2026-11-17 前後端已清空，只留空骨架：第二行／左欄／內容區全空，冇頁名、冇佔位字（待重做） || `#/design/material/library` | Materials | 2026-11-17 前後端已清空，只留空骨架：第二行／左欄／內容區全空，冇頁名、冇佔位字（待重做） |
+| `#/design/knowledge/list` | Knowledge | 2026-11-17 前後端已清空，只留空骨架：第二行／左欄／內容區全空，冇頁名、冇佔位字（待重做） |
+| `#/design/templates/library` | Templates | 2026-11-17 前後端已清空，只留空骨架：第二行／左欄／內容區全空，冇頁名、冇佔位字（待重做） |
 | `#/design/brand/home` | 品牌主頁：這個品牌是誰（一段）、標誌的預設用法、色彩角色的樣本、字體層級的樣本、語氣短例、每一頁的入口（含每張自定義頁）、缺頁 | 可用，全部真寫入（#39）；#94 保留深連結 |
 | `#/design/brand/color` | 色彩：九個寫死的角色分三組、淺色與深色各一套值、HEX／RGB／CMYK、階、准用與不准組合（即時算對比）、標誌可用角色 | 可用，全部真寫入（#35） |
 | `#/design/brand/type` | 字體：四個層級（display／heading／body／caption）各自指定家族、尺寸、行距、字重、最小尺寸、文字顏色；家族與授權（最多兩個）、中英配對、備用字、行長、對齊、錯誤用法 | 可用，全部真寫入（#38） |
@@ -330,6 +331,310 @@ Boss Portal 的導覽是五組：總覽｜據點與機器｜人員｜策略｜�
 
 現在不做：HR app、員工個人頁。Marketing Design 打開後第一眼的內容由老闆逐頁定。
 
+### 5.3 品牌建立（brand guide，stage0–4h）：每格是一個工作單位（2026-11-17）
+
+`/#/design/brand/dashboard` 是 12 個階段的引導，內容正本在 `Perplexity idea/Branding`
+（引擎在 `apps/platform/src/brand-guide/engine/reference/`）。老闆 2026-11-17 定下的
+使用方式，取代之前「檢視／編輯／AI Agent 三個 tab」的做法：
+
+1. **格上只放內容**：一張卡＝一個區塊，顯示位置編號、名稱、已選內容與決策摘要；
+   右上角是已填進度（`2/2`），有檔案時左邊多一個 `檔案 n` 標籤，唔使開卡就知
+   邊幾格放過料（只計未移除的附件）。
+   卡上**沒有**工具列，也**沒有**「點擊卡片即可編輯」之類的提示字。
+2. **點卡＝打開這一格**（`SectionCardOpen`）：卡橫跨整行，頂欄右邊依次是
+   `複製 Prompt`、`睇 Prompt`、`儲存`、`×`（關閉）。下面由選項、決策、檔案、
+   歷史排落去。改選項後按「儲存」，卡不會關，仲可以繼續寫決策、放檔案。
+   改動未存就關（或跳去另一格）會問一句，不會靜靜丟走。
+3. **每張卡有位置編號**（`00.1`、`04A.7`…，在 stage 內連續、跨 stage 唯一）。
+   編號是給人與 agent 共用的對位。
+4. **每張卡有一份可複製的 prompt**（`apps/web/src/design/brand-block-prompt.ts`），
+   內容跟住目前選擇即時更新（用 draft，未儲存都複製到最新）：位置、識別碼
+   （brand／stage／block）、已選、未選、可選項、要求與回覆格式。
+   文字全部住在 i18n（`brandBuild.block.prompt.*`），結構在 module。
+5. **prompt 帶上決策**：`## 目前決策（現況）`（連作者與時間，agent 寫的會標
+   `AI Agent（名）`）＋`## 之前的決策（新到舊，共 n 版）`（最多列 5 版）。
+   prompt 本身可在卡內直接改：`儲存 Prompt` 寫入 `prompt_override`，
+   `還原自動版本` 清空回到跟選項走的那一版。自訂版畫面會講明「改選項不會自動更新」。
+6. **檔案**：上載／預覽／下載／移除（走既有 `/files` 檔案層）。圖片、PDF、
+   純文字、影音在卡內預覽；其他類型只給下載。列表顯示大小、上載日期與上載者
+   （`uploadedByName`）。**沒有改名** —— 顯示名就是原檔名，改名只會令「當時放低
+   的是哪一份」講不清。下載用 `/api/files/:id?download=1`，由伺服器回
+   `attachment`（不靠前端 `download` 屬性）。
+7. **每張卡有一段決策記錄**：與 AI／人討論完，把結論寫落去。每次內容有變就留一版。
+   由 agent 寫入的會顯示「由 AI Agent（名） · 時間」，人寫的顯示「由 名 · 時間」。
+8. **每張卡有自己的歷史**：決策版本 ＋ 檔案加減（移除都保留，連移除者），時間倒序；
+   agent 寫的版本標「決策（AI Agent）」。「清除決策」只清現況，不刪歷史。
+
+資料：`db/migrations/0026_brand_guide_block.sql` 三張表 ——
+`brand_guide_block`（現況）、`brand_guide_block_revision`（追加版本）、
+`brand_guide_block_file`（附件，`removed_at` 標記）。
+`0027_brand_guide_block_prompt.sql` 加 `prompt_override`、`decision_agent_id`
+（現況由哪隻 agent 寫）、revision 的 `agent_id`。
+路由在 `apps/platform/src/brand-guide/block-routes.ts`：
+`GET …/:stage/blocks`、`PUT …/blocks/:blockId/decision`、
+`PUT …/blocks/:blockId/prompt`、`POST／DELETE …/blocks/:blockId/files[/:attachmentId]`。
+寫入要品牌編輯權，讀要登入；每次寫入都留 audit。
+
+### 5.4 Agent 經 MCP 寫回決策（2026-11-17）
+
+「同 agent 傾完，它自己存」不是靠人手貼：prompt 最後一節 `## 寫回系統（MCP）`
+直接寫明工具名與三個識別碼，agent 讀完就知怎寫。
+
+- **平台端**：`apps/platform/src/brand-guide/agent-routes.ts`
+  `GET /agent/brand-guide/blocks?brandId=&stage=`、
+  `PUT /agent/brand-guide/blocks/:blockId/decision`。
+  認證是 `requireAgent`（43 字元 Bearer token），再要 **`design` app 的有效授權**，
+  否則 403；每次寫入 audit `brand.guide.block.decision.agent`，並記 `agent_id`。
+  回傳 `written: false` 代表內容與現況相同（沒有新版本），不是失敗。
+  編號與名稱沿用紀錄，agent 不會無意改掉位置標籤。
+- **MCP server**：`tools/mcp-brand-guide/server.mjs`（stdio，`@modelcontextprotocol/sdk`）
+  工具：`brand_block_list`、`brand_block_get`、`brand_block_save_decision`。
+  設定範本：`tools/mcp-brand-guide/mcp-config.example.json`。
+- **接線步驟**：`#/admin/staff` 開一個 agent → `#/admin/grants` 給它 `design`
+  授權（active）→ 簽發 token → 把 token 放進 MCP 設定的 `HEADX_AGENT_TOKEN`。
+  token 只是憑證，不寫入 repo。
+- 人在畫面看到的決策、歷史與 agent 寫入的是同一份資料：沒有第二套「AI 的答案」。
+
+**不要做**：把舊的逐維度提示詞清單搬返去（`brandBuild.agent.prompts*` 已刪），
+或者把 `檔案／決策／歷史` 按鈕放返上格面 —— 這些都屬於「打開之後」那一層。
+卡片上的 prompt 是唯一入口。
+
+`AI Agent (JSON)` 只匯出**已填的決策**與**已上載的檔案**（連檔案位置
+`<origin>/api/files/<fileId>`），一格都未填就只顯示一句空狀態
+（老闆 2026-11-17：沒有打算一次填滿一版）。結構在
+`apps/web/src/design/brand-agent-input.ts`（純函式，`apps/web/test/brand-agent-input.test.ts`
+鎖住「只帶有內容的格、已移除檔案不匯出、檔案要有絕對網址」），
+DOM 標記是 `data-brand-agent-json` / `data-brand-agent-empty`。
+**不要**把 brief／state 倒回去 —— 那份長 JSON 會吃掉 agent 的 context，
+而且未填的欄位會被當成已決定。
+
+### 5.5 00 業務基礎搬到 Boss Portal（2026-11-17）
+
+老闆定：`00 業務基礎` 講的是「這門生意怎麼運作」，不是品牌設計的一部分，
+所以**由 Design 搬去 Boss Portal**，同一個區塊只留一個入口。
+
+- **Boss Portal › 品牌**：左側欄一頁一個品牌（導覽由 `/brands` 清單即時砌出來，
+  每頁 key 就是品牌 id，網址 `#/boss/brand/<id>`）。只有一個品牌時左欄仍然列出
+  （`AppFrame` 的 `listSinglePage`），因為它是一個清單，不是一頁。
+- **品牌頁內容**：`BrandBusinessStage`（`apps/web/src/design/BrandScreen.tsx`）
+  直接開 `StageDetail` 的 `stage0`，沒有「返回」與上／下一站。填寫、儲存、prompt、
+  檔案、決策、歷史與 agent 寫入全部沿用 0026／0027 那三張表，沒有第二份資料。
+- **Boss 首頁**：四個 KPI 數（據點／待批准／品牌／Needs）撤走，改成「全公司業務」：
+  每個品牌一節，顯示業務畫布、單位經濟、起步清單、準備度檢查
+  （`BrandBusinessSummary`，只讀）。跨品牌匯總未做，等老闆另行定案。
+  副標用新鍵 `boss.overview.leadBusiness`，舊鍵 `boss.overview.lead` 原封不動。
+- **Design 品牌建立**：由 `01 定位與張力` 開始（`BUILD_STAGES` 濾走 `stage0`），
+  總覽是 11 張階段卡；`stageFromStorage` 也只接受這 11 個，舊的 session 記錄
+  指住 `stage0` 會自動退回總覽。`STAGES` 仍然保留 12 個（引擎與 MCP 要對位）。
+
+### 5.6 新增品牌搬到 Boss Portal（2026-11-17 晚）
+
+老闆：「新增品牌掣不應該在 Design app，帶來 `#/boss/brand/`。」
+
+- **`#/boss/brand` 是「全部品牌」頁**（`apps/web/src/boss/BrandsScreen.tsx`）：
+  一行一個品牌（名、代碼、「打開」），整行是一條 hash 連結。頁頭主要動作是
+  `新增品牌`，按下去在清單上面打開 `BrandCreateForm`
+  （`apps/web/src/boss/BrandCreateForm.tsx`）。
+- **品牌模組是常駐的**（`BOSS_NAV` 直接有第一頁 `brands`）。之前是「有品牌才
+  splice 一個模組出來」，結果一個品牌都未有時 `#/boss/brand` 到不了，連第一個
+  品牌都無處可開。現在品牌清單只決定「後面接幾個品牌頁」。
+- **錯 id 要老實講**：`#/boss/brand/<id>` 解不到時，`resolveNav` 會退回模組第一頁；
+  `BossPortal` 因此再看一次 `path[1]`，分三種講法：讀緊／讀唔到／真的找不到
+  （`boss.brand.notFound`）。三種都不可以靜靜畫返清單。
+- **Design 不再有建立入口**：`design.brand.{add,newCode,...,empty,lead,homeLead,count}`
+  已刪（`design.brand.lead` 有插值，`packages/i18n/test/i18n.test.ts` 的插值清單
+  同步移除）。沒有品牌時 `NoBrand` 只講一句去哪裡開，並給老闆一個
+  `去 Boss Portal 開品牌` 的按鈕（`navigatePath('/boss','brand')`）；
+  非老闆仍然見到 `design.brand.ownerOnly`。
+- 驗收：`app-nav.test.ts` 斷言 Boss 模組順序（overview／brand／sites／people／access）
+  與「品牌模組第一頁永遠是 `brands`」；實測新增品牌 → 清單與左欄同時多一行 →
+  點入去 27 張 00 卡；重複代碼回 409 並顯示「呢個品牌代碼已經存在」；
+  `#/boss/brand/nope` 顯示找不到；390px 無橫向溢出。
+
+### 5.7 階段頁的四格 KPI 撤走（2026-11-17 晚）
+
+老闆：「We don't need this in everywhere.」指每一站都重複一次的
+`已填欄位／未填欄位／填寫區塊／需要留意` 四格。
+
+- **已刪**：`StageDetail` 的 `.brand-dash__kpis` 整組，以及只服務這四格的
+  CSS（`.brand-dash__kpi*`）與 i18n 鍵（`brandBuild.dash.{done,fields,missing,todo,watch,blocks,detail,openDetail,missingHint,allFilled,checksCount}`）。
+- **仍然有進度**：頂欄那條 `6%` ＋ `1/17 欄位` 就是唯一的進度顯示（`brandBuild.dash.fieldsN`），
+  填一格就動。「需要留意」改由頁尾 `檢查` 一節逐條講，不再只報一個數。
+- 因為 `StageDetail` 同時服務 Design 01–10 與 Boss 00，改一次兩邊一齊清。
+- 順手修窄螢幕：`.brand-cardgrid` 在 720px 以下原本用 `minmax(400px, 1fr)`，
+  390px 會撐出 30px 橫向捲軸；改單欄，並給 `.brand-dash`／`__body`／`__band`
+  加 `minmax(0, 1fr)`、卡片 `min-width: 0`，實測 390px 溢出 0。
+
+### 5.8 04A–04H 獨立成「品牌集」（brand set，2026-11-17 晚）
+
+> **同日晚上再收窄**：04A 核心識別與 04G 治理搬回品牌層、04F 行銷內容搬去
+> Boss Portal › Marketing。所以品牌集現在只裝 **04B–04E、04H**。見 §5.9。
+
+老闆：「04A-04H 應該 set 成一個 Brand set —— 一套可以重複套用到任何產品／設計／
+輸出的做法。左欄管理品牌集，一個資料夾裝多套（例如 2026 有四套），可以自由搬、
+複製、改名、安全刪除。」
+
+- **01–03 留在品牌總覽**（`#/design/brand/dashboard`，只出三張階段卡）。
+  其餘 04 不在品牌總覽的卡片裡：那三格是「品牌建立」的流程，04 是做法。
+- **品牌集是新的收納層**（0028）：`brand_set_folder`（資料夾，只分類）＋
+  `brand_set`（一套 04 的做法，`folder_id` 為 null 就是未分類）。左欄是一棵
+  「資料夾 → 品牌集」的樹，搜尋、展開收起、逐行選單（開啟／改名／移到／複製／
+  刪除）與「已刪除 → 還原」都在 `apps/web/src/design/BrandSetsRail.tsx`。
+- **答案跟著品牌集走**：`brand_guide_state` 與 `brand_guide_block` 各加
+  `brand_set_id`（null＝品牌層）。唯一鍵因此拆成兩條 partial index，否則兩個
+  品牌集永遠只存得一份答案。所有 block／state／brief 端點收 `?setId=`，由
+  `brand-guide/set-scope.ts` 一次判斷（不屬於這個品牌 404、已刪除 409、
+  01–03 帶 setId 400）。
+- **規矩寫死在 store**（`apps/platform/src/brand-sets/store.ts`）：
+  刪資料夾不刪品牌集（回到未分類）；刪品牌集是軟刪可還原；複製只抄現況
+  （決策、選擇、仍在掛的檔案），不抄歷史；撞名自動加「（2）」。
+- **路由**：`#/design/brand/stage/<stage>`（01–03）、`#/design/brand/sets/<id>`
+  與 `#/design/brand/sets/<id>/<stage>`（04）。品牌模組在 `DESIGN_NAV` 有
+  `dashboard` 與 `sets` 兩頁，但都 `subbar: false`（頁籤會同左欄講同一件事）；
+  麵包屑因此講得對。外殼新增 `hideSidebar`：品牌模組自己有一條左欄，外殼那條
+  收起來，免得同時出現兩條「品牌」欄。
+- **MCP**：`brand_block_list`／`brand_block_get`／`brand_block_save_decision`
+  加選填 `setId`，agent 要改某一套品牌集就講清楚是哪一套。
+- 驗收：`apps/platform/test/integration/brand-set.integration.test.ts` 八條
+  （兩集互不覆蓋、已填數、複製不抄歷史、搬資料夾、刪資料夾不刪集、軟刪／還原、
+  01–03 帶 setId 被拒、別人的集 404）；`apps/web/test/brand-set-route.test.ts`
+  鎖網址解析；Docker `:4210` 實測建集→寫 04A 決策→另一集仍然空白→複製→
+  刪除→還原，390px 窄螢幕無橫向溢出。
+
+### 5.9 04A／04G 回品牌層、04F 搬去 Boss Portal › Marketing（2026-11-17 晚）
+
+老闆：「核心識別其實唔常改，品牌集就成日改」＋「04G 治理都搬上左欄，唔好住品牌集」
+＋「04F 行銷內容搬去 Boss Portal，我自己管，唔想其他同事見到我嘅行銷策略，
+而且行銷策略係全公司共用。」
+
+- **三個 stage 三種歸屬**，寫死在 `apps/platform/src/brand-guide/set-scope.ts`：
+
+  | stage | scope | 資料怎存 |
+  | --- | --- | --- |
+  | 04A 核心識別、04G 治理 | 品牌層 | `brand_id` 有值、`brand_set_id` null |
+  | 04B–04E、04H | 品牌集 | `brand_set_id` 有值 |
+  | 04F 行銷內容 | 公司層 | `brand_id` null、`brand_set_id` null |
+
+  `SET_STAGES` 因此只剩五個；`COMPANY_STAGES` 只有 `stage4f`。品牌集頁面帶住
+  04A／04G 的 `?setId=` 會被 400 `set_stage_mismatch` 擋住，不會靜靜寫一份無人讀到的答案。
+- **左欄**（`BrandSetsRail.tsx`）：品牌總覽（01–03）之後是兩個固定項
+  `04A 核心識別`、`04G 治理`（`data-brand-rail-stage`），之後才是「品牌集」那棵樹。
+  它們的網址是 `#/design/brand/stage/stage4a`、`…/stage4g`，與 01–03 同一組路由。
+- **公司層 04F**（0029）：`brand_guide_state`／`brand_guide_block` 的 `brand_id`
+  改為可空，加 `check (brand_id is not null or brand_set_id is null)`，另加
+  `brand_guide_state_company_key_idx`（`(stage) where brand_id is null`）與
+  `brand_guide_block_company_key_idx`（`(stage, block_id) where brand_id is null`）。
+  普通的 unique index 會把 null 當成彼此不同，所以公司層一定要另開一條。
+- **路由** `apps/platform/src/marketing/routes.ts`：`/company/guide/:stage/...`
+  （schema／state／brief／blocks／decision／prompt／files），與品牌那組同形，
+  前端只換一個 base。**每個端點都先驗 `role === 'owner'`**：不是老闆就是 403
+  `owner_only`，連讀都不行 —— 「看不到」是需求本身，不是副作用。
+- **前端**：`apps/web/src/api.ts` 把九條端點收成一個 `GuideEndpoints` 物件
+  （`brandGuideApi(brandId, setId)` 與 `companyGuideApi()`），`StageDetail` 收一個
+  `api` prop，畫面只有一份。`CompanyMarketingStage` 由 `BossPortal` 在
+  `BOSS_NAV.marketing` 那頁渲染（`#/boss/marketing`）。
+- 驗收：`apps/platform/test/integration/company-marketing.integration.test.ts` 五條
+  （老闆寫讀、員工讀寫都 403、未登入 401、公司層與品牌層互不覆蓋、非 04F 打公司路徑 404）；
+  `brand-set.integration.test.ts` 收緊成「01–03、04A、04F、04G 帶 setId 全部 400」；
+  `apps/web/test/brand-set-route.test.ts` 鎖住 04A／04G 在品牌層、04F 不在品牌模組。
+  Docker `:4210` 實測：左欄兩個固定項、`#/boss/marketing` 出 04F 十二張卡、
+  手打 `#/design/brand/stage/stage4f` 退回品牌總覽、390px 無橫向溢出、零 console error。
+
+### 5.10 AI Agent (JSON) 推到「一組階段」層；階段按鈕撤走（2026-11-17 晚）
+
+老闆：「Each brandset, 核心識別, 治理, 品牌總覽 should have AI Agent (JSON)」
+＋「we don't need 階段 buttons」。
+
+- **匯出本來只有單階段**（`StageDetail` 頂欄一個 `AI Agent (JSON)`，內容是
+  `{brand, stage, decisions, files}`）。04A／04G 是品牌層的階段頁，所以一直有；
+  缺的是**總覽層**：品牌總覽（01–03）與每個品牌集（04B–04E、04H）都是一組階段，
+  沒有一個「階段」可以按。
+- **新增 `buildScopeAgentInput`**（`apps/web/src/design/brand-agent-input.ts`）：
+  ```
+  { brand, scope: { kind: 'brand' | 'brand-set', id, name, stages: ['01','02','03'] },
+    stages: [{ id, code, name, decisions, files }] }
+  ```
+  決策與檔案按階段分開 —— 同一個位置編號（`04B.1`）在每套品牌集都會出現，
+  攤平就分不出是邊一份。空階段不輸出（同單階段匯出原則一樣：未填的站列出來
+  只會令 agent 以為「決定過，只是內容是空」）。位置編號用 `Intl.Collator`
+  數字排序（`04A.2` 要排 `04A.10` 之前）。
+  單階段與整個範圍共用同一個 `collect()`，所以「只帶已填決策／只帶未移除檔案／
+  檔案連位置」三條規則只有一份實作，不會一邊漏 `removedAt`。
+- **畫面**：`BrandOverview` 收一個 `agent` prop（api／品牌／scope），進度條右邊
+  多一個 `AI Agent (JSON)`（`data-brand-scope-agent-toggle`），面板用同一組
+  `.brand-agent` 樣式。按下去才逐站 `api.blocks(stage)`（3 站或 5 站），
+  打開總覽不會先打幾個 request。載入失敗可重試、全空就講清楚為甚麼是空。
+- **階段按鈕撤走**：`StageDetail` 刪了「上一階段／下一階段」與 `onNavigateStage`，
+  只剩 `AI Agent (JSON)`（與非 Boss 頁的「返回總覽」）。理由：那一串次序其實是
+  左欄那棵樹的事，人由左欄進去比在頁尾猜「下一站是甚麼」清楚。
+  連帶刪 `brandBuild.stage.prev`／`next` 兩條文案與 `BUSINESS_STAGES`／
+  `MARKETING_STAGES` 兩個只用來排次序的常數。
+- **同時修一個真 bug**：`GuideEndpoints` 的 `?setId=` 一度拼在 `/blocks` 之前，
+  實際送出 `…/guide/stage4b?setId=xxx/blocks` —— 伺服器只看到 `stage4b` 加一個
+  空 query，於是品牌集裡面每一格都 404（品牌層沒有 query，所以 01–03 一直正常，
+  看起來像「只有品牌集壞了」）。現在 `guideEndpointsOf(base, scope)` 一律
+  「砌好完整路徑，最後才接 query」，並由 `apps/web/test/guide-endpoints.test.ts`
+  鎖住四條實際 URL。
+- 驗收：`brand-agent-input.test.ts` 9 條（新增 3 條 scope 例子）、
+  `guide-endpoints.test.ts` 4 條；Docker `:4210` 真瀏覽器實測四個位置都出到 JSON
+  （總覽寫 01 一格、品牌集寫 04B 一格、04A 寫一格、04G 寫一格，截圖後全部刪回）、
+  階段按鈕在畫面完全搜不到、390px 溢出 0、零 console error。
+
+### 5.11 範圍層 Prompt：品牌總覽、品牌集、04A、04G 都有「複製／睇／改」（2026-11-17 晚）
+
+老闆：「Each brandset, 核心識別, 治理, 品牌總覽 should have Prompt as other
+cards having 複製 Prompt and 睇 Prompt (with edit prompt)」
+＋「each brand set inside 04B–04H, each brand set inside things that have prompt
+should have its own `## 識別碼`, because there will be multiple Brand set」。
+
+**先講第二件事，因為它是資料錯誤而不是文案問題**：`block_id`（例如 `set:tension`）
+在每一套品牌集都一樣，而原本卡片 prompt 的 `## 識別碼` 只有
+`brand / stage / block`。同一個品牌開兩套做法，兩張卡片的 prompt 除了決策內容
+之外一模一樣 —— agent 寫回時分不出是哪一套，就會改錯另一套的同一格。
+現在：
+
+- `buildBlockPrompt` 收 `setId`／`setName`，品牌集內會多一行
+  `set: <id>（<name>）`，寫回參數亦變成
+  `brandId=…、stage=…、setId=…、blockId=…`（MCP 的
+  `brand_block_save_decision` 本來就收 `setId`）。
+- `PromptContext` 加 `setId`／`setName`；`StageDetail` 收 `setName`，
+  `BrandScreen` 由 `activeSet?.name` 傳入。品牌層（01–03、04A、04G）不傳，
+  prompt 不會多一行空 `set:`。
+
+**第一件事**：總覽層與 04A／04G 現在有自己那一段 Prompt。
+
+- **新表 `brand_guide_prompt`（0030）**：`brand_id`、`brand_set_id`、`scope`、
+  `prompt_override`、`updated_by`。空字串＝用自動版本（跟住決策更新）。
+  為什麼不塞進 `brand_guide_state.state`：state 是 stage 引擎的輸入，brief 由它
+  算出來；一段幾千字的 prompt 放進去，等於叫引擎讀一件它不認識的東西。
+  為什麼 `scope` 是文字而不是 stage：品牌總覽不是 stage（它是 01–03 合計），
+  而 04A 雖然是 stage，它的 prompt 也不是 state。scope 值：
+  `brand`（品牌總覽）、`set`（一套品牌集）、`stage4a`／`stage4g`（單頁模組）。
+- **路由** `apps/platform/src/brand-guide/prompt-routes.ts`：
+  `GET|PUT /brands/:brandId/scope-prompt/:scope?setId=`。scope 與 setId 不匹配
+  一律 400 `invalid_scope`（品牌層用 `set`、品牌集用 `brand`、04A 帶 setId），
+  寧可講錯，都不要靜靜寫入一個無人讀到的位置。寫要品牌編輯權，員工 403。
+- **Prompt 內容** `apps/web/src/design/brand-scope-prompt.ts`（純函式，有測試）：
+  `範圍`（品牌／範圍／階段）→ `進度`（逐站 % 與未填數）→
+  `已經定咗嘅決策`（每格一段，含 `## 識別碼：<編號> <名稱>` 與
+  `brand / set / stage / block` 四行）→ `仲未傾嘅區塊`（叫 agent 用
+  `brand_block_list`，不要自己猜有幾多格）→ 討論規則／要做嘅事／回覆格式／
+  寫回系統。空範圍仍然可用（講明未有決策），不會出一段空殼。
+- **畫面**：`BrandOverview` 進度條右邊多 `複製 Prompt` 與 `睇 Prompt`；
+  `StageDetail` 只會在 `scopePrompt` 為真時出現（`BRAND_FIXED_ENTRIES`，
+  即 04A／04G）。面板（`ScopePromptPanel`）重用卡片的 textarea 與
+  `儲存 Prompt`／`還原自動版本`，所以兩處手感一樣。
+  總覽的兩個面板（Prompt 與 AI Agent JSON）**共用同一份區塊紀錄**：
+  一次過載入，按下去才抓，開過就重用；複製未開面板都可以（先載入再砌）。
+- 驗收：`brand-scope-prompt.test.ts` 6 條（每格識別碼、兩套品牌集分得出、
+  品牌層冇 `set:`、單階段範圍、空範圍、進度不造假）；
+  `brand-block-prompt.test.ts` 加 1 條（品牌集卡片 prompt 帶 set 與 setId）；
+  `brand-scope-prompt.integration.test.ts` 8 條（存得返、兩套互不覆蓋、
+  scope 不匹配 400、空字串＝還原、員工 403、未登入 401、跨品牌 404）。
+  Docker `:4210` 真 Chrome：總覽與 04A 都出到含 `## 識別碼` 的 prompt、
+  品牌集 prompt 帶 `set: <id>（<name>）` 與 `setId=`、自訂版 reload 後仍在、
+  品牌集內卡片 prompt 同樣帶 set 與 setId、390px 溢出 0、零 console error。
+
 ## 6. 坑（都係實測踩過，唔好再踩）
 
 1. **測試已經鎖死在 `vitest.config.ts`（`fileParallelism: false`）。** 不需要在指令後面加 `--no-file-parallelism`。這條以前寫在這裡靠人記，結果 CI 跑 `npm test` 時不記得，就會偶發紅一個檔。
@@ -343,6 +648,16 @@ Boss Portal 的導覽是五組：總覽｜據點與機器｜人員｜策略｜�
 9. **表格加欄一定要量寬度。** `.boss-sites` 用 `table-layout: fixed` 加百分比欄寬；四欄已經佔滿 100%，硬加第五欄會被壓成 0px，按鈕飛出卡外。截圖縮細看不出來（字被擠成直排），要 `getBoundingClientRect()` 量。
 10. **`grep "a\|b"`（BRE 交替）在這個環境會靜默回空**，看起來像「檔案裡沒有這段」。要用 `grep -E` 或 Grep 工具。
 11. 截圖用 Playwright。本機已 cache Chromium（`~/Library/Caches/ms-playwright/chromium-1248/`），用 `playwright-core` 加 `createRequire` 由 Node 跑，比裝 Python 版快。
+12. **`.frame-subbar` 自己寫了 `display: flex`，會蓋過 `hidden` 的 `display: none`。** 沒有頁籤時它仍然佔一格 0px 高，把 `.frame-body` 頂落一行，footer 就升到畫面中間。已在 `frame.css` 用 `.frame-subbar[hidden] { display: none }` 加 `grid-row` 明確定位修好。
+13. **前端不要每次 render 都 `brandGuideApi(...)` 一個新物件。** `StageDetail` 的 `load` 依賴 `api`，物件一換就重新抓資料，變成無限迴圈。要在 `useMemo` 裡固定（見 `StageDetail` 的 `brandApi`）。
+14. **`brand_guide_state`／`brand_guide_block` 有三個 scope。** 寫入時 upsert 的 `on conflict` 一定要對中同一條 partial index（公司層／品牌層／品牌集），否則 Postgres 會報「對不上任何唯一約束」。改動時三個分支一齊看。
+15. **同一個 `block_id` 在每套品牌集都一樣。** 任何 prompt／寫回只要少了
+    `setId`，agent 就會改到另一套的同一格。卡片 prompt 與範圍 prompt 都要帶
+    `set:` 那一行，`GuideEndpoints` 的路徑亦要帶 `?setId=`。
+16. **範圍 prompt 不要放進 `brand_guide_state.state`。** state 是 stage 引擎的
+    輸入，多一個幾千字的 key 會令 brief／completeness 的計算變得不可預期。
+    自訂版本住 `brand_guide_prompt`（0030），自動版本由前端即時砌。
+17. **query string 一定要接在路徑最尾。** `…/guide/stage4b?setId=x/blocks` 不是「多一個參數」，而是「路徑只到 stage4b，後面全被當成 query 值」——伺服器回 404，而品牌層沒有 query 所以完全正常，看起來像「只有品牌集壞了」。`api.ts` 的 `guideEndpointsOf` 現在是「先砌完整路徑，最後才 `withScope()`」；改 URL 時用 `guide-endpoints.test.ts` 對實際字串，不要只看有沒有 200。
 
 ## 7. 工作方式（老闆 2026-11-11 定，2026-11-11 晚補充）
 
@@ -351,7 +666,8 @@ Boss Portal 的導覽是五組：總覽｜據點與機器｜人員｜策略｜�
 - 老闆不是工程師：**回報要講「在哪個畫面看得到」，不要講技術細節。**
 - **規矩由老闆定，不是由文件定。** 文件與程式碼不一致時，以程式碼為真相，即刻改文件，不要「等 issue」。
 - 不對外發送、批准，永遠由人按；其餘預設不加閘。
-- 現在刻意不做：MCP、生產部署、備份演練。等頁面成形之後再排。
+- 現在刻意不做：生產部署、備份演練。等頁面成形之後再排。品牌引導的 MCP
+  讀寫已落地（見 5.4）；其他模組的 MCP 工具仍未做。
 - 本機 Docker 就是驗收環境，老闆可以即時自己看。
 - GitHub 沒有 Pro，分支保護開不到；靠「一個 PR 一件事、CI 綠、AI 自己修紅燈」代替。
 - **夜間 loop 是老闆逐輪授權的。** 規矩在 `AGENTS.md`（一次一張、先紅後綠、綠燈才合、撞到空白就停手寫低、不問人也不猜）；授權只覆蓋當晚那一輪，不會自動延伸到下一輪。
@@ -360,7 +676,7 @@ Boss Portal 的導覽是五組：總覽｜據點與機器｜人員｜策略｜�
 
 - Needs：開立（MCP 端）、交貨、吸收、驗收、詳情頁、我負責分頁
 - Design：品牌模組 v2 已完成（#55–#69；七頁＝主頁／平台／色彩／字體／標誌／語氣／圖像＋已核准範例）
-- Design：#94 已有 Create 優先的五模組導覽與固定路由；#95 已接通 Project／Brief。Outputs、Materials、Knowledge、Templates 尚未接 CRUD；Composition、Needs 吸收、Render、Output 與 Provenance 仍未形成作品閉環
+- Design：Create（作品／成品）、Materials、Knowledge、Templates 於 2026-11-17 連同 projects／carousel 後端一併清空，只留空骨架；重做時由零建立資料模型、API、MCP 與畫面，不再沿用舊 Composition／Render／HyperFrames 實作
 - Design：品牌版本的介面（後端有 `brand_release` 與每頁版號，前端未曝露）
 - Boss Portal：憑證與金鑰、批准紀錄、管理級成員、操作紀錄
 - 新增據點第三步（要後端收確認檔的端點）

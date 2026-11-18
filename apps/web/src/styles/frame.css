@@ -42,6 +42,20 @@
   left: var(--hx-space-2);
 }
 
+/*
+ * `.frame-subbar` 自己寫了 `display: flex`，會蓋過瀏覽器對 `hidden` 的
+ * `display: none`。所以沒有頁籤時它仍然佔著一行 0px 高的格，把內容區頂落
+ * 一行。這一條把它真的收起來。
+ */
+.frame-subbar[hidden] {
+  display: none;
+}
+
+/* 頁尾永遠在第 4 行（auto），不跟內容爭位。 */
+.frame-footer {
+  grid-row: 4;
+}
+
 /* 第一層：全域頂欄。 */
 .frame-topbar {
   display: flex;
@@ -230,6 +244,11 @@
   display: none;
 }
 
+/* blank 模式例外（2026-11-17）：那條空第二行是骨架的一部分，要照佔位。 */
+.frame-subbar[data-frame-blank='true']:empty {
+  display: flex;
+}
+
 .frame-subtab {
   position: relative;
   height: var(--hx-frame-size-touch);
@@ -270,6 +289,12 @@
 /* 第三層：左側子頁導覽 ＋ 主內容。 */
 .frame-body {
   display: grid;
+  /*
+   * 明確放進第 3 行（1fr）：`grid-template-rows: auto auto 1fr auto` 的第 3 行
+   * 就是內容區。靠自動排位的話，第二行那條「第二層頁籤」一被隱藏，內容就會
+   * 跌上第 2 行，footer 跟著升到畫面中間，下面留一大片白 —— 短頁面尤其明顯。
+   */
+  grid-row: 3;
   grid-template-columns: var(--hx-frame-sidebar-width) minmax(0, 1fr);
   min-height: 0;
 }

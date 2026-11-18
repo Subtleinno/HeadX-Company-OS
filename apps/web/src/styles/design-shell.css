@@ -1,0 +1,31 @@
+/* Marketing Design：Design app 外殼的版面與色調（五個模組共用）。 */
+.design-modern { min-height:100%; background:var(--hx-design-ground); color:var(--hx-design-ink); }
+.design-modern .frame-subbar { background:var(--hx-design-subbar); border-bottom:1px solid var(--hx-design-border); }
+.design-modern .frame-tab,
+.design-modern .frame-subtab { border-radius:6px; }
+.design-modern .frame-tab[aria-current='page'],
+.design-modern .frame-subtab[aria-current='page'] { background:var(--hx-frame-accent-soft); color:var(--hx-frame-accent-fg); }
+.design-modern .frame-subtab[aria-current='page']::before,
+.design-modern .frame-sidebar__item[aria-current='page']::before { display:none; }
+.design-modern .frame-sidebar { background:var(--hx-design-sidebar); border-right:1px solid var(--hx-design-border); }
+.design-modern .frame-sidebar__item { border-radius:7px; }
+/* accent-ladder：active nav 用主色的淡 tint + 深主色字，full hue 只落在細 mark。 */
+.design-modern .frame-sidebar__item[aria-current='page'] { background:var(--hx-frame-accent-soft); color:var(--hx-frame-accent-fg); font-weight:600; }
+.design-modern .frame-content { padding:24px 28px 48px; }
+.design-modern .frame-content__head { margin-bottom:20px; }
+.design-modern .frame-content__title { letter-spacing:-.025em; }
+.design-modern .design-btn { border-color:var(--hx-design-control); border-radius:8px; background:var(--hx-design-surface); color:var(--hx-design-ink); transition:background .15s,border-color .15s,transform .15s; }
+.design-modern .design-btn:hover:not(:disabled) { background:var(--hx-design-hover); border-color:var(--hx-design-control); }
+.design-modern .design-btn:active:not(:disabled) { transform:translateY(1px); }
+.design-modern .design-btn--primary { background:var(--hx-frame-accent); border-color:var(--hx-frame-accent); color:var(--hx-design-surface); }
+.design-modern .design-btn--primary:hover:not(:disabled) { background:var(--hx-design-accent-hover); border-color:var(--hx-design-accent-hover); }
+.design-modern .design-btn--large { min-height:48px; padding:0 22px; font-weight:650; }
+.design-modern .design-input,
+.design-modern .design-field input,
+.design-modern .design-field textarea,
+.design-modern .design-field select { border:1px solid var(--hx-design-control); border-radius:8px; background:var(--hx-design-surface); color:var(--hx-design-ink); }
+
+@media (max-width:900px) {
+  .design-modern .frame-content { padding:20px; }
+}
+

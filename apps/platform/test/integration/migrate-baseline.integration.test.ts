@@ -44,6 +44,10 @@ const BASELINE = [
   ['0019_brand_suggestion.sql', '172971bbe4d191eb0ff4f7823f69bbdcf073fee7e77f94439c1d6eca4f9dc9a9'],
   ['0020_brand_fixed_pages_backfill.sql', '8ae8702c277fbdf1f8c537cd48b6689950613764736cbadbc5464dca472c139f'],
   ['0021_agent_http_tokens.sql', '7da820bcf7eea2597014a4ec472cd0c59a5c8b3ca93423eae6b5cb9ab865f838'],
+  ['0022_brand_guide.sql', '04d49ddbde1df72bae4601a0d08e0dda56bfa51597f6f7896b1cad43f650ae7a'],
+  ['0023_brand_guide_v2.sql', '6d559e3de44bc069a1ea09628d3da0f233ea8f27104fa8a391e1fa3b457ca29f'],
+  ['0024_brand_guide_stage_seed.sql', '7c936b126122ae59bb3d44a006517730f9cbab58f68bc70e0462c1cde2d7cc6a'],
+  ['0025_brand_guide_seed_stages.sql', 'a4cb5281dec095041fb1f595efac70d1684469481ad4315503983edb135f7ba7'],
   ['design/0001_projects.sql', '47c45bab2389a444a1745657433e9bf6cfaa148d4246b4917688c8af522d0c7b'],
   ['design/0002_carousel.sql', '68f2939bf82037885cc3424d406c7a7efea69572a721fb5796b55ab0bc677ac2'],
 ] as const;

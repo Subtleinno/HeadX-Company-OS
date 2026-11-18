@@ -6,9 +6,6 @@ import { buildServer } from '../../src/app';
 import { registerAuth } from '../../src/auth/routes';
 import { createHashLimiter, type HashLimiter } from '../../src/auth/hash-limits';
 import { registerAgents } from '../../src/agents/index';
-import { registerProjects } from '../../src/projects/index';
-import { registerCarousel, registerCarouselMcp } from '../../src/carousel/index';
-import type { Storage } from '../../src/storage/index';
 import { registerGrants } from '../../src/grants/index';
 import { registerStaff } from '../../src/staff/index';
 import type { StaffHooks } from '../../src/staff/store';
@@ -55,15 +52,11 @@ export type Harness = {
  * 測試專用 app 清單：sales（內部、非敏感、已開放）與 hr（敏感）。
  * 真正嘅 manifest 全部 available: false，所以測試要自己有一份。
  */
-function testRegistry(includeDesign = false): ModuleRegistry {
+function testRegistry(): ModuleRegistry {
   const apps: Array<Pick<ModuleManifest, 'id' | 'sensitive' | 'available' | 'exposure'>> = [
     { id: 'sales', sensitive: false, available: true, exposure: 'internal' },
     { id: 'hr', sensitive: true, available: true, exposure: 'internal' },
   ];
-
-  if (includeDesign) {
-    apps.push({ id: 'design', sensitive: false, available: true, exposure: 'internal' });
-  }
 
   return {
     listModules: () =>
@@ -79,7 +72,7 @@ function testRegistry(includeDesign = false): ModuleRegistry {
   };
 }
 
-export async function createHarness(options: { design?: boolean; carouselStorage?: Storage } = {}): Promise<Harness> {
+export async function createHarness(): Promise<Harness> {
   const db = await createTempDatabase();
   await migrate({ pool: db.pool, dir: migrationsDir, log: silent });
 
@@ -93,7 +86,7 @@ export async function createHarness(options: { design?: boolean; carouselStorage
   const hashRun = <T>(task: () => Promise<T>): Promise<T> => limiter.current.run(task);
 
   const app = buildServer({ checkDb: ok, checkStorage: ok });
-  const registry = testRegistry(options.design === true);
+  const registry = testRegistry();
   const staffHooks: StaffHooks = {};
   registerAuth(app, {
     pool: db.pool,
@@ -116,23 +109,6 @@ export async function createHarness(options: { design?: boolean; carouselStorage
     resolveEntry: () => entry.trusted,
     now: () => new Date(),
   });
-  if (options.design === true) {
-    registerProjects(app, {
-      pool: db.pool,
-      registry,
-      resolveEntry: () => entry.trusted,
-    });
-    if (options.carouselStorage !== undefined) {
-      const carousel = {
-        pool: db.pool,
-        storage: options.carouselStorage,
-        registry,
-        resolveEntry: () => entry.trusted,
-      };
-      registerCarousel(app, carousel);
-      registerCarouselMcp(app, carousel);
-    }
-  }
   await app.ready();
 
   const units = await seedUnits(db);

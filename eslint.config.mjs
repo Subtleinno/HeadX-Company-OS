@@ -4,7 +4,7 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   {
-    ignores: ['**/dist/**', '**/node_modules/**', '**/coverage/**', '**/.workbuddy/**', '**/.zcode/**', '**/Perplexity idea/**', '**/docs/research/**'],
+    ignores: ['**/dist/**', '**/node_modules/**', '**/coverage/**', '**/.workbuddy/**', '**/.zcode/**', '**/Perplexity idea/**', '**/docs/research/**', '**/brand-guide/engine/reference/**'],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,

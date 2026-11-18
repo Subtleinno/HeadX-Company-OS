@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "build": "tsc --build tsconfig.json",
+    "build": "tsc --build tsconfig.json && node -e \"const fs=require('fs'),p=require('path');const src='src/brand-guide/engine/reference',dst='dist/brand-guide/engine/reference';fs.mkdirSync(dst,{recursive:true});for(const f of fs.readdirSync(src))fs.copyFileSync(p.join(src,f),p.join(dst,f));\"",
     "start": "node dist/server.js",
     "worker": "node dist/worker.js",
     "db:app-access": "node dist/db-access/main.js"
@@ -13,13 +13,8 @@
     "@company-os/contracts": "*",
     "@company-os/edition-profile": "*",
     "@company-os/policy": "*",
-    "@modelcontextprotocol/sdk": "^1.32.2",
     "fastify": "^5.12.8",
-    "fflate": "^0.8.3",
-    "gsap": "^3.15.0",
-    "hyperframes": "^0.9.56",
     "pg": "^8.23.1",
-    "sharp": "^0.35.5",
     "zod": "^4.6.7"
   },
   "devDependencies": {

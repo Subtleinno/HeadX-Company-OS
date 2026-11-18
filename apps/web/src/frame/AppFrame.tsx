@@ -29,15 +29,37 @@ export type AppFrameProps = {
   path: readonly string[];
   onSignOut: () => void;
   signingOut?: boolean;
-  pageTitle: string;
+  pageTitle?: string;
   pageSubtitle?: string;
   primaryAction?: ReactNode;
+  /**
+   * 只畫骨架：第二層頂欄、左欄、內容區全部留空（見 `FrameShell.blank`）。
+   * 2026-11-17 老闆指示的四個 Design 模組就是這個狀態：由零重做，畫面上
+   * 不應該有任何頁名、麵包屑或佔位卡。
+   */
+  blank?: boolean;
   /** Needs 之外，呢一頁要唔要右側欄。 */
   withRail?: boolean;
   sidebarSearch?: FrameSidebarSearch;
   /** 由目前列表事實推出的資料夾數量，例如各格式的 Project 數。 */
   sidebarBadges?: Readonly<Record<string, string>>;
-  children: (position: NavPosition) => ReactNode;
+  /**
+   * 只有一頁的模組照樣列出左欄。
+   *
+   * 預設收起（單頁模組同麵包屑重複三次）。但 Boss Portal 的「品牌」是一個
+   * **清單**而不是單頁：即使目前只有一個品牌，老闆也要在左欄見到它在那裡，
+   * 否則下一個品牌出現時，他不會知道去哪裡找。
+   */
+  listSinglePage?: boolean;
+  /**
+   * 完全唔畫左欄。
+   *
+   * 品牌模組自己有一棵「資料夾 → 品牌集」的樹：外殼再加一份頁清單就會
+   * 出現兩條左欄，兩邊叫同一個東西但內容唔同。所以由呼叫端講明「這頁的
+   * 左欄由我自己負責」。
+   */
+  hideSidebar?: boolean;
+  children: (position: NavPosition, sidebar: { open: boolean; toggle: () => void }) => ReactNode;
 };
 
 function toRoute(path: string): Route {
@@ -53,9 +75,12 @@ export function AppFrame({
   pageTitle,
   pageSubtitle,
   primaryAction,
+  blank = false,
   withRail = false,
   sidebarSearch,
   sidebarBadges,
+  listSinglePage = false,
+  hideSidebar = false,
   children,
 }: AppFrameProps) {
   const chrome = useFrameChrome();
@@ -94,6 +119,15 @@ export function AppFrame({
     })),
   }));
 
+  // 只有一頁的模組：左下角「頁面」清單只會列出一項，同麵包屑重複三次。
+  // 單頁模組直接收起那條欄，內容區因此更寬（品牌、素材等只有一頁的模組）。
+  const pageCount = position.navModule.groups.reduce((total, group) => total + group.pages.length, 0);
+  const visibleSidebarGroups: FrameSidebarGroup[] = hideSidebar
+    ? []
+    : pageCount > 1 || (listSinglePage && pageCount > 0)
+      ? sidebarGroups
+      : [];
+
   // 第一格（app 名稱）唔喺呢度砌：名稱只有 manifest 一個來源，由
   // `FrameApps` 補上。呢度只講「模組 / 頁 / 章節」。
   const breadcrumbs = [
@@ -111,6 +145,7 @@ export function AppFrame({
   return (
     <FrameApps
       {...(withRail ? { withRail } : {})}
+      {...(blank ? { blank } : {})}
       currentAppRoute={nav.base}
       moduleTabs={nav.modules.map((item) => ({ key: item.key, label: navLabel(item) }))}
       currentModuleTabKey={position.navModule.key}
@@ -135,22 +170,23 @@ export function AppFrame({
             },
           }
         : {})}
-      modulePages={modulePages}
+      modulePages={blank ? [] : modulePages}
       currentPageKey={position.page.key}
       onSelectPage={goToPage}
       currentSectionKey={position.section?.key ?? null}
       onSelectSection={(pageKey, sectionKey) => {
         navigatePath(base, position.navModule.key, pageKey, sectionKey);
       }}
-      sidebarGroups={sidebarGroups}
+      sidebarGroups={blank ? [] : visibleSidebarGroups}
+      {...(hideSidebar ? { hasCustomSidebar: true } : {})}
       {...(sidebarSearch === undefined ? {} : { sidebarSearch })}
       sidebarOpen={chrome.sidebarOpen}
       onToggleSidebar={chrome.onToggleSidebar}
       theme={chrome.theme}
       account={{ displayName: user.displayName, signingOut }}
       onSignOut={onSignOut}
-      breadcrumbs={breadcrumbs}
-      pageTitle={pageTitle}
+      breadcrumbs={blank ? [] : breadcrumbs}
+      {...(blank || pageTitle === undefined ? {} : { pageTitle })}
       {...(pageSubtitle === undefined ? {} : { pageSubtitle })}
       {...(primaryAction === undefined ? {} : { primaryAction })}
       {...(identity === null ? {} : { companyName: identity.name ?? undefined, region: identity.city ?? undefined })}
@@ -170,7 +206,7 @@ export function AppFrame({
           }
         : {})}
     >
-      {children(position)}
+      {children(position, { open: chrome.sidebarOpen, toggle: chrome.onToggleSidebar })}
     </FrameApps>
   );
 }

@@ -46,8 +46,17 @@ export function encodeRfc5987(value: string): string {
   return result;
 }
 
-export function buildContentDisposition(originalName: string, contentType: string): string {
-  const disposition = isInlineSafe(contentType) ? 'inline' : 'attachment';
+/**
+ * `forceAttachment` 給「下載」按鈕用：同一份圖片／PDF，按預覽是 inline、
+ * 按下載就是 attachment。不能只改前端連結的 `download` 屬性 —— 跨來源
+ * 或被忽略時它不生效，由伺服器講清楚才是可靠的做法。
+ */
+export function buildContentDisposition(
+  originalName: string,
+  contentType: string,
+  forceAttachment = false,
+): string {
+  const disposition = !forceAttachment && isInlineSafe(contentType) ? 'inline' : 'attachment';
 
   return `${disposition}; filename="${asciiFallback(originalName)}"; filename*=UTF-8''${encodeRfc5987(originalName)}`;
 }
